@@ -1,0 +1,29 @@
+/* --- 헤더 영역 --- */
+.main-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0; 
+    background-color: #1E1E1E;
+    border-bottom: 1px solid #3A3A3C;
+    font-family: 'BMDOHYEON', sans-serif;
+}
+.header-left, .header-center, .header-right {
+    flex: 1; display: flex;
+}
+.header-left { 
+    justify-content: flex-start;
+    align-items: center; /* [수정] 로고와 주차 UI의 세로 정렬을 위해 추가 */
+    gap: 20px; /* [수정] 로고와 주차 UI 사이의 간격 */
+}
+.header-center { justify-content: center; }
+.header-right { justify-content: flex-end; }
+
+.header-logo {
+    height: 40px; 
+    width: auto;
+}
+
+.time-display {
+    margin-right: 50px;
+}

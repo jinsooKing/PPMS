@@ -1,0 +1,530 @@
+/* --- 기본 폰트 설정 및 전체 레이아웃 --- */
+body,
+html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    background-color: #121212;
+}
+
+.page-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+}
+
+a {
+    color: inherit;
+    text-decoration: none;
+}
+
+/* --- 공용 컨텐츠 영역 스타일 --- */
+.content-area {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 35px;
+    background-color: #2C2C2E;
+}
+
+/* --- 공용 컴포넌트 스타일 --- */
+.common-box {
+    width: fit-content;
+    padding: 7px 18px;
+    border-radius: 10px;
+    background-color: #000000;
+    color: #FFFFFF;
+    font-weight: bold;
+    white-space: nowrap;
+
+    border: 1px solid #555;
+    border-bottom: 3px solid #333;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    font-size: clamp(6px, 1.2vw, 30px);
+
+}
+
+/* 폰트 크기 유틸리티 클래스 */
+
+.font-45pt {
+    font-size: 3rem;
+}
+
+/* 클릭 효과 유틸리티 클래스 */
+.clickable-box {
+    cursor: pointer;
+    transition: all 0.1s ease-out;
+}
+
+.clickable-box:active {
+    transform: translateY(1px);
+    border-bottom-width: 2px;
+}
+
+/* --- 그리드 레이아웃 스타일 --- */
+.grid-container {
+    display: grid;
+    gap: 20px;
+}
+
+.grid-layout-2-col {
+    grid-template-columns: repeat(2, 1fr);
+}
+
+.grid-layout-3-col {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+/* 생산 페이지의 주차별 UI를 위한 작은 박스 스타일 */
+.week-box {
+    font-family: 'BMJUA', sans-serif;
+    font-size: 1.5rem;
+    font-weight: bold;
+    background-color: #000000;
+    color: #FFFFFF;
+    padding: 14px 28px;
+    border-radius: 10px;
+    text-align: center;
+    border: 1px solid #555;
+    border-bottom: 4px solid #444;
+    box-shadow: 0 3px 5px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    transition: all 0.1s ease-out;
+}
+
+.week-box:active {
+    transform: translateY(2px);
+    border-bottom-width: 2px;
+}
+
+/* 현재 주차를 강조하는 네온 효과 스타일 */
+.week-box.current-week {
+    border-color: #00BFFF;
+    box-shadow: 0 0 6px 1px rgba(0, 191, 255, 0.5), 0 0 10px 3px rgba(0, 191, 255, 0.3);
+}
+
+/* [복원] 드롭업 메뉴 스타일 (크기 축소 이전 버전으로 복원) */
+.dropup-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: none;
+    justify-content: center;
+    align-items: flex-end;
+    z-index: 999;
+}
+
+.dropup-content {
+    background-color: #2C2C2E;
+    width: 100%;
+    max-width: 1200px;
+    padding: 20px;
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
+    box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.3);
+    animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(100%);
+    }
+
+    to {
+        transform: translateY(0);
+    }
+}
+
+.dropup-overlay.visible {
+    display: flex;
+}
+
+/* 모달(팝업) 창 스타일 */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-window {
+    background-color: #2C2C2E;
+    padding: 20px;
+    border-radius: 10px;
+    border: 1px solid #555;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+    width: 95vw;
+    max-width: 1400px;
+    height: 90vh;
+    position: relative;
+    font-family: 'BMDOHYEON', sans-serif;
+    font-weight: bold;
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-title {
+    color: #FFFFFF;
+    font-size: 1.6rem;
+    margin: 0 0 10px 0;
+    padding-bottom: 10px;
+    font-family: inherit;
+    font-weight: inherit;
+    flex-shrink: 0;
+}
+
+.close-btn {
+    position: absolute;
+    top: 10px;
+    right: 20px;
+    font-size: 2.3rem;
+    color: #888;
+    cursor: pointer;
+    border: none;
+    background: none;
+    z-index: 10;
+}
+
+.close-btn:hover {
+    color: #FFFFFF;
+}
+
+.modal-overlay.visible {
+    display: flex;
+}
+
+.modal-content {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-height: 0;
+}
+
+.line-schedule-section {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    border-top: 1px solid #555;
+    padding-top: 5px;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.line-header {
+    display: flex;
+    /* Flexbox 레이아웃 적용 */
+    justify-content: space-between;
+    /* 양쪽 끝으로 요소를 밀어냄 */
+    align-items: center;
+    /* 세로 중앙 정렬 */
+    padding-right: 5px;
+    /* 오른쪽 끝에 약간의 여백 */
+}
+
+.line-title {
+    /* 최소 18px, 이상적으로는 화면 너비의 2.2%, 최대 24px */
+    font-size: clamp(12px, 2.2vw, 24px);
+    margin: 0;
+
+    color : #eaeaea
+
+}
+
+.action-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.plus-btn,
+.minus-btn {
+    width: auto;
+    height: auto;
+    padding: 4px 10px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #FFFFFF;
+    background-color: #000000;
+    border: 1px solid #555;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.1s ease-out;
+}
+
+.plus-btn:hover {
+    background-color: #007BFF;
+}
+
+.minus-btn:hover {
+    background-color: #dc3545;
+}
+
+.plus-btn:active,
+.minus-btn:active {
+    transform: translateY(1px);
+}
+
+.table-container {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    border: 1px solid #555;
+    border-radius: 8px;
+}
+
+table.editable-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: inherit;
+    table-layout: fixed;
+}
+
+.editable-table th,
+.editable-table td {
+    padding: 6px;
+    text-align: center;
+    border-bottom: 1px solid #FFFFFF;
+    border-right: 1px solid #FFFFFF;
+    color: #FFFFFF;
+    font-size: clamp(11px, 1.1vw, 14px);
+    font-weight: bold;
+}
+
+.editable-table thead th {
+    background-color: #3A3A3C;
+    top: 0;
+}
+
+.editable-table th:last-child,
+.editable-table td:last-child {
+    border-right: none;
+}
+
+.data-cell {
+    padding: 0 !important;
+}
+
+.editable-table tbody tr:nth-child(even) {
+    background-color: #3A3A3C;
+}
+
+.editable-table tbody tr:hover {
+    background-color: #555;
+}
+
+.editable-table input,
+.editable-table select {
+    width: 100%;
+    height: 100%;
+    padding: 8px;
+    background: transparent;
+    border: none;
+    color: #FFFFFF;
+    font-family: 'BMDOHYEON', sans-serif;
+    font-weight: bold;
+    font-size: clamp(11px, 1.1vw, 14px);
+    box-sizing: border-box;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    text-align: center;
+}
+
+.editable-table input::placeholder {
+    color: #888;
+}
+
+.editable-table input:focus,
+.editable-table select:focus {
+    outline: none;
+    background-color: #000000;
+}
+
+.editable-table .date-select-group {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 15px;
+    border-top: 1px solid #555;
+    flex-shrink: 0;
+}
+
+.reset-btn {
+    background-color: #721c24;
+}
+
+.reset-btn:hover {
+    background-color: #dc3545;
+}
+
+.no-data-message {
+    font-family: 'BMDOHYEON', sans-serif;
+    font-size: 1.6rem;
+    color: #888;
+    font-weight: bold;
+}
+
+.icon-btn {
+    background: #3a3a3c;
+    border: 1px solid #555;
+    color: #fff;
+    font-size: 14px;    /* 아이콘 크기 줄임 */
+    width: 32px;        /* 버튼 너비 줄임 */
+    height: 32px;       /* 버튼 높이 줄임 */
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.icon-btn:hover {
+    background: #555;
+}
+
+/* 다운로드 선택 모달 최종 수정 스타일 */
+.small-modal {
+    max-width: 300px;
+    padding: 20px 25px 25px 25px;
+    /* ✨ 높이를 자동으로 설정하여 내용물 크기에 따라 줄어들게 함 */
+    height: auto;
+    /* ✨ flex 컨테이너 설정을 추가하여 내부 요소 정렬을 명확히 함 */
+    display: flex;
+    flex-direction: column;
+}
+
+/* 작은 모달창 내부의 콘텐츠 영역이 불필요하게 늘어나지 않도록 설정 */
+.small-modal .modal-content {
+    /* ✨ flex-grow: 0; 이 핵심입니다. 
+       부모에게 남는 공간이 있어도 스스로 늘어나지 않도록 만듭니다. */
+    flex-grow: 0;
+    /* 또는 flex: none; */
+}
+
+/* 기존 버튼 스타일 (참고용) */
+.choice-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    padding-top: 20px;
+}
+
+.choice-buttons .common-box {
+    width: 100%;
+    text-align: center;
+    box-sizing: border-box;
+    padding-top: 12px;
+    padding-bottom: 12px;
+}
+
+.choice-buttons .common-box i {
+    margin-right: 10px;
+}
+
+/* production-view-table의 td에 position 속성 추가 */
+.production-view-table td {
+    position: relative; /* 자식 요소의 absolute 위치 기준이 됨 */
+}
+
+.registration-table td {
+    position: relative; /* 등록 모달 테이블의 td에도 동일한 위치 기준 적용 */
+}
+
+/* 유효성 검사 안내 메시지 스타일 */
+.validation-message {
+    position: absolute;
+    top: -28px; /* 메시지가 두 줄이 될 경우를 대비해 조금 더 위로 조정 */
+    left: 0;
+    width: 100%;
+    box-sizing: border-box; /* 너비 계산이 깨지지 않도록 추가 */
+    background-color: #d35400;
+    color: white;
+    padding: 4px 5px;
+    border-radius: 4px;
+    text-align: center;
+    z-index: 10;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s, visibility 0.3s;
+    
+    /* ✨ 1. clamp() 함수로 유동적인 폰트 크기 적용 */
+    font-size: clamp(2px, 1.2vw, 12px);
+
+    /* ✨ 2. nowrap을 삭제하여 공간이 부족하면 자동으로 줄바꿈되도록 허용 */
+    white-space: normal;
+    line-height: 1.2; /* 줄바꿈 시 줄 간격 조절 */
+    pointer-events: none; /* 메시지가 다른 입력을 방해하지 않도록 함 */
+}
+
+/* 메시지가 보여질 때의 스타일 */
+.validation-message.visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* --- common.css 또는 header.css 파일 등에 적용 --- */
+
+/* 기존의 .font-15pt, .font-35pt 규칙을 아래 코드로 교체합니다. */
+
+/* 약 15pt에 해당하는 유동형 폰트 크기 */
+.font-15pt {
+    /* 최소 13px, 이상적으로는 화면 너비의 1.2%, 최대 18px */
+    font-size: clamp(13px, 1.2vw, 18px);
+}
+
+/* 약 35pt에 해당하는 유동형 폰트 크기 */
+.font-35pt {
+    /* 최소 28px, 이상적으로는 화면 너비의 3.5%, 최대 47px */
+    font-size: clamp(25px, 3.5vw, 35px);
+}
+
+/* (참고) 다른 폰트 크기 클래스가 있다면 동일한 방식으로 clamp()로 변경할 수 있습니다. */
+
+/* --- 생산 등록 모달 테이블 내 버튼 스타일 --- */
+.editable-table .row-actions {
+    /* 버튼들이 들어갈 마지막 칸의 스타일 */
+    width: 10%; /* 너비 확보 */
+    padding: 2px;
+}
+
+.editable-table .action-btn {
+    /* 행마다 추가될 버튼들의 공통 스타일 */
+    width: 45%;
+    height: 28px;
+    margin: 0 2%;
+    font-size: 1rem;
+    font-weight: bold;
+    color: #FFFFFF;
+    background-color: #000000;
+    border: 1px solid #555;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.1s ease-out;
+}
+
+.editable-table .action-btn:hover {
+    transform: scale(1.05);
+}
+
+.editable-table .add-row-btn:hover {
+    background-color: #007BFF; /* 추가 버튼 호버 색상 */
+}
+
+.editable-table .delete-row-btn:hover {
+    background-color: #dc3545; /* 삭제 버튼 호버 색상 */
+}

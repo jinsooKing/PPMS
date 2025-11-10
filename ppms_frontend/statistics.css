@@ -1,0 +1,56 @@
+.content-area {
+    /* common.css의 padding: 35px;를 덮어씁니다. */
+    padding: 15px 35px 35px 35px; /* 상단 패딩만 15px로 줄임 */
+    
+    align-items: flex-start;
+    flex-direction: column;
+}
+
+.statistics-controls {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    margin-bottom: 20px;
+    width: 100%;
+}
+
+/* common.css의 .editable-table select 스타일 재사용 */
+.statistics-controls select {
+    font-family: 'BMDOHYEON', sans-serif;
+    font-weight: bold;
+    font-size: clamp(11px, 1.1vw, 14px);
+    background-color: #1c1c1e;
+    color: #fff;
+    border: 1px solid #555;
+    border-radius: 5px;
+    padding: 8px 12px;
+}
+
+/* common.css의 .clickable-box 스타일 재사용 */
+.search-btn {
+    padding: 9px 25px;
+}
+
+#statistics-result-area {
+    width: 100%;
+}
+
+/* production.css의 .editable-table 스타일 재사용 */
+.statistics-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'BMDOHYEON', sans-serif;
+    table-layout: fixed;
+}
+
+.statistics-controls input[type="number"] {
+    font-family: 'BMDOHYEON', sans-serif;
+    font-weight: bold;
+    font-size: clamp(11px, 1.1vw, 14px);
+    background-color: #1c1c1e;
+    color: #fff;
+    border: 1px solid #555;
+    border-radius: 5px;
+    padding: 8px 12px;
+    width: 100px; /* 적절한 너비 지정 */
+}

@@ -1,0 +1,179 @@
+/* 일정 표가 표시될 때만 상단 정렬을 적용하기 위한 클래스 */
+.content-area.align-top {
+    align-items: flex-start;
+}
+
+#schedule-display-area {
+    width: 100%;
+    margin-top: 0;
+}
+
+.no-line-data-message {
+    font-family: 'BMDOHYEON', sans-serif;
+    font-size: 1rem;
+    color: #888;
+    font-weight: bold;
+    text-align: center;
+    padding: 20px;
+    border: 1px dashed #555;
+    border-radius: 8px;
+    margin-top: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100px;
+}
+
+/* 이전 데이터 선택 화면을 위한 스타일 */
+.period-selector-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+}
+
+.period-btn {
+    font-family: 'BMJUA', sans-serif;
+    font-size: 1.5rem;
+    font-weight: bold;
+    background-color: #000000;
+    color: #FFFFFF;
+    padding: 14px 28px;
+    border-radius: 10px;
+    text-align: center;
+    border: 1px solid #555;
+    border-bottom: 4px solid #444;
+    box-shadow: 0 3px 5px rgba(0,0,0,0.2);
+    cursor: pointer;
+    transition: all 0.1s ease-out;
+}
+.period-btn:hover {
+    background-color: #3A3A3C;
+}
+.period-btn:active {
+    transform: translateY(2px);
+    border-bottom-width: 2px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+.copy-down-icon {
+    cursor: pointer;
+    margin-left: 5px;
+    color: #a0a0a0; /* 아이콘 색상 */
+    transition: color 0.2s;
+}
+
+.copy-down-icon:hover {
+    color: #ffffff; /* 마우스 올렸을 때 색상 */
+}
+
+.line-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.line-title-container {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex-grow: 1;
+}
+.progress-bar-container {
+    width: 200px;
+    height: 20px;
+    background-color: #1c1c1e;
+    border: 1px solid #555;
+    border-radius: 5px;
+    position: relative;
+    overflow: hidden;
+}
+.progress-bar-fill {
+    width: 0%;
+    height: 100%;
+    background-color: #34c759;
+    transition: width 0.3s ease-in-out;
+}
+.progress-bar-text {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 12px;
+    color: white;
+    font-weight: bold;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.7);
+}
+
+/* --- 비고/주의사항 모달 스타일 --- */
+.large-modal {
+    max-width: 900px; /* 모달 너비를 더 넓게 */
+    height: 70vh; /* 모달 높이를 뷰포트의 70%로 */
+}
+
+.notes-tab-nav {
+    display: flex;
+    border-bottom: 2px solid #555;
+    margin-bottom: 15px;
+}
+
+.tab-btn {
+    font-family: 'BMJUA', sans-serif;
+    font-size: 1.2rem;
+    padding: 10px 20px;
+    border: none;
+    background: transparent;
+    color: #888;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s;
+}
+
+.tab-btn:hover {
+    color: #ddd;
+}
+
+.tab-btn.active {
+    color: #FFFFFF;
+    border-bottom-color: #00BFFF; /* 활성 탭 밑줄 */
+}
+
+.notes-modal-content {
+    padding-top: 0;
+    overflow-y: auto; /* 내용이 많으면 스크롤 */
+}
+
+.notes-tab-content {
+    display: none; /* 탭 내용은 기본적으로 숨김 */
+}
+
+.notes-tab-content.active {
+    display: block; /* 활성 탭만 보임 */
+}
+
+.note-item {
+    margin-bottom: 15px;
+    border-bottom: 1px dashed #444;
+    padding-bottom: 10px;
+}
+
+.note-item h4 {
+    font-family: 'BMJUA', sans-serif;
+    font-size: 1.1rem;
+    color: #eaeaea;
+    margin: 0 0 8px 0;
+}
+
+.note-item textarea {
+    width: 100%;
+    min-height: 80px;
+    background-color: #1c1c1e;
+    border: 1px solid #555;
+    color: #fff;
+    font-family: 'BMDOHYEON', sans-serif;
+    
+    /* ▼▼▼ [수정된 부분] ▼▼▼ */
+    font-weight: bold; /* 굵게 */
+    font-size: clamp(11px, 1.1vw, 14px); /* 다른 입력칸과 동일하게 */
+    
+    padding: 8px;
+    border-radius: 5px;
+    box-sizing: border-box; 
+}

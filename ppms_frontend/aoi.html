@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PPMS - AOI</title>
+    <link rel="stylesheet" href="common.css">
+    <link rel="stylesheet" href="header.css">
+    <link rel="stylesheet" href="footer.css">
+    <link href="https://hangeul.pstatic.net/hangeul_static/css/bmdohyeon.css" rel="stylesheet">
+    <link href="https://hangeul.pstatic.net/hangeul_static/css/bmjua.css" rel="stylesheet">
+</head>
+<body>
+    <div class="page-container">
+        <header class="main-header">
+            <div class="header-left">
+                <a href="index.html">
+                    <picture>
+                        <source srcset="logo.avif" type="image/avif">
+                        <img src="logo.png" alt="필리아텔레콤 로고" class="header-logo">
+                    </picture>
+                </a>
+            </div>
+            <div class="header-center">
+                <div class="common-box font-35pt">AOI</div>
+            </div>
+            <div class="header-right">
+                <div class="common-box font-15pt time-display" id="current-time"></div>
+            </div>
+        </header>
+
+        <main class="content-area"></main>
+
+        <footer class="main-footer">
+            <div class="footer-left"></div>
+            <div class="footer-center">
+                <a href="javascript:history.back()">
+                    <div class="common-box font-15pt clickable-box">뒤로 가기</div>
+                </a>
+            </div>
+            <div class="footer-right"></div>
+        </footer>
+    </div>
+    <script>
+        function updateTime() {
+            const timeDisplay = document.getElementById('current-time');
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const formattedTime = `${year}년 ${month}월 ${day}일 ${hours}시 ${minutes}분`;
+            timeDisplay.textContent = formattedTime;
+        }
+        setInterval(updateTime, 1000);
+        updateTime();
+    </script>
+</body>
+</html>
+
