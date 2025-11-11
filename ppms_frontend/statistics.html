@@ -59,6 +59,16 @@
             <div class="footer-right">
             </div>
         </footer>
+
+        <div class="modal-overlay" id="details-modal">
+            <div class="modal-window">
+                <button class="close-btn" id="close-details-modal-btn">&times;</button>
+                <h2 class="modal-title" id="details-modal-title">상세 내역</h2>
+
+                <div class="modal-content" id="details-modal-content">
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -72,6 +82,10 @@
 
             // ▼▼▼ [신규] '주문 연도' 입력 요소를 가져옵니다. ▼▼▼
             const yearInput = document.getElementById('order-year-input');
+            const detailsModal = document.getElementById('details-modal');
+            const closeDetailsModalBtn = document.getElementById('close-details-modal-btn');
+            const detailsModalTitle = document.getElementById('details-modal-title');
+            const detailsModalContent = document.getElementById('details-modal-content');
 
             // --- 2. '주문월' 드롭다운 채우기 ---
             monthSelect.innerHTML = '<option value="">-선택-</option>';
@@ -83,70 +97,82 @@
             // ▼▼▼ [신규] '주문 연도' 기본값으로 현재 연도 설정 ▼▼▼
             yearInput.value = new Date().getFullYear();
 
-            // --- 3. '조회' 버튼 이벤트 리스너 ---
-            searchBtn.addEventListener('click', async () => {
-                const selectedMonth = monthSelect.value;
-                // ▼▼▼ [수정] 'yearInput.value'에서 값을 가져옵니다. ▼▼▼
-                const selectedYear = yearInput.value;
+            document.addEventListener('click', async (event) => {
 
-                if (!selectedYear || !selectedMonth) {
-                    alert('주문 연도와 주문월을 모두 선택하세요.');
-                    return;
-                }
+                // [A] '조회' 버튼 클릭 시
+                if (event.target === searchBtn) {
+                    const selectedMonth = monthSelect.value;
+                    const selectedYear = yearInput.value;
 
-                resultArea.innerHTML = `<p class="no-data-message" style="text-align: center;">데이터를 불러오는 중입니다...</p>`;
-
-                try {
-                    // 4. 백엔드 통계 API 호출
-                    const response = await fetch(`http://127.0.0.1:5000/api/statistics/order_month_summary?order_month=${selectedMonth}&year=${selectedYear}`);
-
-                    if (!response.ok) {
-                        throw new Error('서버 응답 오류');
+                    if (!selectedYear || !selectedMonth) {
+                        alert('주문 연도와 주문월을 모두 선택하세요.');
+                        return;
                     }
 
-                    const summaryData = await response.json();
+                    resultArea.innerHTML = `<p class="no-data-message" style="text-align: center;">데이터를 불러오는 중입니다...</p>`;
 
-                    // 5. 결과 테이블 생성
-                    renderStatisticsTable(summaryData, selectedMonth);
+                    try {
+                        const response = await fetch(`http://127.0.0.1:5000/api/statistics/order_month_summary?order_month=${selectedMonth}&year=${selectedYear}`);
+                        if (!response.ok) throw new Error('서버 응답 오류');
+                        const summaryData = await response.json();
+                        renderStatisticsTable(summaryData, selectedMonth);
+                    } catch (error) {
+                        console.error('통계 데이터 로딩 실패:', error);
+                        resultArea.innerHTML = `<p class="no-data-message" style="text-align: center;">데이터 로딩에 실패했습니다. 백엔드 서버를 확인하세요.</p>`;
+                    }
+                }
 
-                } catch (error) {
-                    console.error('통계 데이터 로딩 실패:', error);
-                    resultArea.innerHTML = `<p class="no-data-message" style="text-align: center;">데이터 로딩에 실패했습니다. 백엔드 서버를 확인하세요.</p>`;
+                // [B] '상세' 버튼 클릭 시
+                if (event.target.classList.contains('stats-details-btn')) {
+                    const button = event.target;
+                    const model = button.dataset.model;
+                    const year = button.dataset.year;
+                    const month = button.dataset.month;
+                    openDetailsModal(model, year, month);
                 }
             });
 
-            // --- 6. 통계 테이블 그리기 함수 ---
             function renderStatisticsTable(data, selectedMonth) {
                 if (!data || data.length === 0) {
                     resultArea.innerHTML = `<p class="no-data-message" style="text-align: center;">'${selectedMonth}'에 대한 데이터가 없습니다.</p>`;
                     return;
                 }
 
-                // production.css의 .editable-table 스타일 재사용
+                // ▼▼▼ [수정] 4개 열로 변경 (모델명, 총 주문, 실생산, 상세) ▼▼▼
                 let tableHTML = `<table class="editable-table statistics-table">
                     <colgroup>
-                        <col style="width: 50%;">
-                        <col style="width: 25%;">
-                        <col style="width: 25%;">
-                    </colgroup>
+                        <col style="width: 30%;"> <col style="width: 30%;"> <col style="width: 30%;"> <col style="width: 10%;"> </colgroup>
                     <thead>
                         <tr>
                             <th>모델명</th>
-                            <th>총 주문량</th>
+                            <th>총주문량</th>
                             <th>실생산총합</th>
-                            </tr>
+                            <th>상세내역</th>
+                        </tr>
                     </thead>
                     <tbody>`;
 
                 data.forEach(item => {
-                    // ▼▼▼ [삭제] 'rate' 계산 삭제 ▼▼▼
+
+                    let problemClass = '';
+                    if (item.status === 'shortage') {
+                        problemClass = 'stats-problem-yellow'; // 노란색
+                    } else if (item.status === 'imbalance') {
+                        problemClass = 'stats-problem-red'; // 빨간색
+                    }
 
                     tableHTML += `
                         <tr>
                             <td>${item.model}</td>
                             <td>${item.totalQuantity.toLocaleString()}</td>
-                            <td>${item.actualProduction.toLocaleString()}</td>
-                            </tr>
+                            <td class="${problemClass}">${item.actualProduction.toLocaleString()}</td>
+                            
+                            <td><button class="stats-details-btn" 
+                                data-model="${item.model}" 
+                                data-year="${item.orderYear}" 
+                                data-month="${item.orderMonth}">🔍</button>
+                            </td>
+                        </tr>
                     `;
                 });
 
@@ -154,7 +180,84 @@
                 resultArea.innerHTML = tableHTML;
             }
 
-            // --- (재사용) 시간 및 푸터 내비게이션 ---
+            async function openDetailsModal(model, year, month) {
+                detailsModalTitle.textContent = `${model} (${year}년 ${month}) 상세 내역`;
+                detailsModalContent.innerHTML = `<p class="no-data-message" style="text-align: center;">상세 내역을 불러오는 중입니다...</p>`;
+                detailsModal.classList.add('visible');
+
+                try {
+                    // 1. 상세 내역 API 호출
+                    const response = await fetch(`http://127.0.0.1:5000/api/statistics/model_details?model=${encodeURIComponent(model)}&year=${year}&month=${encodeURIComponent(month)}`);
+                    if (!response.ok) throw new Error('서버 응답 오류');
+
+                    const detailsData = await response.json();
+
+                    // 2. 상세 내역 테이블 생성
+                    if (detailsData.length === 0) {
+                        detailsModalContent.innerHTML = `<p class="no-data-message" style="text-align: center;">상세 내역 데이터가 없습니다.</p>`;
+                        return;
+                    }
+
+                    let tableHTML = `<table class="editable-table" id="details-modal-table">
+                        <thead>
+                            <tr>
+                                <th>생산 주차</th>
+                                <th>라인</th>
+                                <th>T/B</th>
+                                <th>주문량(LOT)</th>
+                                <th>실생산량</th>
+                            </tr>
+                        </thead>
+                        <tbody>`;
+
+                    detailsData.forEach(item => {
+
+                        // ▼▼▼ [수정된 핵심 로직] ▼▼▼
+
+                        // 1. "50/100" 또는 "50"에서 '/' 앞의 '계획량'을 숫자로 가져옵니다.
+                        const lotParts = (item.lot || '0').split('/');
+                        const batchQty = parseInt(lotParts[0], 10) || 0;
+
+                        // 2. '실생산량'을 숫자로 가져옵니다.
+                        const actualProd = parseInt(item.actualProd, 10) || 0;
+
+                        // 3. 'isPair' 조건 없이, 실생산량이 계획량(batch)보다 적으면 '문제'로 간주합니다.
+                        const isProblem = actualProd !== batchQty;
+                        const problemClass = isProblem ? 'stats-problem-yellow' : ''; // (statistics.css의 .stats-problem 클래스)
+
+                        // (날짜 포맷)
+                        const prodWeekFormatted = `${String(item.prod_year).slice(-2)}-${item.prod_month}-${item.prod_week}`;
+                        const linkURL = `production.html?year=${item.prod_year}&month=${item.prod_month}&week=${item.prod_week}`;
+                        tableHTML += `
+                            <tr>
+                                <td><a href="${linkURL}">${prodWeekFormatted}</a></td>
+                                <td>${item.line}</td>
+                                <td>${item.tb}</td>
+                                <td>${item.lot}</td>
+                                <td class="${problemClass}">${item.actualProd}</td>
+                            </tr>
+                        `;
+                    });
+
+                    tableHTML += `</tbody></table>`;
+                    detailsModalContent.innerHTML = tableHTML;
+
+                } catch (error) {
+                    console.error('상세 내역 로딩 실패:', error);
+                    detailsModalContent.innerHTML = `<p class="no-data-message" style="text-align: center;">데이터 로딩에 실패했습니다.</p>`;
+                }
+            }
+
+            // ▼▼▼ [신규] 상세 모달 닫기 이벤트 ▼▼▼
+            function closeDetailsModal() {
+                detailsModal.classList.remove('visible');
+            }
+            closeDetailsModalBtn.addEventListener('click', closeDetailsModal);
+            detailsModal.addEventListener('click', (e) => {
+                if (e.target === detailsModal) closeDetailsModal();
+            });
+            detailsModal.querySelector('.modal-window').addEventListener('click', (e) => e.stopPropagation());
+
             function updateTime() {
                 const now = new Date();
                 const year = now.getFullYear();

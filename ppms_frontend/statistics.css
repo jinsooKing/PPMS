@@ -54,3 +54,56 @@
     padding: 8px 12px;
     width: 100px; /* 적절한 너비 지정 */
 }
+
+.stats-details-btn {
+    font-size: 1rem;      /* 아이콘 크기 */
+    padding: 5px 8px;     /* 버튼 크기 */
+    font-family: 'BMDOHYEON', sans-serif;
+    color: #fff;
+    background-color: #3A3A3C;
+    border: 1px solid #555;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+.stats-details-btn:hover {
+    background-color: #555;
+}
+
+.editable-table td.stats-problem-yellow {
+    color: #FFD700;
+    font-weight: bold;
+}
+
+.editable-table td.stats-problem-red {
+    color: #FF4500; /* 더 강한 경고색 (오렌지 레드) */
+    font-weight: bold;
+}
+
+/* 3. 상세 내역 모달 스타일 (common.css 재사용 + 커스텀) */
+#details-modal .modal-window {
+    max-width: 800px; /* 모달 너비 */
+    height: 70vh;     /* 모달 높이 */
+}
+
+#details-modal .modal-content {
+    overflow-y: auto; /* 내용 많으면 스크롤 */
+}
+
+/* 4. 상세 내역 모달 안의 테이블 스타일 (common.css 재사용) */
+#details-modal-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'BMDOHYEON', sans-serif;
+    table-layout: fixed;
+}
+
+#details-modal-table a {
+    color: #00BFFF; /* 밝은 파란색 */
+    text-decoration: underline;
+    font-weight: bold;
+    cursor: pointer;
+}
+#details-modal-table a:hover {
+    color: #00ffff; /* 사이언 색 */
+}

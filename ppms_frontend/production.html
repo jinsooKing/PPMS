@@ -256,10 +256,22 @@
         let managerList = [];
         let companyList = [];
 
-        // --- 메인 이벤트 리스너 ---
         document.addEventListener('DOMContentLoaded', () => {
-            // 페이지가 처음 로드될 때 현재 주차 일정을 표시합니다.
-            displayCurrentWeekSchedule();
+
+            // ▼▼▼ [수정된 핵심 로직] ▼▼▼
+            // 1. 페이지 URL에 포함된 파라미터(year, month, week)를 읽습니다.
+            const urlParams = new URLSearchParams(window.location.search);
+            const year = urlParams.get('year');
+            const month = urlParams.get('month');
+            const week = urlParams.get('week');
+
+            if (year && month && week) {
+                // 2. (드릴다운) URL에 파라미터가 있으면, 해당 주차를 바로 표시합니다.
+                displayScheduleForWeek(parseInt(year), parseInt(month), parseInt(week));
+            } else {
+                // 3. (기본) URL에 파라미터가 없으면, '현재 주차'를 표시합니다.
+                displayCurrentWeekSchedule();
+            }
 
             // 모든 버튼과 요소에 대한 이벤트 리스너를 이 안에서 연결합니다.
             prevDataBtn.addEventListener('click', cycleViewMode);
@@ -457,7 +469,7 @@
                 const rows = tableBody.querySelectorAll('tr');
                 rows.forEach(row => {
                     const rowId = row.dataset.scheduleId;
-                    
+
                     // [수정] 인덱스가 아닌 'data-field' 속성으로 정확히 값을 찾습니다.
                     const company = row.querySelector('[data-field="company-modal"]').value;
                     const model = row.querySelector('[data-field="model-modal"]').value;
@@ -467,7 +479,7 @@
                     const tb = row.querySelector('[data-field="tb-modal"]').value;
                     const startDate = row.querySelector('.start-date-select').value;
                     const endDate = row.querySelector('.end-date-select').value;
-                    
+
                     if (company || model || lot) {
                         allSchedules.push({
                             id: rowId ? parseInt(rowId) : null,
@@ -489,26 +501,26 @@
                 weekInfo: currentSelectedWeekInfo,
                 schedules: allSchedules
             };
-            
+
             fetch('http://127.0.0.1:5000/api/production/schedules', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(dataToSend),
             })
-            .then(response => response.json())
-            .then(data => {
-                if (data.message) {
-                    alert(data.message);
-                    closeModal();
-                    renderContent(); 
-                } else {
-                    alert("저장 중 오류 발생: " + (data.error || '알 수 없는 오류'));
-                }
-            })
-            .catch(error => {
-                console.error('저장 중 오류 발생:', error);
-                alert('데이터 저장에 실패했습니다. 백엔드 서버를 확인하세요.');
-            });
+                .then(response => response.json())
+                .then(data => {
+                    if (data.message) {
+                        alert(data.message);
+                        closeModal();
+                        renderContent();
+                    } else {
+                        alert("저장 중 오류 발생: " + (data.error || '알 수 없는 오류'));
+                    }
+                })
+                .catch(error => {
+                    console.error('저장 중 오류 발생:', error);
+                    alert('데이터 저장에 실패했습니다. 백엔드 서버를 확인하세요.');
+                });
         }
         async function resetSchedules() {
             if (confirm('정말로 해당 주차의 모든 일정을 초기화하시겠습니까?\nDB에 저장된 내용이 영구적으로 삭제됩니다.')) {
@@ -630,17 +642,17 @@
             const lineCell = `<td class="line-cell">${line}</td>`;
 
             // 업체 (companyList와 scheduleData 사용)
-            const companyOptions = companyList.map(c => 
+            const companyOptions = companyList.map(c =>
                 `<option value="${c.name}" ${scheduleData.company === c.name ? 'selected' : ''}>${c.name}</option>`
             ).join('');
             const companyCell = `<td><select data-field="company-modal">
                 <option value="">-선택-</option>
                 ${companyOptions}
             </select></td>`;
-            
+
             // 모델명 (scheduleData 사용)
             const modelCell = `<td><input type="text" data-field="model-modal" value="${scheduleData.model || ''}"></td>`;
-            
+
             const orderYearValue = scheduleData.orderYear || currentSelectedWeekInfo.year;
             const orderYearCell = `<td><input type="number" data-field="orderYear" value="${orderYearValue}"></td>`;
 
@@ -654,7 +666,7 @@
 
             // LOT (scheduleData 사용 - 's'가 아님!)
             const lotCell = `<td><input type="text" data-field="lot-modal" value="${scheduleData.lot || ''}" placeholder="예: 50"></td>`;
-            
+
             // T/B (T/O, B/O 포함 및 scheduleData 사용)
             const tbCell = `<td><select data-field="tb-modal">
                 <option ${scheduleData.tb === 'Top' ? 'selected' : ''}>Top</option>
@@ -662,7 +674,7 @@
                 <option ${scheduleData.tb === 'T/O' ? 'selected' : ''}>T/O</option>
                 <option ${scheduleData.tb === 'B/O' ? 'selected' : ''}>B/O</option>
             </select></td>`;
-            
+
             // 생산예정일
             const dateCell = `<td><div class="date-select-group"><select class="start-date-select"></select><span>~</span><select class="end-date-select"></select></div></td>`;
 
@@ -673,7 +685,7 @@
 
             // 날짜 드롭다운 채우기
             populateDateSelectors(currentSelectedWeekInfo, newRow);
-            
+
             // (중요) DB에서 불러온 기존 날짜 값 설정 (scheduleData 사용)
             const selects = newRow.querySelectorAll('select');
             // selects[0] = 업체
@@ -902,7 +914,7 @@
         function displayPastYears() {
             const currentYear = new Date().getFullYear();
             let contentHTML = `<div class="period-selector-grid">`;
-            for (let i = 0; i < 5; i++) {
+            for (let i = 2; i >= 0; i--) {
                 const year = currentYear - i;
                 contentHTML += `<div class="period-btn" data-view="past_months" data-year="${year}">${year}년</div>`;
             }

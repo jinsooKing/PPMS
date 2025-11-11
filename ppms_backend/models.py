@@ -5,6 +5,7 @@ db = SQLAlchemy()
 
 # 'production_schedules' 테이블의 Python 클래스
 # 'production_schedules' 테이블의 Python 클래스
+# 'production_schedules' 테이블의 Python 클래스
 class ProductionSchedule(db.Model):
     __tablename__ = 'production_schedules'
     
@@ -15,8 +16,8 @@ class ProductionSchedule(db.Model):
     line = db.Column(db.String(10), nullable=False)
     company = db.Column(db.String(100))
     model = db.Column(db.String(100))
-    order_month = db.Column(db.String(20))
     order_year = db.Column(db.Integer)
+    order_month = db.Column(db.String(20))
     tb = db.Column(db.String(50))
     start_date = db.Column(db.String(50))
     end_date = db.Column(db.String(50))
@@ -29,16 +30,12 @@ class ProductionSchedule(db.Model):
     total_quantity = db.Column(db.Integer, default=0)
     
     def to_dict(self):
-        # ▼▼▼ [수정된 '읽기 어댑터' 로직] ▼▼▼
+        # (읽기 어댑터 로직)
         batch = self.batch_quantity or 0
         total = self.total_quantity or 0
-
-        # total_quantity가 0보다 크고, batch와 값이 다를 때만 "/"를 표시합니다.
         if total > 0 and batch != total:
-            # Case 1: (50, 100) -> "50/100" 반환
             lot_string = f"{batch}/{total}"
         else:
-            # Case 2: (50, 50) 또는 (50, 0) -> "50" 반환
             lot_string = f"{batch}"
         
         return {
@@ -46,7 +43,7 @@ class ProductionSchedule(db.Model):
             "line": self.line,
             "company": self.company,
             "model": self.model,
-            "orderYear": self.order_year,
+            "orderYear": self.order_year, 
             "orderMonth": self.order_month,
             "tb": self.tb,
             "startDate": self.start_date,
@@ -56,8 +53,12 @@ class ProductionSchedule(db.Model):
             "actualStartDate": self.actual_start_date,
             "actualEndDate": self.actual_end_date,
             "notes": self.notes,
+            "lot": lot_string,
             
-            "lot": lot_string # 수정된 lot_string을 반환
+            # ▼▼▼ [수정] 누락되었던 3개 필드 추가 ▼▼▼
+            "prod_year": self.prod_year,
+            "prod_month": self.prod_month,
+            "prod_week": self.prod_week
         }
 
 class Manager(db.Model):
