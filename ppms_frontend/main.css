@@ -19,3 +19,68 @@
     border-bottom-width: 3px;
     box-shadow: 0 2px 3px rgba(0,0,0,0.2);
 }
+
+#login-modal .small-modal {
+    height: auto; /* 높이는 자동으로 */
+    max-width: 400px;
+}
+
+#login-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    padding-top: 10px;
+}
+
+.login-input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.login-input-group label {
+    font-family: 'BMJUA', sans-serif;
+    font-size: 1.1rem;
+    color: #eaeaea;
+}
+
+/* common.css의 .editable-table input 스타일 재사용 */
+.form-input {
+    width: 100%;
+    padding: 10px;
+    background: #1c1c1e;
+    border: 1px solid #555;
+    color: #FFFFFF;
+    font-family: 'BMDOHYEON', sans-serif;
+    font-weight: bold;
+    font-size: 1.1rem;
+    border-radius: 5px;
+    box-sizing: border-box; /* 패딩 포함 크기 계산 */
+}
+.form-input:focus {
+    outline: none;
+    border-color: #00BFFF;
+}
+
+#login-submit-btn {
+    width: 100%;
+    text-align: center;
+    box-sizing: border-box;
+    padding-top: 12px;
+    padding-bottom: 12px;
+    margin-top: 10px;
+    background-color: #007BFF; /* 로그인 버튼 색상 */
+}
+#login-submit-btn:hover {
+    background-color: #0056b3;
+}
+
+.login-status-message {
+    font-family: 'BMDOHYEON', sans-serif;
+    font-size: 0.9rem;
+    font-weight: bold;
+    color: #FF4500; /* 에러 메시지 색상 */
+    text-align: center;
+    margin: 5px 0 0 0;
+    height: 1.2em; /* 메시지 공간 확보 */
+}

@@ -13,6 +13,7 @@
     <link href="https://hangeul.pstatic.net/hangeul_static/css/bmdohyeon.css" rel="stylesheet">
     <link href="https://hangeul.pstatic.net/hangeul_static/css/bmjua.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="auth.js"></script>
 </head>
 
 <body>
@@ -72,6 +73,7 @@
     </div>
 
     <script>
+
         document.addEventListener('DOMContentLoaded', () => {
 
             // --- 1. 요소 가져오기 ---
@@ -272,6 +274,15 @@
 
             document.getElementById('home-btn').addEventListener('click', () => window.location.href = 'index.html');
             document.getElementById('back-btn').addEventListener('click', () => window.location.href = 'production.html');
+
+            // 1. (말씀하신) 역할(Role) 확인
+            const userRole = localStorage.getItem('ppms_user_role');
+
+            // 2. (말씀하신) 비로그인 시 튕겨내기
+            if (!userRole) {
+                window.location.href = 'login.html';
+                return; // (중요) 나머지 코드 실행 중단
+            }
         });
     </script>
 </body>

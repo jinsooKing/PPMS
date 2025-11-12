@@ -4,13 +4,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PPMS - 생산공정관리시스템</title>
+    <title>PPMS - 관리자 페이지</title>
+    
     <link rel="stylesheet" href="common.css">
     <link rel="stylesheet" href="header.css">
     <link rel="stylesheet" href="main.css">
     <link rel="stylesheet" href="footer.css">
     <link href="https://hangeul.pstatic.net/hangeul_static/css/bmdohyeon.css" rel="stylesheet">
     <link href="https://hangeul.pstatic.net/hangeul_static/css/bmjua.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 
     <script src="auth.js"></script>
 
@@ -20,31 +22,12 @@
             align-items: center;
             justify-content: center;
             flex-wrap: wrap;
-            gap: 15px;
-        }
-
-        .flow-arrow {
-            width: 40px;
-            height: 3px;
-            background-color: #FFFFFF;
-            position: relative;
-        }
-
-        .flow-arrow::after {
-            content: '';
-            position: absolute;
-            right: -8px;
-            top: -6.5px;
-            width: 0;
-            height: 0;
-            border-top: 8px solid transparent;
-            border-bottom: 8px solid transparent;
-            border-left: 10px solid #FFFFFF;
+            gap: 25px; 
         }
 
         .grid-item {
             font-size: clamp(24px, 3vw, 40px);
-            padding: clamp(25px, 3vw, 40px) clamp(30px, 5vw, 50px);
+            padding: clamp(25px, 3vw, 40px) clamp(40px, 5vw, 60px);
         }
     </style>
 </head>
@@ -62,7 +45,7 @@
                 </a>
             </div>
             <div class="header-center">
-                <div class="common-box font-35pt">생산공정관리 PPMS</div>
+                <div class="common-box font-35pt">관리자 페이지</div>
             </div>
             <div class="header-right">
                 <div class="common-box font-15pt time-display" id="current-time"></div>
@@ -71,37 +54,40 @@
 
         <main class="content-area">
             <div class="flow-container">
-                <a href="production.html">
-                    <div class="grid-item">생산</div>
+                
+                <a href="statistics.html">
+                    <div class="grid-item">통계분석</div>
                 </a>
-                <div class="flow-arrow"></div>
-                <a href="aoi.html">
-                    <div class="grid-item">AOI</div>
+
+                <a href="admin_bom.html"> <div class="grid-item">BOM/좌표</div>
                 </a>
-                <div class="flow-arrow"></div>
-                <a href="repair.html">
-                    <div class="grid-item">수리</div>
+
+                <a href="admin_status.html"> <div class="grid-item">작업현황</div>
                 </a>
-                <div class="flow-arrow"></div>
-                <a href="function_test.html">
-                    <div class="grid-item">기능</div>
-                </a>
+
             </div>
         </main>
 
         <footer class="main-footer">
             <div class="footer-left">
-                <div class="common-box font-15pt clickable-box">백업</div>
-                <div class="common-box font-15pt clickable-box">복원</div>
-            </div>
+                 </div>
+            
             <div class="footer-center">
-                <div class="common-box font-15pt" id="footer-center-content">(주)필리아텔레콤</div>
+                <div class="common-box font-15pt clickable-box" id="admin-back-btn">
+                    <i class="fas fa-arrow-left"></i>
+                </div>
+                <div class="common-box font-15pt clickable-box" id="admin-home-btn">
+                    <i class="fas fa-home"></i>
+                </div>
+                <div class="common-box font-15pt clickable-box" id="admin-forward-btn">
+                    <i class="fas fa-arrow-right"></i>
+                </div>
             </div>
+
             <div class="footer-right">
-                <div class="common-box font-15pt clickable-box" id="logout-btn">로그아웃</div>
-            </div>
+                </div>
         </footer>
-    </div>
+        </div>
 
     <script>
         // --- 시간 표시 함수 ---
@@ -121,31 +107,46 @@
         // --- 'DOMContentLoaded' 로직 ---
         document.addEventListener('DOMContentLoaded', () => {
 
-            // 1. 임시 보안 가드
+            // 1. (필수) 임시 로그인 보안 가드
             const userRole = localStorage.getItem('ppms_user_role');
-
-            // 2. 비로그인 시 튕겨내기
             if (!userRole) {
                 window.location.href = 'login.html';
                 return;
             }
 
-            // 3. 로그아웃 버튼 활성화
-            setupLogoutButton();
+            // 2. (필수) 관리자 전용 페이지 권한 확인
+            if (userRole !== 'admin') {
+                alert('접근 권한이 없습니다.');
+                window.location.href = 'index.html';
+                return;
+            }
 
-            // 4. 시간 표시 시작
+            // 3. (삭제) 로그아웃 버튼 활성화 로직 삭제
+            // setupLogoutButton();
+
+            // 4. (필수) 시간 표시 시작
             setInterval(updateTime, 1000);
             updateTime();
 
-            // 5. 관리자일 경우, 푸터 중앙 UI를 '관리자페이지' 링크로 변경
-            const footerCenterContent = document.getElementById('footer-center-content');
-            if (userRole === 'admin' && footerCenterContent) {
-                footerCenterContent.textContent = '관리자페이지';
-                footerCenterContent.classList.add('clickable-box');
-                const adminLink = document.createElement('a');
-                adminLink.href = 'admin.html';
-                footerCenterContent.parentNode.insertBefore(adminLink, footerCenterContent);
-                adminLink.appendChild(footerCenterContent);
+            // 5. 하단 내비게이션 버튼 기능 연결
+            const backBtn = document.getElementById('admin-back-btn');
+            const homeBtn = document.getElementById('admin-home-btn');
+            const forwardBtn = document.getElementById('admin-forward-btn');
+
+            if (backBtn) {
+                backBtn.addEventListener('click', () => {
+                    history.back(); 
+                });
+            }
+            if (homeBtn) {
+                homeBtn.addEventListener('click', () => {
+                    window.location.href = 'index.html'; 
+                });
+            }
+            if (forwardBtn) {
+                forwardBtn.addEventListener('click', () => {
+                    history.forward(); 
+                });
             }
         });
     </script>

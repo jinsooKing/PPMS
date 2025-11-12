@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,7 +10,9 @@
     <link rel="stylesheet" href="footer.css">
     <link href="https://hangeul.pstatic.net/hangeul_static/css/bmdohyeon.css" rel="stylesheet">
     <link href="https://hangeul.pstatic.net/hangeul_static/css/bmjua.css" rel="stylesheet">
+    <script src="auth.js"></script>
 </head>
+
 <body>
     <div class="page-container">
         <header class="main-header">
@@ -53,9 +56,19 @@
             const formattedTime = `${year}년 ${month}월 ${day}일 ${hours}시 ${minutes}분`;
             timeDisplay.textContent = formattedTime;
         }
-        setInterval(updateTime, 1000);
-        updateTime();
+        document.addEventListener('DOMContentLoaded', () => {
+            setInterval(updateTime, 1000);
+            updateTime();
+            // 1. (말씀하신) 역할(Role) 확인
+            const userRole = localStorage.getItem('ppms_user_role');
+
+            // 2. (말씀하신) 비로그인 시 튕겨내기
+            if (!userRole) {
+                window.location.href = 'login.html';
+                return; // (중요) 나머지 코드 실행 중단
+            }
+        });
     </script>
 </body>
-</html>
 
+</html>

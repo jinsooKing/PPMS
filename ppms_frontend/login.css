@@ -1,0 +1,103 @@
+/* login.html 전용 스타일 */
+body, html {
+    height: 100%;
+}
+
+.page-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100%;
+}
+
+/* common.css의 .modal-window 스타일을 가져와 수정 */
+.login-window {
+    background-color: #2C2C2E;
+    padding: 25px 30px 30px 30px;
+    border-radius: 10px;
+    border: 1px solid #555;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+    width: 100%;
+    max-width: 400px;
+    font-family: 'BMDOHYEON', sans-serif;
+    font-weight: bold;
+    display: flex;
+    flex-direction: column;
+}
+
+.login-title {
+    color: #FFFFFF;
+    font-size: 1.8rem;
+    margin: 0 0 15px 0;
+    padding-bottom: 10px;
+    font-family: inherit;
+    font-weight: inherit;
+    text-align: center;
+}
+
+#login-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.login-input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.login-input-group label {
+    font-family: 'BMJUA', sans-serif;
+    font-size: 1.1rem;
+    color: #eaeaea;
+}
+
+.form-input {
+    width: 100%;
+    padding: 10px;
+    background: #1c1c1e;
+    border: 1px solid #555;
+    color: #FFFFFF;
+    font-family: 'BMDOHYEON', sans-serif;
+    font-weight: bold;
+    font-size: 1.1rem;
+    border-radius: 5px;
+    box-sizing: border-box;
+}
+.form-input:focus {
+    outline: none;
+    border-color: #00BFFF;
+}
+
+/* common.css의 .clickable-box 스타일 재사용 */
+#login-submit-btn {
+    width: 100%;
+    text-align: center;
+    box-sizing: border-box;
+    padding-top: 12px;
+    padding-bottom: 12px;
+    margin-top: 10px;
+    background-color: #007BFF;
+    color: #fff;
+    font-size: clamp(13px, 1.2vw, 18px); /* font-15pt */
+    border: 1px solid #555;
+    border-bottom: 3px solid #333;
+}
+#login-submit-btn:hover {
+    background-color: #0056b3;
+}
+#login-submit-btn:active {
+    transform: translateY(1px);
+    border-bottom-width: 2px;
+}
+
+.login-status-message {
+    font-family: 'BMDOHYEON', sans-serif;
+    font-size: 0.9rem;
+    font-weight: bold;
+    color: #FF4500;
+    text-align: center;
+    margin: 5px 0 0 0;
+    height: 1.2em;
+}

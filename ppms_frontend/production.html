@@ -14,6 +14,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+    <script src="auth.js"></script>
 </head>
 
 <body>
@@ -257,6 +258,23 @@
         let companyList = [];
 
         document.addEventListener('DOMContentLoaded', () => {
+
+            // 1. [필수] "file://" 개발 환경용 임시 보안 가드
+            const userRole = localStorage.getItem('ppms_user_role');
+
+            // 2. [필수] localStorage에 값이 없으면 쫓아내기
+            if (!userRole) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            // 3. [필수] 로그아웃 버튼 기능 활성화 (auth.js가 로드되었다면)
+            if (typeof setupLogoutButton === 'function') {
+                setupLogoutButton();
+            }
+            
+            setInterval(updateTime, 1000);
+            updateTime(); // 즉시 1회 실행
 
             // ▼▼▼ [수정된 핵심 로직] ▼▼▼
             // 1. 페이지 URL에 포함된 파라미터(year, month, week)를 읽습니다.
@@ -1332,8 +1350,6 @@
             const formattedTime = `${year}년 ${month}월 ${day}일 ${hours}시 ${minutes}분`;
             timeDisplay.textContent = formattedTime;
         }
-        setInterval(updateTime, 1000);
-
     </script>
 </body>
 

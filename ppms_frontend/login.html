@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PPMS - 로그인</title>
+    <link rel="stylesheet" href="common.css">
+    <link rel="stylesheet" href="login.css"> <link href="https://hangeul.pstatic.net/hangeul_static/css/bmdohyeon.css" rel="stylesheet">
+    <link href="https://hangeul.pstatic.net/hangeul_static/css/bmjua.css" rel="stylesheet">
+</head>
+<body>
+    <div class="page-container">
+        
+        <div class="login-window">
+            <h2 class="login-title">PPMS 로그인</h2>
+            
+            <div id="login-form">
+                <div class="login-input-group">
+                    <label for="password">비밀번호:</label>
+                    <input type="password" id="password" class="form-input" autocomplete="current-password">
+                </div>
+                <div class="common-box clickable-box" id="login-submit-btn">
+                    로그인
+                </div>
+                <p class="login-status-message" id="login-status"></p>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            // 1. 요소 가져오기
+            const loginSubmitBtn = document.getElementById('login-submit-btn');
+            const passwordInput = document.getElementById('password');
+            const loginStatus = document.getElementById('login-status');
+
+            // (페이지가 로드되자마자 비밀번호 입력칸에 포커스)
+            passwordInput.focus();
+
+            // 2. '로그인' 버튼 클릭 이벤트 (API 호출)
+            loginSubmitBtn.addEventListener('click', async () => {
+                const password = passwordInput.value;
+                if (!password) {
+                    loginStatus.textContent = '비밀번호를 입력하세요.';
+                    return;
+                }
+                loginStatus.textContent = '로그인 중...';
+
+                try {
+                    const response = await fetch('http://127.0.0.1:5000/api/auth/login', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            password: password
+                        }),
+                        credentials: 'include' // 세션 쿠키를 받기 위해 필수
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        localStorage.setItem('ppms_user_role', data.role || 'user');
+                        window.location.href = 'index.html'; 
+                    } else {
+                        // 4. 로그인 실패
+                        loginStatus.textContent = data.message;
+                    }
+                } catch (error) {
+                    console.error('로그인 API 통신 오류:', error);
+                    loginStatus.textContent = '서버에 연결할 수 없습니다.';
+                }
+            });
+            
+            // 5. 비밀번호 입력창에서 Enter 키로 로그인
+            passwordInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    loginSubmitBtn.click();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

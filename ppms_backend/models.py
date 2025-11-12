@@ -1,14 +1,12 @@
-from flask_sqlalchemy import SQLAlchemy
+from extensions import db  # ▼ [수정] flask_sqlalchemy 대신 extensions에서 db를 가져옵니다.
+from flask_login import UserMixin
 
-# 'db' 객체를 생성합니다. (아직 app에 연결 안 함)
-db = SQLAlchemy()
+# db = SQLAlchemy()  <-- (삭제) 이 줄은 extensions.py로 이동했습니다.
 
-# 'production_schedules' 테이블의 Python 클래스
-# 'production_schedules' 테이블의 Python 클래스
-# 'production_schedules' 테이블의 Python 클래스
+# ... (ProductionSchedule, Manager, Company 클래스는 동일) ...
 class ProductionSchedule(db.Model):
+    # (내용 변경 없음)
     __tablename__ = 'production_schedules'
-    
     id = db.Column(db.Integer, primary_key=True)
     prod_year = db.Column(db.Integer, nullable=False)
     prod_month = db.Column(db.Integer, nullable=False)
@@ -30,7 +28,6 @@ class ProductionSchedule(db.Model):
     total_quantity = db.Column(db.Integer, default=0)
     
     def to_dict(self):
-        # (읽기 어댑터 로직)
         batch = self.batch_quantity or 0
         total = self.total_quantity or 0
         if total > 0 and batch != total:
@@ -54,19 +51,27 @@ class ProductionSchedule(db.Model):
             "actualEndDate": self.actual_end_date,
             "notes": self.notes,
             "lot": lot_string,
-            
-            # ▼▼▼ [수정] 누락되었던 3개 필드 추가 ▼▼▼
             "prod_year": self.prod_year,
             "prod_month": self.prod_month,
             "prod_week": self.prod_week
         }
 
 class Manager(db.Model):
+    # (내용 변경 없음)
     __tablename__ = 'managers'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False, unique=True)
 
 class Company(db.Model):
+    # (내용 변경 없음)
     __tablename__ = 'companies'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False, unique=True)
+
+class User(UserMixin, db.Model):
+    # (내용 변경 없음)
+    __tablename__ = 'users'
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(100), unique=True, nullable=False)
+    password_hash = db.Column(db.String(255), nullable=False)
+    role = db.Column(db.String(50), nullable=False, default='user')
