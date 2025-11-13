@@ -9,19 +9,22 @@ bp = Blueprint('auth', __name__, url_prefix='/api/auth')
 def login():
     try:
         data = request.json
-        # ▼ [수정] username을 받지 않고, password만 받습니다.
+        # [수정] 'username'을 프론트엔드로부터 받습니다 (값은 'user' 또는 'admin')
+        username = data.get('username')
         password = data.get('password')
 
+        if not username:
+            return jsonify({"success": False, "message": "권한을 선택하세요."}), 400
         if not password:
             return jsonify({"success": False, "message": "비밀번호를 입력하세요."}), 400
 
-        # ▼ [수정] username을 'admin'으로 하드코딩(고정)합니다.
-        username_to_check = "admin" 
+        # [삭제] username을 'admin'으로 하드코딩하던 부분 삭제
+        # username_to_check = "admin" 
         
-        # 1. DB에서 'admin' 사용자를 찾습니다.
-        user = User.query.filter_by(username=username_to_check).first()
+        # 1. DB에서 프론트가 보낸 'username'으로 사용자를 찾습니다.
+        user = User.query.filter_by(username=username).first()
 
-        # 2. 'admin' 사용자가 존재하고, 암호화된 비밀번호가 일치하는지 확인
+        # 2. 사용자가 존재하고, 암호화된 비밀번호가 일치하는지 확인
         if user and bcrypt.check_password_hash(user.password_hash, password):
             # 3. Flask-Login을 사용해 '로그인 세션' 생성
             login_user(user, remember=True)
@@ -29,11 +32,11 @@ def login():
             return jsonify({
                 "success": True, 
                 "message": f"'{user.username}'님, 환영합니다!", 
-                "role": user.role
+                "role": user.role  # [중요] localStorage에 저장할 역할을 응답
             })
         
-        # 4. 로그인 실패
-        return jsonify({"success": False, "message": "비밀번호가 잘못되었습니다."}), 401
+        # 4. 로그인 실패 (계정이 없거나 비밀번호가 틀림)
+        return jsonify({"success": False, "message": "계정 또는 비밀번호가 잘못되었습니다."}), 401
 
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500

@@ -5,9 +5,46 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PPMS - 로그인</title>
     <link rel="stylesheet" href="common.css">
-    <link rel="stylesheet" href="login.css"> <link href="https://hangeul.pstatic.net/hangeul_static/css/bmdohyeon.css" rel="stylesheet">
+    <link rel="stylesheet" href="login.css">
+    <link href="https://hangeul.pstatic.net/hangeul_static/css/bmdohyeon.css" rel="stylesheet">
     <link href="https://hangeul.pstatic.net/hangeul_static/css/bmjua.css" rel="stylesheet">
-</head>
+
+    <style>
+        .login-role-selector {
+            display: flex;
+            justify-content: center;
+            gap: 15px; 
+            margin-bottom: 20px;
+        }
+
+        .login-role-selector .common-box {
+            flex: 1; 
+            width: auto; 
+            text-align: center; 
+            padding-top: 10px;
+            padding-bottom: 10px;
+            font-size: clamp(14px, 1.2vw, 18px); 
+        }
+
+        /* [신규] '선택 안 됨' 상태 (기본 입체감 + 살짝 투명) */
+        .clickable-box.not-selected {
+            opacity: 0.6; /* 살짝 투명하게 처리 */
+            /* pointer-events: none; <-- (제거) 클릭을 막지 않음 */
+        }
+
+        /* '눌린' 상태 (선택됨) */
+        .clickable-box.selected {
+            transform: translateY(1px);
+            border-bottom-width: 2px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+            background-color: #007BFF; 
+            color: #FFFFFF;
+            opacity: 1.0; /* 100% 불투명 */
+        }
+
+        /* [삭제] 'locked' 스타일 완전 삭제 */
+    </style>
+    </head>
 <body>
     <div class="page-container">
         
@@ -15,9 +52,18 @@
             <h2 class="login-title">PPMS 로그인</h2>
             
             <div id="login-form">
+                
+                <div class="login-role-selector">
+                    <div class="common-box clickable-box" id="role-user-btn" data-role="user">
+                        일반
+                    </div>
+                    <div class="common-box clickable-box" id="role-admin-btn" data-role="admin">
+                        관리자
+                    </div>
+                </div>
+
                 <div class="login-input-group">
-                    <label for="password">비밀번호:</label>
-                    <input type="password" id="password" class="form-input" autocomplete="current-password">
+                    <input type="password" id="password" class="form-input" autocomplete="current-password" placeholder="비밀번호">
                 </div>
                 <div class="common-box clickable-box" id="login-submit-btn">
                     로그인
@@ -35,13 +81,41 @@
             const loginSubmitBtn = document.getElementById('login-submit-btn');
             const passwordInput = document.getElementById('password');
             const loginStatus = document.getElementById('login-status');
+            const userBtn = document.getElementById('role-user-btn');
+            const adminBtn = document.getElementById('role-admin-btn');
+            
+            // 2. [수정] '일반'을 기본 선택으로 설정
+            let selectedRole = 'user'; // 기본값 'user'
+            userBtn.classList.add('selected');
+            adminBtn.classList.add('not-selected'); // '관리자'는 'not-selected'로 시작
+            passwordInput.focus(); 
 
-            // (페이지가 로드되자마자 비밀번호 입력칸에 포커스)
-            passwordInput.focus();
+            // 3. [수정] 상호 배타적 클릭 이벤트 (locked 대신 not-selected 사용)
+            [userBtn, adminBtn].forEach(button => {
+                button.addEventListener('click', () => {
+                    const role = button.dataset.role;
 
-            // 2. '로그인' 버튼 클릭 이벤트 (API 호출)
+                    if (selectedRole === role) {
+                        return; // 이미 선택된 건 클릭해도 무시
+                    }
+                    
+                    selectedRole = role; 
+
+                    // [수정] 'selected' / 'not-selected' 클래스를 토글
+                    userBtn.classList.toggle('selected', role === 'user');
+                    userBtn.classList.toggle('not-selected', role !== 'user');
+                    
+                    adminBtn.classList.toggle('selected', role === 'admin');
+                    adminBtn.classList.toggle('not-selected', role !== 'admin');
+
+                    passwordInput.focus();
+                });
+            });
+
+            // 4. '로그인' 버튼 클릭 이벤트 (변경 없음)
             loginSubmitBtn.addEventListener('click', async () => {
                 const password = passwordInput.value;
+                
                 if (!password) {
                     loginStatus.textContent = '비밀번호를 입력하세요.';
                     return;
@@ -51,13 +125,12 @@
                 try {
                     const response = await fetch('http://127.0.0.1:5000/api/auth/login', {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
+                        headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
+                            username: selectedRole, // 'user' 또는 'admin'
                             password: password
                         }),
-                        credentials: 'include' // 세션 쿠키를 받기 위해 필수
+                        credentials: 'include' 
                     });
 
                     const data = await response.json();
@@ -66,7 +139,6 @@
                         localStorage.setItem('ppms_user_role', data.role || 'user');
                         window.location.href = 'index.html'; 
                     } else {
-                        // 4. 로그인 실패
                         loginStatus.textContent = data.message;
                     }
                 } catch (error) {
@@ -75,7 +147,7 @@
                 }
             });
             
-            // 5. 비밀번호 입력창에서 Enter 키로 로그인
+            // 5. Enter 키 이벤트 (변경 없음)
             passwordInput.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') {
                     loginSubmitBtn.click();
