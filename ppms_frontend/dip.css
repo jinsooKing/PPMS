@@ -297,9 +297,7 @@ input[type="date"] {
 /* 4. [신규] '수량' 셀 스타일 */
 .dip-table-box .quantity-cell {
     position: relative; /* [중요] 삭제 버튼의 기준점 */
-    text-align: right; /* 수량은 오른쪽 정렬 */
-    /* [중요] 버튼이 들어갈 공간 확보 */
-    padding-right: 35px !important; 
+    text-align: center; /* 수량은 오른쪽 정렬 */
 }
 
 /* 5. [수정] 행(row)별 삭제 버튼 ('-' 버튼) */
