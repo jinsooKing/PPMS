@@ -1,0 +1,333 @@
+/* --- DIP 페이지 레이아웃 --- */
+.dip-layout {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    height: 100%;
+    gap: 20px; /* 폼과 테이블 사이 간격 */
+    padding: 20px; /* common.css의 .content-area 패딩 대신 사용 */
+    box-sizing: border-box; /* 패딩이 크기에 포함되도록 설정 */
+}
+
+.dip-registration-box {
+    flex-shrink: 0; 
+    flex-basis: 300px; /* [신규] 왼쪽 폼의 가로 너비 고정 (예: 450px) */
+    height: 100%; /* [신규] 세로 높이를 꽉 채움 */
+    overflow-y: auto; /* [신규] 폼 내용이 길어지면 스크롤 */
+    background-color: #2C2C2E;
+    padding: 20px;
+    border-radius: 10px;
+    border: 1px solid #444;
+    box-sizing: border-box; /* [신규] 패딩 포함 */
+}
+/* --- 공용 타이틀 (h2) --- */
+.dip-title {
+    color: #FFFFFF;
+    font-family: 'BMDOHYEON', sans-serif;
+    font-size: clamp(16px, 1.5vw, 22px);
+    margin: 0 0 15px 0;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #555;
+}
+
+/* --- 1. 신규 등록 폼 --- */
+.dip-registration-box {
+    flex-shrink: 0; /* 크기 고정 */
+    background-color: #2C2C2E;
+    padding: 20px;
+    border-radius: 10px;
+    border: 1px solid #444;
+}
+
+.dip-form-grid {
+    display: grid;
+    /* 반응형 그리드: 최소 200px, 최대 1fr */
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px 20px; /* 행 간격, 열 간격 */
+}
+
+.dip-input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px; /* 라벨과 인풋 사이 간격 */
+}
+
+.dip-input-group label {
+    color: #FFFFFF;
+    font-family: 'BMDOHYEON', sans-serif;
+    font-size: clamp(13px, 1vw, 16px);
+}
+
+.form-input {
+    width: 100%;
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid #555;
+    background: #1E1E1E;
+    color: #FFFFFF;
+    font-family: 'BMDOHYEON', sans-serif;
+    font-size: clamp(14px, 1.1vw, 16px);
+    box-sizing: border-box; /* 패딩이 너비에 포함되도록 */
+}
+
+input[type="date"] {
+    color-scheme: dark; /* 날짜 선택기 다크모드 */
+}
+
+/* '출고'/'입고' 버튼 */
+.dip-type-selector {
+    display: flex;
+    gap: 10px;
+    height: 100%; /* 인풋과 높이 맞춤 */
+}
+
+.dip-type-selector .common-box {
+    flex: 1;
+    text-align: center;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    font-size: clamp(14px, 1.1vw, 16px);
+}
+
+/* login.html에서 가져온 '선택됨'/'선택안됨' 스타일 */
+.dip-type-selector .selected {
+    transform: translateY(1px);
+    border-bottom-width: 2px;
+    background-color: #007BFF;
+    color: #FFFFFF;
+    opacity: 1.0;
+}
+.dip-type-selector .not-selected {
+    opacity: 0.6;
+}
+
+/* '등록하기' 버튼 */
+.register-button-group {
+    /* 버튼이 다른 인풋과 세로 정렬이 맞도록 */
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end; /* 라벨이 없는 것처럼 버튼을 아래로 정렬 */
+}
+#dip-register-btn {
+    background-color: #007BFF;
+    color: white;
+    text-align: center;
+    font-size: clamp(15px, 1.2vw, 18px);
+}
+#dip-register-btn:hover {
+    background-color: #0056b3;
+}
+
+
+/* --- 2. 외주 현황 테이블 --- */
+.dip-table-box {
+    flex-grow: 1; /* [중요] 남은 공간을 1:1로 나눠 가짐 */
+    flex-basis: 0; /* 0에서부터 동일하게 공간 분배 */
+    display: flex;
+    flex-direction: column;
+    background-color: #2C2C2E;
+    padding: 20px;
+    border-radius: 10px;
+    border: 1px solid #444;
+    min-height: 0; /* Flexbox 스크롤을 위해 필수 */
+}
+
+.dip-table-box .table-container {
+    flex-grow: 1; /* 테이블 컨테이너가 남은 공간 차지 */
+    overflow-y: auto; /* 내용이 많아지면 스크롤 */
+    border: 1px solid #555;
+    border-radius: 8px;
+}
+
+/* common.css의 .editable-table 스타일을 사용합니다. */
+/* (만약 .editable-table에 덮어쓸 내용이 있다면 여기에 추가) */
+.editable-table th {
+    /* (기존) */
+    background-color: #3A3A3C;
+    top: 0;
+}
+
+.dip-table-box .action-btn-cell {
+    text-align: center;
+}
+
+.dip-table-box .action-btn {
+    font-family: 'BMDOHYEON', sans-serif;
+    padding: 5px 9px; /* 버튼 크기 */
+    font-size: 12px;
+    margin: 0 3px; /* 버튼 사이 간격 */
+    border: 1px solid #555;
+    border-radius: 5px;
+    color: #FFFFFF;
+    cursor: pointer;
+    transition: all 0.1s ease-out;
+}
+.dip-table-box .action-btn:active {
+    transform: translateY(1px);
+}
+
+.dip-table-box .edit-btn {
+    background-color: #007BFF; /* 파란색 */
+}
+.dip-table-box .edit-btn:hover {
+    background-color: #0056b3;
+}
+
+.dip-table-box .delete-btn {
+    background-color: #dc3545; /* 빨간색 */
+}
+.dip-table-box .delete-btn:hover {
+    background-color: #a71d2a;
+}
+
+.dip-table-box .model-cell {
+    cursor: pointer;
+    font-weight: bold;
+    color: #e0e0e0; /* 기본 텍스트보다 살짝 밝게 */
+}
+.dip-table-box .model-cell:hover {
+    text-decoration: underline;
+    color: #00BFFF; /* 강조 색상 */
+}
+
+/* 2. 테이블 제목 (H2)을 아이콘과 나란히 배치 */
+.dip-title-wrapper {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid #555;
+    margin-bottom: 15px;
+}
+.dip-title-wrapper .dip-title {
+    margin: 0; /* h2의 기본 마진 제거 */
+    padding: 0;
+    border: none; /* h2의 기본 테두리 제거 */
+}
+
+/* 3. 제목 옆 '삭제 모드' 토글 아이콘 */
+.delete-toggle-icon {
+    font-family: 'BMDOHYEON', sans-serif;
+    padding: 5px 9px;
+    font-size: 12px;
+    border: 1px solid #555;
+    border-radius: 5px;
+    color: #FFFFFF;
+    background-color: #dc3545; /* 빨간색 */
+    cursor: pointer;
+    transition: all 0.1s ease-out;
+}
+.delete-toggle-icon:hover {
+    background-color: #a71d2a;
+}
+.delete-toggle-icon.active {
+    background-color: #f0ad4e; /* 활성화 시 노란색 */
+}
+
+/* 4. 행(row)별 삭제 버튼 ('-' 버튼) */
+.delete-btn-cell {
+    text-align: center;
+}
+.row-delete-btn {
+    font-family: 'BMDOHYEON', sans-serif;
+    padding: 2px 8px;
+    font-size: 14px;
+    font-weight: bold;
+    border: 1px solid #555;
+    border-radius: 5px;
+    color: #FFFFFF;
+    background-color: #dc3545; /* 빨간색 */
+    cursor: pointer;
+    
+    /* [핵심] 평소에는 숨김 */
+    display: none; 
+}
+.row-delete-btn:hover {
+    background-color: #a71d2a;
+}
+
+/* [핵심] 테이블 박스에 'delete-mode-active' 클래스가 붙으면
+   그 안의 'row-delete-btn'을 보여줌 */
+.dip-table-box.delete-mode-active .row-delete-btn {
+    display: inline-block;
+}
+
+.dip-table-box .model-cell {
+    cursor: pointer;
+    font-weight: bold;
+    color: #e0e0e0; 
+}
+.dip-table-box .model-cell:hover {
+    text-decoration: underline;
+    color: #00BFFF; 
+}
+
+/* 2. 테이블 제목 (H2)을 아이콘과 나란히 배치 */
+.dip-title-wrapper {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid #555;
+    margin-bottom: 15px;
+}
+.dip-title-wrapper .dip-title {
+    margin: 0; 
+    padding: 0;
+    border: none; 
+}
+
+/* 3. 제목 옆 '삭제 모드' 토글 아이콘 */
+.delete-toggle-icon {
+    font-family: 'BMDOHYEON', sans-serif;
+    padding: 5px 9px;
+    font-size: 12px;
+    border: 1px solid #555;
+    border-radius: 5px;
+    color: #FFFFFF;
+    background-color: #dc3545; 
+    cursor: pointer;
+    transition: all 0.1s ease-out;
+}
+.delete-toggle-icon:hover {
+    background-color: #a71d2a;
+}
+.delete-toggle-icon.active {
+    background-color: #f0ad4e; 
+}
+
+/* 4. [신규] '수량' 셀 스타일 */
+.dip-table-box .quantity-cell {
+    position: relative; /* [중요] 삭제 버튼의 기준점 */
+    text-align: right; /* 수량은 오른쪽 정렬 */
+    /* [중요] 버튼이 들어갈 공간 확보 */
+    padding-right: 35px !important; 
+}
+
+/* 5. [수정] 행(row)별 삭제 버튼 ('-' 버튼) */
+.row-delete-btn {
+    position: absolute; /* '수량' 셀 내부에 위치 */
+    right: 5px;
+    top: 50%;
+    transform: translateY(-50%);
+
+    font-family: 'BMDOHYEON', sans-serif;
+    padding: 2px 8px;
+    font-size: 14px;
+    font-weight: bold;
+    border: 1px solid #555;
+    border-radius: 5px;
+    color: #FFFFFF;
+    background-color: #dc3545; 
+    cursor: pointer;
+    
+    /* [핵심] 평소에는 숨김 */
+    display: none; 
+}
+.row-delete-btn:hover {
+    background-color: #a71d2a;
+}
+
+/* [핵심] 테이블 박스에 'delete-mode-active' 클래스가 붙으면
+   그 안의 'row-delete-btn'을 보여줌 */
+.dip-table-box.delete-mode-active .row-delete-btn {
+    display: inline-block;
+}

@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PPMS - DIP (외주 관리)</title>
+    <link rel="stylesheet" href="common.css">
+    <link rel="stylesheet" href="header.css">
+    <link rel="stylesheet" href="footer.css">
+    <link rel="stylesheet" href="dip.css">
+    <link href="https://hangeul.pstatic.net/hangeul_static/css/bmdohyeon.css" rel="stylesheet">
+    <link href="https://hangeul.pstatic.net/hangeul_static/css/bmjua.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="auth.js"></script>
+</head>
+
+<body>
+    <div class="page-container">
+        <header class="main-header">
+            <div class="header-left"><a href="index.html">...</a></div>
+            <div class="header-center">
+                <div class="common-box font-35pt">DIP (외주 관리)</div>
+            </div>
+            <div class="header-right">
+                <div class="common-box font-15pt time-display" id="current-time"></div>
+            </div>
+        </header>
+
+        <main class="content-area dip-layout">
+            <div class="dip-registration-box">
+                <h2 class="dip-title" id="registration-title">신규 출고/입고 등록</h2>
+                <div class="dip-form-grid">
+                    <div class="dip-input-group"><label for="dip-date">날짜</label><input type="date" id="dip-date"
+                            class="form-input"></div>
+                    <div class="dip-input-group"><label for="dip-model">모델명</label><input type="text" id="dip-model"
+                            class="form-input" placeholder="모델명 입력..."></div>
+                    <div class="dip-input-group"><label for="dip-quantity">수량</label><input type="number"
+                            id="dip-quantity" class="form-input" placeholder="0"></div>
+                    <div class="dip-input-group"><label>구분</label>
+                        <div class="dip-type-selector">
+                            <div class="common-box clickable-box" id="type-ship-btn" data-type="ship">출고</div>
+                            <div class="common-box clickable-box" id="type-receive-btn" data-type="receive">입고</div>
+                        </div>
+                    </div>
+                    <div class="dip-input-group register-button-group">
+                        <div class="common-box clickable-box" id="dip-register-btn" style="grid-column: span 2;">등록하기
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dip-table-box" id="dip-shipping-box">
+                <div class="dip-title-wrapper">
+                    <h2 class="dip-title">출고 현황 (외주)</h2>
+                    <button class="delete-toggle-icon" id="shipping-delete-toggle" title="삭제 모드 켜기">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+                <div class="table-container">
+                    <table class="editable-table">
+                        <colgroup>
+                            <col style="width: 25%;">
+                            <col style="width: auto;">
+                            <col style="width: 25%;">
+                        </colgroup>
+                        <thead>
+                            <tr>
+                                <th>날짜</th>
+                                <th>모델명</th>
+                                <th>수량</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dip-shipping-table-body">
+                            <tr>
+                                <td>25-11-17</td>
+                                <td class="model-cell clickable-cell">EXAMPLE-MODEL-A</td>
+                                <td class="quantity-cell">150<button class="row-delete-btn">-</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="dip-table-box" id="dip-receiving-box">
+                <div class="dip-title-wrapper">
+                    <h2 class="dip-title">입고 현황 (회수)</h2>
+                    <button class="delete-toggle-icon" id="receiving-delete-toggle" title="삭제 모드 켜기">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+                <div class="table-container">
+                    <table class="editable-table">
+                        <colgroup>
+                            <col style="width: 25%;">
+                            <col style="width: auto;">
+                            <col style="width: 25%;">
+                        </colgroup>
+                        <thead>
+                            <tr>
+                                <th>날짜</th>
+                                <th>모델명</th>
+                                <th>수량</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dip-receiving-table-body">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </main>
+        <footer class="main-footer">
+            <div class="footer-left"></div>
+            <div class="footer-center">
+                <div class="common-box font-15pt clickable-box" id="dip-back-btn">
+                    <i class="fas fa-arrow-left"></i>
+                </div>
+                <div class="common-box font-15pt clickable-box" id="dip-home-btn">
+                    <i class="fas fa-home"></i>
+                </div>
+                <div class="common-box font-15pt clickable-box" id="dip-forward-btn">
+                    <i class="fas fa-arrow-right"></i>
+                </div>
+            </div>
+            <div class="footer-right"></div>
+        </footer>
+    </div>
+
+    <script>
+        // --- 시간/날짜 함수 (변경 없음) ---
+        function updateTime() { /* (내용 동일) */ }
+        function formatDateYYMMDD(dateString) { /* (내용 동일) */ }
+        function reformatDateToYYYYMMDD(yyddmm) { /* (내용 동일) */ }
+
+        // --- 'DOMContentLoaded' 로직 ---
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // 1. 보안 가드 (변경 없음)
+            const userRole = localStorage.getItem('ppms_user_role');
+            if (!userRole) { window.location.href = 'login.html'; return; }
+            if (typeof setupLogoutButton === 'function') { setupLogoutButton(); }
+            setInterval(updateTime, 1000);
+            updateTime();
+
+            // 2. 하단 내비게이션 (변경 없음)
+            const backBtn = document.getElementById('dip-back-btn');
+            const homeBtn = document.getElementById('dip-home-btn');
+            const forwardBtn = document.getElementById('dip-forward-btn');
+            if (backBtn) { backBtn.addEventListener('click', () => { history.back(); }); }
+            if (homeBtn) { homeBtn.addEventListener('click', () => { window.location.href = 'index.html'; }); }
+            if (forwardBtn) { forwardBtn.addEventListener('click', () => { history.forward(); }); }
+
+            // 3. 폼/테이블 요소 가져오기 (수정)
+            const shipBtn = document.getElementById('type-ship-btn');
+            const receiveBtn = document.getElementById('type-receive-btn');
+            const registerBtn = document.getElementById('dip-register-btn');
+            const title = document.getElementById('registration-title');
+            const dateInput = document.getElementById('dip-date');
+            const modelInput = document.getElementById('dip-model');
+            const quantityInput = document.getElementById('dip-quantity');
+
+            // [수정] 테이블 박스 및 토글 버튼
+            const shippingBox = document.getElementById('dip-shipping-box');
+            const receivingBox = document.getElementById('dip-receiving-box');
+            const shippingTableBody = document.getElementById('dip-shipping-table-body');
+            const receivingTableBody = document.getElementById('dip-receiving-table-body');
+            const shippingDeleteToggle = document.getElementById('shipping-delete-toggle');
+            const receivingDeleteToggle = document.getElementById('receiving-delete-toggle');
+
+            // 4. 상태 관리 변수 (변경 없음)
+            let selectedType = 'ship';
+            let currentlyEditingRow = null;
+
+            // 5. 폼 초기화 함수 (변경 없음)
+            function clearFormInputs() {
+                dateInput.value = '';
+                modelInput.value = '';
+                quantityInput.value = '';
+            }
+            function resetEditState() {
+                currentlyEditingRow = null;
+                title.textContent = '신규 출고/입고 등록';
+                registerBtn.textContent = '등록하기';
+                registerBtn.style.backgroundColor = '';
+            }
+
+            // 6. '출고'/'입고' 버튼 로직 (변경 없음)
+            [shipBtn, receiveBtn].forEach(button => {
+                button.addEventListener('click', () => {
+                    const type = button.dataset.type;
+                    if (selectedType === type) return;
+                    selectedType = type;
+                    shipBtn.classList.toggle('selected', type === 'ship');
+                    shipBtn.classList.toggle('not-selected', type !== 'ship');
+                    receiveBtn.classList.toggle('selected', type === 'receive');
+                    receiveBtn.classList.toggle('not-selected', type !== 'receive');
+                    resetEditState();
+                });
+            });
+            shipBtn.classList.add('selected');
+            receiveBtn.classList.add('not-selected');
+
+            // 7. [수정] '등록/수정' 버튼 클릭 (삭제 버튼 HTML 변경)
+            registerBtn.addEventListener('click', () => {
+                const date = dateInput.value;
+                const model = modelInput.value;
+                const quantity = quantityInput.value;
+
+                if (!date || !model || !quantity) {
+                    alert('날짜, 모델명, 수량을 모두 입력하세요.');
+                    return;
+                }
+
+                // --- '삭제' 버튼 HTML (새 행에 추가될 내용) ---
+                const deleteButtonHTML = `<button class="row-delete-btn">-</button>`;
+
+                if (currentlyEditingRow) {
+                    // --- 수정 모드 (UPDATE) ---
+                    const cells = currentlyEditingRow.cells;
+                    cells[0].textContent = formatDateYYMMDD(date);
+                    cells[1].textContent = model;
+                    // [수정] 수량 셀의 내용 변경
+                    cells[2].innerHTML = `${quantity}${deleteButtonHTML}`;
+
+                    console.log('수정 데이터:', { id: currentlyEditingRow.dataset.id, date, model, quantity });
+                    alert('수정되었습니다.');
+                    resetEditState();
+                    clearFormInputs();
+
+                } else {
+                    // --- 등록 모드 (CREATE) ---
+                    let targetTableBody;
+                    if (selectedType === 'ship') {
+                        targetTableBody = shippingTableBody;
+                    } else {
+                        targetTableBody = receivingTableBody;
+                    }
+
+                    const newRow = targetTableBody.insertRow(0);
+                    newRow.dataset.id = new Date().getTime();
+
+                    newRow.innerHTML = `
+                        <td>${formatDateYYMMDD(date)}</td> 
+                        <td class="model-cell clickable-cell">${model}</td>
+                        <td class="quantity-cell">${quantity}${deleteButtonHTML}</td>
+                    `;
+
+                    console.log('등록 데이터:', { date, model, quantity, type: selectedType });
+                    alert('등록되었습니다.');
+                    resetEditState();
+                    clearFormInputs();
+                }
+            });
+
+            // 8. [신규] '삭제 모드' 토글 이벤트
+            function setupDeleteToggle(toggleBtn, tableBox) {
+                toggleBtn.addEventListener('click', () => {
+                    tableBox.classList.toggle('delete-mode-active');
+                    toggleBtn.classList.toggle('active');
+
+                    const title = toggleBtn.querySelector('i');
+                    if (tableBox.classList.contains('delete-mode-active')) {
+                        toggleBtn.title = "삭제 모드 끄기";
+                        title.className = "fas fa-check";
+                    } else {
+                        toggleBtn.title = "삭제 모드 켜기";
+                        title.className = "fas fa-trash";
+                    }
+                });
+            }
+            setupDeleteToggle(shippingDeleteToggle, shippingBox);
+            setupDeleteToggle(receivingDeleteToggle, receivingBox);
+
+
+            // 9. [수정] 테이블 클릭 이벤트 위임 (수정/삭제 로직 변경)
+            function handleTableClick(event) {
+                const target = event.target;
+                const row = target.closest('tr');
+                if (!row) return;
+
+                // (A) 개별 '-' 삭제 버튼 클릭 시
+                if (target.closest('.row-delete-btn')) {
+                    if (confirm('이 항목을 삭제하시겠습니까?')) {
+                        console.log('삭제 ID:', row.dataset.id);
+                        row.remove();
+                        alert('삭제되었습니다.');
+
+                        if (currentlyEditingRow === row) {
+                            resetEditState();
+                            clearFormInputs();
+                        }
+                    }
+                }
+
+                // (B) '모델명' 셀 클릭 시 (수정 기능)
+                if (target.closest('.model-cell')) {
+                    resetEditState();
+
+                    const cells = row.cells;
+
+                    // [수정] 날짜 복사 기능 추가
+                    dateInput.value = reformatDateToYYYYMMDD(cells[0].textContent);
+                    modelInput.value = cells[1].textContent;
+                    // [수정] '수량' 셀의 텍스트 노드(첫 번째 자식) 값만 가져옴
+                    quantityInput.value = cells[2].firstChild.nodeValue;
+
+                    const tableId = row.closest('tbody').id;
+                    if (tableId === 'dip-shipping-table-body') {
+                        shipBtn.click();
+                    } else {
+                        receiveBtn.click();
+                    }
+
+                    currentlyEditingRow = row;
+                    title.textContent = '항목 수정';
+                    registerBtn.textContent = '수정하기';
+                    registerBtn.style.backgroundColor = '#007BFF';
+                    document.querySelector('.dip-registration-box').scrollTop = 0;
+                }
+            }
+
+            shippingTableBody.addEventListener('click', handleTableClick);
+            receivingTableBody.addEventListener('click', handleTableClick);
+        });
+    </script>
+</body>
+
+</html>
