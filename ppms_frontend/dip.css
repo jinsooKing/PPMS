@@ -1,63 +1,34 @@
-/* --- DIP 페이지 레이아웃 --- */
+/* --- 1. 페이지 레이아웃 --- */
 .dip-layout {
     display: flex;
-    flex-direction: row;
+    flex-direction: column; /* [수정] row -> column (수직 래퍼) */
     width: 100%;
     height: 100%;
-    gap: 20px; /* 폼과 테이블 사이 간격 */
-    padding: 20px; /* common.css의 .content-area 패딩 대신 사용 */
-    box-sizing: border-box; /* 패딩이 크기에 포함되도록 설정 */
-}
-
-.dip-registration-box {
-    flex-shrink: 0; 
-    flex-basis: 300px; /* [신규] 왼쪽 폼의 가로 너비 고정 (예: 450px) */
-    height: 100%; /* [신규] 세로 높이를 꽉 채움 */
-    overflow-y: auto; /* [신규] 폼 내용이 길어지면 스크롤 */
-    background-color: #2C2C2E;
+    gap: 20px;
     padding: 20px;
-    border-radius: 10px;
-    border: 1px solid #444;
-    box-sizing: border-box; /* [신규] 패딩 포함 */
-}
-/* --- 공용 타이틀 (h2) --- */
-.dip-title {
-    color: #FFFFFF;
-    font-family: 'BMDOHYEON', sans-serif;
-    font-size: clamp(16px, 1.5vw, 22px);
-    margin: 0 0 15px 0;
-    padding-bottom: 10px;
-    border-bottom: 2px solid #555;
+    box-sizing: border-box;
 }
 
-/* --- 1. 신규 등록 폼 --- */
-.dip-registration-box {
-    flex-shrink: 0; /* 크기 고정 */
-    background-color: #2C2C2E;
-    padding: 20px;
-    border-radius: 10px;
-    border: 1px solid #444;
-}
+/* --- 2. [삭제] .dip-registration-box --- */
+/* (등록 폼은 이제 common.css의 .modal-window 스타일을 따름) */
 
+/* --- 3. 폼 내부 요소 (그리드, 인풋, 라벨) --- */
+/* (이 규칙들은 모달 내부에서 계속 사용됨) */
 .dip-form-grid {
     display: grid;
-    /* 반응형 그리드: 최소 200px, 최대 1fr */
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 15px 20px; /* 행 간격, 열 간격 */
+    grid-template-columns: 1fr;
+    gap: 15px 20px;
 }
-
 .dip-input-group {
     display: flex;
     flex-direction: column;
-    gap: 8px; /* 라벨과 인풋 사이 간격 */
+    gap: 8px;
 }
-
 .dip-input-group label {
     color: #FFFFFF;
     font-family: 'BMDOHYEON', sans-serif;
     font-size: clamp(13px, 1vw, 16px);
 }
-
 .form-input {
     width: 100%;
     padding: 10px;
@@ -67,20 +38,18 @@
     color: #FFFFFF;
     font-family: 'BMDOHYEON', sans-serif;
     font-size: clamp(14px, 1.1vw, 16px);
-    box-sizing: border-box; /* 패딩이 너비에 포함되도록 */
+    box-sizing: border-box;
 }
-
 input[type="date"] {
-    color-scheme: dark; /* 날짜 선택기 다크모드 */
+    color-scheme: dark;
 }
 
-/* '출고'/'입고' 버튼 */
+/* --- 4. 폼 '구분' 버튼 (출고/입고) --- */
 .dip-type-selector {
     display: flex;
     gap: 10px;
-    height: 100%; /* 인풋과 높이 맞춤 */
+    height: 100%;
 }
-
 .dip-type-selector .common-box {
     flex: 1;
     text-align: center;
@@ -88,8 +57,6 @@ input[type="date"] {
     padding-bottom: 10px;
     font-size: clamp(14px, 1.1vw, 16px);
 }
-
-/* login.html에서 가져온 '선택됨'/'선택안됨' 스타일 */
 .dip-type-selector .selected {
     transform: translateY(1px);
     border-bottom-width: 2px;
@@ -101,96 +68,73 @@ input[type="date"] {
     opacity: 0.6;
 }
 
-/* '등록하기' 버튼 */
+/* --- 5. 폼 '등록/취소' 버튼 --- */
 .register-button-group {
-    /* 버튼이 다른 인풋과 세로 정렬이 맞도록 */
     display: flex;
-    flex-direction: column;
-    justify-content: flex-end; /* 라벨이 없는 것처럼 버튼을 아래로 정렬 */
+    flex-direction: row;
+    justify-content: flex-end;
+    align-items: flex-end;
+    gap: 10px;
+    /* [신규] 폼 그리드 내에서 2칸 차지 */
+    grid-column: span 2; 
+}
+#dip-register-btn,
+#dip-cancel-btn {
+    flex: 1;
+    text-align: center;
+    font-size: clamp(15px, 1.2vw, 18px);
 }
 #dip-register-btn {
     background-color: #007BFF;
     color: white;
-    text-align: center;
-    font-size: clamp(15px, 1.2vw, 18px);
 }
 #dip-register-btn:hover {
     background-color: #0056b3;
 }
+#dip-cancel-btn {
+    background-color: #6c757d;
+    color: white;
+}
+#dip-cancel-btn:hover {
+    background-color: #5a6268;
+}
 
+/* --- 6. [수정] 테이블 래퍼 (Wrapper) --- */
+.dip-tables-container {
+    display: flex;
+    flex-direction: column; /* 위/아래 배치 */
+    flex-grow: 1; /* [수정] 1.5 -> 1 (전체 공간 차지) */
+    gap: 20px; 
+    height: 100%;
+    min-height: 0; /* [신규] 스크롤을 위해 */
+}
 
-/* --- 2. 외주 현황 테이블 --- */
+/* --- 7. '출고' / '입고' 테이블 박스 공통 --- */
 .dip-table-box {
-    flex-grow: 1; /* [중요] 남은 공간을 1:1로 나눠 가짐 */
-    flex-basis: 0; /* 0에서부터 동일하게 공간 분배 */
+    flex-grow: 1; /* 1:1 비율로 세로 공간 분배 */
+    flex-basis: 0;
     display: flex;
     flex-direction: column;
     background-color: #2C2C2E;
     padding: 20px;
     border-radius: 10px;
     border: 1px solid #444;
-    min-height: 0; /* Flexbox 스크롤을 위해 필수 */
+    min-height: 0; 
 }
 
 .dip-table-box .table-container {
-    flex-grow: 1; /* 테이블 컨테이너가 남은 공간 차지 */
-    overflow-y: auto; /* 내용이 많아지면 스크롤 */
+    flex-grow: 1;
+    overflow-y: auto;
     border: 1px solid #555;
     border-radius: 8px;
 }
 
-/* common.css의 .editable-table 스타일을 사용합니다. */
-/* (만약 .editable-table에 덮어쓸 내용이 있다면 여기에 추가) */
 .editable-table th {
-    /* (기존) */
     background-color: #3A3A3C;
     top: 0;
 }
 
-.dip-table-box .action-btn-cell {
-    text-align: center;
-}
-
-.dip-table-box .action-btn {
-    font-family: 'BMDOHYEON', sans-serif;
-    padding: 5px 9px; /* 버튼 크기 */
-    font-size: 12px;
-    margin: 0 3px; /* 버튼 사이 간격 */
-    border: 1px solid #555;
-    border-radius: 5px;
-    color: #FFFFFF;
-    cursor: pointer;
-    transition: all 0.1s ease-out;
-}
-.dip-table-box .action-btn:active {
-    transform: translateY(1px);
-}
-
-.dip-table-box .edit-btn {
-    background-color: #007BFF; /* 파란색 */
-}
-.dip-table-box .edit-btn:hover {
-    background-color: #0056b3;
-}
-
-.dip-table-box .delete-btn {
-    background-color: #dc3545; /* 빨간색 */
-}
-.dip-table-box .delete-btn:hover {
-    background-color: #a71d2a;
-}
-
-.dip-table-box .model-cell {
-    cursor: pointer;
-    font-weight: bold;
-    color: #e0e0e0; /* 기본 텍스트보다 살짝 밝게 */
-}
-.dip-table-box .model-cell:hover {
-    text-decoration: underline;
-    color: #00BFFF; /* 강조 색상 */
-}
-
-/* 2. 테이블 제목 (H2)을 아이콘과 나란히 배치 */
+/* --- 8. 테이블 제목 / 삭제 모드 아이콘 --- */
 .dip-title-wrapper {
     display: flex;
     justify-content: space-between;
@@ -199,12 +143,13 @@ input[type="date"] {
     margin-bottom: 15px;
 }
 .dip-title-wrapper .dip-title {
-    margin: 0; /* h2의 기본 마진 제거 */
+    color: #FFFFFF;
+    font-family: 'BMDOHYEON', sans-serif;
+    font-size: clamp(16px, 1.5vw, 22px);
+    margin: 0;
     padding: 0;
-    border: none; /* h2의 기본 테두리 제거 */
+    border: none;
 }
-
-/* 3. 제목 옆 '삭제 모드' 토글 아이콘 */
 .delete-toggle-icon {
     font-family: 'BMDOHYEON', sans-serif;
     padding: 5px 9px;
@@ -212,7 +157,7 @@ input[type="date"] {
     border: 1px solid #555;
     border-radius: 5px;
     color: #FFFFFF;
-    background-color: #dc3545; /* 빨간색 */
+    background-color: #dc3545;
     cursor: pointer;
     transition: all 0.1s ease-out;
 }
@@ -220,93 +165,30 @@ input[type="date"] {
     background-color: #a71d2a;
 }
 .delete-toggle-icon.active {
-    background-color: #f0ad4e; /* 활성화 시 노란색 */
+    background-color: #f0ad4e;
 }
 
-/* 4. 행(row)별 삭제 버튼 ('-' 버튼) */
-.delete-btn-cell {
-    text-align: center;
-}
-.row-delete-btn {
-    font-family: 'BMDOHYEON', sans-serif;
-    padding: 2px 8px;
-    font-size: 14px;
-    font-weight: bold;
-    border: 1px solid #555;
-    border-radius: 5px;
-    color: #FFFFFF;
-    background-color: #dc3545; /* 빨간색 */
-    cursor: pointer;
-    
-    /* [핵심] 평소에는 숨김 */
-    display: none; 
-}
-.row-delete-btn:hover {
-    background-color: #a71d2a;
-}
-
-/* [핵심] 테이블 박스에 'delete-mode-active' 클래스가 붙으면
-   그 안의 'row-delete-btn'을 보여줌 */
-.dip-table-box.delete-mode-active .row-delete-btn {
-    display: inline-block;
-}
-
+/* --- 9. 테이블 셀 스타일 (모델명, 수량, 행 삭제 버튼) --- */
 .dip-table-box .model-cell {
     cursor: pointer;
     font-weight: bold;
-    color: #e0e0e0; 
+    color: #e0e0e0;
 }
 .dip-table-box .model-cell:hover {
     text-decoration: underline;
-    color: #00BFFF; 
+    color: #00BFFF;
 }
-
-/* 2. 테이블 제목 (H2)을 아이콘과 나란히 배치 */
-.dip-title-wrapper {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 2px solid #555;
-    margin-bottom: 15px;
-}
-.dip-title-wrapper .dip-title {
-    margin: 0; 
-    padding: 0;
-    border: none; 
-}
-
-/* 3. 제목 옆 '삭제 모드' 토글 아이콘 */
-.delete-toggle-icon {
-    font-family: 'BMDOHYEON', sans-serif;
-    padding: 5px 9px;
-    font-size: 12px;
-    border: 1px solid #555;
-    border-radius: 5px;
-    color: #FFFFFF;
-    background-color: #dc3545; 
-    cursor: pointer;
-    transition: all 0.1s ease-out;
-}
-.delete-toggle-icon:hover {
-    background-color: #a71d2a;
-}
-.delete-toggle-icon.active {
-    background-color: #f0ad4e; 
-}
-
-/* 4. [신규] '수량' 셀 스타일 */
 .dip-table-box .quantity-cell {
-    position: relative; /* [중요] 삭제 버튼의 기준점 */
-    text-align: center; /* 수량은 오른쪽 정렬 */
+    position: relative;
+    text-align: center;
+    padding-left: 35px !important;
+    padding-right: 35px !important;
 }
-
-/* 5. [수정] 행(row)별 삭제 버튼 ('-' 버튼) */
 .row-delete-btn {
-    position: absolute; /* '수량' 셀 내부에 위치 */
+    position: absolute;
     right: 5px;
     top: 50%;
     transform: translateY(-50%);
-
     font-family: 'BMDOHYEON', sans-serif;
     padding: 2px 8px;
     font-size: 14px;
@@ -314,18 +196,48 @@ input[type="date"] {
     border: 1px solid #555;
     border-radius: 5px;
     color: #FFFFFF;
-    background-color: #dc3545; 
+    background-color: #dc3545;
     cursor: pointer;
-    
-    /* [핵심] 평소에는 숨김 */
-    display: none; 
+    display: none;
 }
 .row-delete-btn:hover {
     background-color: #a71d2a;
 }
-
-/* [핵심] 테이블 박스에 'delete-mode-active' 클래스가 붙으면
-   그 안의 'row-delete-btn'을 보여줌 */
 .dip-table-box.delete-mode-active .row-delete-btn {
     display: inline-block;
+}
+
+#dip-registration-modal .modal-content {
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+    /* [중요] 모달이 꽉 차도록 설정 */
+    flex-grow: 1;
+    min-height: 0; /* 스크롤을 위해 */
+}
+
+/* 1. 왼쪽: 등록 폼 섹션 */
+.dip-modal-form-section {
+    flex: 0 0 280px; /* 폼 섹션의 너비를 400px로 고정 */
+    display: flex;
+    flex-direction: column;
+}
+
+/* 2. 가운데: 분리선 */
+.dip-modal-separator {
+    width: 2px;
+    background-color: #555;
+    flex-shrink: 0;
+}
+
+/* 3. 오른쪽: 독립 UI 섹션 (요청하신 '박스' 분리) */
+.dip-modal-other-section {
+    flex: 1; /* 남은 공간을 모두 차지 */
+    display: flex;
+    flex-direction: column;
+    border: 1px solid #444; 
+    border-radius: 8px;
+    background-color: #1E1E1E; /* 살짝 어두운 배경 */
+    padding: 15px;
+    overflow-y: auto; /* 내용이 많아지면 스크롤 */
 }
