@@ -1,24 +1,124 @@
 /* --- 1. 페이지 레이아웃 --- */
 .dip-layout {
     display: flex;
-    flex-direction: column; /* [수정] row -> column (수직 래퍼) */
+    flex-direction: column;
     width: 100%;
     height: 100%;
-    gap: 20px;
     padding: 20px;
     box-sizing: border-box;
+    overflow: hidden;
 }
 
-/* --- 2. [삭제] .dip-registration-box --- */
-/* (등록 폼은 이제 common.css의 .modal-window 스타일을 따름) */
+/* --- 2. 모델별 그룹핑 리스트 영역 --- */
+#dip-history-wrapper {
+    flex-grow: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+    padding-right: 10px;
+}
 
-/* --- 3. 폼 내부 요소 (그리드, 인풋, 라벨) --- */
-/* (이 규칙들은 모달 내부에서 계속 사용됨) */
+/* 모델 그룹 카드 */
+.model-group-wrapper {
+    background-color: #2C2C2E;
+    border: 1px solid #444;
+    border-radius: 10px;
+    padding: 20px;
+}
+.model-group-wrapper.edit-mode-active {
+    border-color: #f0ad4e;
+    box-shadow: 0 0 10px rgba(240, 173, 78, 0.3);
+}
+
+/* 모델 헤더 */
+.model-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+    border-bottom: 2px solid #555;
+    color: #FFFFFF;
+    font-family: 'BMDOHYEON', sans-serif; 
+    font-size: clamp(18px, 1.8vw, 26px);
+}
+
+.model-name-display, .lot-display { 
+    font-weight: bold; 
+    margin-right: 20px;
+}
+.lot-display { 
+    color: #ccc; 
+    font-size: 0.9em; 
+}
+
+/* 테이블 쌍 배치 */
+.dip-table-pair {
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+}
+.dip-history-table-box {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+.dip-title {
+    color: #FFFFFF;
+    font-family: 'BMDOHYEON', sans-serif;
+    font-size: clamp(14px, 1.2vw, 20px);
+    margin-bottom: 10px;
+}
+
+/* --- 3. 모달 내부 레이아웃 (2단 분리 - 공통 적용) --- */
+/* [수정] 그룹 추가 모달(#group-manage-modal)도 포함 */
+#dip-registration-modal .modal-content,
+#group-manage-modal .modal-content {
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+    flex-grow: 1;
+    min-height: 0;
+}
+
+/* 왼쪽: 폼 섹션 */
+.dip-modal-form-section {
+    flex: 0 0 280px;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+}
+
+/* 가운데: 분리선 */
+.dip-modal-separator {
+    width: 2px;
+    background-color: #555;
+    flex-shrink: 0;
+}
+
+/* 오른쪽: 독립 UI 섹션 */
+.dip-modal-other-section {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid #444;
+    border-radius: 8px;
+    background-color: #1E1E1E;
+    padding: 15px;
+    overflow-y: auto;
+}
+
+/* --- 4. 폼 스타일 --- */
+/* [수정] 그룹 모달 전용 덮어쓰기 제거 (공통 스타일 사용) */
 .dip-form-grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 15px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    padding-right: 5px;
 }
+
 .dip-input-group {
     display: flex;
     flex-direction: column;
@@ -40,150 +140,66 @@
     font-size: clamp(14px, 1.1vw, 16px);
     box-sizing: border-box;
 }
-input[type="date"] {
-    color-scheme: dark;
-}
+input[type="date"] { color-scheme: dark; }
 
-/* --- 4. 폼 '구분' 버튼 (출고/입고) --- */
-.dip-type-selector {
-    display: flex;
-    gap: 10px;
-    height: 100%;
-}
+.dip-type-selector { display: flex; gap: 10px; }
 .dip-type-selector .common-box {
     flex: 1;
     text-align: center;
-    padding-top: 10px;
-    padding-bottom: 10px;
+    padding: 10px;
     font-size: clamp(14px, 1.1vw, 16px);
 }
 .dip-type-selector .selected {
-    transform: translateY(1px);
-    border-bottom-width: 2px;
     background-color: #007BFF;
-    color: #FFFFFF;
-    opacity: 1.0;
+    color: #fff;
+    border-bottom-width: 2px;
+    transform: translateY(1px);
 }
-.dip-type-selector .not-selected {
-    opacity: 0.6;
-}
+.dip-type-selector .not-selected { opacity: 0.6; }
 
-/* --- 5. 폼 '등록/취소' 버튼 --- */
 .register-button-group {
     display: flex;
     flex-direction: row;
-    justify-content: flex-end;
-    align-items: flex-end;
     gap: 10px;
-    /* [신규] 폼 그리드 내에서 2칸 차지 */
-    grid-column: span 2; 
+    margin-top: 10px;
 }
-#dip-register-btn,
-#dip-cancel-btn {
+#dip-register-btn, #dip-cancel-btn, #save-group-btn {
     flex: 1;
     text-align: center;
     font-size: clamp(15px, 1.2vw, 18px);
 }
-#dip-register-btn {
+#dip-register-btn, #save-group-btn {
     background-color: #007BFF;
     color: white;
 }
-#dip-register-btn:hover {
-    background-color: #0056b3;
-}
-#dip-cancel-btn {
-    background-color: #6c757d;
-    color: white;
-}
-#dip-cancel-btn:hover {
-    background-color: #5a6268;
-}
+#dip-register-btn:hover, #save-group-btn:hover { background-color: #0056b3; }
+#dip-cancel-btn { background-color: #6c757d; color: white; }
+#dip-cancel-btn:hover { background-color: #5a6268; }
 
-/* --- 6. [수정] 테이블 래퍼 (Wrapper) --- */
-.dip-tables-container {
-    display: flex;
-    flex-direction: column; /* 위/아래 배치 */
-    flex-grow: 1; /* [수정] 1.5 -> 1 (전체 공간 차지) */
-    gap: 20px; 
-    height: 100%;
-    min-height: 0; /* [신규] 스크롤을 위해 */
-}
+/* '저장하기' 버튼 스타일 (꽉 채움) */
+#save-group-btn { width: 100%; display: block; box-sizing: border-box; }
 
-/* --- 7. '출고' / '입고' 테이블 박스 공통 --- */
-.dip-table-box {
-    flex-grow: 1; /* 1:1 비율로 세로 공간 분배 */
-    flex-basis: 0;
-    display: flex;
-    flex-direction: column;
-    background-color: #2C2C2E;
-    padding: 20px;
-    border-radius: 10px;
-    border: 1px solid #444;
-    min-height: 0; 
-}
 
-.dip-table-box .table-container {
-    flex-grow: 1;
-    overflow-y: auto;
-    border: 1px solid #555;
-    border-radius: 8px;
-}
-
+/* --- 5. 테이블 스타일 --- */
 .editable-table th {
     background-color: #3A3A3C;
+    font-size: clamp(11px, 1vw, 14px);
     top: 0;
 }
 
-/* --- 8. 테이블 제목 / 삭제 모드 아이콘 --- */
-.dip-title-wrapper {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 2px solid #555;
-    margin-bottom: 15px;
-}
-.dip-title-wrapper .dip-title {
-    color: #FFFFFF;
-    font-family: 'BMDOHYEON', sans-serif;
-    font-size: clamp(16px, 1.5vw, 22px);
-    margin: 0;
-    padding: 0;
-    border: none;
-}
-.delete-toggle-icon {
-    font-family: 'BMDOHYEON', sans-serif;
-    padding: 5px 9px;
-    font-size: 12px;
-    border: 1px solid #555;
-    border-radius: 5px;
-    color: #FFFFFF;
-    background-color: #dc3545;
-    cursor: pointer;
-    transition: all 0.1s ease-out;
-}
-.delete-toggle-icon:hover {
-    background-color: #a71d2a;
-}
-.delete-toggle-icon.active {
-    background-color: #f0ad4e;
+.quantity-cell {
+    text-align: center;
 }
 
-/* --- 9. 테이블 셀 스타일 (모델명, 수량, 행 삭제 버튼) --- */
-.dip-table-box .model-cell {
-    cursor: pointer;
-    font-weight: bold;
-    color: #e0e0e0;
-}
-.dip-table-box .model-cell:hover {
-    text-decoration: underline;
-    color: #00BFFF;
-}
-.dip-table-box .quantity-cell {
-    position: relative;
+.cumulative-cell {
     text-align: center;
+    position: relative;
     padding-left: 35px !important;
     padding-right: 35px !important;
+    font-weight: bold;
+    color: #ffd700;
 }
+
 .row-delete-btn {
     position: absolute;
     right: 5px;
@@ -191,53 +207,50 @@ input[type="date"] {
     transform: translateY(-50%);
     font-family: 'BMDOHYEON', sans-serif;
     padding: 2px 8px;
+    font-size: 12px;
+    background-color: #dc3545;
+    color: white;
+    border: 1px solid #555;
+    border-radius: 4px;
+    cursor: pointer;
+    display: none;
+}
+.row-delete-btn:hover { background-color: #a71d2a; }
+
+.model-group-wrapper.delete-mode-active .row-delete-btn {
+    display: inline-block;
+}
+
+.delete-toggle-icon {
     font-size: 14px;
-    font-weight: bold;
+    padding: 5px 10px;
+    background-color: #dc3545;
+    color: white;
     border: 1px solid #555;
     border-radius: 5px;
-    color: #FFFFFF;
+    cursor: pointer;
+}
+.delete-toggle-icon.active { background-color: #f0ad4e; }
+
+.group-delete-btn {
+    font-family: 'BMDOHYEON', sans-serif;
+    padding: 5px 10px;
+    font-size: 12px;
+    border: 1px solid #dc3545;
+    border-radius: 5px;
+    color: #fff;
     background-color: #dc3545;
     cursor: pointer;
     display: none;
 }
-.row-delete-btn:hover {
-    background-color: #a71d2a;
-}
-.dip-table-box.delete-mode-active .row-delete-btn {
-    display: inline-block;
-}
+.group-delete-btn:hover { background-color: #a71d2a; }
 
-#dip-registration-modal .modal-content {
+.model-group-wrapper.edit-mode-active .delete-toggle-icon { display: none; }
+.model-group-wrapper.edit-mode-active .group-delete-btn { display: inline-block; }
+
+/* --- 6. 푸터 버튼 정렬 --- */
+.footer-action-group {
     display: flex;
-    flex-direction: row;
-    gap: 20px;
-    /* [중요] 모달이 꽉 차도록 설정 */
-    flex-grow: 1;
-    min-height: 0; /* 스크롤을 위해 */
-}
-
-/* 1. 왼쪽: 등록 폼 섹션 */
-.dip-modal-form-section {
-    flex: 0 0 280px; /* 폼 섹션의 너비를 400px로 고정 */
-    display: flex;
-    flex-direction: column;
-}
-
-/* 2. 가운데: 분리선 */
-.dip-modal-separator {
-    width: 2px;
-    background-color: #555;
-    flex-shrink: 0;
-}
-
-/* 3. 오른쪽: 독립 UI 섹션 (요청하신 '박스' 분리) */
-.dip-modal-other-section {
-    flex: 1; /* 남은 공간을 모두 차지 */
-    display: flex;
-    flex-direction: column;
-    border: 1px solid #444; 
-    border-radius: 8px;
-    background-color: #1E1E1E; /* 살짝 어두운 배경 */
-    padding: 15px;
-    overflow-y: auto; /* 내용이 많아지면 스크롤 */
+    align-items: center;
+    gap: 15px;
 }

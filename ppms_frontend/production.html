@@ -15,6 +15,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
     <script src="auth.js"></script>
+    <script src="calendar.js"></script>
 </head>
 
 <body>
@@ -51,7 +52,9 @@
                 </div>
             </div>
             <div class="footer-right">
-                <div class="common-box font-15pt clickable-box" id="prev-data-btn">이전데이터</div>
+                <div class="common-box font-15pt clickable-box" id="week-picker-btn" style="position: relative;">
+                    이전데이터
+                </div>
             </div>
         </footer>
     </div>
@@ -216,7 +219,6 @@
         // --- 전역 요소 ---
         const displayArea = document.getElementById('schedule-display-area');
         const contentArea = document.querySelector('.content-area');
-        const prevDataBtn = document.getElementById('prev-data-btn');
         const backBtn = document.getElementById('back-btn');
         const homeBtn = document.getElementById('home-btn');
         const forwardBtn = document.getElementById('forward-btn');
@@ -231,11 +233,10 @@
         const saveAllBtn = document.getElementById('save-all-btn');
         const resetBtn = document.getElementById('reset-btn');
 
-        // [수정] 다운로드 버튼 ID 변경 및 exportChoiceModal 가져오기
         const exportChoiceModal = document.getElementById('export-choice-modal');
         const closeExportModalBtn = document.getElementById('close-export-modal-btn');
-        const exportPlanBtn = document.getElementById('export-plan-btn'); // 새 ID
-        const exportReportBtn = document.getElementById('export-report-btn'); // 새 ID
+        const exportPlanBtn = document.getElementById('export-plan-btn');
+        const exportReportBtn = document.getElementById('export-report-btn');
 
         const lineControls = {
             'A': { tableBody: document.getElementById('schedule-table-body-A') },
@@ -254,33 +255,24 @@
         let managerList = [];
         let companyList = [];
 
+        // [신규] 권한 확인 헬퍼
         function isEditAllowed() {
             const userRole = localStorage.getItem('ppms_user_role');
-
-            if (userRole === 'admin') {
-                return true; // Admin은 항상 수정 가능
-            }
-
+            if (userRole === 'admin') return true;
             if (userRole === 'user') {
-                // User는 '현재 주차' 뷰만 수정 가능
                 const today = new Date();
                 const actualCurrent = {
                     year: today.getFullYear(),
                     month: today.getMonth() + 1,
-                    // 이 함수는 스크립트 하단(1146줄)에 이미 존재합니다.
-                    weekNum: getCurrentWeekNumber(today) 
+                    weekNum: getCurrentWeekNumber(today)
                 };
-                
-                // currentView.data는 현재 화면에 표시된 주차 정보를 담고 있습니다.
-                const viewed = currentView.data; 
-                
-                if (viewed.year === actualCurrent.year && 
-                    viewed.month === actualCurrent.month && 
+                const viewed = currentView.data;
+                if (viewed.year === actualCurrent.year &&
+                    viewed.month === actualCurrent.month &&
                     viewed.weekNum === actualCurrent.weekNum) {
-                    return true; // 현재 주차이므로 수정 허용
+                    return true;
                 }
             }
-            
             return false;
         }
 
@@ -288,32 +280,20 @@
 
             // 1. [필수] 임시 보안 가드
             const userRole = localStorage.getItem('ppms_user_role');
-
-            // 2. [필수] 비로그인 시 튕겨내기
             if (!userRole) {
                 window.location.href = 'login.html';
                 return;
             }
-
             if (typeof setupLogoutButton === 'function') {
                 setupLogoutButton();
             }
 
-            // --- ▼▼▼ [신규] 권한 설정 로직 ▼▼▼ ---
+            // 2. 권한별 버튼 숨김
             if (userRole !== 'admin') {
-                // 1. '생산일정등록' 버튼 숨기기
                 if (regScheduleBtn) regScheduleBtn.style.display = 'none';
-
-                // 2. 모달의 '저장', '초기화' 버튼 숨기기
                 if (saveAllBtn) saveAllBtn.style.display = 'none';
                 if (resetBtn) resetBtn.style.display = 'none';
-
-                // 3. 모달 타이틀에 '읽기 전용' 표시 (선택 사항)
-                if (modalTitle) {
-                    // (openModal 함수에서 동적으로 처리)
-                }
             }
-            // --- ▲▲▲ 권한 설정 완료 ▲▲▲ ---
 
             setInterval(updateTime, 1000);
             updateTime();
@@ -329,8 +309,11 @@
                 displayCurrentWeekSchedule();
             }
 
+            setupWeekPicker('week-picker-btn', (year, month, weekNum) => {
+                displayScheduleForWeek(year, month, weekNum);
+            });
+
             // 이벤트 리스너 연결
-            prevDataBtn.addEventListener('click', cycleViewMode);
             backBtn.addEventListener('click', goBackView);
             homeBtn.addEventListener('click', () => window.location.href = 'index.html');
             forwardBtn.addEventListener('click', goForwardView);
@@ -344,13 +327,13 @@
 
             modalWindow.addEventListener('click', function (event) {
                 const target = event.target;
-                const userRole = localStorage.getItem('ppms_user_role'); // 권한 확인
+                const userRole = localStorage.getItem('ppms_user_role');
                 if (userRole === 'admin') {
                     if (target.classList.contains('add-row-btn')) {
                         const currentRow = target.closest('tr');
                         const tableBody = currentRow.closest('tbody');
                         const line = tableBody.id.slice(-1);
-                        addNewScheduleRow(tableBody, line, {}, currentRow); // [수정] 4번째 인자 추가
+                        addNewScheduleRow(tableBody, line, {}, currentRow);
                     }
                     if (target.classList.contains('delete-row-btn')) {
                         const currentRow = target.closest('tr');
@@ -364,7 +347,6 @@
                 }
             });
 
-            // (유효성 검사 등 다른 리스너들) ...
             modalWindow.addEventListener('input', function (event) {
                 const target = event.target;
                 if (target.dataset.field === 'lot-modal') {
@@ -410,31 +392,16 @@
             });
             displayArea.addEventListener('change', handleTableInputChange);
 
-            // [수정] 다운로드 모달 이벤트 리스너 (이제 정상 작동)
-            function closeExportModal() {
-                exportChoiceModal.classList.remove('visible');
-            }
+            function closeExportModal() { exportChoiceModal.classList.remove('visible'); }
             closeExportModalBtn.addEventListener('click', closeExportModal);
             exportChoiceModal.addEventListener('click', closeExportModal);
             exportChoiceModal.querySelector('.modal-window').addEventListener('click', (e) => e.stopPropagation());
+            exportPlanBtn.addEventListener('click', async () => { await generateProductionPdf('plan'); closeExportModal(); });
+            exportReportBtn.addEventListener('click', async () => { await generateProductionPdf('report'); closeExportModal(); });
 
-            exportPlanBtn.addEventListener('click', async () => {
-                await generateProductionPdf('plan');
-                closeExportModal();
-            });
-            exportReportBtn.addEventListener('click', async () => {
-                await generateProductionPdf('report');
-                closeExportModal();
-            });
-
-            // (비고 모달 리스너)
-            function closeNotesModal() {
-                notesModal.classList.remove('visible');
-            }
+            function closeNotesModal() { notesModal.classList.remove('visible'); }
             closeNotesModalBtn.addEventListener('click', closeNotesModal);
-            notesModal.addEventListener('click', (e) => {
-                if (e.target === notesModal) closeNotesModal();
-            });
+            notesModal.addEventListener('click', (e) => { if (e.target === notesModal) closeNotesModal(); });
             notesModal.querySelector('.modal-window').addEventListener('click', (e) => e.stopPropagation());
             notesTabNav.addEventListener('click', (e) => {
                 if (e.target.classList.contains('tab-btn')) {
@@ -450,6 +417,29 @@
 
 
         // --- 기능 함수들 ---
+
+        // [신규] ISO 주차 문자열 -> 날짜(목요일) 변환 함수
+        function getDateFromISOWeek(weekStr) { // "2025-W42"
+            const [y, w] = weekStr.split('-W');
+            const year = parseInt(y);
+            const week = parseInt(w);
+
+            // 1월 4일이 포함된 주가 1주차 (ISO 8601)
+            const simpleDate = new Date(year, 0, 1 + (week - 1) * 7);
+            const dayOfWeek = simpleDate.getDay();
+            const ISOweekStart = simpleDate;
+
+            if (dayOfWeek <= 4)
+                ISOweekStart.setDate(simpleDate.getDate() - simpleDate.getDay() + 1);
+            else
+                ISOweekStart.setDate(simpleDate.getDate() + 8 - simpleDate.getDay());
+
+            // 해당 주차의 '목요일'을 기준으로 월을 판단합니다.
+            const thursday = new Date(ISOweekStart);
+            thursday.setDate(ISOweekStart.getDate() + 3);
+
+            return thursday;
+        }
 
         function showValidationMessage(targetElement, message) {
             const parentCell = targetElement.parentElement;
@@ -481,18 +471,16 @@
                 companyList = await companyRes.json();
             } catch (error) {
                 console.error("마스터 데이터 로딩 실패:", error);
-                alert("담당자/업체 목록을 불러오는 데 실패했습니다.");
+                // alert("담당자/업체 목록을 불러오는 데 실패했습니다.");
             }
         }
 
         function saveSchedules() {
-            // ▼ [권한 확인]
             const userRole = localStorage.getItem('ppms_user_role');
             if (userRole !== 'admin') {
                 alert('저장 권한이 없습니다.');
                 return;
             }
-            // ▲ [권한 확인]
 
             const allSchedules = [];
             for (const line in lineControls) {
@@ -545,13 +533,11 @@
         }
 
         async function resetSchedules() {
-            // ▼ [권한 확인]
             const userRole = localStorage.getItem('ppms_user_role');
             if (userRole !== 'admin') {
                 alert('초기화 권한이 없습니다.');
                 return;
             }
-            // ▲ [권한 확인]
 
             if (confirm('정말로 해당 주차의 모든 일정을 초기화하시겠습니까?\nDB에 저장된 내용이 영구적으로 삭제됩니다.')) {
                 const { year, month, weekNum } = currentSelectedWeekInfo;
@@ -611,12 +597,8 @@
         }
 
         async function openModal(weekInfo) {
-            // ▼ [권한 확인]
             const userRole = localStorage.getItem('ppms_user_role');
-            // ▲ [권한 확인]
-
             currentSelectedWeekInfo = weekInfo;
-            // [수정] 'user'일 경우 모달 제목 변경
             modalTitle.textContent = `${weekInfo.month}월${weekInfo.weekNum}주차 일정 ${userRole !== 'admin' ? '(읽기 전용)' : '등록'}`;
 
             for (const line in lineControls) {
@@ -649,21 +631,17 @@
 
         function closeModal() { modalOverlay.classList.remove('visible'); }
 
-        // --- [수정] addNewScheduleRow (모달 테이블 생성) 함수에 'disabled' 속성 추가 ---
         function addNewScheduleRow(targetTableBody, line, scheduleData = {}, insertAfterRow = null) {
-            // ▼ [권한 확인]
             const userRole = localStorage.getItem('ppms_user_role');
             const isReadOnly = (userRole !== 'admin') ? 'disabled' : '';
-            // ▲ [권한 확인]
 
             const newRow = insertAfterRow ?
-                targetTableBody.insertRow(insertAfterRow.rowIndex) : // [수정] rowIndex로 정확한 위치 삽입
+                targetTableBody.insertRow(insertAfterRow.rowIndex) :
                 targetTableBody.insertRow();
             newRow.dataset.scheduleId = scheduleData.id || '';
 
             const lineCell = `<td class="line-cell">${line}</td>`;
 
-            // [수정] 업체 (disabled 추가)
             const companyOptions = companyList.map(c =>
                 `<option value="${c.name}" ${scheduleData.company === c.name ? 'selected' : ''}>${c.name}</option>`
             ).join('');
@@ -672,36 +650,30 @@
                 ${companyOptions}
             </select></td>`;
 
-            // [수정] 주문연도 (disabled 추가)
             const orderYearValue = scheduleData.orderYear || currentSelectedWeekInfo.year;
             const orderYearCell = `<td><input type="number" data-field="orderYear" value="${orderYearValue}" ${isReadOnly}></td>`;
 
-            // [수정] 모델명 (disabled 추가)
             const modelCell = `<td><input type="text" data-field="model-modal" value="${scheduleData.model || ''}" ${isReadOnly}></td>`;
 
-            // [수정] 주문월 (disabled 추가)
             let monthOptions = '';
             for (let i = 1; i <= 12; i++) {
                 const monthText = `${i}월분`;
-                monthOptions += `<option value="${monthText}" ${scheduleData.orderMonth === monthText ? 'selected' : ''}>${monthText}</option>`;
+                const isSelected = (scheduleData.orderMonth && scheduleData.orderMonth.trim() === monthText) ? 'selected' : '';
+                monthOptions += `<option value="${monthText}" ${isSelected}>${monthText}</option>`;
             }
             const orderMonthCell = `<td><select data-field="orderMonth" ${isReadOnly}><option value="">-선택-</option>${monthOptions}</select></td>`;
 
-            // [수정] T/B (disabled 추가)
             const tbCell = `<td><select data-field="tb-modal" ${isReadOnly}>
-                <option ${scheduleData.tb === 'Top' ? 'selected' : ''}>Top</option>
-                <option ${scheduleData.tb === 'Bot' ? 'selected' : ''}>Bot</option>
-                <option ${scheduleData.tb === 'T/O' ? 'selected' : ''}>T/O</option>
-                <option ${scheduleData.tb === 'B/O' ? 'selected' : ''}>B/O</option>
+                <option value="Top" ${scheduleData.tb === 'Top' ? 'selected' : ''}>Top</option>
+                <option value="Bot" ${scheduleData.tb === 'Bot' ? 'selected' : ''}>Bot</option>
+                <option value="T/O" ${scheduleData.tb === 'T/O' ? 'selected' : ''}>T/O</option>
+                <option value="B/O" ${scheduleData.tb === 'B/O' ? 'selected' : ''}>B/O</option>
             </select></td>`;
 
-            // [수정] LOT (disabled 추가)
             const lotCell = `<td><input type="text" data-field="lot-modal" value="${scheduleData.lot || ''}" placeholder="예: 50" ${isReadOnly}></td>`;
 
-            // [수정] 생산예정일 (disabled 추가)
             const dateCell = `<td><div class="date-select-group"><select class="start-date-select" ${isReadOnly}></select><span>~</span><select class="end-date-select" ${isReadOnly}></select></div></td>`;
 
-            // [수정] 동작 (admin일 때만 버튼 보이기)
             const actionCell = `<td class="row-actions">
                 ${(userRole === 'admin') ?
                     '<button class="action-btn add-row-btn">+</button><button class="action-btn delete-row-btn">-</button>' :
@@ -712,15 +684,13 @@
 
             populateDateSelectors(currentSelectedWeekInfo, newRow);
 
-            // DB에서 불러온 기존 날짜 값 설정
             const selects = newRow.querySelectorAll('select');
-            selects[3].value = scheduleData.startDate || ''; // 시작일
-            selects[4].value = scheduleData.endDate || ''; // 종료일
+            selects[3].value = scheduleData.startDate || '';
+            selects[4].value = scheduleData.endDate || '';
 
             return newRow;
         }
 
-        // (populateDateSelectors, renderContent, navigateToView, goBackView, goForwardView, cycleViewMode, handlePeriodButtonClick 변경 없음) ...
         function populateDateSelectors(weekInfo, row) {
             if (!row || !weekInfo.year) return;
             const startDateSelect = row.querySelector('.start-date-select');
@@ -769,6 +739,8 @@
             currentView = { mode: newMode, data: data };
             renderContent();
         }
+
+        // [수정] 뒤로가기 로직 (스택 없으면 브라우저 뒤로가기)
         function goBackView() {
             if (viewHistory.length > 0) {
                 forwardHistory.push(currentView);
@@ -778,6 +750,7 @@
                 history.back();
             }
         }
+
         function goForwardView() {
             if (forwardHistory.length > 0) {
                 viewHistory.push(currentView);
@@ -785,12 +758,14 @@
                 renderContent();
             }
         }
+
         function cycleViewMode() {
             const currentMode = currentView.mode;
             if (currentMode === 'current_week' || currentMode === 'schedule_view') navigateToView('past_weeks');
             else if (currentMode === 'past_weeks') navigateToView('past_months', { year: new Date().getFullYear() });
             else if (currentMode === 'past_months') navigateToView('past_years');
         }
+
         function handlePeriodButtonClick(event) {
             const target = event.target;
             if (target.classList.contains('period-btn')) {
@@ -803,15 +778,11 @@
             }
         }
 
-        // --- [수정] handleTableInputChange (메인화면 수정) 함수에 권한 확인 ---
         function handleTableInputChange(event) {
-            // ▼ [권한 확인]
-            const userRole = localStorage.getItem('ppms_user_role');
             if (!isEditAllowed()) {
                 alert('수정 권한이 없습니다.');
                 return;
             }
-            // ▲ [권한 확인]
 
             const target = event.target;
             const row = target.closest('tr');
@@ -983,14 +954,10 @@
         }
 
         async function handleNoteSave(event) {
-            // ▼ [권한 확인]
-            const userRole = localStorage.getItem('ppms_user_role');
             if (!isEditAllowed()) {
                 alert('비고 저장 권한이 없습니다.');
                 return;
             }
-            // ▲ [권한 확인]
-
             if (event.target.tagName !== 'TEXTAREA') return;
             const scheduleId = event.target.dataset.noteId;
             const newNoteText = event.target.value;
@@ -1010,7 +977,6 @@
             }
         }
 
-        // --- [수정] createScheduleTableHTML (메인 테이블 생성) 함수에 'disabled' 속성 추가 ---
         function createScheduleTableHTML(schedules, progress, isReadOnly = false) {
             const schedulesByLine = { A: [], B: [], C: [] };
             if (schedules && schedules.length > 0) {
@@ -1020,10 +986,8 @@
                 });
             }
 
-            // ▼ [권한 확인]
             const userRole = localStorage.getItem('ppms_user_role');
             const isReadOnlyAttr = isEditAllowed() ? '' : 'disabled';
-            // ▲ [권한 확인]
 
             let tableHTML = '';
             for (const line in schedulesByLine) {
@@ -1059,36 +1023,49 @@
                         <th>생산예정일</th>
                     </tr></thead><tbody>`;
 
-                    // [수정] map 루프에서 'disabled' 속성(${isReadOnlyAttr}) 추가
                     tableHTML += schedulesByLine[line].map(s => {
+                        // 1. 담당자 옵션 생성
                         const managerOptions = managerList.map(m =>
                             `<option value="${m.name}" ${s.manager === m.name ? 'selected' : ''}>${m.name}</option>`
                         ).join('');
+
+                        // 2. 업체 옵션 생성
                         const companyOptions = companyList.map(c =>
                             `<option value="${c.name}" ${s.company === c.name ? 'selected' : ''}>${c.name}</option>`
                         ).join('');
+
+                        // 3. 주문월 옵션 생성 (값 비교 강화)
                         let monthOptions = '';
                         for (let i = 1; i <= 12; i++) {
                             const monthText = `${i}월분`;
-                            monthOptions += `<option value="${monthText}" ${s.orderMonth === monthText ? 'selected' : ''}>${monthText}</option>`;
+                            // DB 값(s.orderMonth)이 존재하고 일치하면 selected
+                            const isSelected = (s.orderMonth && s.orderMonth.trim() === monthText) ? 'selected' : '';
+                            monthOptions += `<option value="${monthText}" ${isSelected}>${monthText}</option>`;
                         }
 
                         return `<tr data-schedule-id="${s.id}" data-line="${line}">
-                <td><select class="form-select" data-field="manager" ${isReadOnlyAttr}>
+                    <td><select class="form-select" data-field="manager" ${isReadOnlyAttr}>
+                        <option value="">-선택-</option> ${managerOptions}
                     </select></td>
-                <td><select class="form-select" data-field="company" ${isReadOnlyAttr}>
+                    <td><select class="form-select" data-field="company" ${isReadOnlyAttr}>
+                        <option value="">-선택-</option> ${companyOptions}
                     </select></td>
-                <td><input type="text" class="form-input" data-field="model" value="${s.model || ''}" ${isReadOnlyAttr}></td>
-                <td><select class="form-select" data-field="orderMonth" ${isReadOnlyAttr}>
+                    <td><input type="text" class="form-input" data-field="model" value="${s.model || ''}" ${isReadOnlyAttr}></td>
+                    <td><select class="form-select" data-field="orderMonth" ${isReadOnlyAttr}>
+                        <option value="">-선택-</option> ${monthOptions}
                     </select></td>
-                <td><select class="form-select" data-field="tb" ${isReadOnlyAttr}>
+                    <td><select class="form-select" data-field="tb" ${isReadOnlyAttr}>
+                        <option value="Top" ${s.tb === 'Top' ? 'selected' : ''}>Top</option>
+                        <option value="Bot" ${s.tb === 'Bot' ? 'selected' : ''}>Bot</option>
+                        <option value="T/O" ${s.tb === 'T/O' ? 'selected' : ''}>T/O</option>
+                        <option value="B/O" ${s.tb === 'B/O' ? 'selected' : ''}>B/O</option>
                     </select></td>
-                <td><input type="text" class="form-input" data-field="lot" value="${s.lot || ''}" ${isReadOnlyAttr}></td>
-                <td><input type="text" class="form-input" data-field="actualProd" value="${s.actualProd || ''}" ${isReadOnlyAttr}></td>
-                <td><select class="form-select prod-start-date" data-field="prodStart" ${isReadOnlyAttr}></select></td>
-                <td><select class="form-select prod-end-date" data-field="prodEnd" ${isReadOnlyAttr}></select></td>
-                <td>${s.startDate} ~ ${s.endDate}</td>
-            </tr>`;
+                    <td><input type="text" class="form-input" data-field="lot" value="${s.lot || ''}" ${isReadOnlyAttr}></td>
+                    <td><input type="text" class="form-input" data-field="actualProd" value="${s.actualProd || ''}" ${isReadOnlyAttr}></td>
+                    <td><select class="form-select prod-start-date" data-field="prodStart" ${isReadOnlyAttr}></select></td>
+                    <td><select class="form-select prod-end-date" data-field="prodEnd" ${isReadOnlyAttr}></select></td>
+                    <td>${s.startDate} ~ ${s.endDate}</td>
+                </tr>`;
                     }).join('');
                     tableHTML += `</tbody></table></div>`;
                 } else {
@@ -1099,7 +1076,6 @@
             return tableHTML;
         }
 
-        // (PDF 생성 및 날짜 관련 유틸리티 함수들은 변경 없음)
         async function generateProductionPdf(reportType) {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();

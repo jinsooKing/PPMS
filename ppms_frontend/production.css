@@ -177,3 +177,7 @@
     border-radius: 5px;
     box-sizing: border-box; 
 }
+input[type="date"],
+input[type="week"] {
+    color-scheme: dark;
+}

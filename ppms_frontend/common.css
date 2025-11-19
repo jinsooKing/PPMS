@@ -528,3 +528,84 @@ table.editable-table {
 .editable-table .delete-row-btn:hover {
     background-color: #dc3545; /* 삭제 버튼 호버 색상 */
 }
+
+.custom-calendar-popup {
+    position: absolute;
+    /* 버튼(부모 relative) 기준으로 위치를 잡습니다. */
+    /* 위치는 각 페이지 상황에 맞춰 JS나 추가 CSS로 조정 가능 */
+    bottom: 100%; /* 버튼 바로 위 */
+    right: 0;
+    margin-bottom: 10px;
+    
+    width: 300px;
+    background-color: #2C2C2E;
+    border: 1px solid #555;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+    padding: 15px;
+    z-index: 2000;
+    display: none;
+    font-family: 'BMDOHYEON', sans-serif;
+}
+
+.custom-calendar-popup.visible {
+    display: block;
+}
+
+.calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    color: white;
+}
+
+.calendar-nav-btn {
+    background: none;
+    border: none;
+    color: #ccc;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 0 10px;
+}
+.calendar-nav-btn:hover { color: white; }
+
+.calendar-days-header {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    text-align: center;
+    margin-bottom: 5px;
+    color: #888;
+    font-size: 12px;
+}
+
+.calendar-body {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.calendar-week-row {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background-color 0.1s;
+}
+
+.day-cell {
+    text-align: center;
+    padding: 8px 0;
+    color: white;
+    font-size: 14px;
+    border-radius: 4px;
+}
+
+.day-cell.other-month { opacity: 0.3; }
+.day-cell.sunday { color: #ff4d4d; }
+
+/* 마우스 올렸을 때 (일요일 제외) 하이라이트 */
+.calendar-week-row:hover .day-cell:not(.sunday) {
+    background-color: #007BFF;
+    color: white;
+}
