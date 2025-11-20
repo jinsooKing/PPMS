@@ -82,10 +82,15 @@ class DipGroup(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     model = db.Column(db.String(100), nullable=False)
     lot = db.Column(db.String(50), nullable=False)
+    year = db.Column(db.Integer, nullable=False, default=0) 
+    month = db.Column(db.String(20), nullable=False, default='')
     # 같은 모델+LOT 중복 방지
-    __table_args__ = (db.UniqueConstraint('model', 'lot', name='unique_model_lot'),)
+    status = db.Column(db.String(20), nullable=False, default='ongoing')
+    
+    __table_args__ = (
+        db.UniqueConstraint('model', 'year', 'month', 'lot', name='unique_dip_group_key'),
+    )
 
-    # 관계 설정 (그룹 삭제 시 하위 이력도 삭제)
     histories = db.relationship('DipHistory', backref='group', cascade='all, delete-orphan', lazy=True)
 
     def to_dict(self):
@@ -93,6 +98,9 @@ class DipGroup(db.Model):
             'id': self.id,
             'model': self.model,
             'lot': self.lot,
+            'year': self.year,   # [신규]
+            'month': self.month, # [신규]
+            'status': self.status,
             'histories': [h.to_dict() for h in self.histories]
         }
 

@@ -13,13 +13,11 @@
     <link href="https://hangeul.pstatic.net/hangeul_static/css/bmdohyeon.css" rel="stylesheet">
     <link href="https://hangeul.pstatic.net/hangeul_static/css/bmjua.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    
     <script src="auth.js"></script>
 </head>
 
 <body>
     <div class="page-container">
-        
         <header class="main-header">
             <div class="header-left"><a href="index.html">홈으로</a></div>
             <div class="header-center">
@@ -40,30 +38,16 @@
 
         <footer class="main-footer">
             <div class="footer-left footer-action-group">
-                <div class="common-box font-15pt clickable-box" id="open-dip-modal-btn">
-                    <i class="fas fa-plus-circle"></i> 출입고 등록
-                </div>
+                <div class="common-box font-15pt clickable-box" id="open-dip-modal-btn"><i class="fas fa-plus-circle"></i> 출입고 등록</div>
             </div>
             <div class="footer-center footer-action-group">
-                <div class="common-box font-15pt clickable-box" id="dip-back-btn" onclick="history.back();">
-                    <i class="fas fa-arrow-left"></i>
-                </div>
-                <a href="index.html" id="dip-home-link">
-                    <div class="common-box font-15pt clickable-box" id="dip-home-btn" style="background-color: #333;">
-                        <i class="fas fa-home"></i>
-                    </div>
-                </a>
-                <div class="common-box font-15pt clickable-box" id="dip-forward-btn" onclick="history.forward();">
-                    <i class="fas fa-arrow-right"></i>
-                </div>
+                <div class="common-box font-15pt clickable-box" id="dip-back-btn" onclick="history.back();"><i class="fas fa-arrow-left"></i></div>
+                <a href="index.html" id="dip-home-link"><div class="common-box font-15pt clickable-box" id="dip-home-btn" style="background-color: #333;"><i class="fas fa-home"></i></div></a>
+                <div class="common-box font-15pt clickable-box" id="dip-forward-btn" onclick="history.forward();"><i class="fas fa-arrow-right"></i></div>
             </div>
             <div class="footer-right footer-action-group">
-                <div class="common-box font-15pt clickable-box" id="edit-group-btn" style="background-color: #6c757d;">
-                    <i class="fas fa-edit"></i> 그룹편집
-                </div>
-                <div class="common-box font-15pt clickable-box" id="add-group-btn" style="background-color: #007bff;">
-                    <i class="fas fa-layer-group"></i> 그룹추가
-                </div>
+                <div class="common-box font-15pt clickable-box" id="edit-group-btn" style="background-color: #6c757d;"><i class="fas fa-edit"></i> 그룹편집</div>
+                <div class="common-box font-15pt clickable-box" id="add-group-btn" style="background-color: #007bff;"><i class="fas fa-layer-group"></i> 그룹추가</div>
             </div>
         </footer>
     </div>
@@ -95,22 +79,26 @@
     </div>
 
     <div class="modal-overlay" id="group-manage-modal">
-        <div class="modal-window" style="width: 90vw; max-width: 900px;"> 
+        <div class="modal-window"> 
+            <button id="toggle-completed-btn">완료된 그룹 보기 >></button>
             <button class="close-btn" id="close-group-modal-btn">&times;</button>
+            
             <div class="modal-content">
-                
                 <div class="dip-modal-form-section">
                     <h2 class="modal-title" id="group-modal-title">모델 그룹 추가</h2>
                     <div class="dip-form-grid">
                         <div class="dip-input-group">
                             <label for="group-model-name">모델명</label>
-                            <input type="text" id="group-model-name" class="form-input" placeholder="우측 리스트에서 선택하세요">
+                            <input type="text" id="group-model-name" class="form-input" placeholder="우측 리스트 선택">
                         </div>
                         <div class="dip-input-group">
                             <label for="group-lot">LOT</label>
-                            <input type="text" id="group-lot" class="form-input" placeholder="숫자만 입력 가능">
+                            <input type="text" id="group-lot" class="form-input" placeholder="숫자만 입력">
                         </div>
+                        <input type="hidden" id="group-year">
+                        <input type="hidden" id="group-month">
                         <input type="hidden" id="group-edit-id"> 
+                        
                         <div class="dip-input-group" style="margin-top: 20px;">
                             <div class="common-box clickable-box" id="save-group-btn" style="width: 100%; text-align: center; background-color: #007bff;">저장하기</div>
                         </div>
@@ -121,8 +109,17 @@
 
                 <div class="dip-modal-other-section">
                     <h3 class="dip-title" style="margin: 0 0 15px 0; border-bottom: 2px solid #555;">생산 완료 모델 (SMD)</h3>
-                    <div id="production-models-list" style="color: #ddd; overflow-y: auto; max-height: 400px;">
+                    <div id="production-models-list" style="color: #ddd;">
                         <p style="text-align:center; color:#888;">로딩중...</p>
+                    </div>
+                </div>
+
+                <div class="collapsible-section">
+                    <div class="dip-modal-separator"></div>
+                    <div class="dip-modal-other-section">
+                        <h3 class="dip-title" style="margin: 0 0 15px 0; border-bottom: 2px solid #555; color: #28a745;">완료된 DIP 그룹</h3>
+                        <div id="completed-groups-list" style="color: #ddd;">
+                            </div>
                     </div>
                 </div>
 
@@ -131,7 +128,6 @@
     </div>
 
     <script>
-        // --- 헬퍼 함수 ---
         function updateTime() {
             const timeDisplay = document.getElementById('current-time');
             if (!timeDisplay) return;
@@ -145,16 +141,13 @@
             return '';
         }
 
-        // --- 데이터 상태 ---
         let groupList = [];
-        let productionModelsCache = []; // [신규] 생산 모델 데이터 캐싱
+        let productionModelsCache = [];
         const API_BASE = 'http://127.0.0.1:5000/api/dip';
 
-        // --- DOM 요소 ---
         const wrapper = document.getElementById('dip-history-wrapper');
         const emptyMsg = document.getElementById('empty-message');
         
-        // 출입고 등록 모달
         const regModal = document.getElementById('dip-registration-modal');
         const openRegModalBtn = document.getElementById('open-dip-modal-btn');
         const closeRegModalBtn = document.getElementById('close-dip-modal-btn');
@@ -171,27 +164,29 @@
         let regEditingGroupId = null;
         let regEditingRowId = null;
 
-        // 그룹 관리 모달
         const groupModal = document.getElementById('group-manage-modal');
         const openGroupModalBtn = document.getElementById('add-group-btn');
         const editGroupModeBtn = document.getElementById('edit-group-btn');
         const closeGroupModalBtn = document.getElementById('close-group-modal-btn');
         const groupModelInput = document.getElementById('group-model-name');
         const groupLotInput = document.getElementById('group-lot');
+        const groupYearInput = document.getElementById('group-year');
+        const groupMonthInput = document.getElementById('group-month');
         const groupEditIdInput = document.getElementById('group-edit-id');
         const saveGroupBtn = document.getElementById('save-group-btn');
         const groupModalTitle = document.getElementById('group-modal-title');
         const productionModelsList = document.getElementById('production-models-list');
+        const completedGroupsList = document.getElementById('completed-groups-list');
+        
+        const toggleCompletedBtn = document.getElementById('toggle-completed-btn'); // [신규]
+
         let isGroupEditMode = false; 
 
-        // --- 초기화 ---
         document.addEventListener('DOMContentLoaded', () => {
             updateTime();
             setInterval(updateTime, 60000);
-            
             fetchGroups(); 
 
-            // 이벤트 리스너
             openRegModalBtn.addEventListener('click', () => {
                 resetRegForm();
                 openModal(regModal);
@@ -200,58 +195,60 @@
             });
             closeRegModalBtn.addEventListener('click', () => closeModal(regModal));
             cancelRegisterBtn.addEventListener('click', () => closeModal(regModal));
-            
             regShipBtn.addEventListener('click', () => updateRegType('ship'));
             regReceiveBtn.addEventListener('click', () => updateRegType('receive'));
-
             doRegisterBtn.addEventListener('click', handleRegistration);
 
             openGroupModalBtn.addEventListener('click', () => {
                 openGroupModal();
-                fetchProductionModels(); // 모달 열 때 데이터 로딩
+                fetchProductionModels(); 
+                renderCompletedGroups(); 
             });
             closeGroupModalBtn.addEventListener('click', () => closeModal(groupModal));
             saveGroupBtn.addEventListener('click', handleSaveGroup);
+            
+            // [신규] 토글 버튼
+            toggleCompletedBtn.addEventListener('click', toggleCompletedSection);
 
             editGroupModeBtn.addEventListener('click', toggleGroupEditMode);
-            
             wrapper.addEventListener('click', handleWrapperClick);
-
-            // [신규] LOT 입력 유효성 검사 (숫자만 입력)
-            groupLotInput.addEventListener('input', function(e) {
-                this.value = this.value.replace(/[^0-9]/g, '');
-            });
+            groupLotInput.addEventListener('input', function(e) { this.value = this.value.replace(/[^0-9]/g, ''); });
         });
 
-        // --- API 호출 ---
         async function fetchGroups() {
             try {
                 const response = await fetch(`${API_BASE}/groups`);
                 if (!response.ok) throw new Error('데이터 로딩 실패');
                 groupList = await response.json();
                 renderGroups();
-            } catch (error) {
-                console.error(error);
-            }
+            } catch (error) { console.error(error); }
         }
 
-        // 생산 완료 모델 목록 가져오기
         async function fetchProductionModels() {
             productionModelsList.innerHTML = '<p style="text-align:center;">로딩중...</p>';
             try {
                 const response = await fetch(`${API_BASE}/production_models`);
                 const models = await response.json();
-                productionModelsCache = models; // [신규] 데이터 캐싱 (유효성 검사용)
+                productionModelsCache = models; 
+                
+                const filteredModels = models.filter(m => {
+                    const isCompleted = groupList.some(g => 
+                        g.model === m.model && 
+                        g.lot === m.lot && 
+                        g.status === 'completed'
+                    );
+                    return !isCompleted;
+                });
 
-                if (models.length === 0) {
-                    productionModelsList.innerHTML = '<p style="text-align:center;">생산 완료된 모델이 없습니다.</p>';
+                if (filteredModels.length === 0) {
+                    productionModelsList.innerHTML = '<p style="text-align:center;">등록 가능한(미완료) 생산 모델이 없습니다.</p>';
                     return;
                 }
-
-                const html = models.map(m => 
+                
+                const html = filteredModels.map(m => 
                     `<div class="common-box clickable-box" style="margin-bottom:5px; font-size:14px; padding:5px 10px;" 
-                          onclick="fillGroupForm('${m.model}', '${m.lot}')">
-                        <span style="color:#fff; font-weight:bold;">${m.model}</span>
+                          onclick="fillGroupForm('${m.model}', '${m.lot}', '${m.year}', '${m.month}')">
+                        <span style="color:#fff; font-weight:bold;">${m.model} (${m.month})</span>
                         <span style="color:#aaa; font-size:0.9em; margin-left:10px;">(LOT: ${m.lot})</span>
                      </div>`
                 ).join('');
@@ -261,40 +258,76 @@
             }
         }
 
-        // --- 렌더링 ---
+        function renderCompletedGroups() {
+            completedGroupsList.innerHTML = '';
+            const completedGroups = groupList.filter(g => g.status === 'completed');
+            
+            if (completedGroups.length === 0) {
+                completedGroupsList.innerHTML = '<p style="text-align:center;">완료된 그룹이 없습니다.</p>';
+                return;
+            }
+            const html = completedGroups.map(g => 
+                `<div class="common-box" style="margin-bottom:5px; font-size:14px; padding:5px 10px; border:1px solid #28a745; color:#aaa;">
+                    <span style="font-weight:bold; text-decoration:line-through;">${g.model} (${g.month})</span> 
+                    <span style="font-size:0.9em;">(LOT: ${g.lot})</span>
+                 </div>`
+            ).join('');
+            completedGroupsList.innerHTML = html;
+        }
+
         function renderGroups() {
             wrapper.innerHTML = '';
-            wrapper.appendChild(emptyMsg);
+            const activeGroups = groupList.filter(g => g.status !== 'completed');
 
-            if (groupList.length === 0) {
+            if (activeGroups.length === 0) {
+                wrapper.appendChild(emptyMsg);
                 emptyMsg.style.display = 'block';
                 return;
             }
             emptyMsg.style.display = 'none';
 
-            groupList.forEach(group => {
+            activeGroups.forEach(group => {
                 const groupEl = document.createElement('div');
                 groupEl.className = 'model-group-wrapper';
+                
+                const totalShip = group.shipping.reduce((sum, item) => sum + parseInt(item.quantity), 0);
+                const totalReceive = group.receiving.reduce((sum, item) => sum + parseInt(item.quantity), 0);
+                const targetLot = parseInt(group.lot);
+
+                const isReadyToComplete = (targetLot === totalShip && targetLot === totalReceive);
+                
+                if (isReadyToComplete) {
+                    groupEl.classList.add('ready-to-complete');
+                }
+                
                 if(isGroupEditMode) groupEl.classList.add('edit-mode-active');
                 groupEl.dataset.groupId = group.id;
 
-                const deleteControlHtml = isGroupEditMode 
-                    ? `<button class="group-delete-btn" title="그룹 전체 삭제">그룹 삭제</button>` 
-                    : ``;
+                let controlsHtml = '';
+                if (isGroupEditMode) {
+                    controlsHtml = `<button class="group-delete-btn" title="그룹 전체 삭제">그룹 삭제</button>`;
+                } else {
+                    if (isReadyToComplete) {
+                         controlsHtml += `<button class="group-complete-btn" title="그룹 완료 처리">완료</button>`;
+                    }
+                    controlsHtml += `<button class="delete-toggle-icon" title="행 삭제 모드 켜기"><i class="fas fa-trash"></i></button>`;
+                }
+
+                const displayModelName = `${group.model} (${group.month})`;
 
                 const headerHtml = `
                     <div class="model-header ${isGroupEditMode ? 'clickable-box' : ''}" style="${isGroupEditMode ? 'border: 2px dashed #007bff; padding: 10px; border-radius: 5px;' : ''}">
                         <div class="model-info">
-                            <span class="model-name-display">${group.model}</span>
+                            <span class="model-name-display">${displayModelName}</span>
                             <span class="lot-display">LOT: ${group.lot}</span>
                         </div>
-                        <div class="model-controls">${deleteControlHtml}</div>
+                        <div class="model-controls">${controlsHtml}</div>
                     </div>`;
 
                 const tablesHtml = `
                     <div class="dip-table-pair">
                         <div class="dip-history-table-box">
-                            <h3 class="dip-title" style="margin-top: 0;">SMD 출고 (외주)</h3>
+                            <h3 class="dip-title" style="margin-top: 0;">SMD 출고 (외주) <span style="font-size:0.8em; color:#aaa;">(합계: ${totalShip})</span></h3>
                             <table class="editable-table history-table" data-type="ship">
                                 <colgroup><col style="width: 25%;"><col style="width: 35%;"><col style="width: 40%;"></colgroup>
                                 <thead><tr><th>날짜</th><th>출고 수량</th><th>누계수량</th></tr></thead>
@@ -302,7 +335,7 @@
                             </table>
                         </div>
                         <div class="dip-history-table-box">
-                            <h3 class="dip-title" style="margin-top: 0;">DIP 입고 (회수)</h3>
+                            <h3 class="dip-title" style="margin-top: 0;">DIP 입고 (회수) <span style="font-size:0.8em; color:#aaa;">(합계: ${totalReceive})</span></h3>
                             <table class="editable-table history-table" data-type="receive">
                                 <colgroup><col style="width: 25%;"><col style="width: 35%;"><col style="width: 40%;"></colgroup>
                                 <thead><tr><th>날짜</th><th>입고 수량</th><th>누계수량</th></tr></thead>
@@ -323,9 +356,7 @@
                 sum += parseInt(row.quantity);
                 return { ...row, cumulative: sum };
             });
-
-            // 최신 항목이 맨 아래로 (정순)
-            return rowsWithCumulative.map(row => `
+            return rowsWithCumulative.reverse().map(row => `
                 <tr data-row-id="${row.id}" class="clickable-row">
                     <td>${formatDateYYMMDD(row.date)}</td>
                     <td class="quantity-cell">${row.quantity}</td>
@@ -337,70 +368,125 @@
             `).join('');
         }
 
-        // [출입고 등록 모달용] 기존 그룹 리스트 렌더링
         function renderAvailableGroups() {
             availableGroupsList.innerHTML = '';
-            if (groupList.length === 0) {
-                availableGroupsList.innerHTML = '<p style="text-align:center;">생성된 그룹이 없습니다.</p>';
+            const activeGroups = groupList.filter(g => g.status !== 'completed');
+            
+            if (activeGroups.length === 0) {
+                availableGroupsList.innerHTML = '<p style="text-align:center;">등록 가능한(진행중인) 그룹이 없습니다.</p>';
                 return;
             }
-            const html = groupList.map(g => 
+            const html = activeGroups.map(g => 
                 `<div class="common-box clickable-box" style="margin-bottom:5px; font-size:14px; padding:5px 10px;" 
                       onclick="fillRegForm('${g.model}')">
-                    <span style="font-weight:bold;">${g.model}</span> 
+                    <span style="font-weight:bold;">${g.model} (${g.month})</span> 
                     <span style="color:#aaa; font-size:0.9em;">(LOT: ${g.lot})</span>
                  </div>`
             ).join('');
             availableGroupsList.innerHTML = html;
         }
 
-        // --- 핸들러 ---
-        
-        // (그룹 추가 모달) 리스트 클릭 시 폼 채우기
-        window.fillGroupForm = function(model, lot) {
+        window.fillGroupForm = function(model, lot, year, month) {
             groupModelInput.value = model;
             groupLotInput.value = lot;
+            groupYearInput.value = year;
+            groupMonthInput.value = month;
         };
 
-        // (출입고 등록 모달) 리스트 클릭 시 폼 채우기
         window.fillRegForm = function(model) {
-            if(!regModelInput.readOnly) {
-                regModelInput.value = model;
-            }
+            if(!regModelInput.readOnly) regModelInput.value = model;
         };
+
+        // [수정] 접기/펼치기 토글 함수 (애니메이션 처리 포함)
+        function toggleCompletedSection() {
+            const modalWindow = groupModal.querySelector('.modal-window');
+            const collapsibleSection = groupModal.querySelector('.collapsible-section');
+            const isExpanded = modalWindow.classList.contains('expanded');
+            
+            if (isExpanded) {
+                // [접기]
+                // 1. 버튼 상태 변경
+                toggleCompletedBtn.innerHTML = '완료된 그룹 보기 >>';
+                toggleCompletedBtn.classList.remove('active');
+                
+                // 2. 'closing' 클래스 추가 -> 책 덮기 애니메이션 시작
+                collapsibleSection.classList.add('closing');
+                
+                // 3. 모달 너비 축소 (애니메이션과 동시에 시작)
+                modalWindow.classList.remove('expanded');
+
+                // 4. 애니메이션 시간(0.5s) 후 완전히 숨김
+                setTimeout(() => {
+                    collapsibleSection.classList.remove('closing'); 
+                    // CSS에서 .expanded가 없으면 display: none이 되므로 자동 숨김됨
+                }, 500); // CSS animation duration과 일치
+
+            } else {
+                // [펼치기]
+                // 1. 데이터 갱신
+                renderCompletedGroups();
+                
+                // 2. 버튼 상태 변경
+                toggleCompletedBtn.innerHTML = '완료된 그룹 숨기기 <<';
+                toggleCompletedBtn.classList.add('active');
+                
+                // 3. 모달 너비 확장 및 섹션 표시 (책 펼치기 애니메이션 자동 시작)
+                modalWindow.classList.add('expanded');
+                
+                // (혹시 남아있을지 모를 closing 클래스 제거)
+                collapsibleSection.classList.remove('closing');
+            }
+        }
+
+        // [추가] 모달 닫을 때 초기화 로직 보강 (closeModal 함수 수정)
+        function closeModal(modalEl) {
+            modalEl.classList.remove('visible');
+            
+            if (modalEl === regModal) {
+                resetRegForm();
+            } else if (modalEl === groupModal) {
+                groupModelInput.value = '';
+                groupLotInput.value = '';
+                groupEditIdInput.value = '';
+                
+                // [신규] 닫을 때 애니메이션 없이 즉시 초기화
+                const modalWindow = groupModal.querySelector('.modal-window');
+                const collapsibleSection = groupModal.querySelector('.collapsible-section');
+                
+                modalWindow.classList.remove('expanded');
+                collapsibleSection.classList.remove('closing');
+                
+                toggleCompletedBtn.innerHTML = '완료된 그룹 보기 >>';
+                toggleCompletedBtn.classList.remove('active');
+            }
+        }
 
         async function handleSaveGroup() {
             const modelName = groupModelInput.value.trim().toUpperCase();
             const lot = groupLotInput.value.trim();
-            const editId = groupEditIdInput.value;
+            const year = groupYearInput.value;
+            const month = groupMonthInput.value;
             
-            if (!modelName) { alert('모델명을 입력하세요.'); return; }
+            if (!modelName) { alert('모델명을 선택하세요.'); return; }
             if (!lot) { alert('LOT를 입력하세요.'); return; }
 
-            // [신규] 생산 완료 모델 리스트에 존재하는지 검증
-            const isValidModel = productionModelsCache.some(pm => pm.model === modelName);
-            if (!isValidModel) {
-                alert('생산 완료 모델 리스트에 없는 모델명입니다.\n우측 리스트에서 선택해 주세요.');
-                return;
-            }
-
-            // [신규] LOT 숫자 검증 (이미 input 이벤트로 막고 있지만 이중 체크)
-            if (/[^0-9]/.test(lot)) {
-                alert('LOT는 숫자만 입력 가능합니다.');
-                return;
+            const isValid = productionModelsCache.some(pm => pm.model === modelName && pm.lot === lot);
+            if (!isValid) {
+                if(!confirm('우측 리스트에서 선택하지 않았거나 일치하지 않는 정보입니다. 계속하시겠습니까?')) return;
             }
 
             try {
-                // 수정 모드일 때 (ID 존재) -> PUT (필요시 API 추가 구현)
-                // 추가 모드일 때 -> POST
-                // (현재는 DB에서 model+lot 유니크 제약을 걸어둠)
                 const response = await fetch(`${API_BASE}/groups`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ model: modelName, lot: lot })
+                    body: JSON.stringify({ 
+                        model: modelName, 
+                        lot: lot,
+                        year: year, 
+                        month: month
+                    })
                 });
                 const res = await response.json();
-                
                 if (res.success) {
                     alert('그룹이 생성되었습니다.');
                     closeModal(groupModal);
@@ -417,11 +503,10 @@
             const quantity = parseInt(regQtyInput.value);
 
             if (!date || !model || isNaN(quantity)) {
-                alert('날짜, 모델명, 수량을 정확히 입력하세요.');
+                alert('입력값을 확인하세요.');
                 return;
             }
 
-            // 모델명으로 대상 그룹 찾기
             let targetGroup;
             if (regEditingGroupId) {
                  targetGroup = groupList.find(g => g.id == regEditingGroupId);
@@ -430,7 +515,7 @@
             }
 
             if (!targetGroup) {
-                alert(`'${model}' 모델 그룹을 찾을 수 없습니다.\n먼저 [그룹추가] 버튼으로 그룹을 생성해 주세요.`);
+                alert(`'${model}' 모델 그룹을 찾을 수 없습니다.`);
                 return;
             }
 
@@ -443,53 +528,57 @@
                     type: regSelectedType,
                     quantity: quantity
                 };
-
                 if (regEditingRowId) {
                     url += `/${regEditingRowId}`;
                     method = 'PUT';
                 }
-
                 const response = await fetch(url, {
                     method: method,
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(body)
                 });
-
                 const res = await response.json();
                 if (res.success) {
                     alert(regEditingRowId ? '수정되었습니다.' : '등록되었습니다.');
                     closeModal(regModal);
                     fetchGroups();
                 } else {
-                    alert('오류 발생: ' + res.message);
+                    alert('오류: ' + res.message);
                 }
-            } catch (e) { alert('서버 통신 오류'); }
+            } catch (e) { alert('통신 오류'); }
         }
 
         function handleWrapperClick(e) {
             const target = e.target;
             const groupEl = target.closest('.model-group-wrapper');
             if (!groupEl) return;
-
             const groupId = groupEl.dataset.groupId;
             const group = groupList.find(g => g.id == groupId);
             if (!group) return;
 
-            // (A) 그룹 삭제
+            if (target.closest('.group-complete-btn')) {
+                if (confirm(`'${group.model}' 그룹을 완료 처리하시겠습니까?\n완료 후에는 추가 등록이 불가능합니다.`)) {
+                    completeGroup(groupId);
+                }
+                return;
+            }
+
             if (target.closest('.group-delete-btn')) {
-                if (confirm(`'${group.model}' 그룹을 정말 삭제하시겠습니까?\n모든 데이터가 영구 삭제됩니다.`)) {
+                if (confirm(`'${group.model}' 그룹을 삭제하시겠습니까?\n영구 삭제됩니다.`)) {
                     deleteGroup(groupId);
                 }
                 return;
             }
 
-            // (B) 그룹 헤더 클릭 (편집) -> (그룹명 수정 불가 정책으로 알림만 표시)
-            if (isGroupEditMode && target.closest('.model-header') && !target.closest('.group-delete-btn')) {
-                alert('그룹명/LOT 수정은 지원하지 않습니다. 삭제 후 재생성 해주세요.');
+            if (!isGroupEditMode && target.closest('.delete-toggle-icon')) {
+                const btn = target.closest('.delete-toggle-icon');
+                const isActive = groupEl.classList.toggle('delete-mode-active');
+                btn.classList.toggle('active', isActive);
+                const icon = btn.querySelector('i');
+                icon.className = isActive ? 'fas fa-check' : 'fas fa-trash';
                 return;
             }
 
-            // (D) 행 삭제 버튼
             if (target.closest('.row-delete-btn')) {
                 const row = target.closest('tr');
                 const rowId = row.dataset.rowId;
@@ -500,13 +589,11 @@
                 return;
             }
 
-            // (E) 행 클릭 (수정)
             const row = target.closest('tr');
             if (row && !target.closest('.row-delete-btn')) {
                 const rowId = row.dataset.rowId;
                 const table = row.closest('table');
                 const type = table.dataset.type;
-                
                 const dataArr = (type === 'ship') ? group.shipping : group.receiving;
                 const rowData = dataArr.find(r => r.id == rowId);
 
@@ -517,20 +604,26 @@
                     cancelRegisterBtn.style.display = 'block';
                     regEditingGroupId = groupId;
                     regEditingRowId = rowId;
-
                     regDateInput.value = rowData.date; 
                     regModelInput.value = group.model;
                     regModelInput.readOnly = true; 
                     regQtyInput.value = rowData.quantity;
-                    
                     updateRegType(type);
-                    
                     regShipBtn.style.pointerEvents = 'none';
                     regReceiveBtn.style.pointerEvents = 'none';
                     regShipBtn.style.opacity = '0.5';
                     regReceiveBtn.style.opacity = '0.5';
                 }
             }
+        }
+
+        async function completeGroup(id) {
+            try {
+                const res = await fetch(`${API_BASE}/groups/${id}/complete`, { method: 'POST' });
+                const data = await res.json();
+                if (data.success) fetchGroups();
+                else alert(data.message);
+            } catch(e) { alert('완료 처리 실패'); }
         }
 
         async function deleteGroup(id) {
@@ -547,7 +640,6 @@
             } catch(e) { alert('삭제 실패'); }
         }
 
-        // --- UI 유틸 ---
         function openModal(modalEl) {
             modalEl.classList.add('visible');
             modalEl.focus();
@@ -560,11 +652,21 @@
                 groupModelInput.value = '';
                 groupLotInput.value = '';
                 groupEditIdInput.value = '';
+                
+                // 닫을 때 접힘 상태 초기화
+                const groupModalWindow = groupModal.querySelector('.modal-window');
+                groupModalWindow.classList.remove('expanded');
+                toggleCompletedBtn.innerHTML = '완료된 그룹 보기 >>';
+                toggleCompletedBtn.classList.remove('active');
             }
         }
-
         function resetRegForm() {
-            regDateInput.value = '';
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            regDateInput.value = `${year}-${month}-${day}`;
+            
             regModelInput.value = '';
             regModelInput.readOnly = false; 
             regQtyInput.value = '';
@@ -574,13 +676,11 @@
             cancelRegisterBtn.style.display = 'none';
             regEditingGroupId = null;
             regEditingRowId = null;
-            
             regShipBtn.style.pointerEvents = 'auto';
             regReceiveBtn.style.pointerEvents = 'auto';
             regShipBtn.style.opacity = '1';
             regReceiveBtn.style.opacity = '1';
         }
-
         function updateRegType(type) {
             regSelectedType = type;
             if (type === 'ship') {
@@ -591,21 +691,15 @@
                 regReceiveBtn.classList.add('selected');
             }
         }
-
-        window.fillModelInput = function(modelName) {
-            if(!regModelInput.readOnly) {
-                regModelInput.value = modelName;
-            }
-        };
-
         function openGroupModal() {
             groupModalTitle.textContent = '모델 그룹 추가';
             groupModelInput.value = '';
             groupLotInput.value = '';
+            groupYearInput.value = '';
+            groupMonthInput.value = '';
             groupEditIdInput.value = '';
             openModal(groupModal);
         }
-
         function toggleGroupEditMode() {
             isGroupEditMode = !isGroupEditMode;
             editGroupModeBtn.style.backgroundColor = isGroupEditMode ? '#ffc107' : '#6c757d';
