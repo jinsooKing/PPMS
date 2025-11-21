@@ -31,7 +31,6 @@
     padding: 20px;
     transition: all 0.3s ease;
 }
-
 .model-group-wrapper.edit-mode-active {
     border-color: #f0ad4e;
     box-shadow: 0 0 10px rgba(240, 173, 78, 0.3);
@@ -50,7 +49,6 @@
     color: #888;
 }
 
-/* --- 모델 헤더 --- */
 .model-header {
     display: flex;
     justify-content: space-between;
@@ -69,7 +67,6 @@
 .lot-display { color: #ccc; font-size: 0.9em; }
 .model-controls { display: flex; align-items: center; gap: 10px; }
 
-/* --- 테이블 배치 --- */
 .dip-table-pair { display: flex; flex-direction: row; gap: 20px; }
 .dip-history-table-box { flex: 1; display: flex; flex-direction: column; min-width: 0; }
 .dip-title {
@@ -80,7 +77,7 @@
 }
 
 /* =========================================
-   3. 모달 레이아웃 (공통 & 3D 효과 통합)
+   3. 모달 레이아웃 (공통)
    ========================================= */
 #dip-registration-modal .modal-content,
 #group-manage-modal .modal-content {
@@ -90,11 +87,12 @@
     flex-grow: 1;
     min-height: 0;
     padding-bottom: 10px;
+    overflow-x: hidden; 
 }
 
 .dip-modal-form-section,
 .dip-modal-other-section {
-    flex: 1 1 0; /* 1:1:1 비율 */
+    flex: 1; /* 1:1 균등 분할 */
     display: flex;
     flex-direction: column;
     max-width: none;
@@ -109,161 +107,99 @@
     padding: 15px;
 }
 
-/* 구분선 */
-.dip-modal-separator {
-    width: 2px;
-    background-color: #555;
-    flex-shrink: 0;
-}
-
-/* --- [그룹 관리 모달] 3D 애니메이션 전용 스타일 --- */
-
-/* 1. 모달 윈도우 (3D 공간) */
-#group-manage-modal .modal-window {
-    width: 90vw;
-    max-width: 800px; /* 기본(접힘) 너비 */
-    height: auto !important;
-    max-height: 85vh;
-    
-    /* [핵심] 3D 원근감 */
-    perspective: 1500px;
-    transition: max-width 0.6s cubic-bezier(0.25, 1, 0.5, 1);
-}
-/* 펼쳤을 때 너비 */
-#group-manage-modal .modal-window.expanded {
-    max-width: 1250px;
-}
-
-/* 2. 접이식 섹션 (책 페이지) */
-.collapsible-section {
-    display: none; /* JS로 제어 */
-    flex: 1;
-    flex-direction: row;
-    gap: 20px;
-    min-width: 0;
-    
-    /* [핵심] 회전 축 설정 */
-    transform-origin: left center;
-    transform-style: preserve-3d;
-    backface-visibility: hidden;
-}
-
-/* 펼쳐질 때 (애니메이션) */
-#group-manage-modal .modal-window.expanded .collapsible-section {
-    display: flex;
-    animation: bookOpen 0.7s cubic-bezier(0.25, 1, 0.5, 1) forwards;
-}
-
-/* 접힐 때 (애니메이션 - JS에서 .closing 클래스 추가) */
-#group-manage-modal .modal-window .collapsible-section.closing {
-    display: flex;
-    animation: bookClose 0.5s cubic-bezier(0.25, 1, 0.5, 1) forwards;
-}
-
-/* 3. 애니메이션 키프레임 */
-@keyframes bookOpen {
-    0% {
-        transform: rotateY(-90deg) translateX(-30px);
-        opacity: 0;
-    }
-    100% {
-        transform: rotateY(0deg) translateX(0);
-        opacity: 1;
-    }
-}
-
-@keyframes bookClose {
-    0% {
-        transform: rotateY(0deg);
-        opacity: 1;
-    }
-    100% {
-        transform: rotateY(-90deg) translateX(-30px);
-        opacity: 0;
-    }
-}
-
-/* 4. 토글 버튼 */
-#toggle-completed-btn {
-    position: absolute;
-    top: 20px;
-    right: 60px;
-    padding: 6px 12px;
-    font-family: 'BMDOHYEON', sans-serif;
-    font-size: 13px;
-    background-color: #3A3A3C;
-    color: #ccc;
-    border: 1px solid #555;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: all 0.3s;
-    z-index: 10;
-}
-#toggle-completed-btn:hover { background-color: #555; color: #fff; }
-#toggle-completed-btn.active {
-    background-color: #28a745;
-    color: #fff;
-    border-color: #28a745;
-    box-shadow: 0 0 10px rgba(40, 167, 69, 0.4);
-}
+.dip-modal-separator { width: 2px; background-color: #555; flex-shrink: 0; }
 
 
 /* =========================================
-   4. 폼 입력 요소 스타일
+   [수정] 그룹 관리 모달 (크기 축소 및 아코디언 스타일)
    ========================================= */
-.dip-form-grid {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    padding-right: 5px;
-}
-#group-manage-modal .dip-form-grid { padding: 10px; }
 
-.dip-input-group { display: flex; flex-direction: column; gap: 8px; }
-.dip-input-group label {
-    color: #FFFFFF;
-    font-family: 'BMDOHYEON', sans-serif;
-    font-size: clamp(13px, 1vw, 16px);
+/* 1. 모달 윈도우 크기 축소 */
+#group-manage-modal .modal-window,
+#dip-registration-modal .modal-window {
+    width: 90vw;
+    max-width: 850px; /* [수정] 두 모달 모두 콤팩트한 너비 적용 */
+    height: auto !important; /* 높이 자동 조절 */
+    max-height: 85vh;
+    transition: max-width 0.3s ease;
 }
-.form-input {
-    width: 100%;
-    padding: 10px;
-    border-radius: 5px;
+
+/* 2. [신규] 업체별 아코디언(카테고리) 스타일 */
+.company-category-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    
+    font-family: 'BMJUA', sans-serif;
+    font-size: 1.1rem;
+    color: #fff;
+    background-color: #333;
+    
+    padding: 10px 15px;
+    margin-top: 10px;
     border: 1px solid #555;
-    background: #1E1E1E;
-    color: #FFFFFF;
-    font-family: 'BMDOHYEON', sans-serif;
-    font-size: clamp(14px, 1.1vw, 16px);
-    box-sizing: border-box;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s;
 }
+.company-category-header:hover {
+    background-color: #444;
+}
+.company-category-header.active {
+    background-color: #007BFF; /* 활성 시 파란색 */
+    border-color: #007BFF;
+}
+.company-category-header:first-child { margin-top: 0; }
+
+/* 카테고리 아이콘 (화살표) */
+.company-category-header i {
+    transition: transform 0.3s;
+}
+.company-category-header.active i {
+    transform: rotate(180deg); /* 활성 시 회전 */
+}
+
+/* 모델 리스트 (숨김/표시) */
+.company-models-list {
+    display: none; /* 기본 숨김 */
+    flex-direction: column;
+    gap: 5px;
+    padding: 10px;
+    background-color: #252525;
+    border: 1px solid #444;
+    border-top: none;
+    border-bottom-left-radius: 5px;
+    border-bottom-right-radius: 5px;
+    margin-bottom: 5px;
+}
+/* 활성화되면 보임 */
+.company-models-list.open {
+    display: flex;
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* =========================================
+   4. 폼 & 테이블 스타일 (기존 유지)
+   ========================================= */
+.dip-form-grid { display: flex; flex-direction: column; gap: 15px; padding-right: 5px; }
+#group-manage-modal .dip-form-grid { padding: 10px; }
+.dip-input-group { display: flex; flex-direction: column; gap: 8px; }
+.dip-input-group label { color: #FFFFFF; font-family: 'BMDOHYEON', sans-serif; font-size: clamp(13px, 1vw, 16px); }
+.form-input { width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #555; background: #1E1E1E; color: #FFFFFF; font-family: 'BMDOHYEON', sans-serif; font-size: clamp(14px, 1.1vw, 16px); box-sizing: border-box; }
 input[type="date"] { color-scheme: dark; }
 
 .dip-type-selector { display: flex; gap: 10px; }
-.dip-type-selector .common-box {
-    flex: 1;
-    text-align: center;
-    padding: 10px;
-    font-size: clamp(14px, 1.1vw, 16px);
-}
-.dip-type-selector .selected {
-    background-color: #007BFF;
-    color: #fff;
-    border-bottom-width: 2px;
-    transform: translateY(1px);
-}
+.dip-type-selector .common-box { flex: 1; text-align: center; padding: 10px; font-size: clamp(14px, 1.1vw, 16px); }
+.dip-type-selector .selected { background-color: #007BFF; color: #fff; border-bottom-width: 2px; transform: translateY(1px); }
 .dip-type-selector .not-selected { opacity: 0.6; }
 
-.register-button-group {
-    display: flex;
-    flex-direction: row;
-    gap: 10px;
-    margin-top: 10px;
-}
-#dip-register-btn, #dip-cancel-btn, #save-group-btn {
-    flex: 1;
-    text-align: center;
-    font-size: clamp(15px, 1.2vw, 18px);
-}
+.register-button-group { display: flex; flex-direction: row; gap: 10px; margin-top: 10px; }
+#dip-register-btn, #dip-cancel-btn, #save-group-btn { flex: 1; text-align: center; font-size: clamp(15px, 1.2vw, 18px); }
 #save-group-btn { width: 100%; display: block; box-sizing: border-box; }
 
 #dip-register-btn, #save-group-btn { background-color: #007BFF; color: white; }
@@ -271,109 +207,30 @@ input[type="date"] { color-scheme: dark; }
 #dip-cancel-btn { background-color: #6c757d; color: white; }
 #dip-cancel-btn:hover { background-color: #5a6268; }
 
-/* =========================================
-   5. 테이블 및 버튼 스타일
-   ========================================= */
-.editable-table th {
-    background-color: #3A3A3C;
-    font-size: clamp(11px, 1vw, 14px);
-    top: 0;
-}
+.editable-table th { background-color: #3A3A3C; font-size: clamp(11px, 1vw, 14px); top: 0; }
 .quantity-cell { text-align: center; }
-.cumulative-cell {
-    text-align: center;
-    position: relative;
-    padding-left: 35px !important;
-    padding-right: 35px !important;
-    font-weight: bold;
-    color: #ffd700;
-}
-.row-delete-btn {
-    position: absolute;
-    right: 5px;
-    top: 50%;
-    transform: translateY(-50%);
-    font-family: 'BMDOHYEON', sans-serif;
-    padding: 2px 8px;
-    font-size: 12px;
-    background-color: #dc3545;
-    color: white;
-    border: 1px solid #555;
-    border-radius: 4px;
-    cursor: pointer;
-    display: none;
-}
+.cumulative-cell { text-align: center; position: relative; padding-left: 35px !important; padding-right: 35px !important; font-weight: bold; color: #ffd700; }
+.row-delete-btn { position: absolute; right: 5px; top: 50%; transform: translateY(-50%); font-family: 'BMDOHYEON', sans-serif; padding: 2px 8px; font-size: 12px; background-color: #dc3545; color: white; border: 1px solid #555; border-radius: 4px; cursor: pointer; display: none; }
 .row-delete-btn:hover { background-color: #a71d2a; }
 .model-group-wrapper.delete-mode-active .row-delete-btn { display: inline-block; }
 
-.delete-toggle-icon {
-    font-size: 14px;
-    padding: 5px 10px;
-    background-color: #dc3545;
-    color: white;
-    border: 1px solid #555;
-    border-radius: 5px;
-    cursor: pointer;
-}
+.delete-toggle-icon { font-size: 14px; padding: 5px 10px; background-color: #dc3545; color: white; border: 1px solid #555; border-radius: 5px; cursor: pointer; }
 .delete-toggle-icon.active { background-color: #f0ad4e; }
-
-.group-delete-btn {
-    font-family: 'BMDOHYEON', sans-serif;
-    padding: 5px 10px;
-    font-size: 12px;
-    border: 1px solid #dc3545;
-    border-radius: 5px;
-    color: #fff;
-    background-color: #dc3545;
-    cursor: pointer;
-    display: none;
-}
+.group-delete-btn { font-family: 'BMDOHYEON', sans-serif; padding: 5px 10px; font-size: 12px; border: 1px solid #dc3545; border-radius: 5px; color: #fff; background-color: #dc3545; cursor: pointer; display: none; }
 .group-delete-btn:hover { background-color: #a71d2a; }
-
-.group-complete-btn {
-    font-family: 'BMDOHYEON', sans-serif;
-    padding: 5px 10px;
-    font-size: 12px;
-    border: 1px solid #28a745;
-    border-radius: 5px;
-    color: #fff;
-    background-color: #28a745;
-    cursor: pointer;
-    animation: pulse 2s infinite;
-}
+.group-complete-btn { font-family: 'BMDOHYEON', sans-serif; padding: 5px 10px; font-size: 12px; border: 1px solid #28a745; border-radius: 5px; color: #fff; background-color: #28a745; cursor: pointer; animation: pulse 2s infinite; }
 .group-complete-btn:hover { background-color: #218838; }
 
-@keyframes pulse {
-    0% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7); }
-    70% { box-shadow: 0 0 0 10px rgba(40, 167, 69, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0); }
-}
+@keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(40, 167, 69, 0); } 100% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0); } }
 
 .model-group-wrapper.edit-mode-active .delete-toggle-icon { display: none; }
 .model-group-wrapper.edit-mode-active .group-delete-btn { display: inline-block; }
 .model-group-wrapper.edit-mode-active .group-complete-btn { display: inline-block; }
 
-
 .footer-action-group { display: flex; align-items: center; gap: 15px; }
 
-/* =========================================
-   6. 모달 등장 애니메이션 (Slide Up & Blur) - Option 2
-   ========================================= */
-@keyframes modalSlideUpFade {
-    from { opacity: 0; transform: translateY(30px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-@keyframes fadeInOverlay {
-    from { background-color: rgba(0, 0, 0, 0); }
-    to { background-color: rgba(0, 0, 0, 0.4); }
-}
-
-.modal-overlay.visible {
-    backdrop-filter: blur(5px);
-    background-color: rgba(0, 0, 0, 0.4);
-    animation: fadeInOverlay 0.4s ease-out forwards;
-}
-.modal-overlay.visible .modal-window {
-    animation: modalSlideUpFade 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-    box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-}
+/* 모달 등장 애니메이션 */
+@keyframes modalSlideUpFade { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes fadeInOverlay { from { background-color: rgba(0, 0, 0, 0); } to { background-color: rgba(0, 0, 0, 0.4); } }
+.modal-overlay.visible { backdrop-filter: blur(5px); background-color: rgba(0, 0, 0, 0.4); animation: fadeInOverlay 0.4s ease-out forwards; }
+.modal-overlay.visible .modal-window { animation: modalSlideUpFade 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards; box-shadow: 0 20px 40px rgba(0,0,0,0.4); }

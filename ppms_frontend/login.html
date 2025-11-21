@@ -1,121 +1,114 @@
 <!DOCTYPE html>
 <html lang="ko">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PPMS - 로그인</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.0/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://unicons.iconscout.com/release/v2.1.9/css/unicons.css">
     <link rel="stylesheet" href="common.css">
     <link rel="stylesheet" href="login.css">
-    <link href="https://hangeul.pstatic.net/hangeul_static/css/bmdohyeon.css" rel="stylesheet">
-    <link href="https://hangeul.pstatic.net/hangeul_static/css/bmjua.css" rel="stylesheet">
+</head>
 
-    <style>
-        .login-role-selector {
-            display: flex;
-            justify-content: center;
-            gap: 15px; 
-            margin-bottom: 20px;
-        }
-
-        .login-role-selector .common-box {
-            flex: 1; 
-            width: auto; 
-            text-align: center; 
-            padding-top: 10px;
-            padding-bottom: 10px;
-            font-size: clamp(14px, 1.2vw, 18px); 
-        }
-
-        /* [신규] '선택 안 됨' 상태 (기본 입체감 + 살짝 투명) */
-        .clickable-box.not-selected {
-            opacity: 0.6; /* 살짝 투명하게 처리 */
-            /* pointer-events: none; <-- (제거) 클릭을 막지 않음 */
-        }
-
-        /* '눌린' 상태 (선택됨) */
-        .clickable-box.selected {
-            transform: translateY(1px);
-            border-bottom-width: 2px;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-            background-color: #007BFF; 
-            color: #FFFFFF;
-            opacity: 1.0; /* 100% 불투명 */
-        }
-
-        /* [삭제] 'locked' 스타일 완전 삭제 */
-    </style>
-    </head>
 <body>
-    <div class="page-container">
-        
-        <div class="login-window">
-            <h2 class="login-title">PPMS 로그인</h2>
-            
-            <div id="login-form">
-                
-                <div class="login-role-selector">
-                    <div class="common-box clickable-box" id="role-user-btn" data-role="user">
-                        일반
-                    </div>
-                    <div class="common-box clickable-box" id="role-admin-btn" data-role="admin">
-                        관리자
-                    </div>
-                </div>
 
-                <div class="login-input-group">
-                    <input type="password" id="password" class="form-input" autocomplete="current-password" placeholder="비밀번호">
+    <div class="section">
+        <div class="container">
+            <div class="row full-height justify-content-center">
+                <div class="col-12 text-center align-self-center py-5">
+
+                    <div class="main-ui-wrapper">
+
+                        <h3 class="ui-title">PPMS Log-In</h3>
+
+                        <h6 class="mb-0 pb-3">
+                            <span>일반</span>
+                            <span>관리</span>
+                        </h6>
+
+                        <input class="checkbox" type="checkbox" id="reg-log" name="reg-log" />
+                        <label for="reg-log"></label>
+
+                    </div>
+                    <div class="card-3d-wrap mx-auto">
+                        <div class="card-3d-wrapper">
+
+                            <div class="card-front">
+                                <div class="center-wrap">
+                                    <div class="section text-center">
+                                        <h4 class="mb-4 pb-3">일반 로그인</h4>
+                                        <div class="form-group">
+                                            <input type="password" class="form-style" placeholder="비밀번호"
+                                                id="user-password" autocomplete="current-password">
+                                            <i class="input-icon uil uil-lock-alt"></i>
+                                        </div>
+                                        <a href="#" class="btn mt-4" id="btn-user-login">SUBMIT</a>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card-back">
+                                <div class="center-wrap">
+                                    <div class="section text-center">
+                                        <h4 class="mb-4 pb-3">관리자 로그인</h4>
+                                        <div class="form-group">
+                                            <input type="password" class="form-style" placeholder="관리자 비밀번호"
+                                                id="admin-password" autocomplete="current-password">
+                                            <i class="input-icon uil uil-lock-alt"></i>
+                                        </div>
+                                        <a href="#" class="btn mt-4" id="btn-admin-login">SUBMIT</a>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <p class="mb-0 mt-4 text-center" id="login-status"
+                        style="color: #ffeba7; font-weight: 500; min-height: 24px;"></p>
+
                 </div>
-                <div class="common-box clickable-box" id="login-submit-btn">
-                    로그인
-                </div>
-                <p class="login-status-message" id="login-status"></p>
             </div>
         </div>
-
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            
-            // 1. 요소 가져오기
-            const loginSubmitBtn = document.getElementById('login-submit-btn');
-            const passwordInput = document.getElementById('password');
+            const userBtn = document.getElementById('btn-user-login');
+            const adminBtn = document.getElementById('btn-admin-login');
+            const userPassInput = document.getElementById('user-password');
+            const adminPassInput = document.getElementById('admin-password');
             const loginStatus = document.getElementById('login-status');
-            const userBtn = document.getElementById('role-user-btn');
-            const adminBtn = document.getElementById('role-admin-btn');
-            
-            // 2. [수정] '일반'을 기본 선택으로 설정
-            let selectedRole = 'user'; // 기본값 'user'
-            userBtn.classList.add('selected');
-            adminBtn.classList.add('not-selected'); // '관리자'는 'not-selected'로 시작
-            passwordInput.focus(); 
+            const checkbox = document.getElementById('reg-log');
 
-            // 3. [수정] 상호 배타적 클릭 이벤트 (locked 대신 not-selected 사용)
-            [userBtn, adminBtn].forEach(button => {
-                button.addEventListener('click', () => {
-                    const role = button.dataset.role;
+            // [수정] 카드를 회전시키기 위해 요소를 선택합니다.
+            const cardWrapper = document.querySelector('.card-3d-wrapper');
 
-                    if (selectedRole === role) {
-                        return; // 이미 선택된 건 클릭해도 무시
-                    }
-                    
-                    selectedRole = role; 
+            // 초기 포커스
+            userPassInput.focus();
 
-                    // [수정] 'selected' / 'not-selected' 클래스를 토글
-                    userBtn.classList.toggle('selected', role === 'user');
-                    userBtn.classList.toggle('not-selected', role !== 'user');
-                    
-                    adminBtn.classList.toggle('selected', role === 'admin');
-                    adminBtn.classList.toggle('not-selected', role !== 'admin');
+            // [수정] 체크박스 변경 시 동작 (카드 뒤집기 + 포커스 이동)
+            checkbox.addEventListener('change', () => {
+                loginStatus.textContent = ''; // 메시지 초기화
 
-                    passwordInput.focus();
-                });
+                if (checkbox.checked) {
+                    // 1. 관리자 모드 (체크됨) -> 카드 180도 회전
+                    cardWrapper.style.transform = 'rotateY(180deg)';
+
+                    // 2. 입력창 포커스
+                    setTimeout(() => adminPassInput.focus(), 300);
+                } else {
+                    // 1. 일반 모드 (체크 해제) -> 카드 원위치 (0도)
+                    cardWrapper.style.transform = 'rotateY(0deg)';
+
+                    // 2. 입력창 포커스
+                    setTimeout(() => userPassInput.focus(), 300);
+                }
             });
 
-            // 4. '로그인' 버튼 클릭 이벤트 (변경 없음)
-            loginSubmitBtn.addEventListener('click', async () => {
-                const password = passwordInput.value;
-                
+            // 로그인 함수 (기존 동일)
+            async function performLogin(role, password) {
                 if (!password) {
                     loginStatus.textContent = '비밀번호를 입력하세요.';
                     return;
@@ -127,33 +120,38 @@
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                            username: selectedRole, // 'user' 또는 'admin'
+                            username: role,
                             password: password
                         }),
-                        credentials: 'include' 
+                        credentials: 'include'
                     });
 
                     const data = await response.json();
 
                     if (data.success) {
                         localStorage.setItem('ppms_user_role', data.role || 'user');
-                        window.location.href = 'index.html'; 
+                        // 1. body에 fade-out 클래스를 추가하여 투명하게 만듦
+                        document.body.classList.add('fade-out');
+
+                        // 2. CSS transition 시간(0.5초)만큼 기다렸다가 페이지 이동
+                        setTimeout(() => {
+                            window.location.href = 'index.html';
+                        }, 500); // 500ms = 0.5초
                     } else {
-                        loginStatus.textContent = data.message;
+                        loginStatus.textContent = data.message || '로그인 실패';
                     }
                 } catch (error) {
-                    console.error('로그인 API 통신 오류:', error);
-                    loginStatus.textContent = '서버에 연결할 수 없습니다.';
+                    console.error('로그인 오류:', error);
+                    loginStatus.textContent = '서버 연결 오류';
                 }
-            });
-            
-            // 5. Enter 키 이벤트 (변경 없음)
-            passwordInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    loginSubmitBtn.click();
-                }
-            });
+            }
+
+            userBtn.addEventListener('click', (e) => { e.preventDefault(); performLogin('user', userPassInput.value); });
+            adminBtn.addEventListener('click', (e) => { e.preventDefault(); performLogin('admin', adminPassInput.value); });
+            userPassInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') userBtn.click(); });
+            adminPassInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') adminBtn.click(); });
         });
     </script>
 </body>
+
 </html>

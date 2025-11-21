@@ -8,23 +8,50 @@ bp = Blueprint('dip', __name__, url_prefix='/api/dip')
 
 @bp.route('/groups', methods=['GET'])
 def get_groups():
+    # 1. 모든 그룹 조회
     groups = DipGroup.query.all()
+    
+    # 2. [신규] 그룹에 매핑할 업체 정보 미리 조회 (최적화)
+    # (모델명, 년, 월, LOT)가 일치하는 생산 스케줄의 업체명을 가져옴
+    prods = db.session.query(
+        ProductionSchedule.model,
+        ProductionSchedule.order_year,
+        ProductionSchedule.order_month,
+        ProductionSchedule.total_quantity,
+        ProductionSchedule.company
+    ).all()
+    
+    # 매핑 딕셔너리 생성: { (모델, 년, 월, LOT): 업체명 }
+    company_map = {}
+    for p in prods:
+        key = (p.model, p.order_year, p.order_month, str(p.total_quantity))
+        company_map[key] = p.company
+
     result = []
     for g in groups:
         g_dict = g.to_dict()
-        # (이력 정렬 로직 동일)
+        
+        # 3. [신규] 해당 그룹의 업체명 찾아서 추가
+        # (DB에 저장된 group.year, group.month 등을 키로 사용)
+        group_key = (g.model, g.year, g.month, g.lot)
+        g_dict['company'] = company_map.get(group_key, '업체 미지정')
+
+        # (이력 정렬 및 분류 로직 - 기존과 동일)
         sorted_histories = sorted(g.histories, key=lambda x: (x.date, x.id))
         shipping = []
         receiving = []
         for h in sorted_histories:
             item = h.to_dict()
             item['cumulative'] = 0 
-            if h.type == 'ship': shipping.append(item)
-            else: receiving.append(item)
+            if h.type == 'ship':
+                shipping.append(item)
+            else:
+                receiving.append(item)
         g_dict['shipping'] = shipping
         g_dict['receiving'] = receiving
         del g_dict['histories']
         result.append(g_dict)
+        
     return jsonify(result)
 
 # ▼ [수정] 생산 완료 모델 조회 (년/월 정보 포함)
@@ -53,7 +80,8 @@ def get_production_models():
         ProductionSchedule.model,
         ProductionSchedule.total_quantity,
         ProductionSchedule.order_year,  # [추가]
-        ProductionSchedule.order_month  # [추가]
+        ProductionSchedule.order_month,  # [추가]
+        ProductionSchedule.company
     ).filter(
         or_(*date_filters),
         ProductionSchedule.actual_prod > 0
@@ -69,7 +97,8 @@ def get_production_models():
                 'model': r.model,
                 'lot': str(r.total_quantity),
                 'year': r.order_year,     # [추가]
-                'month': r.order_month    # [추가]
+                'month': r.order_month,    # [추가]
+                'company': r.company # [추가]
             }
             
     return jsonify(list(unique_models.values()))

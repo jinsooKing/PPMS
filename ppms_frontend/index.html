@@ -5,150 +5,547 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PPMS - 생산공정관리시스템</title>
+    
     <link rel="stylesheet" href="common.css">
-    <link rel="stylesheet" href="header.css">
-    <link rel="stylesheet" href="main.css">
-    <link rel="stylesheet" href="footer.css">
+    
     <link href="https://hangeul.pstatic.net/hangeul_static/css/bmdohyeon.css" rel="stylesheet">
     <link href="https://hangeul.pstatic.net/hangeul_static/css/bmjua.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://unicons.iconscout.com/release/v2.1.9/css/unicons.css">
+    <link href="https://fonts.googleapis.com/css?family=Poppins:400,500,600,700,800,900" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Roboto+Mono" rel="stylesheet">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
 
     <script src="auth.js"></script>
 
     <style>
+        /* --- [CSS 변수] --- */
+        :root {
+            --white: #fff;
+            --black: #121212;
+            --gray: #807f83;
+            --glitch-red: #ff536b;
+            --glitch-blue: #3ffeff;
+            --gold: #ffeba7;
+            --dark-bg: #2a2b38;
+        }
+
+        /* --- [1. 전체 배경 및 테마] --- */
+        body {
+            background-color: #1f2029;
+            background-image: url('https://s3-us-west-2.amazonaws.com/s.cdpn.io/1462889/pat.svg');
+            background-position: center;
+            background-repeat: repeat;
+            background-size: 300%;
+            color: #c4c3ca;
+            font-family: 'Poppins', 'BMDOHYEON', sans-serif;
+            opacity: 0; 
+            overflow: hidden; 
+            margin: 0;
+        }
+
+        a, a:hover { text-decoration: none; color: inherit; }
+
+        .page-container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            backdrop-filter: blur(2px);
+        }
+
+        .content-area {
+            background-color: transparent;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            perspective: 1000px;
+            width: 100%;
+            /* 자식 요소(DIP버튼)가 위로 튀어나와도 잘리지 않도록 visible 설정 */
+            overflow: visible; 
+        }
+
+        /* --- [2. 헤더 스타일] --- */
+        .main-header, .main-footer {
+            background: rgba(31, 32, 41, 0.9);
+            border-bottom: 1px solid rgba(255, 235, 167, 0.1);
+            box-shadow: 0 10px 30px 0 rgba(0, 0, 0, 0.3);
+            padding: 10px clamp(15px, 5vw, 40px);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+            flex-shrink: 0;
+        }
+
+        .main-footer {
+            border-top: 1px solid rgba(255, 235, 167, 0.1);
+            border-bottom: none;
+            padding: 15px clamp(15px, 5vw, 40px);
+        }
+
+        .common-box {
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+            padding: 0 !important;
+            color: #fff;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .header-left { display: flex; align-items: center; flex: 0 0 auto; }
+
+        /* --- [3. Glitch Effect CSS] --- */
+        .svg-sprite { position: absolute; width: 0; height: 0; }
+        .header-logo-wrapper { position: relative; display: inline-block; transform: translateZ(0); overflow: visible; cursor: pointer; }
+        .header-logo { height: clamp(50px, 10vw, 90px); width: auto; fill: var(--gold); transition: fill 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94); filter: drop-shadow(0 0 5px rgba(255, 235, 167, 0.4)); display: block; }
+        .header-logo-wrapper.btn-glitch-active .header-logo { fill: #ffffff; -webkit-filter: url('#filter'); filter: url('#filter'); }
+
+        .header-center .common-box { color: var(--gold); font-family: 'Poppins', 'BMDOHYEON', sans-serif; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; font-size: clamp(1.2rem, 2.5vw, 2rem); white-space: nowrap; }
+        .time-display { color: #c4c3ca; font-family: 'Poppins', sans-serif; font-weight: 500; font-size: clamp(0.8rem, 1.2vw, 1.1rem) !important; }
+
+        /* --- [4. 메인 콘텐츠 (카드 UI)] --- */
         .flow-container {
             display: flex;
             align-items: center;
             justify-content: center;
-            flex-wrap: wrap;
-            gap: 15px;
-        }
-
-        .flow-arrow {
-            width: 40px;
-            height: 3px;
-            background-color: #FFFFFF;
+            gap: clamp(10px, 2vw, 30px);
+            width: 100%;
+            flex-wrap: wrap; 
             position: relative;
+            margin-top: 50px; /* 상단 여백 확보 */
         }
 
-        .flow-arrow::after {
-            content: '';
-            position: absolute;
-            right: -8px;
-            top: -6.5px;
-            width: 0;
-            height: 0;
-            border-top: 8px solid transparent;
-            border-bottom: 8px solid transparent;
-            border-left: 10px solid #FFFFFF;
-        }
-
+        /* 대제목 카드 */
         .grid-item {
-            font-size: clamp(24px, 3vw, 40px);
-            padding: clamp(25px, 3vw, 40px) clamp(30px, 5vw, 50px);
+            position: relative;
+            width: clamp(90px, 13vw, 180px);
+            height: clamp(110px, 16vw, 220px);
+            background-color: var(--dark-bg);
+            border-radius: 15px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            transition: all 0.4s ease;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            overflow: hidden;
+            cursor: pointer;
+            color: #fff;
+            font-family: 'BMDOHYEON', sans-serif;
+            font-size: clamp(1rem, 1.6vw, 1.6rem);
+            letter-spacing: 1px;
+            z-index: 2;
         }
+
+        .grid-item::before {
+            font-family: 'unicons';
+            font-size: clamp(2.5rem, 4vw, 4rem);
+            color: var(--gold);
+            margin-bottom: 15px;
+            transition: all 0.4s ease;
+            text-shadow: 0 0 20px rgba(255, 235, 167, 0.4);
+        }
+
+        a[href="production.html"] .grid-item::before { content: '\eb86'; }
+        a[href="aoi.html"] .grid-item::before { content: '\eb0d'; }
+        a[href="repair.html"] .grid-item::before { content: '\eb26'; }
+        a[href="function_test.html"] .grid-item::before { content: '\eb05'; }
+
+        .grid-item:hover { transform: translateY(-10px) scale(1.05); background-color: var(--gold); box-shadow: 0 20px 40px rgba(255, 235, 167, 0.3); border-color: var(--gold); }
+        .grid-item:hover::before { color: #102770; transform: scale(1.2) rotate(-10deg); text-shadow: none; }
+        .grid-item:hover { color: #102770; }
+
+        /* --- [5. 화살표 (수평)] --- */
+        .flow-arrow {
+            width: clamp(20px, 5vw, 60px);
+            height: 0; 
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: visible; 
+        }
+
+        .flow-arrow-icon {
+            font-family: 'unicons';
+            content: '\e943'; /* Right Arrow */
+            font-size: clamp(1.2rem, 2vw, 2rem);
+            color: #5a5b68;
+            animation: arrow-pulse 2s infinite;
+        }
+
+        /* --- [6. DIP (조립) 분기점 - Z-Index 수정됨] --- */
+        
+        .branch-container {
+            position: absolute;
+            /* 메인 화살표 중앙에서 시작 */
+            bottom: 50%; 
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            /* [중요] column-reverse: 1번요소(선)가 맨 아래, 3번요소(카드)가 맨 위 */
+            flex-direction: column-reverse; 
+            align-items: center;
+            z-index: 0;
+            pointer-events: none; /* 빈 공간 클릭 시 통과 */
+        }
+
+        /* 1. 움직이는 점선 (Line) - 맨 아래 */
+        .branch-line-dashed {
+            width: 2px;
+            /* [높이 설정] 높이를 키워 UI를 위로 밀어올림 */
+            height: clamp(20px, 20vh, 60px); 
+            
+            background-image: linear-gradient(to top, #5a5b68 50%, transparent 50%);
+            background-size: 2px 20px; 
+            background-repeat: repeat-y;
+            
+            animation: dashed-move-up 1s linear infinite;
+            opacity: 0.6;
+            z-index: 1; /* 카드보다 낮음 */
+        }
+
+        @keyframes dashed-move-up {
+            from { background-position: 0 0; }
+            to { background-position: 0 -20px; }
+        }
+
+        /* 2. 수직 화살표 (Arrow) - 중간 */
+        .flow-arrow-icon-vertical {
+            font-family: 'unicons';
+            content: '\e946'; /* Angle Double Up */
+            font-size: clamp(1.2rem, 2vw, 2rem);
+            color: #5a5b68;
+            margin-bottom: 5px;
+            animation: arrow-pulse-vertical 2s infinite;
+            z-index: 2; /* 선보다 높음 */
+        }
+
+        /* 3. DIP 카드 링크 (Card) - 맨 위 */
+        .branch-item-link {
+            pointer-events: auto; /* 클릭 가능 */
+            z-index: 100; /* [핵심] 아주 높은 값으로 설정하여 선/화살표 위에 위치 */
+            position: relative; /* z-index 적용을 위해 */
+            margin-bottom: 5px;
+        }
+
+        /* DIP 카드 스타일 */
+        .sub-grid-item {
+            width: clamp(70px, 9vw, 110px);
+            height: clamp(70px, 9vw, 110px);
+            background-color: var(--dark-bg);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            color: #fff;
+            font-family: 'BMDOHYEON', sans-serif;
+            font-size: clamp(0.8rem, 1.1vw, 1.2rem);
+        }
+
+        .sub-grid-item::before {
+            font-family: 'unicons';
+            content: '\eb93'; /* Chip icon */
+            font-size: clamp(1.8rem, 3vw, 2.5rem);
+            color: var(--gold);
+            margin-bottom: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .sub-grid-item:hover {
+            transform: translateY(-5px);
+            background-color: var(--gold);
+            color: #102770;
+            box-shadow: 0 10px 25px rgba(255, 235, 167, 0.4);
+        }
+        .sub-grid-item:hover::before { color: #102770; }
+
+        @keyframes arrow-pulse {
+            0% { opacity: 0.2; transform: translateX(-5px); color: #5a5b68; }
+            50% { opacity: 1; transform: translateX(0); color: var(--gold); text-shadow: 0 0 10px var(--gold);}
+            100% { opacity: 0.2; transform: translateX(5px); color: #5a5b68; }
+        }
+
+        @keyframes arrow-pulse-vertical {
+            0% { opacity: 0.2; transform: translateY(5px); color: #5a5b68; }
+            50% { opacity: 1; transform: translateY(0); color: var(--gold); text-shadow: 0 0 10px var(--gold);}
+            100% { opacity: 0.2; transform: translateY(-5px); color: #5a5b68; }
+        }
+
+        /* --- [7. 푸터 버튼] --- */
+        .footer-btn {
+            padding: 8px 20px;
+            border-radius: 30px;
+            background: #2a2b38;
+            color: #c4c3ca;
+            font-size: clamp(0.7rem, 0.9rem, 1rem);
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255,255,255,0.1);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+        }
+
+        .footer-btn:hover {
+            background: var(--gold);
+            color: #102770;
+            box-shadow: 0 0 15px rgba(255, 235, 167, 0.4);
+            border-color: transparent;
+        }
+
+        @media (max-width: 600px) {
+            .flow-container {
+                flex-direction: row; 
+                flex-wrap: wrap;
+                margin-top: 150px; /* 모바일 대응 여백 */
+            }
+            .header-center { display: none; } 
+            .footer-btn { padding: 5px 10px; } 
+        }
+
+        .icon-backup::before { content: '\eb0b'; font-family: 'unicons'; }
+        .icon-restore::before { content: '\e864'; font-family: 'unicons'; }
+        .icon-logout::before { content: '\eb97'; font-family: 'unicons'; }
+        .icon-admin::before { content: '\ea4f'; font-family: 'unicons'; }
+
     </style>
 </head>
 
 <body>
+    <svg style="position: absolute; width: 0; height: 0;" width="0" height="0" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" class="svg-sprite">
+        <defs>
+            <filter id="filter">
+                <feTurbulence type="fractalNoise" baseFrequency="0.01 0.004" numOctaves="1" result="warp" seed="1"></feTurbulence>
+                <feDisplacementMap xChannelSelector="R" yChannelSelector="G" scale="30" in="SourceGraphic" in2="warp"></feDisplacementMap>
+            </filter>
+        </defs>
+    </svg>
+
     <div class="page-container">
 
         <header class="main-header">
             <div class="header-left">
-                <a href="index.html">
-                    <picture>
-                        <source srcset="logo.avif" type="image/avif">
-                        <img src="logo.png" alt="필리아텔레콤 로고" class="header-logo">
-                    </picture>
+                <a href="index.html" class="header-logo-wrapper btn-glitch">
+                    <svg class="header-logo" version="1.0" xmlns="http://www.w3.org/2000/svg"
+                     width="233.000000pt" height="240.000000pt" viewBox="0 0 233.000000 240.000000"
+                     preserveAspectRatio="xMidYMid meet">
+                        <g transform="translate(0.000000,240.000000) scale(0.100000,-0.100000)" stroke="none">
+                            <path d="M978 2385 c-184 -31 -309 -94 -433 -219 -143 -144 -199 -279 -198 -481 1 -235 87 -444 246 -592 271 -253 686 -282 997 -70 54 37 151 127 193 181 26 32 16 27 -66 -37 -189 -148 -291 -189 -467 -189 -275 1 -472 113 -575 327 -128 265 -86 586 101 773 99 99 243 150 389 138 172 -14 293 -86 355 -208 38 -77 41 -167 9 -253 -38 -102 -159 -206 -276 -240 l-23 -6 0 188 c0 134 4 193 12 201 7 7 31 12 55 12 32 0 43 4 43 15 0 13 -35 15 -251 15 -196 0 -250 -3 -247 -12 3 -7 24 -14 49 -16 24 -2 47 -9 51 -15 14 -21 10 -661 -4 -675 -7 -7 -31 -12 -55 -12 -32 0 -43 -4 -43 -15 0 -13 34 -15 250 -15 216 0 250 2 250 15 0 11 -12 15 -45 15 -59 0 -65 14 -65 139 l0 100 58 6 c109 11 184 26 236 46 183 68 285 273 230 460 -94 317 -404 487 -776 424z"/>
+                            <path d="M1991 638 c-60 -130 -103 -211 -120 -225 l-26 -22 73 -1 c39 0 72 3 72 6 0 3 -9 13 -19 22 -19 16 -19 19 -4 55 l15 37 87 0 c84 0 88 -1 99 -25 18 -38 15 -63 -8 -70 -45 -14 -15 -25 70 -25 50 0 90 3 90 6 0 3 -10 16 -21 28 -12 12 -61 109 -109 216 -48 107 -92 196 -97 197 -5 2 -52 -88 -102 -199z m113 -9 c14 -33 26 -62 26 -65 0 -2 -27 -4 -61 -4 -33 0 -59 4 -57 8 2 4 14 33 27 65 14 31 28 57 32 57 3 0 18 -27 33 -61z"/>
+                            <path d="M0 811 c0 -5 11 -16 25 -25 25 -16 25 -17 25 -179 0 -89 -4 -167 -8 -173 -4 -6 -15 -13 -24 -17 -43 -16 -13 -27 72 -27 50 0 90 4 90 9 0 5 -11 16 -25 25 -24 16 -26 22 -23 79 l3 62 85 5 c131 9 180 44 180 130 0 53 -22 84 -76 106 -38 16 -324 20 -324 5z m264 -35 c58 -24 69 -107 18 -146 -19 -15 -40 -20 -88 -20 l-64 0 0 78 c0 47 5 83 12 90 16 16 81 15 122 -2z"/>
+                            <path d="M440 810 c0 -6 11 -15 25 -20 l25 -10 0 -175 0 -175 -25 -10 c-50 -19 -26 -30 65 -30 50 0 90 4 90 9 0 5 -10 15 -22 23 -19 13 -23 26 -26 92 l-4 76 96 0 96 0 0 -75 c0 -68 -2 -76 -25 -91 -14 -9 -25 -20 -25 -25 0 -5 41 -9 90 -9 50 0 90 4 90 9 0 5 -11 16 -25 25 -25 16 -25 17 -25 181 0 164 0 165 25 181 14 9 25 20 25 25 0 5 -40 9 -90 9 -49 0 -90 -4 -90 -9 0 -5 11 -16 25 -25 23 -15 25 -23 25 -86 l0 -70 -96 0 -96 0 4 72 c3 60 7 73 26 86 12 8 22 18 22 23 0 5 -40 9 -90 9 -55 0 -90 -4 -90 -10z"/>
+                            <path d="M940 810 c0 -6 11 -15 25 -20 l25 -10 0 -167 c0 -93 -4 -173 -8 -179 -4 -6 -15 -13 -24 -17 -43 -16 -13 -27 72 -27 50 0 90 4 90 9 0 5 -11 16 -25 25 -25 16 -25 17 -25 181 0 164 0 165 25 181 14 9 25 20 25 25 0 5 -40 9 -90 9 -55 0 -90 -4 -90 -10z"/>
+                            <path d="M1170 810 c0 -6 8 -14 18 -17 9 -4 20 -11 24 -17 4 -6 8 -83 8 -171 0 -88 -4 -165 -8 -171 -4 -6 -15 -13 -24 -17 -10 -3 -18 -11 -18 -17 0 -6 66 -10 190 -10 l190 0 6 28 c3 15 10 42 15 61 15 60 -7 69 -36 15 -21 -39 -51 -59 -106 -69 -44 -8 -115 10 -123 31 -3 9 -6 81 -6 160 0 142 1 145 25 168 14 13 25 26 25 30 0 3 -40 6 -90 6 -55 0 -90 -4 -90 -10z"/>
+                            <path d="M1630 811 c0 -5 11 -16 25 -25 25 -16 25 -17 25 -181 0 -164 0 -165 -25 -181 -14 -9 -25 -20 -25 -25 0 -5 38 -9 85 -9 84 0 104 9 65 30 -19 10 -20 21 -20 185 0 164 1 175 20 185 39 21 19 30 -65 30 -47 0 -85 -4 -85 -9z"/>
+                            <path d="M532 273 c3 -17 40 -18 591 -21 582 -2 587 -2 587 18 0 20 -6 20 -591 20 -557 0 -590 -1 -587 -17z"/>
+                            <path d="M530 180 c0 -5 14 -10 30 -10 l30 0 0 -80 c0 -64 3 -80 15 -80 12 0 15 16 15 80 l0 80 30 0 c17 0 30 5 30 10 0 6 -32 10 -75 10 -43 0 -75 -4 -75 -10z"/>
+                            <path d="M700 100 l0 -90 65 0 c37 0 65 4 65 10 0 6 -25 10 -55 10 -54 0 -55 0 -55 30 0 29 1 30 50 30 28 0 50 5 50 10 0 6 -22 10 -50 10 -49 0 -50 1 -50 30 0 30 1 30 55 30 30 0 55 5 55 10 0 6 -28 10 -65 10 l-65 0 0 -90z"/>
+                            <path d="M850 101 l0 -91 60 0 c33 0 60 4 60 10 0 6 -20 10 -45 10 l-44 0 -3 77 c-2 50 -7 78 -15 81 -10 3 -13 -19 -13 -87z"/>
+                            <path d="M990 100 l0 -90 65 0 c37 0 65 4 65 10 0 6 -22 10 -50 10 -49 0 -50 1 -50 30 0 29 2 30 44 30 25 0 48 5 51 10 4 6 -13 10 -44 10 -50 0 -51 1 -51 30 0 29 1 30 50 30 28 0 50 5 50 10 0 6 -28 10 -65 10 l-65 0 0 -90z"/>
+                            <path d="M1161 164 c-32 -41 -28 -98 9 -136 26 -25 36 -29 62 -24 36 7 68 32 68 53 0 20 -16 16 -32 -8 -16 -24 -59 -29 -83 -9 -20 17 -20 94 1 114 20 20 58 21 78 1 16 -17 36 -20 36 -6 0 19 -45 41 -81 41 -29 0 -43 -6 -58 -26z"/>
+                            <path d="M1351 171 c-48 -48 -29 -143 33 -164 87 -29 148 89 83 161 -27 29 -89 30 -116 3z m103 -23 c47 -66 -19 -154 -79 -106 -29 23 -34 71 -9 106 20 30 68 30 88 0z"/>
+                            <path d="M1520 100 c0 -53 4 -90 10 -90 6 0 10 25 10 55 0 30 4 55 8 55 5 0 16 -25 26 -56 22 -71 43 -70 71 6 l20 55 3 -58 c2 -40 7 -57 15 -54 18 6 17 172 -2 172 -12 0 -22 -20 -63 -125 -9 -23 -12 -19 -39 53 -42 107 -59 104 -59 -13z"/>
+                        </g>
+                    </svg>
                 </a>
             </div>
             <div class="header-center">
-                <div class="common-box font-35pt">생산공정관리 PPMS</div>
+                <div class="common-box">PPMS PROCESS</div>
             </div>
             <div class="header-right">
-                <div class="common-box font-15pt time-display" id="current-time"></div>
+                <div class="common-box time-display" id="current-time">
+                    <i class="uil uil-clock-eight"></i>
+                    <span>Loading...</span>
+                </div>
             </div>
         </header>
 
         <main class="content-area">
             <div class="flow-container">
+                
                 <a href="production.html">
-                    <div class="grid-item">생산</div>
+                    <div class="grid-item">
+                        <span>생 산</span>
+                    </div>
                 </a>
-                <div class="flow-arrow"></div>
+                
+                <div class="flow-arrow">
+                    
+                    <i class="uil uil-angle-double-right flow-arrow-icon"></i>
+
+                    <div class="branch-container">
+                        
+                        <div class="branch-line-dashed"></div>
+
+                        <i class="uil uil-angle-double-up flow-arrow-icon-vertical"></i>
+
+                        <a href="dip.html" class="branch-item-link">
+                            <div class="sub-grid-item">
+                                <span>조 립</span>
+                            </div>
+                        </a>
+
+                    </div>
+
+                </div>
+                
                 <a href="aoi.html">
-                    <div class="grid-item">AOI</div>
+                    <div class="grid-item">
+                        <span>AOI</span>
+                    </div>
                 </a>
-                <div class="flow-arrow"></div>
+                
+                <div class="flow-arrow">
+                    <i class="uil uil-angle-double-right flow-arrow-icon"></i>
+                </div>
+                
                 <a href="repair.html">
-                    <div class="grid-item">수리</div>
+                    <div class="grid-item">
+                        <span>수 리</span>
+                    </div>
                 </a>
-                <div class="flow-arrow"></div>
+                
+                <div class="flow-arrow">
+                    <i class="uil uil-angle-double-right flow-arrow-icon"></i>
+                </div>
+                
                 <a href="function_test.html">
-                    <div class="grid-item">기능</div>
+                    <div class="grid-item">
+                        <span>기 능</span>
+                    </div>
                 </a>
+
             </div>
         </main>
 
         <footer class="main-footer">
-            <div class="footer-left">
-                <div class="common-box font-15pt clickable-box">백업</div>
-                <div class="common-box font-15pt clickable-box">복원</div>
+            <div class="footer-left" style="display: flex; gap: 10px;">
+                <div class="footer-btn icon-backup">백업</div>
+                <div class="footer-btn icon-restore">복원</div>
             </div>
+            
             <div class="footer-center">
-                <div class="common-box font-15pt" id="footer-center-content">(주)필리아텔레콤</div>
+                <div class="common-box" id="footer-center-content" style="font-size: 0.9rem; opacity: 0.7;">
+                    © PHILIA TELECOM
+                </div>
             </div>
+            
             <div class="footer-right">
-                <div class="common-box font-15pt clickable-box" id="logout-btn">로그아웃</div>
+                <div class="footer-btn icon-logout" id="logout-btn">Logout</div>
             </div>
         </footer>
     </div>
 
     <script>
-        // --- 시간 표시 함수 ---
-        function updateTime() {
-            const timeDisplay = document.getElementById('current-time');
-            if (!timeDisplay) return;
-            const now = new Date();
-            const year = now.getFullYear();
-            const month = String(now.getMonth() + 1).padStart(2, '0');
-            const day = String(now.getDate()).padStart(2, '0');
-            const hours = String(now.getHours()).padStart(2, '0');
-            const minutes = String(now.getMinutes()).padStart(2, '0');
-            const formattedTime = `${year}년 ${month}월 ${day}일 ${hours}시 ${minutes}분`;
-            timeDisplay.textContent = formattedTime;
-        }
-
-        // --- 'DOMContentLoaded' 로직 ---
+        // --------------------------------------------------------
+        // [글리치 애니메이션 JS]
+        // --------------------------------------------------------
         document.addEventListener('DOMContentLoaded', () => {
+            
+            const filter = document.querySelector('.svg-sprite');
+            const turb = filter.querySelector('#filter feTurbulence');
+            const glitchElements = document.querySelectorAll('.btn-glitch');
 
-            // 1. 임시 보안 가드
+            let turbVal = { val: 0.000001 };
+            let turbValX = { val: 0.000001 };
+
+            let timeline = new TimelineMax({
+                repeat: -1,
+                repeatDelay: 2,
+                paused: true,
+                onUpdate: function () {
+                    turb.setAttribute('baseFrequency', turbVal.val + ' ' + turbValX.val);
+                }
+            });
+
+            timeline
+                .to(turbValX, 0.1, { val: 0.5 })
+                .to(turbVal, 0.1, { val: 0.02 })
+                .set(turbValX, { val: 0.000001 })
+                .set(turbVal, { val: 0.000001 })
+                .to(turbValX, 0.2, { val: 0.4 }, 0.4)
+                .to(turbVal, 0.2, { val: 0.002 }, 0.4)
+                .set(turbValX, { val: 0.000001 })
+                .set(turbVal, { val: 0.000001 });
+
+            glitchElements.forEach(el => {
+                el.addEventListener('mouseenter', function() {
+                    this.classList.add('btn-glitch-active');
+                    timeline.restart(); 
+                });
+                
+                el.addEventListener('mouseleave', function() {
+                    this.classList.remove('btn-glitch-active');
+                    timeline.pause();
+                    gsap.set(turbVal, { val: 0.000001 });
+                    gsap.set(turbValX, { val: 0.000001 });
+                    turb.setAttribute('baseFrequency', '0.000001 0.000001');
+                });
+            });
+
+
+            // [기본 기능]
+            setTimeout(() => {
+                document.body.style.opacity = '1';
+                document.body.style.transition = 'opacity 0.8s ease';
+            }, 50);
+
             const userRole = localStorage.getItem('ppms_user_role');
-
-            // 2. 비로그인 시 튕겨내기
             if (!userRole) {
                 window.location.href = 'login.html';
                 return;
             }
 
-            // 3. 로그아웃 버튼 활성화
             setupLogoutButton();
-
-            // 4. 시간 표시 시작
             setInterval(updateTime, 1000);
             updateTime();
 
-            // 5. 관리자일 경우, 푸터 중앙 UI를 '관리자페이지' 링크로 변경
             const footerCenterContent = document.getElementById('footer-center-content');
             if (userRole === 'admin' && footerCenterContent) {
-                footerCenterContent.textContent = '관리자페이지';
-                footerCenterContent.classList.add('clickable-box');
+                const centerDiv = document.querySelector('.footer-center');
+                centerDiv.innerHTML = ''; 
+                
                 const adminLink = document.createElement('a');
                 adminLink.href = 'admin.html';
-                footerCenterContent.parentNode.insertBefore(adminLink, footerCenterContent);
-                adminLink.appendChild(footerCenterContent);
+                
+                const adminBtn = document.createElement('div');
+                adminBtn.className = 'footer-btn icon-admin';
+                adminBtn.textContent = '관리자 페이지';
+                adminBtn.style.color = '#ffeba7';
+                
+                adminLink.appendChild(adminBtn);
+                centerDiv.appendChild(adminLink);
             }
         });
+
+        function updateTime() {
+            const timeDisplay = document.querySelector('#current-time span');
+            if (!timeDisplay) return;
+            const now = new Date();
+            
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            
+            timeDisplay.textContent = `${year}.${month}.${day} ${hours}:${minutes}`;
+        }
     </script>
 </body>
-
 </html>

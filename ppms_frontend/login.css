@@ -1,103 +1,268 @@
-/* login.html 전용 스타일 */
-body, html {
-    height: 100%;
+@import url('https://fonts.googleapis.com/css?family=Poppins:400,500,600,700,800,900');
+
+body {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 300;
+    font-size: 15px;
+    line-height: 1.7;
+    color: #c4c3ca;
+    background-color: #1f2029;
+    overflow-x: hidden;
+    height: 100vh;
 }
 
-.page-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100%;
+a {
+    cursor: pointer;
+    transition: all 200ms linear;
 }
 
-/* common.css의 .modal-window 스타일을 가져와 수정 */
-.login-window {
-    background-color: #2C2C2E;
-    padding: 25px 30px 30px 30px;
-    border-radius: 10px;
-    border: 1px solid #555;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+a:hover {
+    text-decoration: none;
+}
+
+/* --- [수정] 상단 컨트롤 UI 박스 스타일 (카드 디자인과 통일) --- */
+.main-ui-wrapper {
+    /* 배경을 카드와 동일한 다크 테마로 변경 */
+    background-color: #2a2b38; 
+    background-image: url('https://s3-us-west-2.amazonaws.com/s.cdpn.io/1462889/pat.svg');
+    background-position: bottom center;
+    background-repeat: no-repeat;
+    background-size: 300%;
+    
+    border-radius: 6px;
+    padding: 25px 0 15px 0;    /* 콤팩트한 높이 유지 */
     width: 100%;
-    max-width: 400px;
-    font-family: 'BMDOHYEON', sans-serif;
-    font-weight: bold;
-    display: flex;
-    flex-direction: column;
+    max-width: 440px;
+    margin: 0 auto 20px auto;  /* 카드와의 간격 */
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3); /* 그림자 조금 더 진하게 */
+    position: relative;
+    z-index: 10;
 }
 
-.login-title {
-    color: #FFFFFF;
-    font-size: 1.8rem;
-    margin: 0 0 15px 0;
-    padding-bottom: 10px;
-    font-family: inherit;
-    font-weight: inherit;
-    text-align: center;
+/* [수정] 제목 색상 (어두운 배경이므로 밝은색/노란색 포인트) */
+.ui-title {
+    font-weight: 800;
+    color: #ffeba7; /* 포인트 컬러(노란색) 사용 */
+    margin-bottom: 15px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
 }
 
-#login-form {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
+p {
+    font-weight: 500;
+    font-size: 14px;
+    line-height: 1.7;
 }
 
-.login-input-group {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-}
-
-.login-input-group label {
-    font-family: 'BMJUA', sans-serif;
-    font-size: 1.1rem;
-    color: #eaeaea;
-}
-
-.form-input {
-    width: 100%;
-    padding: 10px;
-    background: #1c1c1e;
-    border: 1px solid #555;
-    color: #FFFFFF;
-    font-family: 'BMDOHYEON', sans-serif;
-    font-weight: bold;
-    font-size: 1.1rem;
-    border-radius: 5px;
-    box-sizing: border-box;
-}
-.form-input:focus {
-    outline: none;
-    border-color: #00BFFF;
-}
-
-/* common.css의 .clickable-box 스타일 재사용 */
-#login-submit-btn {
-    width: 100%;
-    text-align: center;
-    box-sizing: border-box;
-    padding-top: 12px;
-    padding-bottom: 12px;
-    margin-top: 10px;
-    background-color: #007BFF;
+h4 {
+    font-weight: 600;
     color: #fff;
-    font-size: clamp(13px, 1.2vw, 18px); /* font-15pt */
-    border: 1px solid #555;
-    border-bottom: 3px solid #333;
-}
-#login-submit-btn:hover {
-    background-color: #0056b3;
-}
-#login-submit-btn:active {
-    transform: translateY(1px);
-    border-bottom-width: 2px;
 }
 
-.login-status-message {
-    font-family: 'BMDOHYEON', sans-serif;
-    font-size: 0.9rem;
-    font-weight: bold;
-    color: #FF4500;
+/* [수정] 일반/관리 라벨 텍스트 색상 */
+h6 span {
+    padding: 0 20px;
+    text-transform: uppercase;
+    font-weight: 700;
+    font-size: 1.2rem;
+    color: #fff; /* 흰색으로 변경 */
+}
+
+.section {
+    position: relative;
+    width: 100%;
+    display: block;
+}
+
+.full-height {
+    min-height: 100vh;
+}
+
+[type="checkbox"]:checked,
+[type="checkbox"]:not(:checked) {
+    position: absolute;
+    left: -9999px;
+}
+
+/* [수정] 토글 스위치 트랙 (어두운 배경 위라 노란색이 잘 보임) */
+.checkbox:checked+label,
+.checkbox:not(:checked)+label {
+    position: relative;
+    display: block;
     text-align: center;
-    margin: 5px 0 0 0;
-    height: 1.2em;
+    width: 60px;
+    height: 16px;
+    border-radius: 8px;
+    padding: 0;
+    margin: 10px auto;
+    cursor: pointer;
+    background-color: #ffeba7; /* 노란색 트랙 */
+}
+
+/* [수정] 토글 스위치 원형 버튼 */
+.checkbox:checked+label:before,
+.checkbox:not(:checked)+label:before {
+    position: absolute;
+    display: block;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    color: #ffeba7;          /* 아이콘 색상 (노란색) */
+    background-color: #102770; /* 버튼 배경 (남색) - 대비 효과 */
+    font-family: 'unicons';
+    content: '\eb4f';
+    z-index: 20;
+    top: -10px;
+    left: -10px;
+    line-height: 36px;
+    text-align: center;
+    font-size: 24px;
+    transition: all 0.5s ease;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+.checkbox:checked+label:before {
+    transform: translateX(44px) rotate(-270deg);
+}
+
+/* --- 3D 카드 래퍼 --- */
+.card-3d-wrap {
+    position: relative;
+    width: 440px;
+    max-width: 100%;
+    height: 300px;
+    -webkit-transform-style: preserve-3d;
+    transform-style: preserve-3d;
+    perspective: 800px;
+    margin-top: 0;
+}
+
+.card-3d-wrapper {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    -webkit-transform-style: preserve-3d;
+    transform-style: preserve-3d;
+    transition: all 600ms ease-out;
+}
+
+.card-front,
+.card-back {
+    width: 100%;
+    height: 100%;
+    background-color: #2a2b38;
+    background-image: url('https://s3-us-west-2.amazonaws.com/s.cdpn.io/1462889/pat.svg');
+    background-position: bottom center;
+    background-repeat: no-repeat;
+    background-size: 300%;
+    position: absolute;
+    border-radius: 6px;
+    left: 0;
+    top: 0;
+    -webkit-transform-style: preserve-3d;
+    transform-style: preserve-3d;
+    -webkit-backface-visibility: hidden;
+    -moz-backface-visibility: hidden;
+    -o-backface-visibility: hidden;
+    backface-visibility: hidden;
+}
+
+.card-back {
+    transform: rotateY(180deg);
+}
+
+.center-wrap {
+    position: absolute;
+    width: 100%;
+    padding: 0 35px;
+    top: 50%;
+    left: 0;
+    transform: translate3d(0, -50%, 35px) perspective(100px);
+    z-index: 20;
+    display: block;
+}
+
+.form-group {
+    position: relative;
+    display: block;
+    margin: 0;
+    padding: 0;
+}
+
+.form-style {
+    padding: 13px 20px;
+    padding-left: 55px;
+    height: 48px;
+    width: 100%;
+    font-weight: 500;
+    border-radius: 4px;
+    font-size: 14px;
+    line-height: 22px;
+    letter-spacing: 0.5px;
+    outline: none;
+    color: #c4c3ca;
+    background-color: #1f2029;
+    border: none;
+    transition: all 200ms linear;
+    box-shadow: 0 4px 8px 0 rgba(21, 21, 21, .2);
+}
+
+.form-style:focus,
+.form-style:active {
+    border: none;
+    outline: none;
+    box-shadow: 0 4px 8px 0 rgba(21, 21, 21, .2);
+}
+
+.input-icon {
+    position: absolute;
+    top: 0;
+    left: 18px;
+    height: 48px;
+    font-size: 24px;
+    line-height: 48px;
+    text-align: left;
+    color: #ffeba7;
+    transition: all 200ms linear;
+}
+
+.form-group input:focus + .input-icon {
+    color: #00BFFF;
+}
+
+.btn {
+    border-radius: 4px;
+    height: 44px;
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    transition: all 200ms linear;
+    padding: 0 30px;
+    letter-spacing: 1px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    border: none;
+    background-color: #ffeba7;
+    color: #102770;
+    box-shadow: 0 8px 24px 0 rgba(255, 235, 167, .2);
+    cursor: pointer;
+    width: 100%;
+}
+
+.btn:active,
+.btn:focus {
+    background-color: #102770;
+    color: #ffeba7;
+    box-shadow: 0 8px 24px 0 rgba(16, 39, 112, .2);
+}
+
+.btn:hover {
+    background-color: #102770;
+    color: #ffeba7;
+    box-shadow: 0 8px 24px 0 rgba(16, 39, 112, .2);
 }

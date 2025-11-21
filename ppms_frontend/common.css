@@ -609,3 +609,15 @@ table.editable-table {
     background-color: #007BFF;
     color: white;
 }
+
+body {
+    /* 기본적으로 불투명(보임) 상태 */
+    opacity: 1;
+    /* 투명도가 변할 때 0.5초 동안 부드럽게 변함 */
+    transition: opacity 0.5s ease-in-out;
+}
+
+/* 페이지가 사라질 때 적용할 클래스 */
+body.fade-out {
+    opacity: 0;
+}
