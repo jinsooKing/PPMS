@@ -4,36 +4,328 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PPMS - 생산</title>
+    <title>PPMS - 생산 일정 관리</title>
+    
     <link rel="stylesheet" href="common.css">
-    <link rel="stylesheet" href="header.css">
-    <link rel="stylesheet" href="footer.css">
-    <link rel="stylesheet" href="production.css">
     <link href="https://hangeul.pstatic.net/hangeul_static/css/bmdohyeon.css" rel="stylesheet">
     <link href="https://hangeul.pstatic.net/hangeul_static/css/bmjua.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://unicons.iconscout.com/release/v2.1.9/css/unicons.css">
+    <link href="https://fonts.googleapis.com/css?family=Poppins:400,500,600,700,800,900" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Roboto+Mono" rel="stylesheet">
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    
     <script src="auth.js"></script>
     <script src="calendar.js"></script>
+    <script src="paperlogy-font.js"></script>
+
+    <style>
+        /* --- [1. 테마 변수] --- */
+        :root {
+            --bg-dark: #1f2029;
+            --card-bg: #2a2b38;
+            --text-color: #c4c3ca;
+            --text-white: #ffffff;
+            --point-gold: #ffeba7;
+            --accent-blue: #102770;
+            --danger-red: #ff4444;
+            --border-color: rgba(255, 235, 167, 0.1);
+        }
+        body {
+            opacity: 0;
+        }
+
+        /* --- [2. 레이아웃] --- */
+        body {
+            background-color: var(--bg-dark);
+            background-image: url('https://s3-us-west-2.amazonaws.com/s.cdpn.io/1462889/pat.svg');
+            background-position: center;
+            background-repeat: repeat;
+            background-size: 300%;
+            color: var(--text-color);
+            font-family: 'Poppins', 'BMDOHYEON', sans-serif;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        a, a:hover { text-decoration: none; color: inherit; }
+
+        .page-container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            backdrop-filter: blur(2px);
+        }
+
+        .content-area {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 20px;
+            overflow-y: auto;
+            width: 100%;
+        }
+
+        /* --- [3. 헤더 & 푸터] --- */
+        .main-header, .main-footer {
+            background: rgba(31, 32, 41, 0.95);
+            border-bottom: 1px solid var(--border-color);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            padding: 10px 30px;
+            display: flex;
+            align-items: center;
+            z-index: 100;
+            flex-shrink: 0;
+            position: relative;
+        }
+
+        .main-footer {
+            border-top: 1px solid var(--border-color);
+            border-bottom: none;
+            justify-content: space-between;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .header-center {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1;
+            white-space: nowrap;
+        }
+
+        .header-right { margin-left: auto; z-index: 2; }
+
+        /* 버튼 스타일 */
+        .common-box, .footer-btn {
+            background: var(--card-bg) !important;
+            color: var(--text-color);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 30px;
+            padding: 6px 18px;
+            font-family: 'BMJUA', sans-serif;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: none;
+            white-space: nowrap;
+        }
+
+        .common-box:hover, .footer-btn:hover {
+            background: var(--point-gold) !important;
+            color: var(--accent-blue);
+            box-shadow: 0 0 15px rgba(255, 235, 167, 0.4);
+            border-color: transparent;
+        }
+
+        /* --- [4. 로고] --- */
+        .svg-sprite { position: absolute; width: 0; height: 0; }
+        .header-logo-wrapper { position: relative; display: flex; align-items: center; transform: translateZ(0); cursor: pointer; flex-shrink: 0; }
+        .header-logo { height: 35px; width: auto; fill: var(--point-gold); transition: fill 0.2s ease; filter: drop-shadow(0 0 5px rgba(255, 235, 167, 0.4)); display: block; }
+        .header-logo-wrapper.btn-glitch-active .header-logo { fill: #ffffff; -webkit-filter: url('#filter'); filter: url('#filter'); }
+
+        .header-center .common-box { background: transparent !important; border: none; color: var(--point-gold); font-family: 'Poppins', 'BMDOHYEON', sans-serif; font-weight: 800; font-size: 1.8rem; letter-spacing: 2px; text-transform: uppercase; pointer-events: none; }
+        .time-display { color: var(--text-color); font-family: 'Poppins', sans-serif; font-weight: 500; font-size: 1rem; background: transparent !important; border: none; }
+        .footer-center { display: flex; flex-direction: row; gap: 15px; align-items: center; justify-content: center; }
+
+        /* --- [5. 메인 뷰 테이블] --- */
+        #schedule-display-area { width: 100%; max-width: 1600px; display: flex; flex-direction: column; gap: 15px; margin-bottom: 20px; }
+        .line-schedule-section { background-color: var(--card-bg); border-radius: 10px; padding: 10px 15px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); border: 1px solid rgba(255, 255, 255, 0.05); }
+        .line-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 5px; }
+        
+        .line-title-group { display: flex; align-items: center; gap: 15px; }
+        .line-title { font-family: 'BMDOHYEON', sans-serif; font-size: 1.3rem; color: var(--text-white); margin: 0; display: flex; align-items: center; gap: 10px; }
+        .line-title::before { content: ''; display: block; width: 4px; height: 16px; background-color: var(--point-gold); border-radius: 2px; }
+        
+        .table-container {
+            overflow-x: auto;
+            overflow-y: auto;       /* 세로 스크롤 허용 */
+            max-height: 60vh;       /* 화면 높이의 60%까지만 늘어남 (스크롤 발생 지점) */
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        table.editable-table { width: 100%; border-collapse: collapse; font-family: 'Poppins', 'BMJUA', sans-serif; color: var(--text-color); }
+        table.editable-table th, table.editable-table td { padding: 4px 6px; white-space: nowrap; text-align: center; border-bottom: 1px solid rgba(255, 255, 255, 0.05); font-size: 0.85rem; height: 32px; }
+        table.editable-table th { background-color: #1a1b23; color: var(--point-gold); font-weight: 600; text-transform: uppercase; border-bottom: 2px solid rgba(255, 235, 167, 0.2); position: sticky; top: 0; z-index: 5; }
+        table.editable-table tbody tr:hover { background-color: rgba(255, 235, 167, 0.05); }
+
+        .form-input, .form-select { background: transparent; border: 1px solid transparent; color: #fff; font-family: inherit; font-size: 0.85rem; text-align: center; width: 100%; height: 26px; padding: 0 4px; border-radius: 3px; }
+        .form-input:focus, .form-select:focus { background-color: #15151a; border-color: var(--point-gold); outline: none; }
+        select.form-select { background-color: #2a2b38; }
+
+        .progress-bar-container { width: 120px; height: 10px; background-color: #15151a; border-radius: 5px; overflow: hidden; position: relative; border: 1px solid rgba(255,255,255,0.1); }
+        .progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--point-gold), #ffbc00); width: 0%; transition: width 0.5s ease; }
+        .progress-bar-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 9px; color: #fff; text-shadow: 0 0 3px #000; font-weight: bold; }
+        
+        /* 헤더 컨트롤 버튼 */
+        .header-controls { display: flex; gap: 8px; }
+        .icon-btn { 
+            background: #3a3a3c; border: 1px solid #555; color: #fff; 
+            font-size: 1.1rem; cursor: pointer; padding: 0; 
+            width: 30px; height: 30px; border-radius: 5px; 
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s;
+        }
+        .icon-btn:hover { background: #555; color: var(--point-gold); transform: scale(1.05); }
+        .icon-btn.delete-mode-active { background-color: var(--danger-red); border-color: var(--danger-red); color: #fff; animation: pulse-red 2s infinite; }
+        
+        .delete-mode tbody tr { cursor: pointer; transition: background-color 0.2s; }
+        .delete-mode tbody tr:hover { background-color: rgba(255, 68, 68, 0.2) !important; }
+        .delete-mode tbody tr:hover td { color: #ffcccc; }
+
+        @keyframes pulse-red {
+            0% { box-shadow: 0 0 0 0 rgba(255, 68, 68, 0.7); }
+            70% { box-shadow: 0 0 0 6px rgba(255, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 68, 68, 0); }
+        }
+
+        /* --- [6. 모달 공통 스타일] --- */
+        @keyframes fadeInOverlay { from { background-color: rgba(0,0,0,0); } to { background-color: rgba(0,0,0,0.85); } }
+        @keyframes modalSlideUp { from { opacity: 0; transform: translateY(30px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+        .modal-overlay { background-color: rgba(0, 0, 0, 0.85); backdrop-filter: blur(5px); z-index: 1000; display: none; justify-content: center; align-items: center; position: fixed; top: 0; left: 0; width: 100%; height: 100%; }
+        .modal-overlay.visible { display: flex; animation: fadeInOverlay 0.3s forwards; }
+        .modal-overlay.visible .modal-window { animation: modalSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+        .modal-window { 
+            background-color: #23242d; border: 1px solid var(--border-color);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6); color: #fff;
+            display: flex; flex-direction: column; 
+            max-height: 90vh; border-radius: 12px;
+        }
+        .modal-content { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 20px; }
+        .modal-title { color: var(--point-gold); border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding: 15px; margin: 0; flex-shrink: 0; font-family: 'BMJUA'; }
+        .modal-footer { padding: 15px; border-top: 1px solid rgba(255, 255, 255, 0.1); flex-shrink: 0; display: flex; justify-content: space-between; }
+        .close-btn { position: absolute; top: 15px; right: 20px; color: #888; font-size: 2rem; background: none; border: none; cursor: pointer; z-index: 10; }
+        .close-btn:hover { color: var(--point-gold); }
+
+        /* --- [7. 일정 등록 모달 (탭 스타일)] --- */
+        /* [수정] 탭 네비게이션 */
+        .line-tab-nav {
+            display: flex; border-bottom: 1px solid rgba(255,255,255,0.1); 
+            background: #15151a; flex-shrink: 0; 
+        }
+        .line-tab-btn {
+            flex: 1; padding: 15px; background: transparent; border: none; 
+            color: #888; cursor: pointer; font-family: 'BMJUA'; font-size: 1.1rem; 
+            border-bottom: 3px solid transparent; transition: all 0.2s;
+        }
+        .line-tab-btn:hover { color: #ddd; background: rgba(255,255,255,0.05); }
+        .line-tab-btn.active { 
+            color: var(--point-gold); border-bottom-color: var(--point-gold); 
+            background: rgba(255, 235, 167, 0.05); 
+        }
+
+        /* 탭 컨텐츠 */
+        .tab-content { display: none; animation: fadeIn 0.3s ease; }
+        .tab-content.active { display: block; }
+
+        /* 테이블 스타일 */
+        .registration-table th { background-color: #15151a; color: #aaa; padding: 10px; font-size: 0.9rem; }
+        .registration-table td { padding: 6px; }
+        .registration-table input, .registration-table select { background-color: rgba(255,255,255,0.05); border-radius: 4px; height: 34px; }
+        
+        .action-btn { border-radius: 4px; width: 24px; height: 24px; line-height: 22px; padding: 0; font-size: 12px; color:white; border:none; cursor: pointer; }
+        .add-row-btn { background-color: #1e3a8a; margin-right: 4px; }
+        .delete-row-btn { background-color: #7f1d1d; }
+
+        /* --- [8. 비고 모달 UI] --- */
+        .notes-modal-content-container { display: flex; flex-direction: column; height: 100%; overflow: hidden; }
+        .notes-tab-nav { display: flex; border-bottom: 1px solid rgba(255,255,255,0.1); background: #15151a; flex-shrink: 0; }
+        .tab-btn { flex: 1; padding: 12px; background: transparent; border: none; color: #888; cursor: pointer; font-family: 'BMJUA'; font-size: 1rem; border-bottom: 2px solid transparent; transition: all 0.2s; }
+        .tab-btn:hover { background: rgba(255,255,255,0.05); color: #ddd; }
+        .tab-btn.active { color: var(--point-gold); border-bottom-color: var(--point-gold); background: rgba(255, 235, 167, 0.05); }
+        .notes-modal-content { flex: 1; overflow-y: auto; padding: 20px; background: #1a1b23; }
+        .notes-tab-content { display: none; animation: fadeIn 0.3s ease; }
+        .notes-tab-content.active { display: block; }
+        .note-item { background: #23242d; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 15px; margin-bottom: 15px; }
+        .note-item h4 { margin: 0 0 10px 0; color: var(--point-gold); font-size: 0.95rem; }
+        .note-item textarea { width: 100%; min-height: 80px; background: #15151a; border: 1px solid #444; color: #eee; padding: 10px; border-radius: 5px; font-family: 'Poppins', sans-serif; resize: vertical; font-size: 0.9rem; line-height: 1.5; }
+        .note-item textarea:focus { border-color: var(--point-gold); outline: none; }
+
+        /* --- [9. 주차 선택 모달 UI] --- */
+        #week-selector-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 15px; padding: 10px; }
+        .week-box { background: linear-gradient(145deg, #2a2b38, #23242d); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 10px; padding: 20px 10px; text-align: center; color: #c4c3ca; font-family: 'BMJUA', sans-serif; font-size: 1.1rem; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
+        .week-box:hover { background: var(--point-gold); color: var(--accent-blue); transform: translateY(-5px); box-shadow: 0 8px 15px rgba(255, 235, 167, 0.3); border-color: transparent; }
+        
+        .period-selector-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px; width: 100%; }
+        .period-btn { background-color: #2a2b38; color: var(--text-white); padding: 15px; border-radius: 10px; text-align: center; font-family: 'BMJUA', sans-serif; font-size: 1.1rem; cursor: pointer; transition: all 0.2s ease; border: 1px solid rgba(255, 255, 255, 0.05); }
+        .period-btn:hover { background-color: var(--point-gold); color: var(--accent-blue); transform: translateY(-2px); }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        @media (max-width: 768px) {
+            .main-header { padding: 10px; flex-direction: column; height: auto; gap: 10px; }
+            .header-center { position: static; transform: none; order: -1; margin-bottom: 5px; }
+            .header-left { width: 100%; justify-content: space-between; }
+            .header-right { display: none; }
+            .line-schedule-section { padding: 10px; }
+        }
+    </style>
 </head>
 
 <body>
+    <svg style="position: absolute; width: 0; height: 0;" width="0" height="0" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" class="svg-sprite">
+        <defs>
+            <filter id="filter">
+                <feTurbulence type="fractalNoise" baseFrequency="0.01 0.004" numOctaves="1" result="warp" seed="1"></feTurbulence>
+                <feDisplacementMap xChannelSelector="R" yChannelSelector="G" scale="30" in="SourceGraphic" in2="warp"></feDisplacementMap>
+            </filter>
+        </defs>
+    </svg>
+
     <div class="page-container">
         <header class="main-header">
-            <div class="header-left"><a href="index.html">
-                    <picture>
-                        <source srcset="logo.avif" type="image/avif"><img src="logo.png" alt="필리아텔레콤 로고"
-                            class="header-logo">
-                    </picture>
+            <div class="header-left">
+                <a href="index.html" class="header-logo-wrapper btn-glitch">
+                    <svg class="header-logo" version="1.0" xmlns="http://www.w3.org/2000/svg"
+                     width="233.000000pt" height="240.000000pt" viewBox="0 0 233.000000 240.000000"
+                     preserveAspectRatio="xMidYMid meet">
+                        <g transform="translate(0.000000,240.000000) scale(0.100000,-0.100000)" stroke="none">
+                            <path d="M978 2385 c-184 -31 -309 -94 -433 -219 -143 -144 -199 -279 -198 -481 1 -235 87 -444 246 -592 271 -253 686 -282 997 -70 54 37 151 127 193 181 26 32 16 27 -66 -37 -189 -148 -291 -189 -467 -189 -275 1 -472 113 -575 327 -128 265 -86 586 101 773 99 99 243 150 389 138 172 -14 293 -86 355 -208 38 -77 41 -167 9 -253 -38 -102 -159 -206 -276 -240 l-23 -6 0 188 c0 134 4 193 12 201 7 7 31 12 55 12 32 0 43 4 43 15 0 13 -35 15 -251 15 -196 0 -250 -3 -247 -12 3 -7 24 -14 49 -16 24 -2 47 -9 51 -15 14 -21 10 -661 -4 -675 -7 -7 -31 -12 -55 -12 -32 0 -43 -4 -43 -15 0 -13 34 -15 250 -15 216 0 250 2 250 15 0 11 -12 15 -45 15 -59 0 -65 14 -65 139 l0 100 58 6 c109 11 184 26 236 46 183 68 285 273 230 460 -94 317 -404 487 -776 424z"/>
+                            <path d="M1991 638 c-60 -130 -103 -211 -120 -225 l-26 -22 73 -1 c39 0 72 3 72 6 0 3 -9 13 -19 22 -19 16 -19 19 -4 55 l15 37 87 0 c84 0 88 -1 99 -25 18 -38 15 -63 -8 -70 -45 -14 -15 -25 70 -25 50 0 90 3 90 6 0 3 -10 16 -21 28 -12 12 -61 109 -109 216 -48 107 -92 196 -97 197 -5 2 -52 -88 -102 -199z m113 -9 c14 -33 26 -62 26 -65 0 -2 -27 -4 -61 -4 -33 0 -59 4 -57 8 2 4 14 33 27 65 14 31 28 57 32 57 3 0 18 -27 33 -61z"/>
+                            <path d="M0 811 c0 -5 11 -16 25 -25 25 -16 25 -17 25 -179 0 -89 -4 -167 -8 -173 -4 -6 -15 -13 -24 -17 -43 -16 -13 -27 72 -27 50 0 90 4 90 9 0 5 -11 16 -25 25 -24 16 -26 22 -23 79 l3 62 85 5 c131 9 180 44 180 130 0 53 -22 84 -76 106 -38 16 -324 20 -324 5z m264 -35 c58 -24 69 -107 18 -146 -19 -15 -40 -20 -88 -20 l-64 0 0 78 c0 47 5 83 12 90 16 16 81 15 122 -2z"/>
+                            <path d="M440 810 c0 -6 11 -15 25 -20 l25 -10 0 -175 0 -175 -25 -10 c-50 -19 -26 -30 65 -30 50 0 90 4 90 9 0 5 -10 15 -22 23 -19 13 -23 26 -26 92 l-4 76 96 0 96 0 0 -75 c0 -68 -2 -76 -25 -91 -14 -9 -25 -20 -25 -25 0 -5 41 -9 90 -9 50 0 90 4 90 9 0 5 -11 16 -25 25 -25 16 -25 17 -25 181 0 164 0 165 25 181 14 9 25 20 25 25 0 5 -40 9 -90 9 -49 0 -90 -4 -90 -9 0 -5 11 -16 25 -25 23 -15 25 -23 25 -86 l0 -70 -96 0 -96 0 4 72 c3 60 7 73 26 86 12 8 22 18 22 23 0 5 -40 9 -90 9 -55 0 -90 -4 -90 -10z"/>
+                            <path d="M940 810 c0 -6 11 -15 25 -20 l25 -10 0 -167 c0 -93 -4 -173 -8 -179 -4 -6 -15 -13 -24 -17 -43 -16 -13 -27 72 -27 50 0 90 4 90 9 0 5 -11 16 -25 25 -25 16 -25 17 -25 181 0 164 0 165 25 181 14 9 25 20 25 25 0 5 -40 9 -90 9 -55 0 -90 -4 -90 -10z"/>
+                            <path d="M1170 810 c0 -6 8 -14 18 -17 9 -4 20 -11 24 -17 4 -6 8 -83 8 -171 0 -88 -4 -165 -8 -171 -4 -6 -15 -13 -24 -17 -10 -3 -18 -11 -18 -17 0 -6 66 -10 190 -10 l190 0 6 28 c3 15 10 42 15 61 15 60 -7 69 -36 15 -21 -39 -51 -59 -106 -69 -44 -8 -115 10 -123 31 -3 9 -6 81 -6 160 0 142 1 145 25 168 14 13 25 26 25 30 0 3 -40 6 -90 6 -55 0 -90 -4 -90 -10z"/>
+                            <path d="M1630 811 c0 -5 11 -16 25 -25 25 -16 25 -17 25 -181 0 -164 0 -165 -25 -181 -14 -9 -25 -20 -25 -25 0 -5 38 -9 85 -9 84 0 104 9 65 30 -19 10 -20 21 -20 185 0 164 1 175 20 185 39 21 19 30 -65 30 -47 0 -85 -4 -85 -9z"/>
+                            <path d="M532 273 c3 -17 40 -18 591 -21 582 -2 587 -2 587 18 0 20 -6 20 -591 20 -557 0 -590 -1 -587 -17z"/>
+                            <path d="M530 180 c0 -5 14 -10 30 -10 l30 0 0 -80 c0 -64 3 -80 15 -80 12 0 15 16 15 80 l0 80 30 0 c17 0 30 5 30 10 0 6 -32 10 -75 10 -43 0 -75 -4 -75 -10z"/>
+                            <path d="M700 100 l0 -90 65 0 c37 0 65 4 65 10 0 6 -25 10 -55 10 -54 0 -55 0 -55 30 0 29 1 30 50 30 28 0 50 5 50 10 0 6 -22 10 -50 10 -49 0 -50 1 -50 30 0 30 1 30 55 30 30 0 55 5 55 10 0 6 -28 10 -65 10 l-65 0 0 -90z"/>
+                            <path d="M850 101 l0 -91 60 0 c33 0 60 4 60 10 0 6 -20 10 -45 10 l-44 0 -3 77 c-2 50 -7 78 -15 81 -10 3 -13 -19 -13 -87z"/>
+                            <path d="M990 100 l0 -90 65 0 c37 0 65 4 65 10 0 6 -22 10 -50 10 -49 0 -50 1 -50 30 0 29 2 30 44 30 25 0 48 5 51 10 4 6 -13 10 -44 10 -50 0 -51 1 -51 30 0 29 1 30 50 30 28 0 50 5 50 10 0 6 -28 10 -65 10 l-65 0 0 -90z"/>
+                            <path d="M1161 164 c-32 -41 -28 -98 9 -136 26 -25 36 -29 62 -24 36 7 68 32 68 53 0 20 -16 16 -32 -8 -16 -24 -59 -29 -83 -9 -20 17 -20 94 1 114 20 20 58 21 78 1 16 -17 36 -20 36 -6 0 19 -45 41 -81 41 -29 0 -43 -6 -58 -26z"/>
+                            <path d="M1351 171 c-48 -48 -29 -143 33 -164 87 -29 148 89 83 161 -27 29 -89 30 -116 3z m103 -23 c47 -66 -19 -154 -79 -106 -29 23 -34 71 -9 106 20 30 68 30 88 0z"/>
+                            <path d="M1520 100 c0 -53 4 -90 10 -90 6 0 10 25 10 55 0 30 4 55 8 55 5 0 16 -25 26 -56 22 -71 43 -70 71 6 l20 55 3 -58 c2 -40 7 -57 15 -54 18 6 17 172 -2 172 -12 0 -22 -20 -63 -125 -9 -23 -12 -19 -39 53 -42 107 -59 104 -59 -13z"/>
+                        </g>
+                    </svg>
                 </a>
-                <div id="current-week-display" class="common-box font-15pt clickable-box"></div>
+                <div id="current-week-display" class="common-box clickable-box">
+                    <i class="uil uil-calendar-alt"></i> <span>Loading...</span>
+                </div>
             </div>
             <div class="header-center">
-                <div class="common-box font-35pt">생산(SMD)</div>
+                <div class="common-box">PRODUCTION (SMD)</div>
             </div>
             <div class="header-right">
-                <div class="common-box font-15pt time-display" id="current-time"></div>
+                <div class="common-box time-display" id="current-time"></div>
             </div>
         </header>
 
@@ -43,152 +335,129 @@
 
         <footer class="main-footer">
             <div class="footer-left">
-                <div class="common-box font-15pt clickable-box" id="reg-schedule-btn">생산일정등록</div>
-            </div>
-            <div class="footer-center">
-                <div class="common-box font-15pt clickable-box" id="back-btn"><i class="fas fa-arrow-left"></i></div>
-                <div class="common-box font-15pt clickable-box" id="home-btn"><i class="fas fa-home"></i></div>
-                <div class="common-box font-15pt clickable-box" id="forward-btn"><i class="fas fa-arrow-right"></i>
+                <div class="footer-btn" id="reg-schedule-btn">
+                    <i class="uil uil-edit"></i> 일정 등록
                 </div>
             </div>
+            <div class="footer-center">
+                <div class="footer-btn" id="back-btn"><i class="uil uil-arrow-left"></i></div>
+                <div class="footer-btn" id="home-btn"><i class="uil uil-home"></i></div>
+                <div class="footer-btn" id="forward-btn"><i class="uil uil-arrow-right"></i></div>
+            </div>
             <div class="footer-right">
-                <div class="common-box font-15pt clickable-box" id="week-picker-btn" style="position: relative;">
-                    이전데이터
+                <div class="footer-btn" id="week-picker-btn" style="position: relative;">
+                    <i class="uil uil-history"></i> 이전 데이터
                 </div>
             </div>
         </footer>
     </div>
 
-    <div class="dropup-overlay" id="week-selector-dropup">
-        <div class="dropup-content">
-            <div class="grid-container" id="week-selector-grid"></div>
+    <div class="modal-overlay" id="week-selector-dropup">
+        <div class="modal-window small-modal" style="width:auto; max-width:500px; height:auto; max-height:80vh;">
+            <button class="close-btn" id="close-week-modal-btn" onclick="closeWeekSelectorDropup()">&times;</button>
+            <h3 class="modal-title">주차 선택</h3>
+            <div class="modal-content">
+                <div class="grid-container" id="week-selector-grid" style="grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));"></div>
+            </div>
         </div>
     </div>
 
     <div class="modal-overlay" id="schedule-modal">
-        <div class="modal-window">
+        <div class="modal-window" style="width: 95vw; max-width: 1600px;">
             <button class="close-btn" id="close-modal-btn">&times;</button>
-            <h2 class="modal-title" id="modal-title"></h2>
+            <h2 class="modal-title" id="modal-title">생산 일정 등록</h2>
+            
+            <nav class="line-tab-nav">
+                <button class="line-tab-btn active" data-line-tab="A">A LINE</button>
+                <button class="line-tab-btn" data-line-tab="B">B LINE</button>
+                <button class="line-tab-btn" data-line-tab="C">C LINE</button>
+            </nav>
+
             <div class="modal-content">
-                <section class="line-schedule-section">
+                
+                <section class="line-schedule-section tab-content active" id="tab-content-A" data-line="A">
                     <div class="line-header">
-                        <h3 class="line-title">A라인</h3>
+                        <div class="line-title-group">
+                            <h3 class="line-title">A LINE 스케줄</h3>
+                            <div class="header-controls" id="header-controls-A">
+                                <button class="icon-btn add-row-btn" title="행 추가"><i class="uil uil-plus"></i></button>
+                                <button class="icon-btn toggle-delete-btn" title="삭제 모드"><i class="uil uil-trash-alt"></i></button>
+                            </div>
+                        </div>
                     </div>
                     <div class="table-container">
-                        <table class="editable-table registration-table">
+                        <table class="editable-table registration-table" id="table-A">
                             <colgroup>
-                                <col style="width: 5%;">
-                                <col style="width: 10%;">
-                                <col style="width: 7%;">
-                                <col style="width: 20%;">
-                                <col style="width: 8%">
-                                <col style="width: 10%;">
-                                <col style="width: 10%;">
-                                <col style="width: 20%;">
-                                <col style="width: 10%;">
+                                <col style="width:15%"> <col style="width:8%"> <col style="width:27%"> <col style="width:10%"> 
+                                <col style="width:10%"> <col style="width:10%"> <col style="width:20%">
                             </colgroup>
-                            <thead>
-                                <tr>
-                                    <th>생산라인</th>
-                                    <th>업체</th>
-                                    <th>주문연도</th>
-                                    <th>모델명</th>
-                                    <th>주문월</th>
-                                    <th>T/B</th>
-                                    <th>LOT</th>
-                                    <th>생산예정일</th>
-                                    <th>추가/삭제</th>
-                                </tr>
-                            </thead>
+                            <thead><tr><th>업체</th><th>년도</th><th>모델명</th><th>발주월</th><th>T/B</th><th>LOT</th><th>생산예정일</th></tr></thead>
                             <tbody id="schedule-table-body-A"></tbody>
                         </table>
                     </div>
                 </section>
-                <section class="line-schedule-section">
+
+                <section class="line-schedule-section tab-content" id="tab-content-B" data-line="B">
                     <div class="line-header">
-                        <h3 class="line-title">B라인</h3>
+                        <div class="line-title-group">
+                            <h3 class="line-title">B LINE 스케줄</h3>
+                            <div class="header-controls" id="header-controls-B">
+                                <button class="icon-btn add-row-btn" title="행 추가"><i class="uil uil-plus"></i></button>
+                                <button class="icon-btn toggle-delete-btn" title="삭제 모드"><i class="uil uil-trash-alt"></i></button>
+                            </div>
+                        </div>
                     </div>
                     <div class="table-container">
-                        <table class="editable-table registration-table">
+                        <table class="editable-table registration-table" id="table-B">
                             <colgroup>
-                                <col style="width: 5%;">
-                                <col style="width: 10%;">
-                                <col style="width: 7%;">
-                                <col style="width: 20%;">
-                                <col style="width: 8%">
-                                <col style="width: 10%;">
-                                <col style="width: 10%;">
-                                <col style="width: 20%;">
-                                <col style="width: 10%;">
+                                <col style="width:15%"> <col style="width:8%"> <col style="width:27%"> <col style="width:10%"> 
+                                <col style="width:10%"> <col style="width:10%"> <col style="width:20%">
                             </colgroup>
-                            <thead>
-                                <tr>
-                                    <th>생산라인</th>
-                                    <th>업체</th>
-                                    <th>주문연도</th>
-                                    <th>모델명</th>
-                                    <th>주문월</th>
-                                    <th>T/B</th>
-                                    <th>LOT</th>
-                                    <th>생산예정일</th>
-                                    <th>추가/삭제</th>
-                                </tr>
-                            </thead>
+                            <thead><tr><th>업체</th><th>년도</th><th>모델명</th><th>발주월</th><th>T/B</th><th>LOT</th><th>생산예정일</th></tr></thead>
                             <tbody id="schedule-table-body-B"></tbody>
                         </table>
                     </div>
                 </section>
-                <section class="line-schedule-section">
+
+                <section class="line-schedule-section tab-content" id="tab-content-C" data-line="C">
                     <div class="line-header">
-                        <h3 class="line-title">C라인</h3>
+                        <div class="line-title-group">
+                            <h3 class="line-title">C LINE 스케줄</h3>
+                            <div class="header-controls" id="header-controls-C">
+                                <button class="icon-btn add-row-btn" title="행 추가"><i class="uil uil-plus"></i></button>
+                                <button class="icon-btn toggle-delete-btn" title="삭제 모드"><i class="uil uil-trash-alt"></i></button>
+                            </div>
+                        </div>
                     </div>
                     <div class="table-container">
-                        <table class="editable-table registration-table">
+                        <table class="editable-table registration-table" id="table-C">
                             <colgroup>
-                                <col style="width: 5%;">
-                                <col style="width: 10%;">
-                                <col style="width: 7%;">
-                                <col style="width: 20%;">
-                                <col style="width: 8%">
-                                <col style="width: 10%;">
-                                <col style="width: 10%;">
-                                <col style="width: 20%;">
-                                <col style="width: 10%;">
+                                <col style="width:15%"> <col style="width:8%"> <col style="width:27%"> <col style="width:10%"> 
+                                <col style="width:10%"> <col style="width:10%"> <col style="width:20%">
                             </colgroup>
-                            <thead>
-                                <tr>
-                                    <th>생산라인</th>
-                                    <th>업체</th>
-                                    <th>주문연도</th>
-                                    <th>모델명</th>
-                                    <th>주문월</th>
-                                    <th>T/B</th>
-                                    <th>LOT</th>
-                                    <th>생산예정일</th>
-                                    <th>추가/삭제</th>
-                                </tr>
-                            </thead>
+                            <thead><tr><th>업체</th><th>년도</th><th>모델명</th><th>발주월</th><th>T/B</th><th>LOT</th><th>생산예정일</th></tr></thead>
                             <tbody id="schedule-table-body-C"></tbody>
                         </table>
                     </div>
                 </section>
+
             </div>
             <div class="modal-footer">
-                <div class="common-box font-15pt clickable-box reset-btn" id="reset-btn">초기화</div>
-                <div class="common-box font-15pt clickable-box" id="save-all-btn">저장</div>
+                <div class="common-box reset-btn" id="reset-btn" style="background-color: #8B0000 !important; border-color: #ff4444;"><i class="uil uil-trash-alt"></i> 초기화</div>
+                <div class="common-box" id="save-all-btn" style="background-color: var(--accent-blue) !important;"><i class="uil uil-save"></i> 저장하기</div>
             </div>
         </div>
     </div>
 
     <div class="modal-overlay" id="notes-modal">
-        <div class="modal-window">
+        <div class="modal-window" style="height: 70vh; max-width: 800px;">
             <button class="close-btn" id="close-notes-modal-btn">&times;</button>
-            <h2 class="modal-title">비고 / 주의사항</h2>
+            <h2 class="modal-title">NOTES / REMARKS</h2>
             <div class="notes-modal-content-container">
                 <nav class="notes-tab-nav">
-                    <button class="tab-btn active" data-tab="A">A라인</button>
-                    <button class="tab-btn" data-tab="B">B라인</button>
-                    <button class="tab-btn" data-tab="C">C라인</button>
+                    <button class="tab-btn active" data-tab="A">A LINE</button>
+                    <button class="tab-btn" data-tab="B">B LINE</button>
+                    <button class="tab-btn" data-tab="C">C LINE</button>
                 </nav>
                 <div class="notes-modal-content">
                     <div id="notes-content-A" class="notes-tab-content active"></div>
@@ -200,23 +469,174 @@
     </div>
 
     <div class="modal-overlay" id="export-choice-modal">
-        <div class="modal-window small-modal">
+        <div class="modal-window small-modal" style="max-width: 350px; height: auto;">
             <button class="close-btn" id="close-export-modal-btn">&times;</button>
-            <h3 class="modal-title">다운로드 형식 선택</h3>
-            <div class="modal-content choice-buttons">
-                <div id="export-plan-btn" class="common-box font-15pt clickable-box">
-                    <i class="fas fa-calendar-alt"></i> 생산계획서
+            <h3 class="modal-title">EXPORT AS PDF</h3>
+            <div class="modal-content choice-buttons" style="display:flex; flex-direction:column; gap:15px; margin-top:20px;">
+                <div id="export-plan-btn" class="common-box clickable-box" style="justify-content:center;">
+                    <i class="uil uil-clipboard-notes"></i> 생산계획서
                 </div>
-                <div id="export-report-btn" class="common-box font-15pt clickable-box">
-                    <i class="fas fa-file-pdf"></i> 생산보고서
+                <div id="export-report-btn" class="common-box clickable-box" style="justify-content:center;">
+                    <i class="uil uil-file-check-alt"></i> 생산보고서
                 </div>
             </div>
         </div>
     </div>
-    <script src="paperlogy-font.js"></script>
 
     <script>
-        // --- 전역 요소 ---
+        document.addEventListener('DOMContentLoaded', () => {
+
+            setTimeout(() => {
+                document.body.style.opacity = '1';
+            }, 50);
+            
+            /* --- 로고 애니메이션 --- */
+            const filter = document.querySelector('.svg-sprite');
+            if(filter) {
+                const turb = filter.querySelector('#filter feTurbulence');
+                const glitchElements = document.querySelectorAll('.btn-glitch');
+                let turbVal = { val: 0.000001 }, turbValX = { val: 0.000001 };
+                let timeline = new TimelineMax({
+                    repeat: -1, repeatDelay: 2, paused: true,
+                    onUpdate: function () { turb.setAttribute('baseFrequency', turbVal.val + ' ' + turbValX.val); }
+                });
+                timeline.to(turbValX, 0.1, { val: 0.5 }).to(turbVal, 0.1, { val: 0.02 })
+                        .set(turbValX, { val: 0.000001 }).set(turbVal, { val: 0.000001 })
+                        .to(turbValX, 0.2, { val: 0.4 }, 0.4).to(turbVal, 0.2, { val: 0.002 }, 0.4)
+                        .set(turbValX, { val: 0.000001 }).set(turbVal, { val: 0.000001 });
+
+                glitchElements.forEach(el => {
+                    el.addEventListener('mouseenter', function() { this.classList.add('btn-glitch-active'); timeline.restart(); });
+                    el.addEventListener('mouseleave', function() { this.classList.remove('btn-glitch-active'); timeline.pause(); gsap.set(turbVal, {val:0}); gsap.set(turbValX, {val:0}); turb.setAttribute('baseFrequency', '0.000001 0.000001'); });
+                });
+            }
+
+            // --- 기본 초기화 ---
+            const userRole = localStorage.getItem('ppms_user_role');
+            if (!userRole) { window.location.href = 'login.html'; return; }
+            if (typeof setupLogoutButton === 'function') setupLogoutButton();
+
+            if (userRole !== 'admin') {
+                if(regScheduleBtn) regScheduleBtn.style.display='none';
+                if(saveAllBtn) saveAllBtn.style.display='none';
+                if(resetBtn) resetBtn.style.display='none';
+            }
+
+            setInterval(updateTime, 1000);
+            updateTime();
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const pYear = urlParams.get('year'), pMonth = urlParams.get('month'), pWeek = urlParams.get('week');
+            if (pYear && pMonth && pWeek) displayScheduleForWeek(parseInt(pYear), parseInt(pMonth), parseInt(pWeek));
+            else displayCurrentWeekSchedule();
+
+            setupWeekPicker('week-picker-btn', (y, m, w) => displayScheduleForWeek(y, m, w));
+
+            // Event Listeners
+            backBtn.addEventListener('click', goBackView);
+            homeBtn.addEventListener('click', () => window.location.href = 'index.html');
+            forwardBtn.addEventListener('click', goForwardView);
+            if(regScheduleBtn) regScheduleBtn.addEventListener('click', openWeekSelectorDropup);
+            
+            weekSelectorDropup.addEventListener('click', (e) => { if(e.target === weekSelectorDropup) closeWeekSelectorDropup(); });
+            weekSelectorGrid.addEventListener('click', handleWeekSelection);
+
+            if(saveAllBtn) saveAllBtn.addEventListener('click', saveSchedules);
+            if(resetBtn) resetBtn.addEventListener('click', resetSchedules);
+            closeModalBtn.addEventListener('click', closeModal);
+            modalOverlay.addEventListener('click', closeModal);
+            modalWindow.addEventListener('click', e => e.stopPropagation());
+
+            // [모달 이벤트] 행 추가/삭제
+            modalWindow.addEventListener('click', function (event) {
+                if (localStorage.getItem('ppms_user_role') === 'admin') {
+                    // 추가
+                    if (event.target.closest('.add-row-btn')) {
+                        const btn = event.target.closest('.add-row-btn');
+                        const section = btn.closest('.line-schedule-section');
+                        // 현재 활성화된 탭의 라인에 추가
+                        const line = section.dataset.line;
+                        addNewScheduleRow(section.querySelector('tbody'), line);
+                    }
+                    // 삭제 모드 토글
+                    if (event.target.closest('.toggle-delete-btn')) {
+                        const btn = event.target.closest('.toggle-delete-btn');
+                        const table = btn.closest('.line-schedule-section').querySelector('table');
+                        btn.classList.toggle('delete-mode-active');
+                        table.classList.toggle('delete-mode');
+                    }
+                    // 행 삭제
+                    const row = event.target.closest('tr');
+                    if (row && row.closest('table').classList.contains('delete-mode')) {
+                        if (row.closest('tbody').rows.length > 1) row.remove();
+                        else alert("최소 1개 행은 유지해야 합니다.");
+                    }
+                }
+            });
+            
+            // [모달 이벤트] 탭 전환
+            const lineTabNav = document.querySelector('.line-tab-nav');
+            if(lineTabNav) {
+                lineTabNav.addEventListener('click', (e) => {
+                    if(e.target.classList.contains('line-tab-btn')) {
+                        // 버튼 활성화 처리
+                        lineTabNav.querySelectorAll('.line-tab-btn').forEach(b => b.classList.remove('active'));
+                        e.target.classList.add('active');
+                        
+                        // 컨텐츠 표시 처리
+                        const targetLine = e.target.dataset.lineTab;
+                        const modalContent = document.querySelector('#schedule-modal .modal-content');
+                        modalContent.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                        document.getElementById(`tab-content-${targetLine}`).classList.add('active');
+                    }
+                });
+            }
+
+            const validate = (e, reg, msg) => {
+                const val = e.target.value, sanitized = val.replace(reg, '');
+                if(val !== sanitized) { e.target.value = sanitized; showValidationMessage(e.target, msg); }
+            };
+            modalWindow.addEventListener('input', e => { if(e.target.dataset.field==='lot-modal') validate(e, /[^0-9/]/g, "숫자/' 만 가능"); });
+            displayArea.addEventListener('input', e => {
+                if(e.target.dataset.field==='lot') validate(e, /[^0-9/]/g, "숫자/' 만 가능");
+                else if(e.target.dataset.field==='actualProd') validate(e, /[^0-9/]/g, "숫자만 가능");
+            });
+
+            displayArea.addEventListener('click', function(e) {
+                if(e.target.closest('.period-btn')) {
+                    const d = e.target.closest('.period-btn').dataset;
+                    navigateToView(d.view, {year:parseInt(d.year), month:parseInt(d.month), weekNum:parseInt(d.week)});
+                }
+                if(e.target.closest('#open-export-modal-btn')) exportChoiceModal.classList.add('visible');
+                if(e.target.closest('#open-notes-modal-btn')) openNotesModal();
+            });
+            displayArea.addEventListener('change', handleTableInputChange);
+
+            // PDF
+            const closeExport = () => exportChoiceModal.classList.remove('visible');
+            closeExportModalBtn.addEventListener('click', closeExport);
+            exportChoiceModal.addEventListener('click', closeExport);
+            exportChoiceModal.querySelector('.modal-window').addEventListener('click', e => e.stopPropagation());
+            exportPlanBtn.addEventListener('click', async () => { await generateProductionPdf('plan'); closeExport(); });
+            exportReportBtn.addEventListener('click', async () => { await generateProductionPdf('report'); closeExport(); });
+
+            // Notes
+            const closeNotes = () => notesModal.classList.remove('visible');
+            closeNotesModalBtn.addEventListener('click', closeNotes);
+            notesModal.addEventListener('click', e => { if(e.target===notesModal) closeNotes(); });
+            notesModal.querySelector('.modal-window').addEventListener('click', e => e.stopPropagation());
+            notesTabNav.addEventListener('click', e => {
+                if(e.target.classList.contains('tab-btn')) {
+                    notesTabNav.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+                    notesContentContainer.querySelectorAll('.notes-tab-content').forEach(c=>c.classList.remove('active'));
+                    e.target.classList.add('active');
+                    document.getElementById(`notes-content-${e.target.dataset.tab}`).classList.add('active');
+                }
+            });
+            notesContentContainer.addEventListener('change', handleNoteSave);
+        });
+
+        // --- 전역 변수 ---
         const displayArea = document.getElementById('schedule-display-area');
         const contentArea = document.querySelector('.content-area');
         const backBtn = document.getElementById('back-btn');
@@ -232,12 +652,10 @@
         const closeModalBtn = document.getElementById('close-modal-btn');
         const saveAllBtn = document.getElementById('save-all-btn');
         const resetBtn = document.getElementById('reset-btn');
-
         const exportChoiceModal = document.getElementById('export-choice-modal');
         const closeExportModalBtn = document.getElementById('close-export-modal-btn');
         const exportPlanBtn = document.getElementById('export-plan-btn');
         const exportReportBtn = document.getElementById('export-report-btn');
-
         const lineControls = {
             'A': { tableBody: document.getElementById('schedule-table-body-A') },
             'B': { tableBody: document.getElementById('schedule-table-body-B') },
@@ -249,548 +667,170 @@
         const notesContentContainer = notesModal.querySelector('.notes-modal-content');
 
         let currentView = { mode: 'current_week', data: {} };
-        let viewHistory = [];
-        let forwardHistory = [];
-        let currentSelectedWeekInfo = {};
-        let managerList = [];
-        let companyList = [];
+        let viewHistory = [], forwardHistory = [], currentSelectedWeekInfo = {};
+        let managerList = [], companyList = [];
 
-        // [신규] 권한 확인 헬퍼
         function isEditAllowed() {
-            const userRole = localStorage.getItem('ppms_user_role');
-            if (userRole === 'admin') return true;
-            if (userRole === 'user') {
-                const today = new Date();
-                const actualCurrent = {
-                    year: today.getFullYear(),
-                    month: today.getMonth() + 1,
-                    weekNum: getCurrentWeekNumber(today)
-                };
-                const viewed = currentView.data;
-                if (viewed.year === actualCurrent.year &&
-                    viewed.month === actualCurrent.month &&
-                    viewed.weekNum === actualCurrent.weekNum) {
-                    return true;
-                }
+            const r = localStorage.getItem('ppms_user_role');
+            if(r==='admin') return true;
+            if(r==='user') {
+                const d=new Date(), y=d.getFullYear(), m=d.getMonth()+1, w=getCurrentWeekNumber(d);
+                const v=currentView.data;
+                if(v.year===y && v.month===m && v.weekNum===w) return true;
             }
             return false;
         }
 
-        document.addEventListener('DOMContentLoaded', () => {
-
-            // 1. [필수] 임시 보안 가드
-            const userRole = localStorage.getItem('ppms_user_role');
-            if (!userRole) {
-                window.location.href = 'login.html';
-                return;
-            }
-            if (typeof setupLogoutButton === 'function') {
-                setupLogoutButton();
-            }
-
-            // 2. 권한별 버튼 숨김
-            if (userRole !== 'admin') {
-                if (regScheduleBtn) regScheduleBtn.style.display = 'none';
-                if (saveAllBtn) saveAllBtn.style.display = 'none';
-                if (resetBtn) resetBtn.style.display = 'none';
-            }
-
-            setInterval(updateTime, 1000);
-            updateTime();
-
-            const urlParams = new URLSearchParams(window.location.search);
-            const year = urlParams.get('year');
-            const month = urlParams.get('month');
-            const week = urlParams.get('week');
-
-            if (year && month && week) {
-                displayScheduleForWeek(parseInt(year), parseInt(month), parseInt(week));
-            } else {
-                displayCurrentWeekSchedule();
-            }
-
-            setupWeekPicker('week-picker-btn', (year, month, weekNum) => {
-                displayScheduleForWeek(year, month, weekNum);
-            });
-
-            // 이벤트 리스너 연결
-            backBtn.addEventListener('click', goBackView);
-            homeBtn.addEventListener('click', () => window.location.href = 'index.html');
-            forwardBtn.addEventListener('click', goForwardView);
-            regScheduleBtn.addEventListener('click', openWeekSelectorDropup);
-            weekSelectorDropup.addEventListener('click', handleWeekSelection);
-            saveAllBtn.addEventListener('click', saveSchedules);
-            resetBtn.addEventListener('click', resetSchedules);
-            closeModalBtn.addEventListener('click', closeModal);
-            modalOverlay.addEventListener('click', closeModal);
-            modalWindow.addEventListener('click', (e) => e.stopPropagation());
-
-            modalWindow.addEventListener('click', function (event) {
-                const target = event.target;
-                const userRole = localStorage.getItem('ppms_user_role');
-                if (userRole === 'admin') {
-                    if (target.classList.contains('add-row-btn')) {
-                        const currentRow = target.closest('tr');
-                        const tableBody = currentRow.closest('tbody');
-                        const line = tableBody.id.slice(-1);
-                        addNewScheduleRow(tableBody, line, {}, currentRow);
-                    }
-                    if (target.classList.contains('delete-row-btn')) {
-                        const currentRow = target.closest('tr');
-                        const tableBody = currentRow.closest('tbody');
-                        if (tableBody.rows.length > 1) {
-                            currentRow.remove();
-                        } else {
-                            alert('마지막 행은 삭제할 수 없습니다.');
-                        }
-                    }
-                }
-            });
-
-            modalWindow.addEventListener('input', function (event) {
-                const target = event.target;
-                if (target.dataset.field === 'lot-modal') {
-                    const originalValue = target.value;
-                    const sanitizedValue = originalValue.replace(/[^0-9/]/g, '');
-                    if (originalValue !== sanitizedValue) {
-                        target.value = sanitizedValue;
-                        showValidationMessage(target, "숫자와 '/'만 입력 가능합니다.");
-                    }
-                }
-            });
-            displayArea.addEventListener('input', function (event) {
-                const target = event.target;
-                if (target.dataset.field === 'lot') {
-                    const originalValue = target.value;
-                    const sanitizedValue = originalValue.replace(/[^0-9/]/g, '');
-                    if (originalValue !== sanitizedValue) {
-                        target.value = sanitizedValue;
-                        showValidationMessage(target, "숫자와 '/'만 입력 가능합니다.");
-                    }
-                }
-                else if (target.dataset.field === 'actualProd') {
-                    const originalValue = target.value;
-                    const sanitizedValue = originalValue.replace(/[^0-9]/g, '');
-                    if (originalValue !== sanitizedValue) {
-                        target.value = sanitizedValue;
-                        showValidationMessage(target, "숫자만 입력 가능합니다.");
-                    }
-                }
-            });
-            displayArea.addEventListener('click', function (event) {
-                const target = event.target;
-                if (target.classList.contains('period-btn')) {
-                    const { view, year, month, week } = target.dataset;
-                    navigateToView(view, { year: parseInt(year), month: parseInt(month), weekNum: parseInt(week) });
-                }
-                if (target.closest('#open-export-modal-btn')) {
-                    exportChoiceModal.classList.add('visible');
-                }
-                if (target.closest('#open-notes-modal-btn')) {
-                    openNotesModal();
-                }
-            });
-            displayArea.addEventListener('change', handleTableInputChange);
-
-            function closeExportModal() { exportChoiceModal.classList.remove('visible'); }
-            closeExportModalBtn.addEventListener('click', closeExportModal);
-            exportChoiceModal.addEventListener('click', closeExportModal);
-            exportChoiceModal.querySelector('.modal-window').addEventListener('click', (e) => e.stopPropagation());
-            exportPlanBtn.addEventListener('click', async () => { await generateProductionPdf('plan'); closeExportModal(); });
-            exportReportBtn.addEventListener('click', async () => { await generateProductionPdf('report'); closeExportModal(); });
-
-            function closeNotesModal() { notesModal.classList.remove('visible'); }
-            closeNotesModalBtn.addEventListener('click', closeNotesModal);
-            notesModal.addEventListener('click', (e) => { if (e.target === notesModal) closeNotesModal(); });
-            notesModal.querySelector('.modal-window').addEventListener('click', (e) => e.stopPropagation());
-            notesTabNav.addEventListener('click', (e) => {
-                if (e.target.classList.contains('tab-btn')) {
-                    const tabName = e.target.dataset.tab;
-                    notesTabNav.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-                    notesContentContainer.querySelectorAll('.notes-tab-content').forEach(content => content.classList.remove('active'));
-                    e.target.classList.add('active');
-                    document.getElementById(`notes-content-${tabName}`).classList.add('active');
-                }
-            });
-            notesContentContainer.addEventListener('change', handleNoteSave);
-        });
-
-
-        // --- 기능 함수들 ---
-
-        // [신규] ISO 주차 문자열 -> 날짜(목요일) 변환 함수
-        function getDateFromISOWeek(weekStr) { // "2025-W42"
-            const [y, w] = weekStr.split('-W');
-            const year = parseInt(y);
-            const week = parseInt(w);
-
-            // 1월 4일이 포함된 주가 1주차 (ISO 8601)
-            const simpleDate = new Date(year, 0, 1 + (week - 1) * 7);
-            const dayOfWeek = simpleDate.getDay();
-            const ISOweekStart = simpleDate;
-
-            if (dayOfWeek <= 4)
-                ISOweekStart.setDate(simpleDate.getDate() - simpleDate.getDay() + 1);
-            else
-                ISOweekStart.setDate(simpleDate.getDate() + 8 - simpleDate.getDay());
-
-            // 해당 주차의 '목요일'을 기준으로 월을 판단합니다.
-            const thursday = new Date(ISOweekStart);
-            thursday.setDate(ISOweekStart.getDate() + 3);
-
-            return thursday;
-        }
-
-        function showValidationMessage(targetElement, message) {
-            const parentCell = targetElement.parentElement;
-            let messageEl = parentCell.querySelector('.validation-message');
-            if (!messageEl) {
-                messageEl = document.createElement('span');
-                messageEl.className = 'validation-message';
-                parentCell.appendChild(messageEl);
-            }
-            messageEl.textContent = message;
-            messageEl.classList.add('visible');
-            const existingTimeout = messageEl.dataset.timeoutId;
-            if (existingTimeout) {
-                clearTimeout(existingTimeout);
-            }
-            const newTimeout = setTimeout(() => {
-                messageEl.classList.remove('visible');
-            }, 2000);
-            messageEl.dataset.timeoutId = newTimeout;
+        function showValidationMessage(target, msg) {
+            const p = target.parentElement;
+            let m = p.querySelector('.validation-message');
+            if(!m) { m = document.createElement('span'); m.className='validation-message'; p.appendChild(m); }
+            m.textContent = msg; m.classList.add('visible');
+            if(m.dataset.tid) clearTimeout(m.dataset.tid);
+            m.dataset.tid = setTimeout(()=>m.classList.remove('visible'), 2000);
         }
 
         async function loadMasterData() {
             try {
-                const [managerRes, companyRes] = await Promise.all([
+                const [m, c] = await Promise.all([
                     fetch('http://127.0.0.1:5000/api/production/managers'),
                     fetch('http://127.0.0.1:5000/api/production/companies')
                 ]);
-                managerList = await managerRes.json();
-                companyList = await companyRes.json();
-            } catch (error) {
-                console.error("마스터 데이터 로딩 실패:", error);
-                // alert("담당자/업체 목록을 불러오는 데 실패했습니다.");
-            }
+                managerList = await m.json(); companyList = await c.json();
+            } catch(e) { console.error(e); }
         }
 
         function saveSchedules() {
-            const userRole = localStorage.getItem('ppms_user_role');
-            if (userRole !== 'admin') {
-                alert('저장 권한이 없습니다.');
-                return;
-            }
-
-            const allSchedules = [];
-            for (const line in lineControls) {
-                const tableBody = lineControls[line].tableBody;
-                const rows = tableBody.querySelectorAll('tr');
-                rows.forEach(row => {
-                    const rowId = row.dataset.scheduleId;
-                    const company = row.querySelector('[data-field="company-modal"]').value;
-                    const model = row.querySelector('[data-field="model-modal"]').value;
-                    const orderYear = row.querySelector('[data-field="orderYear"]').value;
-                    const orderMonth = row.querySelector('[data-field="orderMonth"]').value;
-                    const lot = row.querySelector('[data-field="lot-modal"]').value;
-                    const tb = row.querySelector('[data-field="tb-modal"]').value;
-                    const startDate = row.querySelector('.start-date-select').value;
-                    const endDate = row.querySelector('.end-date-select').value;
-
-                    if (company || model || lot) {
-                        allSchedules.push({
-                            id: rowId ? parseInt(rowId) : null,
-                            line: row.querySelector('.line-cell').textContent,
-                            company, model,
-                            orderYear: parseInt(orderYear),
-                            orderMonth: orderMonth, lot: lot, tb: tb,
-                            startDate: startDate, endDate: endDate
+            if(localStorage.getItem('ppms_user_role')!=='admin') return alert('권한 없음');
+            const scheds = [];
+            for(const l in lineControls) {
+                lineControls[l].tableBody.querySelectorAll('tr').forEach(r => {
+                    const c = r.querySelector('[data-field="company-modal"]').value, m = r.querySelector('[data-field="model-modal"]').value, lt = r.querySelector('[data-field="lot-modal"]').value;
+                    if(c||m||lt) {
+                        let yv = r.querySelector('[data-field="orderYear"]').value;
+                        if(yv.length===2) yv = '20'+yv;
+                        scheds.push({
+                            id: r.dataset.scheduleId ? parseInt(r.dataset.scheduleId) : null,
+                            line: l, company: c, model: m,
+                            orderYear: parseInt(yv),
+                            orderMonth: r.querySelector('[data-field="orderMonth"]').value,
+                            tb: r.querySelector('[data-field="tb-modal"]').value, lot: lt,
+                            startDate: r.querySelector('.start-date-select').value,
+                            endDate: r.querySelector('.end-date-select').value
                         });
                     }
                 });
             }
-            const dataToSend = { weekInfo: currentSelectedWeekInfo, schedules: allSchedules };
-
             fetch('http://127.0.0.1:5000/api/production/schedules', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(dataToSend),
-            })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.message) {
-                        alert(data.message);
-                        closeModal();
-                        renderContent();
-                    } else {
-                        alert("저장 중 오류 발생: " + (data.error || '알 수 없는 오류'));
-                    }
-                })
-                .catch(error => {
-                    console.error('저장 중 오류 발생:', error);
-                    alert('데이터 저장에 실패했습니다. 백엔드 서버를 확인하세요.');
-                });
+                method:'POST', headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({ weekInfo: currentSelectedWeekInfo, schedules: scheds })
+            }).then(r=>r.json()).then(d=>{ if(d.message){alert(d.message);closeModal();renderContent();}else alert("Error"); });
         }
 
         async function resetSchedules() {
-            const userRole = localStorage.getItem('ppms_user_role');
-            if (userRole !== 'admin') {
-                alert('초기화 권한이 없습니다.');
-                return;
-            }
-
-            if (confirm('정말로 해당 주차의 모든 일정을 초기화하시겠습니까?\nDB에 저장된 내용이 영구적으로 삭제됩니다.')) {
-                const { year, month, weekNum } = currentSelectedWeekInfo;
-                try {
-                    const response = await fetch(`http://127.0.0.1:5000/api/production/schedules?year=${year}&month=${month}&weekNum=${weekNum}`, {
-                        method: 'DELETE'
-                    });
-                    const data = await response.json();
-                    if (!response.ok) {
-                        throw new Error(data.error || '삭제 중 오류 발생');
-                    }
-                    for (const line in lineControls) {
-                        const control = lineControls[line];
-                        control.tableBody.innerHTML = '';
-                        addNewScheduleRow(control.tableBody, line);
-                    }
-                    alert('일정이 성공적으로 초기화되었습니다.');
-                } catch (error) {
-                    console.error('초기화 실패:', error);
-                    alert('일정 초기화에 실패했습니다. 백엔드 서버를 확인하세요.');
-                }
-            }
+            if(localStorage.getItem('ppms_user_role')!=='admin') return alert('권한 없음');
+            if(!confirm('초기화?')) return;
+            const {year,month,weekNum} = currentSelectedWeekInfo;
+            await fetch(`http://127.0.0.1:5000/api/production/schedules?year=${year}&month=${month}&weekNum=${weekNum}`, {method:'DELETE'});
+            alert('완료');
+            for(const l in lineControls) { lineControls[l].tableBody.innerHTML=''; addNewScheduleRow(lineControls[l].tableBody,l); }
         }
 
         function openWeekSelectorDropup() {
-            const viewYear = currentView.data.year || new Date().getFullYear();
-            const viewMonth = currentView.data.month ? currentView.data.month - 1 : new Date().getMonth();
-            const productionWeeksSet = getProductionWeeksInMonth(viewYear, viewMonth);
-            const weekNumbers = Array.from(productionWeeksSet).sort((a, b) => a - b);
+            const y = currentView.data.year || new Date().getFullYear();
+            const m = currentView.data.month ? currentView.data.month - 1 : new Date().getMonth();
+            const weeks = Array.from(getProductionWeeksInMonth(y,m)).sort((a,b)=>a-b);
             weekSelectorGrid.innerHTML = '';
-            weekNumbers.forEach(weekNum => {
-                const weekBox = document.createElement('div');
-                weekBox.className = 'week-box';
-                weekBox.textContent = `${viewMonth + 1}월 ${weekNum}주차`;
-                weekBox.dataset.year = viewYear;
-                weekBox.dataset.month = viewMonth + 1;
-                weekBox.dataset.week = weekNum;
-                weekSelectorGrid.appendChild(weekBox);
+            weeks.forEach(w => {
+                const d = document.createElement('div'); d.className = 'week-box clickable-box';
+                d.textContent = `${m+1}월 ${w}주차`; d.dataset.year=y; d.dataset.month=m+1; d.dataset.week=w;
+                weekSelectorGrid.appendChild(d);
             });
             weekSelectorDropup.classList.add('visible');
         }
-
-        function closeWeekSelectorDropup() {
-            weekSelectorDropup.classList.remove('visible');
-        }
-
-        function handleWeekSelection(event) {
-            const target = event.target;
-            if (target.classList.contains('week-box')) {
-                const { year, month, week } = target.dataset;
-                const weekInfo = { year: parseInt(year), month: parseInt(month), weekNum: parseInt(week) };
-                closeWeekSelectorDropup();
-                openModal(weekInfo);
-            } else if (target.id === 'week-selector-dropup') {
-                closeWeekSelectorDropup();
+        function closeWeekSelectorDropup() { weekSelectorDropup.classList.remove('visible'); }
+        function handleWeekSelection(e) {
+            if(e.target.classList.contains('week-box')) {
+                const {year,month,week} = e.target.dataset;
+                closeWeekSelectorDropup(); openModal({year:parseInt(year), month:parseInt(month), weekNum:parseInt(week)});
             }
         }
 
         async function openModal(weekInfo) {
-            const userRole = localStorage.getItem('ppms_user_role');
             currentSelectedWeekInfo = weekInfo;
-            modalTitle.textContent = `${weekInfo.month}월${weekInfo.weekNum}주차 일정 ${userRole !== 'admin' ? '(읽기 전용)' : '등록'}`;
-
-            for (const line in lineControls) {
-                if (lineControls[line].tableBody) {
-                    lineControls[line].tableBody.innerHTML = '';
-                }
-            }
-            try {
-                await loadMasterData();
-                const response = await fetch(`http://127.0.0.1:5000/api/production/schedules?year=${weekInfo.year}&month=${weekInfo.month}&weekNum=${weekInfo.weekNum}`);
-                const savedData = await response.json();
-                if (savedData.length > 0) {
-                    savedData.forEach(data => {
-                        const tableBody = lineControls[data.line].tableBody;
-                        addNewScheduleRow(tableBody, data.line, data);
-                    });
-                }
-                for (const line in lineControls) {
-                    const tableBody = lineControls[line].tableBody;
-                    if (tableBody && tableBody.rows.length === 0) {
-                        addNewScheduleRow(tableBody, line);
-                    }
-                }
-                modalOverlay.classList.add('visible');
-            } catch (error) {
-                console.error('모달 데이터 로딩 중 오류:', error);
-                alert('일정 데이터를 불러오는 데 실패했습니다. 백엔드 서버를 확인하세요.');
-            }
+            const role = localStorage.getItem('ppms_user_role');
+            modalTitle.textContent = `${weekInfo.month}월 ${weekInfo.weekNum}주차 생산 일정 ${role!=='admin'?'(읽기 전용)':''}`;
+            for(const l in lineControls) lineControls[l].tableBody.innerHTML='';
+            await loadMasterData();
+            const res = await fetch(`http://127.0.0.1:5000/api/production/schedules?year=${weekInfo.year}&month=${weekInfo.month}&weekNum=${weekInfo.weekNum}`);
+            const data = await res.json();
+            if(data.length>0) data.forEach(d=>addNewScheduleRow(lineControls[d.line].tableBody, d.line, d));
+            for(const l in lineControls) if(lineControls[l].tableBody.rows.length===0) addNewScheduleRow(lineControls[l].tableBody, l);
+            modalOverlay.classList.add('visible');
         }
-
         function closeModal() { modalOverlay.classList.remove('visible'); }
 
-        function addNewScheduleRow(targetTableBody, line, scheduleData = {}, insertAfterRow = null) {
-            const userRole = localStorage.getItem('ppms_user_role');
-            const isReadOnly = (userRole !== 'admin') ? 'disabled' : '';
+        function addNewScheduleRow(target, line, data={}, after=null) {
+            const role = localStorage.getItem('ppms_user_role');
+            const ro = role!=='admin'?'disabled':'';
+            const row = after ? target.insertRow(after.rowIndex) : target.insertRow();
+            row.dataset.scheduleId = data.id||'';
+            const opts = (lst,v) => lst.map(i=>`<option value="${i.name}" ${v===i.name?'selected':''}>${i.name}</option>`).join('');
+            let mOpts = ''; for(let i=1; i<=12; i++) mOpts+=`<option value="${i}월분" ${(data.orderMonth||'').trim()===`${i}월분`?'selected':''}>${i}월분</option>`;
+            
+            const fullYear = data.orderYear || currentSelectedWeekInfo.year;
+            const shortYear = String(fullYear).slice(-2);
 
-            const newRow = insertAfterRow ?
-                targetTableBody.insertRow(insertAfterRow.rowIndex) :
-                targetTableBody.insertRow();
-            newRow.dataset.scheduleId = scheduleData.id || '';
-
-            const lineCell = `<td class="line-cell">${line}</td>`;
-
-            const companyOptions = companyList.map(c =>
-                `<option value="${c.name}" ${scheduleData.company === c.name ? 'selected' : ''}>${c.name}</option>`
-            ).join('');
-            const companyCell = `<td><select data-field="company-modal" ${isReadOnly}>
-                <option value="">-선택-</option>
-                ${companyOptions}
-            </select></td>`;
-
-            const orderYearValue = scheduleData.orderYear || currentSelectedWeekInfo.year;
-            const orderYearCell = `<td><input type="number" data-field="orderYear" value="${orderYearValue}" ${isReadOnly}></td>`;
-
-            const modelCell = `<td><input type="text" data-field="model-modal" value="${scheduleData.model || ''}" ${isReadOnly}></td>`;
-
-            let monthOptions = '';
-            for (let i = 1; i <= 12; i++) {
-                const monthText = `${i}월분`;
-                const isSelected = (scheduleData.orderMonth && scheduleData.orderMonth.trim() === monthText) ? 'selected' : '';
-                monthOptions += `<option value="${monthText}" ${isSelected}>${monthText}</option>`;
-            }
-            const orderMonthCell = `<td><select data-field="orderMonth" ${isReadOnly}><option value="">-선택-</option>${monthOptions}</select></td>`;
-
-            const tbCell = `<td><select data-field="tb-modal" ${isReadOnly}>
-                <option value="Top" ${scheduleData.tb === 'Top' ? 'selected' : ''}>Top</option>
-                <option value="Bot" ${scheduleData.tb === 'Bot' ? 'selected' : ''}>Bot</option>
-                <option value="T/O" ${scheduleData.tb === 'T/O' ? 'selected' : ''}>T/O</option>
-                <option value="B/O" ${scheduleData.tb === 'B/O' ? 'selected' : ''}>B/O</option>
-            </select></td>`;
-
-            const lotCell = `<td><input type="text" data-field="lot-modal" value="${scheduleData.lot || ''}" placeholder="예: 50" ${isReadOnly}></td>`;
-
-            const dateCell = `<td><div class="date-select-group"><select class="start-date-select" ${isReadOnly}></select><span>~</span><select class="end-date-select" ${isReadOnly}></select></div></td>`;
-
-            const actionCell = `<td class="row-actions">
-                ${(userRole === 'admin') ?
-                    '<button class="action-btn add-row-btn">+</button><button class="action-btn delete-row-btn">-</button>' :
-                    '읽기전용'}
-            </td>`;
-
-            newRow.innerHTML = lineCell + companyCell + orderYearCell + modelCell + orderMonthCell + tbCell + lotCell + dateCell + actionCell;
-
-            populateDateSelectors(currentSelectedWeekInfo, newRow);
-
-            const selects = newRow.querySelectorAll('select');
-            selects[3].value = scheduleData.startDate || '';
-            selects[4].value = scheduleData.endDate || '';
-
-            return newRow;
+            row.innerHTML = `
+                <td><select data-field="company-modal" class="form-select" ${ro}><option value="">-</option>${opts(companyList, data.company)}</select></td>
+                <td><input type="number" data-field="orderYear" class="form-input" value="${shortYear}" ${ro}></td>
+                <td><input type="text" data-field="model-modal" class="form-input" value="${data.model||''}" ${ro}></td>
+                <td><select data-field="orderMonth" class="form-select" ${ro}><option value="">-</option>${mOpts}</select></td>
+                <td><select data-field="tb-modal" class="form-select" ${ro}><option value="Top" ${data.tb==='Top'?'selected':''}>Top</option><option value="Bot" ${data.tb==='Bot'?'selected':''}>Bot</option><option value="T/O" ${data.tb==='T/O'?'selected':''}>T/O</option><option value="B/O" ${data.tb==='B/O'?'selected':''}>B/O</option></select></td>
+                <td><input type="text" data-field="lot-modal" class="form-input" value="${data.lot||''}" ${ro}></td>
+                <td style="display:flex;gap:5px;"><select class="start-date-select form-select" ${ro}></select>~<select class="end-date-select form-select" ${ro}></select></td>
+            `;
+            populateDateSelectors(currentSelectedWeekInfo, row);
+            const sels = row.querySelectorAll('select');
+            sels[3].value = data.startDate||''; sels[4].value = data.endDate||'';
+            return row;
         }
 
-        function populateDateSelectors(weekInfo, row) {
-            if (!row || !weekInfo.year) return;
-            const startDateSelect = row.querySelector('.start-date-select');
-            const endDateSelect = row.querySelector('.end-date-select');
-            startDateSelect.innerHTML = '';
-            endDateSelect.innerHTML = '';
-            const weekdays = getWeekdaysForWeek(weekInfo.year, weekInfo.month - 1, weekInfo.weekNum);
-            const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
-            weekdays.forEach(item => {
-                const optionText = `${item.month}/${item.day}(${dayNames[item.dayOfWeek]})`;
-                const startOption = document.createElement('option');
-                startOption.value = optionText;
-                startOption.textContent = optionText;
-                startDateSelect.appendChild(startOption);
-                const endOption = document.createElement('option');
-                endOption.value = optionText;
-                endOption.textContent = optionText;
-                endDateSelect.appendChild(endOption);
+        function populateDateSelectors(info, row) {
+            if(!row || !info.year) return;
+            const days = getWeekdaysForWeek(info.year, info.month-1, info.weekNum);
+            const dNames = ['일','월','화','수','목','금','토'];
+            const s1=row.querySelector('.start-date-select'), s2=row.querySelector('.end-date-select');
+            s1.innerHTML=s2.innerHTML='';
+            days.forEach(d=>{
+                const txt = `${d.month}/${d.day}(${dNames[d.dayOfWeek]})`;
+                s1.add(new Option(txt,txt)); s2.add(new Option(txt,txt));
             });
         }
 
         function renderContent() {
-            const { mode, data } = currentView;
-            if (mode === 'current_week' || mode === 'schedule_view') {
-                contentArea.classList.add('align-top');
-                displayArea.style.marginTop = '5px';
-            } else {
-                contentArea.classList.remove('align-top');
-                displayArea.style.marginTop = '5px';
-            }
-            switch (mode) {
-                case 'past_weeks': displayPastWeeks(); break;
-                case 'past_months': displayPastMonths(data.year); break;
-                case 'past_years': displayPastYears(); break;
-                case 'weeks_of_month': displayWeeksForMonth(data.year, data.month); break;
-                case 'schedule_view': displayScheduleForWeek(data.year, data.month, data.weekNum); break;
-                case 'current_week':
-                default: displayCurrentWeekSchedule(); break;
-            }
-        }
-        function navigateToView(newMode, data = {}) {
-            if (currentView.mode !== newMode || JSON.stringify(currentView.data) !== JSON.stringify(data)) {
-                viewHistory.push(currentView);
-                forwardHistory = [];
-            }
-            currentView = { mode: newMode, data: data };
-            renderContent();
+            const {mode, data} = currentView;
+            contentArea.className = (mode==='current_week'||mode==='schedule_view') ? 'content-area align-top' : 'content-area';
+            displayArea.style.marginTop = '5px';
+            if(mode==='current_week'||mode==='schedule_view') displayScheduleForWeek(data.year, data.month, data.weekNum);
+            else if(mode==='past_weeks') displayPastWeeks();
+            else if(mode==='past_months') displayPastMonths(data.year);
+            else if(mode==='past_years') displayPastYears();
+            else if(mode==='weeks_of_month') displayWeeksForMonth(data.year, data.month);
         }
 
-        // [수정] 뒤로가기 로직 (스택 없으면 브라우저 뒤로가기)
-        function goBackView() {
-            if (viewHistory.length > 0) {
-                forwardHistory.push(currentView);
-                currentView = viewHistory.pop();
-                renderContent();
-            } else {
-                history.back();
-            }
+        function navigateToView(m, d={}) {
+            if(currentView.mode!==m || JSON.stringify(currentView.data)!==JSON.stringify(d)) { viewHistory.push(currentView); forwardHistory=[]; }
+            currentView={mode:m, data:d}; renderContent();
         }
+        function goBackView() { if(viewHistory.length>0) { forwardHistory.push(currentView); currentView=viewHistory.pop(); renderContent(); } else history.back(); }
+        function goForwardView() { if(forwardHistory.length>0) { viewHistory.push(currentView); currentView=forwardHistory.pop(); renderContent(); } }
 
-        function goForwardView() {
-            if (forwardHistory.length > 0) {
-                viewHistory.push(currentView);
-                currentView = forwardHistory.pop();
-                renderContent();
-            }
-        }
-
-        function cycleViewMode() {
-            const currentMode = currentView.mode;
-            if (currentMode === 'current_week' || currentMode === 'schedule_view') navigateToView('past_weeks');
-            else if (currentMode === 'past_weeks') navigateToView('past_months', { year: new Date().getFullYear() });
-            else if (currentMode === 'past_months') navigateToView('past_years');
-        }
-
-        function handlePeriodButtonClick(event) {
-            const target = event.target;
-            if (target.classList.contains('period-btn')) {
-                const { view, year, month, week } = target.dataset;
-                navigateToView(view, {
-                    year: parseInt(year),
-                    month: parseInt(month),
-                    weekNum: parseInt(week)
-                });
-            }
-        }
-
-        function handleTableInputChange(event) {
-            if (!isEditAllowed()) {
-                alert('수정 권한이 없습니다.');
-                return;
-            }
-
-            const target = event.target;
-            const row = target.closest('tr');
-            if (!row) return;
-            const scheduleId = row.dataset.scheduleId;
-            if (!scheduleId) return;
-
-            const dataToUpdate = {
+        function handleTableInputChange(e) {
+            if(!isEditAllowed()) return alert('권한 없음');
+            const row = e.target.closest('tr');
+            if(!row || !row.dataset.scheduleId) return;
+            const body = {
                 manager: row.querySelector('[data-field="manager"]').value,
                 company: row.querySelector('[data-field="company"]').value,
                 model: row.querySelector('[data-field="model"]').value,
@@ -801,439 +841,250 @@
                 prodStart: row.querySelector('[data-field="prodStart"]').value,
                 prodEnd: row.querySelector('[data-field="prodEnd"]').value
             };
-
-            if (target.dataset.field === 'lot' || target.dataset.field === 'actualProd') {
-                const line = row.dataset.line;
-                if (line) updateLineProgress(line);
-            }
-
-            fetch(`http://127.0.0.1:5000/api/production/schedules/${scheduleId}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(dataToUpdate)
-            })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.message) {
-                        console.log(`ID ${scheduleId} 업데이트 성공`);
-                    } else {
-                        console.error('업데이트 실패:', data.error);
-                    }
-                })
-                .catch(error => {
-                    console.error('업데이트 중 네트워크 오류:', error);
-                });
+            if(e.target.dataset.field==='lot'||e.target.dataset.field==='actualProd') updateLineProgress(row.dataset.line);
+            fetch(`http://127.0.0.1:5000/api/production/schedules/${row.dataset.scheduleId}`, {
+                method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)
+            });
         }
 
         function displayCurrentWeekSchedule() {
-            const today = new Date();
-            const year = today.getFullYear();
-            const month = today.getMonth() + 1;
-            const weekNum = getCurrentWeekNumber(today);
-            currentView = { mode: 'current_week', data: { year, month, weekNum } };
-            weekDisplay.textContent = `${year}년 ${month}월 ${weekNum}주차`;
-            displayScheduleForWeek(year, month, weekNum);
+            const d = new Date();
+            const y=d.getFullYear(), m=d.getMonth()+1, w=getCurrentWeekNumber(d);
+            currentView = {mode:'current_week', data:{year:y, month:m, weekNum:w}};
+            displayScheduleForWeek(y, m, w);
         }
 
-        async function displayScheduleForWeek(year, month, weekNum) {
-            currentView = { mode: 'schedule_view', data: { year, month, weekNum } };
-            weekDisplay.textContent = `${year}년 ${month}월 ${weekNum}주차`;
-            contentArea.classList.add('align-top');
-
+        async function displayScheduleForWeek(y, m, w) {
+            currentView = {mode:'schedule_view', data:{year:y, month:m, weekNum:w}};
+            weekDisplay.innerHTML = `<i class="uil uil-calendar-alt"></i> ${y}년 ${m}월 ${w}주차`;
             await loadMasterData();
-
-            fetch(`http://127.0.0.1:5000/api/production/schedules?year=${year}&month=${month}&weekNum=${weekNum}`)
-                .then(response => response.json())
-                .then(savedData => {
-                    displayArea.innerHTML = createScheduleTableHTML(savedData, {}, false);
-                    if (savedData.length > 0) {
-                        const weekInfo = { year, month, weekNum };
-                        populateDateSelectorsForProductionPage(weekInfo, savedData);
-                    }
-                    ['A', 'B', 'C'].forEach(line => updateLineProgress(line));
-                })
-                .catch(error => {
-                    console.error('일정 로딩 중 오류 발생:', error);
-                    displayArea.innerHTML = `<p class="no-data-message" style="text-align: center;">데이터 로딩 실패. 백엔드 서버를 확인하세요.</p>`;
-                });
+            try {
+                const res = await fetch(`http://127.0.0.1:5000/api/production/schedules?year=${y}&month=${m}&weekNum=${w}`);
+                const data = await res.json();
+                displayArea.innerHTML = createScheduleTableHTML(data);
+                if(data.length>0) populateDateSelectorsForProductionPage({year:y, month:m, weekNum:w}, data);
+                ['A','B','C'].forEach(l=>updateLineProgress(l));
+            } catch(e) { displayArea.innerHTML = '<p class="no-line-data-message">데이터 로딩 실패</p>'; }
         }
 
         function updateLineProgress(line) {
-            const section = document.querySelector(`.line-schedule-section[data-line="${line}"]`);
-            if (!section) return;
-            let totalLot = 0;
-            let totalActual = 0;
-            const rows = section.querySelectorAll('tbody tr');
-            rows.forEach(row => {
-                const lotInput = row.querySelector('input[data-field="lot"]');
-                const actualInput = row.querySelector('input[data-field="actualProd"]');
-                totalLot += parseInt(lotInput.value) || 0;
-                totalActual += parseInt(actualInput.value) || 0;
+            const sec = document.querySelector(`.line-schedule-section[data-line="${line}"]`);
+            if(!sec) return;
+            let tLot=0, tAct=0;
+            sec.querySelectorAll('tbody tr').forEach(r=>{
+                tLot += parseInt(r.querySelector('input[data-field="lot"]').value)||0;
+                tAct += parseInt(r.querySelector('input[data-field="actualProd"]').value)||0;
             });
-            const percentage = totalLot > 0 ? (totalActual / totalLot) * 100 : 0;
-            const displayPercentage = Math.min(percentage, 100);
+            const pct = tLot>0 ? Math.min((tAct/tLot)*100, 100) : 0;
             const bar = document.getElementById(`progress-bar-${line}`);
-            const text = document.getElementById(`progress-text-${line}`);
-            if (bar) bar.style.width = `${displayPercentage}%`;
-            if (text) text.textContent = `${Math.round(displayPercentage)}%`;
+            const txt = document.getElementById(`progress-text-${line}`);
+            if(bar) bar.style.width=`${pct}%`;
+            if(txt) txt.textContent=`${Math.round(pct)}%`;
         }
 
         function displayPastWeeks() {
-            const today = new Date();
-            const year = today.getFullYear();
-            const month = today.getMonth() + 1;
-            const currentWeek = getCurrentWeekNumber(today);
-            let contentHTML = `<div class="period-selector-grid">`;
-            for (let i = 1; i <= currentWeek; i++) {
-                contentHTML += `<div class="period-btn" data-view="schedule_view" data-year="${year}" data-month="${month}" data-week="${i}">${month}월 ${i}주차</div>`;
-            }
-            contentHTML += `</div>`;
-            displayArea.innerHTML = contentHTML;
+            const d = new Date(), w = getCurrentWeekNumber(d);
+            let h = `<div class="period-selector-grid">`;
+            for(let i=1; i<=w; i++) h+=`<div class="period-btn clickable-box" data-view="schedule_view" data-year="${d.getFullYear()}" data-month="${d.getMonth()+1}" data-week="${i}">${d.getMonth()+1}월 ${i}주차</div>`;
+            displayArea.innerHTML = h + `</div>`;
         }
-        function displayPastMonths(year) {
-            const today = new Date();
-            const currentMonth = (today.getFullYear() === year) ? today.getMonth() : 11;
-            let contentHTML = `<div class="period-selector-grid">`;
-            for (let i = 0; i <= currentMonth; i++) {
-                contentHTML += `<div class="period-btn" data-view="weeks_of_month" data-year="${year}" data-month="${i + 1}">${i + 1}월</div>`;
-            }
-            contentHTML += `</div>`;
-            displayArea.innerHTML = contentHTML;
+        function displayPastMonths(y) {
+            const d = new Date(), max = (y===d.getFullYear()) ? d.getMonth() : 11;
+            let h = `<div class="period-selector-grid">`;
+            for(let i=0; i<=max; i++) h+=`<div class="period-btn clickable-box" data-view="weeks_of_month" data-year="${y}" data-month="${i+1}">${i+1}월</div>`;
+            displayArea.innerHTML = h + `</div>`;
         }
         function displayPastYears() {
-            const currentYear = new Date().getFullYear();
-            let contentHTML = `<div class="period-selector-grid">`;
-            for (let i = 2; i >= 0; i--) {
-                const year = currentYear - i;
-                contentHTML += `<div class="period-btn" data-view="past_months" data-year="${year}">${year}년</div>`;
-            }
-            contentHTML += `</div>`;
-            displayArea.innerHTML = contentHTML;
+            let h = `<div class="period-selector-grid">`;
+            for(let i=0; i<3; i++) { const y = new Date().getFullYear()-i; h+=`<div class="period-btn clickable-box" data-view="past_months" data-year="${y}">${y}년</div>`; }
+            displayArea.innerHTML = h + `</div>`;
         }
-        function displayWeeksForMonth(year, month) {
-            const productionWeeksSet = getProductionWeeksInMonth(year, month - 1);
-            const weekNumbers = Array.from(productionWeeksSet).sort((a, b) => a - b);
-            let contentHTML = `<div class="period-selector-grid">`;
-            weekNumbers.forEach(weekNum => {
-                contentHTML += `<div class="period-btn" data-view="schedule_view" data-year="${year}" data-month="${month}" data-week="${weekNum}">${month}월 ${weekNum}주차</div>`;
-            });
-            contentHTML += `</div>`;
-            displayArea.innerHTML = contentHTML;
+        function displayWeeksForMonth(y, m) {
+            const w = Array.from(getProductionWeeksInMonth(y, m-1)).sort((a,b)=>a-b);
+            let h = `<div class="period-selector-grid">`;
+            w.forEach(k => h+=`<div class="period-btn clickable-box" data-view="schedule_view" data-year="${y}" data-month="${m}" data-week="${k}">${m}월 ${k}주차</div>`);
+            displayArea.innerHTML = h + `</div>`;
         }
 
         async function openNotesModal() {
-            const { year, month, weekNum } = currentView.data;
-            let schedulesData;
+            const {year, month, weekNum} = currentView.data;
             try {
-                const response = await fetch(`http://127.0.0.1:5000/api/production/schedules?year=${year}&month=${month}&weekNum=${weekNum}`);
-                schedulesData = await response.json();
-            } catch (e) {
-                alert('데이터 로딩 실패. 서버를 확인하세요.');
-                return;
-            }
-            const lineData = { A: [], B: [], C: [] };
-            schedulesData.forEach(s => {
-                if (lineData[s.line]) {
-                    lineData[s.line].push(s);
-                }
-            });
-            for (const line of ['A', 'B', 'C']) {
-                const contentEl = document.getElementById(`notes-content-${line}`);
-                if (lineData[line].length > 0) {
-                    contentEl.innerHTML = lineData[line].map(s => `
-                        <div class="note-item">
-                            <h4>${s.company || '업체 미입력'} - ${s.model || '모델 미입력'} (LOT: ${s.lot || 'N/A'})</h4>
-                            <textarea data-note-id="${s.id}" placeholder="비고/주의사항 입력...">${s.notes || ''}</textarea>
-                        </div>
-                    `).join('');
-                } else {
-                    contentEl.innerHTML = `<p class="no-line-data-message">${line}라인은 등록된 일정이 없습니다.</p>`;
-                }
-            }
-            notesModal.classList.add('visible');
+                const res = await fetch(`http://127.0.0.1:5000/api/production/schedules?year=${year}&month=${month}&weekNum=${weekNum}`);
+                const data = await res.json();
+                const byLine = {A:[], B:[], C:[]};
+                data.forEach(s=>{ if(byLine[s.line]) byLine[s.line].push(s); });
+                
+                ['A', 'B', 'C'].forEach(line => {
+                    const el = document.getElementById(`notes-content-${line}`);
+                    if(byLine[line].length > 0) {
+                        el.innerHTML = byLine[line].map(s => `
+                            <div class="note-item">
+                                <h4>${s.company||'-'} / ${s.model||'-'} (LOT:${s.lot})</h4>
+                                <textarea data-note-id="${s.id}" placeholder="비고 입력...">${s.notes||''}</textarea>
+                            </div>
+                        `).join('');
+                    } else el.innerHTML = '<p style="color:#666; text-align:center; margin-top:20px;">일정이 없습니다.</p>';
+                });
+                notesModal.classList.add('visible');
+            } catch (e) { alert('오류 발생'); }
+        }
+        async function handleNoteSave(e) {
+            if(!isEditAllowed()) return alert('권한 없음');
+            if(e.target.tagName!=='TEXTAREA') return;
+            const id = e.target.dataset.noteId;
+            const notes = e.target.value;
+            try {
+                const res = await fetch(`http://127.0.0.1:5000/api/production/schedules/${id}/notes`, {
+                    method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({notes})
+                });
+                if(res.ok) console.log('Note Saved');
+            } catch(e) { console.error(e); }
         }
 
-        async function handleNoteSave(event) {
-            if (!isEditAllowed()) {
-                alert('비고 저장 권한이 없습니다.');
-                return;
-            }
-            if (event.target.tagName !== 'TEXTAREA') return;
-            const scheduleId = event.target.dataset.noteId;
-            const newNoteText = event.target.value;
-            try {
-                const response = await fetch(`http://127.0.0.1:5000/api/production/schedules/${scheduleId}/notes`, {
-                    method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ notes: newNoteText })
-                });
-                if (!response.ok) {
-                    throw new Error('서버 저장 실패');
-                }
-                console.log(`노트 (ID: ${scheduleId}) 저장 완료.`);
-            } catch (error) {
-                console.error('노트 저장 실패:', error);
-                alert('비고/주의사항 저장에 실패했습니다.');
-            }
-        }
-
-        function createScheduleTableHTML(schedules, progress, isReadOnly = false) {
-            const schedulesByLine = { A: [], B: [], C: [] };
-            if (schedules && schedules.length > 0) {
-                schedules.forEach((schedule, index) => {
-                    schedule.originalIndex = index;
-                    if (schedulesByLine[schedule.line]) { schedulesByLine[schedule.line].push(schedule); }
-                });
-            }
-
-            const userRole = localStorage.getItem('ppms_user_role');
-            const isReadOnlyAttr = isEditAllowed() ? '' : 'disabled';
-
-            let tableHTML = '';
-            for (const line in schedulesByLine) {
-                let headerContent = `
-                    <div class="line-title-container">
-                        <h3 class="line-title">${line}라인</h3>
-                        <div class="progress-bar-container">
-                            <div class="progress-bar-fill" id="progress-bar-${line}"></div>
-                            <span class="progress-bar-text" id="progress-text-${line}">0%</span>
+        function createScheduleTableHTML(schedules) {
+            const byLine = {A:[], B:[], C:[]};
+            schedules.forEach(s=>{ if(byLine[s.line]) byLine[s.line].push(s); });
+            const ro = isEditAllowed()?'':'disabled';
+            let html='';
+            for(const line in byLine) {
+                let header = `
+                    <div class="line-header" style="border-bottom:none;">
+                        <div class="line-title">
+                            <span>${line} LINE</span>
+                            <div class="progress-bar-container"><div class="progress-bar-fill" id="progress-bar-${line}"></div><span class="progress-bar-text" id="progress-text-${line}">0%</span></div>
                         </div>
+                        ${line==='A'?`<div style="display:flex; gap:5px;"><button id="open-notes-modal-btn" class="icon-btn" title="메모"><i class="uil uil-notes"></i></button><button id="open-export-modal-btn" class="icon-btn" title="다운로드"><i class="uil uil-import"></i></button></div>`:''}
                     </div>`;
-                if (line === 'A') {
-                    headerContent += `<button id="open-notes-modal-btn" class="icon-btn" title="비고/주의사항"><i class="fas fa-sticky-note"></i></button>`;
-                    headerContent += `<button id="open-export-modal-btn" class="icon-btn" title="다운로드"><i class="fas fa-download"></i></button>`;
-                }
-                tableHTML += `<section class="line-schedule-section" data-line="${line}"><div class="line-header">${headerContent}</div>`;
-                if (schedulesByLine[line].length > 0) {
-                    tableHTML += `<div class="table-container"><table class="editable-table production-view-table"><colgroup>
-                        <col style="width: 6%;">  
-                        <col style="width: 6%;"> 
-                        <col style="width: auto;"> 
-                        <col style="width: 6%;">  
-                        <col style="width: 6%;">  
-                        <col style="width: 8%;"> 
-                        <col style="width: 6%;">  
-                        <col style="width: 8%;"> 
-                        <col style="width: 8%;"> 
-                        <col style="width: 20%;"> </colgroup>
-                        <thead><tr>
-                        <th>담당자 </th><th>업체 </th><th>모델명</th>
-                        <th>주문월</th><th>T/B</th><th>LOT</th>
-                        <th>실생산</th><th>생산시작일</th><th>생산종료일</th>
-                        <th>생산예정일</th>
-                    </tr></thead><tbody>`;
-
-                    tableHTML += schedulesByLine[line].map(s => {
-                        // 1. 담당자 옵션 생성
-                        const managerOptions = managerList.map(m =>
-                            `<option value="${m.name}" ${s.manager === m.name ? 'selected' : ''}>${m.name}</option>`
-                        ).join('');
-
-                        // 2. 업체 옵션 생성
-                        const companyOptions = companyList.map(c =>
-                            `<option value="${c.name}" ${s.company === c.name ? 'selected' : ''}>${c.name}</option>`
-                        ).join('');
-
-                        // 3. 주문월 옵션 생성 (값 비교 강화)
-                        let monthOptions = '';
-                        for (let i = 1; i <= 12; i++) {
-                            const monthText = `${i}월분`;
-                            // DB 값(s.orderMonth)이 존재하고 일치하면 selected
-                            const isSelected = (s.orderMonth && s.orderMonth.trim() === monthText) ? 'selected' : '';
-                            monthOptions += `<option value="${monthText}" ${isSelected}>${monthText}</option>`;
-                        }
-
+                html+=`<section class="line-schedule-section" data-line="${line}">${header}`;
+                if(byLine[line].length>0) {
+                    const rows = byLine[line].map(s => {
+                        const mOpts = managerList.map(m=>`<option value="${m.name}" ${s.manager===m.name?'selected':''}>${m.name}</option>`).join('');
+                        const cOpts = companyList.map(c=>`<option value="${c.name}" ${s.company===c.name?'selected':''}>${c.name}</option>`).join('');
+                        let moOpts = ''; for(let i=1;i<=12;i++) moOpts+=`<option value="${i}월분" ${(s.orderMonth||'').trim()===`${i}월분`?'selected':''}>${i}월분</option>`;
                         return `<tr data-schedule-id="${s.id}" data-line="${line}">
-                    <td><select class="form-select" data-field="manager" ${isReadOnlyAttr}>
-                        <option value="">-선택-</option> ${managerOptions}
-                    </select></td>
-                    <td><select class="form-select" data-field="company" ${isReadOnlyAttr}>
-                        <option value="">-선택-</option> ${companyOptions}
-                    </select></td>
-                    <td><input type="text" class="form-input" data-field="model" value="${s.model || ''}" ${isReadOnlyAttr}></td>
-                    <td><select class="form-select" data-field="orderMonth" ${isReadOnlyAttr}>
-                        <option value="">-선택-</option> ${monthOptions}
-                    </select></td>
-                    <td><select class="form-select" data-field="tb" ${isReadOnlyAttr}>
-                        <option value="Top" ${s.tb === 'Top' ? 'selected' : ''}>Top</option>
-                        <option value="Bot" ${s.tb === 'Bot' ? 'selected' : ''}>Bot</option>
-                        <option value="T/O" ${s.tb === 'T/O' ? 'selected' : ''}>T/O</option>
-                        <option value="B/O" ${s.tb === 'B/O' ? 'selected' : ''}>B/O</option>
-                    </select></td>
-                    <td><input type="text" class="form-input" data-field="lot" value="${s.lot || ''}" ${isReadOnlyAttr}></td>
-                    <td><input type="text" class="form-input" data-field="actualProd" value="${s.actualProd || ''}" ${isReadOnlyAttr}></td>
-                    <td><select class="form-select prod-start-date" data-field="prodStart" ${isReadOnlyAttr}></select></td>
-                    <td><select class="form-select prod-end-date" data-field="prodEnd" ${isReadOnlyAttr}></select></td>
-                    <td>${s.startDate} ~ ${s.endDate}</td>
-                </tr>`;
+                            <td><select class="form-select" data-field="manager" ${ro}><option value="">-</option>${mOpts}</select></td>
+                            <td><select class="form-select" data-field="company" ${ro}><option value="">-</option>${cOpts}</select></td>
+                            <td><input type="text" class="form-input" data-field="model" value="${s.model||''}" ${ro}></td>
+                            <td><select class="form-select" data-field="orderMonth" ${ro}><option value="">-</option>${moOpts}</select></td>
+                            <td><select class="form-select" data-field="tb" ${ro}><option value="Top" ${s.tb==='Top'?'selected':''}>Top</option><option value="Bot" ${s.tb==='Bot'?'selected':''}>Bot</option><option value="T/O" ${s.tb==='T/O'?'selected':''}>T/O</option><option value="B/O" ${s.tb==='B/O'?'selected':''}>B/O</option></select></td>
+                            <td><input type="text" class="form-input" data-field="lot" value="${s.lot||''}" ${ro}></td>
+                            <td><input type="text" class="form-input" data-field="actualProd" value="${s.actualProd||''}" ${ro}></td>
+                            <td><select class="form-select prod-start-date" data-field="prodStart" ${ro}></select></td>
+                            <td><select class="form-select prod-end-date" data-field="prodEnd" ${ro}></select></td>
+                            <td style="color:var(--point-gold);">${s.startDate}~${s.endDate}</td>
+                        </tr>`;
                     }).join('');
-                    tableHTML += `</tbody></table></div>`;
-                } else {
-                    tableHTML += `<p class="no-line-data-message">${line}라인은 등록된 생산 일정이 없습니다.</p>`;
-                }
-                tableHTML += `</section>`;
+                    html+=`<div class="table-container"><table class="editable-table">
+                        <colgroup><col style="width:6%"><col style="width:6%"><col><col style="width:6%"><col style="width:6%"><col style="width:8%"><col style="width:6%"><col style="width:8%"><col style="width:8%"><col style="width:20%"></colgroup>
+                        <thead><tr><th>담당</th><th>업체</th><th>모델명</th><th>주문월</th><th>T/B</th><th>LOT</th><th>실생산</th><th>시작</th><th>종료</th><th>예정일</th></tr></thead>
+                        <tbody>${rows}</tbody></table></div>`;
+                } else html+=`<p class="no-line-data-message">일정 없음</p>`;
+                html+=`</section>`;
             }
-            return tableHTML;
+            return html;
+        }
+
+        function populateDateSelectorsForProductionPage(info, scheds) {
+            const days = getWeekdaysForWeek(info.year, info.month-1, info.weekNum);
+            const dNames = ['일','월','화','수','목','금','토'];
+            document.querySelectorAll('.prod-start-date, .prod-end-date').forEach(s => {
+                const row = s.closest('tr'); if(!row) return;
+                const id = parseInt(row.dataset.scheduleId);
+                const sc = scheds.find(i=>i.id===id);
+                const val = s.classList.contains('prod-start-date') ? sc.actualStartDate : sc.actualEndDate;
+                s.innerHTML = '<option value="-">-</option>';
+                days.forEach(d => {
+                    const txt = `${d.month}/${d.day}(${dNames[d.dayOfWeek]})`;
+                    s.add(new Option(txt, txt, false, txt===val));
+                });
+            });
         }
 
         async function generateProductionPdf(reportType) {
+            if (typeof addPaperlogyFont !== 'function') { alert("폰트 로드 오류"); return; }
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
             const isPlan = reportType === 'plan';
-            const { year, month, weekNum } = currentView.data;
-            let dbScheduleData;
+            
+            let year, month, weekNum;
+            if (!currentView.data || !currentView.data.year) {
+                const d = new Date(); year=d.getFullYear(); month=d.getMonth()+1; weekNum=getCurrentWeekNumber(d);
+            } else { year=currentView.data.year; month=currentView.data.month; weekNum=currentView.data.weekNum; }
+
+            let dbData;
             try {
-                const response = await fetch(`http://127.0.0.1:5000/api/production/schedules?year=${year}&month=${month}&weekNum=${weekNum}`);
-                if (!response.ok) throw new Error('서버 응답 오류');
-                dbScheduleData = await response.json();
-            } catch (error) {
-                console.error("PDF 생성 중 데이터 로딩 실패:", error);
-                alert("데이터를 불러오는 데 실패했습니다. 백엔드 서버를 확인하세요.");
-                return;
-            }
-            if (dbScheduleData.length === 0) {
-                alert("다운로드할 데이터가 없습니다.");
-                return;
-            }
+                const res = await fetch(`http://127.0.0.1:5000/api/production/schedules?year=${year}&month=${month}&weekNum=${weekNum}`);
+                if (!res.ok) throw new Error();
+                dbData = await res.json();
+            } catch (e) { alert("데이터 오류"); return; }
+
+            if (!dbData || dbData.length === 0) { alert("데이터 없음"); return; }
+
             addPaperlogyFont(doc);
             doc.setFont('Paperlogy', 'normal');
             const title = isPlan ? `${year}년 ${month}월 ${weekNum}주차 생산계획서` : `${year}년 ${month}월 ${weekNum}주차 생산보고서`;
-            const head = isPlan
-                ? [['업체', '모델명', '주문월', 'T/B', 'LOT', '월', '화', '수', '목', '금']]
-                : [['담당자', '업체', '모델명', '주문월', 'T/B', 'LOT', '실생산', '월', '화', '수', '목', '금']];
-            doc.setFontSize(20);
-            doc.text(title, 14, 7);
-            const dayColumnWidth = 8;
-            const orderMonthWidth = 13;
-            const columnStyles = isPlan
-                ? { 0: { cellWidth: 25 }, 1: { cellWidth: 'auto' }, 2: { cellWidth: orderMonthWidth }, 3: { cellWidth: 17 }, 4: { cellWidth: 20 }, 5: { cellWidth: dayColumnWidth }, 6: { cellWidth: dayColumnWidth }, 7: { cellWidth: dayColumnWidth }, 8: { cellWidth: dayColumnWidth }, 9: { cellWidth: dayColumnWidth } }
-                : { 0: { cellWidth: 20 }, 1: { cellWidth: 17 }, 2: { cellWidth: 'auto' }, 3: { cellWidth: orderMonthWidth }, 4: { cellWidth: 17 }, 5: { cellWidth: 20 }, 6: { cellWidth: 13 }, 7: { cellWidth: dayColumnWidth }, 8: { cellWidth: dayColumnWidth }, 9: { cellWidth: dayColumnWidth }, 10: { cellWidth: dayColumnWidth }, 11: { cellWidth: dayColumnWidth } };
-            const dataByLine = { A: [], B: [], C: [] };
-            dbScheduleData.forEach((item) => { if (dataByLine[item.line]) { dataByLine[item.line].push(item); } });
-            const daysOrder = ['월', '화', '수', '목', '금'];
-            let lastY = 28;
-            ['A', 'B', 'C'].forEach(line => {
-                const lineItems = dataByLine[line];
-                if (lineItems.length > 0) {
-                    doc.setFontSize(14);
-                    doc.setFont('Paperlogy', 'normal');
-                    doc.text(`${line}라인`, 14, lastY + 10);
-                    const body = lineItems.map(item => {
-                        const getDay = (dateStr) => (dateStr && dateStr.match(/\(([^)]+)\)/)) ? dateStr.match(/\(([^)]+)\)/)[1] : null;
-                        const startDay = isPlan ? getDay(item.startDate) : getDay(item.actualStartDate);
-                        const endDay = isPlan ? getDay(item.endDate) : getDay(item.actualEndDate);
-                        const startIndex = daysOrder.indexOf(startDay);
-                        const endIndex = daysOrder.indexOf(endDay);
-                        const finalEndIndex = (startIndex > -1 && endIndex === -1) ? startIndex : endIndex;
-                        const dayFlags = daysOrder.map((day, index) => {
-                            if (startIndex > -1 && finalEndIndex > -1 && startIndex <= finalEndIndex) {
-                                return (index >= startIndex && index <= finalEndIndex) ? 1 : 0;
-                            }
-                            return 0;
-                        });
-                        if (isPlan) {
-                            return [item.company, item.model, item.orderMonth || '', item.tb || 'Top', item.lot, ...dayFlags];
-                        } else {
-                            return [item.manager || '', item.company, item.model, item.orderMonth || '', item.tb || 'Top', item.lot, item.actualProd || '', ...dayFlags];
-                        }
+            const head = isPlan ? [['업체', '모델명', '주문월', 'T/B', 'LOT', '월', '화', '수', '목', '금']] : [['담당자', '업체', '모델명', '주문월', 'T/B', 'LOT', '실생산', '월', '화', '수', '목', '금']];
+            
+            doc.setFontSize(20); doc.text(title, 14, 15);
+            const dayColW = 8;
+            const colStyles = isPlan ? { 0:{cellWidth:25}, 1:{cellWidth:'auto'}, 2:{cellWidth:13}, 3:{cellWidth:17}, 4:{cellWidth:20}, 5:{cellWidth:dayColW}, 6:{cellWidth:dayColW}, 7:{cellWidth:dayColW}, 8:{cellWidth:dayColW}, 9:{cellWidth:dayColW} } : { 0:{cellWidth:20}, 1:{cellWidth:17}, 2:{cellWidth:'auto'}, 3:{cellWidth:13}, 4:{cellWidth:17}, 5:{cellWidth:20}, 6:{cellWidth:13}, 7:{cellWidth:dayColW}, 8:{cellWidth:dayColW}, 9:{cellWidth:dayColW}, 10:{cellWidth:dayColW}, 11:{cellWidth:dayColW} };
+            
+            const byLine = { A:[], B:[], C:[] };
+            dbData.forEach(i => { if(byLine[i.line]) byLine[i.line].push(i); });
+            const daysOrder = ['월','화','수','목','금'];
+            let lastY = 25;
+
+            ['A','B','C'].forEach(line => {
+                if(byLine[line].length > 0) {
+                    if(lastY > 250) { doc.addPage(); lastY=20; }
+                    doc.setFontSize(14); doc.setFont('Paperlogy', 'normal'); doc.text(`${line}라인`, 14, lastY+10);
+                    
+                    const body = byLine[line].map(item => {
+                        const getDay = (s) => (s && s.match(/\(([^)]+)\)/)) ? s.match(/\(([^)]+)\)/)[1] : null;
+                        const start = isPlan ? getDay(item.startDate) : getDay(item.actualStartDate);
+                        const end = isPlan ? getDay(item.endDate) : getDay(item.actualEndDate);
+                        const sIdx = daysOrder.indexOf(start), eIdx = daysOrder.indexOf(end);
+                        const finalE = (sIdx > -1 && eIdx === -1) ? sIdx : eIdx;
+                        const flags = daysOrder.map((d, i) => (sIdx > -1 && finalE > -1 && sIdx <= finalE && i >= sIdx && i <= finalE) ? 1 : 0);
+
+                        if(isPlan) return [item.company, item.model, item.orderMonth||'', item.tb||'Top', item.lot, ...flags];
+                        else return [item.manager||'', item.company, item.model, item.orderMonth||'', item.tb||'Top', item.lot, item.actualProd||'', ...flags];
                     });
+
                     doc.autoTable({
-                        head: head, body: body, startY: lastY + 15,
-                        theme: 'grid',
-                        styles: { font: 'Paperlogy', fontStyle: 'normal', fontSize: 9, lineWidth: 0.1, lineColor: [150, 150, 150], halign: 'center' },
-                        headStyles: { fontStyle: 'normal' },
-                        columnStyles: columnStyles,
-                        didDrawCell: function (data) {
-                            const dayColumnStartIndex = isPlan ? 5 : 7;
-                            if (data.column.index >= dayColumnStartIndex && data.cell.section === 'body') {
-                                if (data.cell.raw === 1) { doc.setFillColor(255, 255, 0); } else { doc.setFillColor(255, 255, 255); }
-                                doc.setDrawColor(150, 150, 150);
-                                doc.rect(data.cell.x, data.cell.y, data.cell.width, data.cell.height, 'FD');
-                                data.cell.text = [''];
+                        head: head, body: body, startY: lastY+15, theme: 'grid',
+                        styles: { font:'Paperlogy', fontStyle:'normal', fontSize:9, lineWidth:0.1, lineColor:[150,150,150], halign:'center' },
+                        headStyles: { fontStyle:'normal', fillColor:[200,200,200], textColor:0 },
+                        columnStyles: colStyles,
+                        didDrawCell: function(data) {
+                            const startCol = isPlan ? 5 : 7;
+                            if(data.column.index >= startCol && data.cell.section === 'body') {
+                                if(data.cell.raw === 1) doc.setFillColor(255, 255, 0); else doc.setFillColor(255, 255, 255);
+                                doc.rect(data.cell.x, data.cell.y, data.cell.width, data.cell.height, 'FD'); data.cell.text = [''];
                             }
                         }
                     });
                     lastY = doc.autoTable.previous.finalY;
                 }
             });
-            const fileName = isPlan ? '생산계획서' : '생산보고서';
-            doc.save(`${year}년-${month}월-${weekNum}주차_${fileName}.pdf`);
+            doc.save(`${year}년-${month}월-${weekNum}주차_${isPlan?'생산계획서':'생산보고서'}.pdf`);
         }
 
-        function populateDateSelectorsForProductionPage(weekInfo, schedulesData) {
-            const weekdays = getWeekdaysForWeek(weekInfo.year, weekInfo.month - 1, weekInfo.weekNum);
-            const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
-            const allStartDateSelects = document.querySelectorAll('.prod-start-date');
-            const allEndDateSelects = document.querySelectorAll('.prod-end-date');
-            const createOption = (value, text) => { const option = document.createElement('option'); option.value = value; option.textContent = text; return option; };
-
-            allStartDateSelects.forEach(select => {
-                const row = select.closest('tr');
-                if (!row) return;
-                const scheduleId = parseInt(row.dataset.scheduleId);
-                const schedule = schedulesData.find(s => s.id === scheduleId);
-                const savedStart = schedule ? schedule.actualStartDate : '-';
-                select.innerHTML = ''; select.appendChild(createOption('-', '-'));
-                weekdays.forEach(item => { const optionText = `${item.month}/${item.day}(${dayNames[item.dayOfWeek]})`; const option = createOption(optionText, optionText); if (optionText === savedStart) option.selected = true; select.appendChild(option); });
-            });
-            allEndDateSelects.forEach(select => {
-                const row = select.closest('tr');
-                if (!row) return;
-                const scheduleId = parseInt(row.dataset.scheduleId);
-                const schedule = schedulesData.find(s => s.id === scheduleId);
-                const savedEnd = schedule ? schedule.actualEndDate : '-';
-                select.innerHTML = ''; select.appendChild(createOption('-', '-'));
-                weekdays.forEach(item => { const optionText = `${item.month}/${item.day}(${dayNames[item.dayOfWeek]})`; const option = createOption(optionText, optionText); if (optionText === savedEnd) option.selected = true; select.appendChild(option); });
-            });
+        function getWeekdaysForWeek(y, m, w) {
+            const d = new Date(y, m, 1); d.setDate(d.getDate() - d.getDay() + (w - 1) * 7);
+            const res = [];
+            for(let i=0; i<7; i++) { const cur = new Date(d); cur.setDate(d.getDate()+i); if(cur.getDay()>=1 && cur.getDay()<=5) res.push({ month: cur.getMonth()+1, day: cur.getDate(), dayOfWeek: cur.getDay() }); }
+            return res;
         }
-
-        function getWeekdaysForWeek(year, month, weekNum) {
-            const weekdays = [];
-            const firstDateOfMonth = new Date(year, month, 1);
-            const firstDayOfWeek = firstDateOfMonth.getDay();
-            let date = new Date(firstDateOfMonth);
-            date.setDate(date.getDate() - firstDayOfWeek);
-            date.setDate(date.getDate() + (weekNum - 1) * 7);
-            for (let i = 0; i < 7; i++) {
-                const currentDate = new Date(date);
-                currentDate.setDate(date.getDate() + i);
-                const dayOfWeek = currentDate.getDay();
-                if (dayOfWeek >= 1 && dayOfWeek <= 5) { weekdays.push({ year: currentDate.getFullYear(), month: currentDate.getMonth() + 1, day: currentDate.getDate(), dayOfWeek: dayOfWeek }); }
-            }
-            return weekdays;
+        function getProductionWeeksInMonth(y, m) {
+            const s = new Set(); const last = new Date(y, m+1, 0).getDate();
+            for(let i=1; i<=last; i++) { const d = new Date(y, m, i); if(d.getDay()>=1 && d.getDay()<=5) s.add(Math.ceil((i + new Date(y, m, 1).getDay()) / 7)); }
+            return s;
         }
-        function getProductionWeeksInMonth(year, month) {
-            const productionWeeks = new Set();
-            const lastDateOfMonth = new Date(year, month + 1, 0).getDate();
-            for (let day = 1; day <= lastDateOfMonth; day++) {
-                const currentDate = new Date(year, month, day);
-                const dayOfWeek = currentDate.getDay();
-                if (dayOfWeek >= 1 && dayOfWeek <= 5) {
-                    const firstDayOfMonth = new Date(year, month, 1).getDay();
-                    const weekNumber = Math.ceil((day + firstDayOfMonth) / 7);
-                    productionWeeks.add(weekNumber);
-                }
-            }
-            return productionWeeks;
-        }
-        function getCurrentWeekNumber(date) {
-            const dayOfMonth = date.getDate();
-            const firstDayOfMonth = new Date(date.getFullYear(), date.getMonth(), 1).getDay();
-            return Math.ceil((dayOfMonth + firstDayOfMonth) / 7);
-        }
+        function getCurrentWeekNumber(d) { return Math.ceil((d.getDate() + new Date(d.getFullYear(), d.getMonth(), 1).getDay()) / 7); }
         function updateTime() {
-            const timeDisplay = document.getElementById('current-time');
-            if (!timeDisplay) return;
-            const now = new Date();
-            const year = now.getFullYear();
-            const month = String(now.getMonth() + 1).padStart(2, '0');
-            const day = String(now.getDate()).padStart(2, '0');
-            const hours = String(now.getHours()).padStart(2, '0');
-            const minutes = String(now.getMinutes()).padStart(2, '0');
-            const formattedTime = `${year}년 ${month}월 ${day}일 ${hours}시 ${minutes}분`;
-            timeDisplay.textContent = formattedTime;
+            const d = new Date(); document.getElementById('current-time').textContent = `${d.getFullYear()}년 ${(d.getMonth()+1).toString().padStart(2,'0')}월 ${d.getDate().toString().padStart(2,'0')}일 ${d.getHours().toString().padStart(2,'0')}시 ${d.getMinutes().toString().padStart(2,'0')}분`;
         }
     </script>
 </body>
-
 </html>

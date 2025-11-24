@@ -62,7 +62,6 @@
             justify-content: center;
             perspective: 1000px;
             width: 100%;
-            /* 자식 요소(DIP버튼)가 위로 튀어나와도 잘리지 않도록 visible 설정 */
             overflow: visible; 
         }
 
@@ -77,6 +76,7 @@
             align-items: center;
             z-index: 100;
             flex-shrink: 0;
+            position: relative; 
         }
 
         .main-footer {
@@ -84,6 +84,26 @@
             border-bottom: none;
             padding: 15px clamp(15px, 5vw, 40px);
         }
+
+        /* 중앙 정렬 */
+        .header-center, .footer-center {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .header-left, .header-right, .footer-left, .footer-right {
+            flex: 1; 
+            display: flex;
+            align-items: center;
+        }
+        
+        .header-right, .footer-right { justify-content: flex-end; }
 
         .common-box {
             background: transparent !important;
@@ -97,27 +117,37 @@
             gap: 10px;
         }
         
-        .header-left { display: flex; align-items: center; flex: 0 0 auto; }
-
-        /* --- [3. Glitch Effect CSS] --- */
+        /* --- [3. 로고 스타일] --- */
         .svg-sprite { position: absolute; width: 0; height: 0; }
         .header-logo-wrapper { position: relative; display: inline-block; transform: translateZ(0); overflow: visible; cursor: pointer; }
-        .header-logo { height: clamp(50px, 10vw, 90px); width: auto; fill: var(--gold); transition: fill 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94); filter: drop-shadow(0 0 5px rgba(255, 235, 167, 0.4)); display: block; }
+        
+        .header-logo { 
+            height: 35px; 
+            width: auto; 
+            fill: var(--gold); 
+            transition: fill 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94); 
+            filter: drop-shadow(0 0 5px rgba(255, 235, 167, 0.4)); 
+            display: block; 
+        }
+        
         .header-logo-wrapper.btn-glitch-active .header-logo { fill: #ffffff; -webkit-filter: url('#filter'); filter: url('#filter'); }
 
-        .header-center .common-box { color: var(--gold); font-family: 'Poppins', 'BMDOHYEON', sans-serif; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; font-size: clamp(1.2rem, 2.5vw, 2rem); white-space: nowrap; }
-        .time-display { color: #c4c3ca; font-family: 'Poppins', sans-serif; font-weight: 500; font-size: clamp(0.8rem, 1.2vw, 1.1rem) !important; }
+        .header-center .common-box { 
+            color: var(--gold); font-family: 'Poppins', 'BMDOHYEON', sans-serif; 
+            font-weight: 800; letter-spacing: 2px; text-transform: uppercase; 
+            font-size: clamp(1.2rem, 2.5vw, 2rem); white-space: nowrap; 
+        }
+        
+        .time-display { 
+            color: #c4c3ca; font-family: 'Poppins', sans-serif; 
+            font-weight: 500; font-size: clamp(0.8rem, 1.2vw, 1.1rem) !important; 
+        }
 
         /* --- [4. 메인 콘텐츠 (카드 UI)] --- */
         .flow-container {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: clamp(10px, 2vw, 30px);
-            width: 100%;
-            flex-wrap: wrap; 
-            position: relative;
-            margin-top: 50px; /* 상단 여백 확보 */
+            display: flex; align-items: center; justify-content: center;
+            gap: clamp(10px, 2vw, 30px); width: 100%; flex-wrap: wrap; 
+            position: relative; margin-top: 50px; 
         }
 
         /* 대제목 카드 */
@@ -129,7 +159,7 @@
             border-radius: 15px;
             display: flex;
             flex-direction: column;
-            justify-content: center;
+            justify-content: center; /* 중앙 정렬 */
             align-items: center;
             text-align: center;
             transition: all 0.4s ease;
@@ -144,64 +174,95 @@
             z-index: 2;
         }
 
-        .grid-item::before {
-            font-family: 'unicons';
-            font-size: clamp(2.5rem, 4vw, 4rem);
-            color: var(--gold);
+        /* --- [아이콘 스타일 & 애니메이션 (Fade In/Out)] --- */
+        .icon-container {
+            position: relative;
+            height: 60px; /* 아이콘 높이 확보 */
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
             margin-bottom: 15px;
-            transition: all 0.4s ease;
+        }
+
+        .icon-container i {
+            font-size: clamp(2.5rem, 4vw, 4rem);
+            position: absolute;
+            transition: opacity 0.4s ease-in-out, transform 0.4s ease-in-out; /* 부드러운 전환 */
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%); /* 정중앙 배치 */
+        }
+
+        /* 기본 아이콘 (보임) */
+        .main-icon {
+            opacity: 1;
+            color: var(--gold);
             text-shadow: 0 0 20px rgba(255, 235, 167, 0.4);
         }
 
-        a[href="production.html"] .grid-item::before { content: '\eb86'; }
-        a[href="aoi.html"] .grid-item::before { content: '\eb0d'; }
-        a[href="repair.html"] .grid-item::before { content: '\eb26'; }
-        a[href="function_test.html"] .grid-item::before { content: '\eb05'; }
+        /* 호버용 아이콘 (숨김) */
+        .hover-icon {
+            opacity: 0;
+            color: #102770;
+        }
 
-        .grid-item:hover { transform: translateY(-10px) scale(1.05); background-color: var(--gold); box-shadow: 0 20px 40px rgba(255, 235, 167, 0.3); border-color: var(--gold); }
-        .grid-item:hover::before { color: #102770; transform: scale(1.2) rotate(-10deg); text-shadow: none; }
-        .grid-item:hover { color: #102770; }
+        /* [호버 효과] */
+        .grid-item:hover {
+            transform: translateY(-10px) scale(1.05);
+            background-color: var(--gold);
+            box-shadow: 0 20px 40px rgba(255, 235, 167, 0.3);
+            border-color: var(--gold);
+            color: #102770;
+        }
+
+        /* 호버 시: 기본 아이콘 사라짐 */
+        .grid-item:hover .main-icon {
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(0.8); /* 살짝 작아지며 사라짐 */
+        }
+
+        /* 호버 시: 새 아이콘 나타남 */
+        .grid-item:hover .hover-icon {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1.1); /* 살짝 커지며 등장 */
+        }
 
         /* --- [5. 화살표 (수평)] --- */
         .flow-arrow {
             width: clamp(20px, 5vw, 60px);
             height: 0; 
             position: relative;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            display: flex; align-items: center; justify-content: center;
             overflow: visible; 
         }
 
         .flow-arrow-icon {
             font-family: 'unicons';
-            content: '\e943'; /* Right Arrow */
+            content: '\e943'; 
             font-size: clamp(1.2rem, 2vw, 2rem);
             color: #5a5b68;
             animation: arrow-pulse 2s infinite;
         }
 
-        /* --- [6. DIP (조립) 분기점 - Z-Index 수정됨] --- */
-        
+        /* --- [6. DIP (조립) UI & 점선 애니메이션] --- */
         .branch-container {
             position: absolute;
-            /* 메인 화살표 중앙에서 시작 */
-            bottom: 50%; 
+            bottom: 50%; /* 화살표 중앙에서 시작 */
             left: 50%;
             transform: translateX(-50%);
             display: flex;
-            /* [중요] column-reverse: 1번요소(선)가 맨 아래, 3번요소(카드)가 맨 위 */
-            flex-direction: column-reverse; 
+            flex-direction: column-reverse; /* 아래(선) -> 위(카드) 순서 */
             align-items: center;
             z-index: 0;
-            pointer-events: none; /* 빈 공간 클릭 시 통과 */
+            pointer-events: none; 
         }
 
-        /* 1. 움직이는 점선 (Line) - 맨 아래 */
+        /* 움직이는 점선 */
         .branch-line-dashed {
             width: 2px;
-            /* [높이 설정] 높이를 키워 UI를 위로 밀어올림 */
-            height: clamp(20px, 20vh, 60px); 
+            /* [유지] 높이 */
+            height: clamp(30px, 20vh, 70px); 
             
             background-image: linear-gradient(to top, #5a5b68 50%, transparent 50%);
             background-size: 2px 20px; 
@@ -209,7 +270,7 @@
             
             animation: dashed-move-up 1s linear infinite;
             opacity: 0.6;
-            z-index: 1; /* 카드보다 낮음 */
+            z-index: 1; 
         }
 
         @keyframes dashed-move-up {
@@ -217,26 +278,24 @@
             to { background-position: 0 -20px; }
         }
 
-        /* 2. 수직 화살표 (Arrow) - 중간 */
         .flow-arrow-icon-vertical {
             font-family: 'unicons';
-            content: '\e946'; /* Angle Double Up */
+            content: '\e946'; 
             font-size: clamp(1.2rem, 2vw, 2rem);
             color: #5a5b68;
             margin-bottom: 5px;
             animation: arrow-pulse-vertical 2s infinite;
-            z-index: 2; /* 선보다 높음 */
+            z-index: 2; 
         }
 
-        /* 3. DIP 카드 링크 (Card) - 맨 위 */
         .branch-item-link {
-            pointer-events: auto; /* 클릭 가능 */
-            z-index: 100; /* [핵심] 아주 높은 값으로 설정하여 선/화살표 위에 위치 */
-            position: relative; /* z-index 적용을 위해 */
+            pointer-events: auto; 
+            z-index: 100; 
+            position: relative; 
             margin-bottom: 5px;
         }
 
-        /* DIP 카드 스타일 */
+        /* DIP 소형 카드 스타일 */
         .sub-grid-item {
             width: clamp(70px, 9vw, 110px);
             height: clamp(70px, 9vw, 110px);
@@ -244,7 +303,7 @@
             border-radius: 12px;
             display: flex;
             flex-direction: column;
-            justify-content: center;
+            justify-content: center; /* 중앙 정렬 */
             align-items: center;
             text-align: center;
             transition: all 0.3s ease;
@@ -253,15 +312,16 @@
             color: #fff;
             font-family: 'BMDOHYEON', sans-serif;
             font-size: clamp(0.8rem, 1.1vw, 1.2rem);
+            overflow: hidden;
         }
-
-        .sub-grid-item::before {
-            font-family: 'unicons';
-            content: '\eb93'; /* Chip icon */
-            font-size: clamp(1.8rem, 3vw, 2.5rem);
-            color: var(--gold);
+        
+        /* DIP 아이콘 래퍼 */
+        .sub-grid-item .icon-container {
+            height: 40px; 
             margin-bottom: 5px;
-            transition: all 0.3s ease;
+        }
+        .sub-grid-item i {
+            font-size: clamp(1.8rem, 3vw, 2.5rem);
         }
 
         .sub-grid-item:hover {
@@ -270,7 +330,10 @@
             color: #102770;
             box-shadow: 0 10px 25px rgba(255, 235, 167, 0.4);
         }
-        .sub-grid-item:hover::before { color: #102770; }
+        
+        /* DIP 호버 애니메이션 (Fade) */
+        .sub-grid-item:hover .main-icon { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+        .sub-grid-item:hover .hover-icon { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
 
         @keyframes arrow-pulse {
             0% { opacity: 0.2; transform: translateX(-5px); color: #5a5b68; }
@@ -295,10 +358,7 @@
             transition: all 0.3s ease;
             border: 1px solid rgba(255,255,255,0.1);
             cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            white-space: nowrap;
+            display: flex; align-items: center; gap: 8px; white-space: nowrap;
         }
 
         .footer-btn:hover {
@@ -309,20 +369,15 @@
         }
 
         @media (max-width: 600px) {
-            .flow-container {
-                flex-direction: row; 
-                flex-wrap: wrap;
-                margin-top: 150px; /* 모바일 대응 여백 */
-            }
-            .header-center { display: none; } 
+            .flow-container { margin-top: 150px; flex-direction: row; flex-wrap: wrap; }
+            .header-center, .footer-center { position: static; transform: none; margin-bottom: 10px; }
+            .main-header, .main-footer { flex-direction: column; padding: 15px; }
             .footer-btn { padding: 5px 10px; } 
         }
 
         .icon-backup::before { content: '\eb0b'; font-family: 'unicons'; }
         .icon-restore::before { content: '\e864'; font-family: 'unicons'; }
         .icon-logout::before { content: '\eb97'; font-family: 'unicons'; }
-        .icon-admin::before { content: '\ea4f'; font-family: 'unicons'; }
-
     </style>
 </head>
 
@@ -378,8 +433,10 @@
         <main class="content-area">
             <div class="flow-container">
                 
-                <a href="production.html">
+                <a href="production.html" onclick="transitionToPage(event, 'production.html')">
                     <div class="grid-item">
+                        <div class="icon-container">
+                            <i class="uil uil-box main-icon"></i> <i class="uil uil-cog hover-icon"></i> </div>
                         <span>생 산</span>
                     </div>
                 </a>
@@ -394,8 +451,12 @@
 
                         <i class="uil uil-angle-double-up flow-arrow-icon-vertical"></i>
 
-                        <a href="dip.html" class="branch-item-link">
+                        <a href="dip.html" class="branch-item-link" onclick="transitionToPage(event, 'dip.html')">
                             <div class="sub-grid-item">
+                                <div class="icon-container">
+                                    <i class="uil uil-processor main-icon"></i> 
+                                    <i class="uil uil-circuit hover-icon"></i> 
+                                </div>
                                 <span>조 립</span>
                             </div>
                         </a>
@@ -404,8 +465,12 @@
 
                 </div>
                 
-                <a href="aoi.html">
+                <a href="aoi.html" onclick="transitionToPage(event, 'aoi.html')">
                     <div class="grid-item">
+                        <div class="icon-container">
+                            <i class="uil uil-eye main-icon"></i> 
+                            <i class="uil uil-search-alt hover-icon"></i> 
+                        </div>
                         <span>AOI</span>
                     </div>
                 </a>
@@ -414,8 +479,12 @@
                     <i class="uil uil-angle-double-right flow-arrow-icon"></i>
                 </div>
                 
-                <a href="repair.html">
+                <a href="repair.html" onclick="transitionToPage(event, 'repair.html')">
                     <div class="grid-item">
+                        <div class="icon-container">
+                            <i class="uil uil-wrench main-icon"></i> 
+                            <i class="uil uil-screw hover-icon"></i> 
+                        </div>
                         <span>수 리</span>
                     </div>
                 </a>
@@ -424,8 +493,12 @@
                     <i class="uil uil-angle-double-right flow-arrow-icon"></i>
                 </div>
                 
-                <a href="function_test.html">
+                <a href="function_test.html" onclick="transitionToPage(event, 'function_test.html')">
                     <div class="grid-item">
+                        <div class="icon-container">
+                            <i class="uil uil-laptop main-icon"></i> 
+                            <i class="uil uil-check-circle hover-icon"></i> 
+                        </div>
                         <span>기 능</span>
                     </div>
                 </a>
@@ -452,9 +525,16 @@
     </div>
 
     <script>
-        // --------------------------------------------------------
-        // [글리치 애니메이션 JS]
-        // --------------------------------------------------------
+        // [추가] 페이지 전환 함수 (페이드 아웃)
+        function transitionToPage(e, url) {
+            e.preventDefault();
+            document.body.style.opacity = '0'; // 화면 투명하게
+            setTimeout(() => {
+                window.location.href = url;
+            }, 500); // 0.5초 후 이동
+        }
+
+        // [기본 로직]
         document.addEventListener('DOMContentLoaded', () => {
             
             const filter = document.querySelector('.svg-sprite');
@@ -499,10 +579,9 @@
             });
 
 
-            // [기본 기능]
+            // 페이드 인 효과 (0 -> 1)
             setTimeout(() => {
                 document.body.style.opacity = '1';
-                document.body.style.transition = 'opacity 0.8s ease';
             }, 50);
 
             const userRole = localStorage.getItem('ppms_user_role');
@@ -524,7 +603,7 @@
                 adminLink.href = 'admin.html';
                 
                 const adminBtn = document.createElement('div');
-                adminBtn.className = 'footer-btn icon-admin';
+                adminBtn.className = 'footer-btn'; // 아이콘 클래스 제거
                 adminBtn.textContent = '관리자 페이지';
                 adminBtn.style.color = '#ffeba7';
                 
