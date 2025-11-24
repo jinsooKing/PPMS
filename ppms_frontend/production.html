@@ -33,9 +33,7 @@
             --danger-red: #ff4444;
             --border-color: rgba(255, 235, 167, 0.1);
         }
-        body {
-            opacity: 0;
-        }
+        body { opacity: 0; }
 
         /* --- [2. 레이아웃] --- */
         body {
@@ -153,17 +151,28 @@
         .line-title { font-family: 'BMDOHYEON', sans-serif; font-size: 1.3rem; color: var(--text-white); margin: 0; display: flex; align-items: center; gap: 10px; }
         .line-title::before { content: ''; display: block; width: 4px; height: 16px; background-color: var(--point-gold); border-radius: 2px; }
         
-        .table-container {
-            overflow-x: auto;
-            overflow-y: auto;       /* 세로 스크롤 허용 */
-            max-height: 60vh;       /* 화면 높이의 60%까지만 늘어남 (스크롤 발생 지점) */
-            border-radius: 6px;
+        .table-container { 
+            overflow-x: auto; 
+            overflow-y: auto; 
+            max-height: 60vh; 
+            border-radius: 6px; 
             border: 1px solid rgba(255, 255, 255, 0.05);
         }
         
         table.editable-table { width: 100%; border-collapse: collapse; font-family: 'Poppins', 'BMJUA', sans-serif; color: var(--text-color); }
         table.editable-table th, table.editable-table td { padding: 4px 6px; white-space: nowrap; text-align: center; border-bottom: 1px solid rgba(255, 255, 255, 0.05); font-size: 0.85rem; height: 32px; }
-        table.editable-table th { background-color: #1a1b23; color: var(--point-gold); font-weight: 600; text-transform: uppercase; border-bottom: 2px solid rgba(255, 235, 167, 0.2); position: sticky; top: 0; z-index: 5; }
+        
+        table.editable-table th { 
+            background-color: #1a1b23; 
+            color: var(--point-gold); 
+            font-weight: 600; 
+            text-transform: uppercase; 
+            border-bottom: 2px solid rgba(255, 235, 167, 0.2); 
+            position: sticky; 
+            top: 0; 
+            z-index: 10;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        }
         table.editable-table tbody tr:hover { background-color: rgba(255, 235, 167, 0.05); }
 
         .form-input, .form-select { background: transparent; border: 1px solid transparent; color: #fff; font-family: inherit; font-size: 0.85rem; text-align: center; width: 100%; height: 26px; padding: 0 4px; border-radius: 3px; }
@@ -174,18 +183,77 @@
         .progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--point-gold), #ffbc00); width: 0%; transition: width 0.5s ease; }
         .progress-bar-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 9px; color: #fff; text-shadow: 0 0 3px #000; font-weight: bold; }
         
-        /* 헤더 컨트롤 버튼 */
-        .header-controls { display: flex; gap: 8px; }
-        .icon-btn { 
+        /* 헤더 컨트롤 및 버튼 스타일 */
+        .header-controls { display: flex; align-items: center; gap: 8px; }
+        
+        /* 기본 텍스트 버튼 */
+        .text-btn { 
             background: #3a3a3c; border: 1px solid #555; color: #fff; 
-            font-size: 1.1rem; cursor: pointer; padding: 0; 
-            width: 30px; height: 30px; border-radius: 5px; 
+            font-size: 0.9rem; font-family: 'BMJUA', sans-serif;
+            cursor: pointer; padding: 5px 12px; 
+            border-radius: 5px; 
             display: flex; align-items: center; justify-content: center;
             transition: all 0.2s;
+            height: 32px;
+            white-space: nowrap;
         }
-        .icon-btn:hover { background: #555; color: var(--point-gold); transform: scale(1.05); }
-        .icon-btn.delete-mode-active { background-color: var(--danger-red); border-color: var(--danger-red); color: #fff; animation: pulse-red 2s infinite; }
+        .text-btn:hover { background: #555; color: var(--point-gold); transform: translateY(-2px); }
         
+        /* 뒤로가기/앞으로가기 버튼 스타일 */
+        .history-btn {
+            width: 32px; padding: 0;
+            font-size: 1.2rem;
+        }
+        .history-btn:disabled {
+            opacity: 0.3; cursor: default; transform: none;
+            color: #aaa; border-color: #444;
+        }
+
+        /* 불러오기 선택 옵션 컨테이너 */
+        .import-options-container {
+            display: flex;
+            gap: 5px;
+            overflow: hidden;
+            max-width: 0;
+            opacity: 0;
+            transform: translateX(-10px);
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            pointer-events: none;
+        }
+        .import-options-container.active { 
+            max-width: 300px; 
+            opacity: 1;
+            transform: translateX(0);
+            pointer-events: auto;
+            margin-left: 5px;
+        }
+        
+        .import-option-btn {
+            background-color: #15151a; 
+            color: #ccc;
+            border: 1px solid rgba(255, 235, 167, 0.3); 
+            border-radius: 4px;
+            padding: 5px 10px;
+            font-family: 'BMJUA';
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .import-option-btn:hover { 
+            background-color: var(--point-gold); 
+            color: var(--accent-blue);
+            border-color: var(--point-gold);
+            transform: translateY(-1px);
+        }
+
+        /* 삭제 모드 스타일 */
+        .text-btn.delete-mode-active { 
+            background-color: var(--danger-red); 
+            border-color: var(--danger-red); 
+            color: #fff; 
+            animation: pulse-red 2s infinite; 
+        }
         .delete-mode tbody tr { cursor: pointer; transition: background-color 0.2s; }
         .delete-mode tbody tr:hover { background-color: rgba(255, 68, 68, 0.2) !important; }
         .delete-mode tbody tr:hover td { color: #ffcccc; }
@@ -195,6 +263,18 @@
             70% { box-shadow: 0 0 0 6px rgba(255, 68, 68, 0); }
             100% { box-shadow: 0 0 0 0 rgba(255, 68, 68, 0); }
         }
+
+        /* 애니메이션 */
+        @keyframes rowFadeIn { 
+            from { opacity: 0; transform: translateY(-15px); } 
+            to { opacity: 1; transform: translateY(0); } 
+        }
+        @keyframes rowFadeOutNatural { 
+            0% { opacity: 1; transform: scale(1); background-color: rgba(255,68,68,0.1); }
+            100% { opacity: 0; transform: scale(0.98); background-color: rgba(255,68,68,0.3); } 
+        }
+        .animate-in { animation: rowFadeIn 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+        .animate-out { animation: rowFadeOutNatural 0.35s ease-out forwards; }
 
         /* --- [6. 모달 공통 스타일] --- */
         @keyframes fadeInOverlay { from { background-color: rgba(0,0,0,0); } to { background-color: rgba(0,0,0,0.85); } }
@@ -217,7 +297,6 @@
         .close-btn:hover { color: var(--point-gold); }
 
         /* --- [7. 일정 등록 모달 (탭 스타일)] --- */
-        /* [수정] 탭 네비게이션 */
         .line-tab-nav {
             display: flex; border-bottom: 1px solid rgba(255,255,255,0.1); 
             background: #15151a; flex-shrink: 0; 
@@ -233,19 +312,15 @@
             background: rgba(255, 235, 167, 0.05); 
         }
 
-        /* 탭 컨텐츠 */
         .tab-content { display: none; animation: fadeIn 0.3s ease; }
         .tab-content.active { display: block; }
 
-        /* 테이블 스타일 */
         .registration-table th { background-color: #15151a; color: #aaa; padding: 10px; font-size: 0.9rem; }
         .registration-table td { padding: 6px; }
         .registration-table input, .registration-table select { background-color: rgba(255,255,255,0.05); border-radius: 4px; height: 34px; }
         
         .action-btn { border-radius: 4px; width: 24px; height: 24px; line-height: 22px; padding: 0; font-size: 12px; color:white; border:none; cursor: pointer; }
-        .add-row-btn { background-color: #1e3a8a; margin-right: 4px; }
-        .delete-row-btn { background-color: #7f1d1d; }
-
+        
         /* --- [8. 비고 모달 UI] --- */
         .notes-modal-content-container { display: flex; flex-direction: column; height: 100%; overflow: hidden; }
         .notes-tab-nav { display: flex; border-bottom: 1px solid rgba(255,255,255,0.1); background: #15151a; flex-shrink: 0; }
@@ -380,8 +455,15 @@
                         <div class="line-title-group">
                             <h3 class="line-title">A LINE 스케줄</h3>
                             <div class="header-controls" id="header-controls-A">
-                                <button class="icon-btn add-row-btn" title="행 추가"><i class="uil uil-plus"></i></button>
-                                <button class="icon-btn toggle-delete-btn" title="삭제 모드"><i class="uil uil-trash-alt"></i></button>
+                                <button class="text-btn import-line-btn" title="다른 라인에서 가져오기">불러오기</button>
+                                <div class="import-options-container">
+                                    <button class="import-option-btn" data-source="B">B라인</button>
+                                    <button class="import-option-btn" data-source="C">C라인</button>
+                                </div>
+                                <button class="text-btn add-row-btn" title="행 추가">행 추가</button>
+                                <button class="text-btn toggle-delete-btn" title="삭제 모드">행 삭제</button>
+                                <button class="text-btn history-btn undo-btn" title="실행 취소" disabled><i class="uil uil-arrow-circle-left"></i></button>
+                                <button class="text-btn history-btn redo-btn" title="다시 실행" disabled><i class="uil uil-arrow-circle-right"></i></button>
                             </div>
                         </div>
                     </div>
@@ -391,7 +473,12 @@
                                 <col style="width:15%"> <col style="width:8%"> <col style="width:27%"> <col style="width:10%"> 
                                 <col style="width:10%"> <col style="width:10%"> <col style="width:20%">
                             </colgroup>
-                            <thead><tr><th>업체</th><th>년도</th><th>모델명</th><th>발주월</th><th>T/B</th><th>LOT</th><th>생산예정일</th></tr></thead>
+                            <thead>
+                                <tr>
+                                    <th>업체</th><th>년도</th><th>모델명</th><th>발주월</th>
+                                    <th>T/B</th><th>LOT</th><th>생산예정일</th>
+                                </tr>
+                            </thead>
                             <tbody id="schedule-table-body-A"></tbody>
                         </table>
                     </div>
@@ -402,8 +489,15 @@
                         <div class="line-title-group">
                             <h3 class="line-title">B LINE 스케줄</h3>
                             <div class="header-controls" id="header-controls-B">
-                                <button class="icon-btn add-row-btn" title="행 추가"><i class="uil uil-plus"></i></button>
-                                <button class="icon-btn toggle-delete-btn" title="삭제 모드"><i class="uil uil-trash-alt"></i></button>
+                                <button class="text-btn import-line-btn" title="다른 라인에서 가져오기">불러오기</button>
+                                <div class="import-options-container">
+                                    <button class="import-option-btn" data-source="A">A라인</button>
+                                    <button class="import-option-btn" data-source="C">C라인</button>
+                                </div>
+                                <button class="text-btn add-row-btn" title="행 추가">행 추가</button>
+                                <button class="text-btn toggle-delete-btn" title="삭제 모드">행 삭제</button>
+                                <button class="text-btn history-btn undo-btn" title="실행 취소" disabled><i class="uil uil-arrow-circle-left"></i></button>
+                                <button class="text-btn history-btn redo-btn" title="다시 실행" disabled><i class="uil uil-arrow-circle-right"></i></button>
                             </div>
                         </div>
                     </div>
@@ -413,7 +507,12 @@
                                 <col style="width:15%"> <col style="width:8%"> <col style="width:27%"> <col style="width:10%"> 
                                 <col style="width:10%"> <col style="width:10%"> <col style="width:20%">
                             </colgroup>
-                            <thead><tr><th>업체</th><th>년도</th><th>모델명</th><th>발주월</th><th>T/B</th><th>LOT</th><th>생산예정일</th></tr></thead>
+                            <thead>
+                                <tr>
+                                    <th>업체</th><th>년도</th><th>모델명</th><th>발주월</th>
+                                    <th>T/B</th><th>LOT</th><th>생산예정일</th>
+                                </tr>
+                            </thead>
                             <tbody id="schedule-table-body-B"></tbody>
                         </table>
                     </div>
@@ -424,8 +523,15 @@
                         <div class="line-title-group">
                             <h3 class="line-title">C LINE 스케줄</h3>
                             <div class="header-controls" id="header-controls-C">
-                                <button class="icon-btn add-row-btn" title="행 추가"><i class="uil uil-plus"></i></button>
-                                <button class="icon-btn toggle-delete-btn" title="삭제 모드"><i class="uil uil-trash-alt"></i></button>
+                                <button class="text-btn import-line-btn" title="다른 라인에서 가져오기">불러오기</button>
+                                <div class="import-options-container">
+                                    <button class="import-option-btn" data-source="A">A라인</button>
+                                    <button class="import-option-btn" data-source="B">B라인</button>
+                                </div>
+                                <button class="text-btn add-row-btn" title="행 추가">행 추가</button>
+                                <button class="text-btn toggle-delete-btn" title="삭제 모드">행 삭제</button>
+                                <button class="text-btn history-btn undo-btn" title="실행 취소" disabled><i class="uil uil-arrow-circle-left"></i></button>
+                                <button class="text-btn history-btn redo-btn" title="다시 실행" disabled><i class="uil uil-arrow-circle-right"></i></button>
                             </div>
                         </div>
                     </div>
@@ -435,7 +541,12 @@
                                 <col style="width:15%"> <col style="width:8%"> <col style="width:27%"> <col style="width:10%"> 
                                 <col style="width:10%"> <col style="width:10%"> <col style="width:20%">
                             </colgroup>
-                            <thead><tr><th>업체</th><th>년도</th><th>모델명</th><th>발주월</th><th>T/B</th><th>LOT</th><th>생산예정일</th></tr></thead>
+                            <thead>
+                                <tr>
+                                    <th>업체</th><th>년도</th><th>모델명</th><th>발주월</th>
+                                    <th>T/B</th><th>LOT</th><th>생산예정일</th>
+                                </tr>
+                            </thead>
                             <tbody id="schedule-table-body-C"></tbody>
                         </table>
                     </div>
@@ -484,6 +595,13 @@
     </div>
 
     <script>
+        // [Undo/Redo 상태 관리 - 전역]
+        const historyState = {
+            A: { undoStack: [], redoStack: [] },
+            B: { undoStack: [], redoStack: [] },
+            C: { undoStack: [], redoStack: [] }
+        };
+
         document.addEventListener('DOMContentLoaded', () => {
 
             setTimeout(() => {
@@ -542,34 +660,78 @@
             weekSelectorGrid.addEventListener('click', handleWeekSelection);
 
             if(saveAllBtn) saveAllBtn.addEventListener('click', saveSchedules);
-            if(resetBtn) resetBtn.addEventListener('click', resetSchedules);
+            if(resetBtn) resetBtn.addEventListener('click', resetSchedules); // 초기화 버튼 이벤트 연결
             closeModalBtn.addEventListener('click', closeModal);
             modalOverlay.addEventListener('click', closeModal);
             modalWindow.addEventListener('click', e => e.stopPropagation());
 
-            // [모달 이벤트] 행 추가/삭제
+            // [모달 이벤트 수정: 행 추가, 삭제 모드, 라인 가져오기, Undo/Redo]
             modalWindow.addEventListener('click', function (event) {
                 if (localStorage.getItem('ppms_user_role') === 'admin') {
-                    // 추가
+                    
+                    // 1. 행 추가 (Add)
                     if (event.target.closest('.add-row-btn')) {
                         const btn = event.target.closest('.add-row-btn');
                         const section = btn.closest('.line-schedule-section');
-                        // 현재 활성화된 탭의 라인에 추가
                         const line = section.dataset.line;
+                        
+                        saveState(line); // State 저장
                         addNewScheduleRow(section.querySelector('tbody'), line);
                     }
-                    // 삭제 모드 토글
+
+                    // 2. 삭제 모드 토글
                     if (event.target.closest('.toggle-delete-btn')) {
                         const btn = event.target.closest('.toggle-delete-btn');
                         const table = btn.closest('.line-schedule-section').querySelector('table');
                         btn.classList.toggle('delete-mode-active');
                         table.classList.toggle('delete-mode');
                     }
-                    // 행 삭제
+
+                    // 3. 불러오기 메뉴 토글
+                    if (event.target.closest('.import-line-btn')) {
+                        const btn = event.target.closest('.import-line-btn');
+                        const section = btn.closest('.line-schedule-section');
+                        const optionsContainer = section.querySelector('.import-options-container');
+                        
+                        document.querySelectorAll('.import-options-container').forEach(el => {
+                            if(el !== optionsContainer) el.classList.remove('active');
+                        });
+                        if(optionsContainer) optionsContainer.classList.toggle('active');
+                    }
+
+                    // 4. 특정 라인 가져오기 선택 (Import)
+                    if (event.target.classList.contains('import-option-btn')) {
+                        const sourceLine = event.target.dataset.source;
+                        const section = event.target.closest('.line-schedule-section');
+                        const targetLine = section.dataset.line;
+                        
+                        saveState(targetLine); // State 저장
+                        copyScheduleFromLine(sourceLine, targetLine);
+                        
+                        const container = event.target.closest('.import-options-container');
+                        if(container) container.classList.remove('active');
+                    }
+
+                    // 5. 행 삭제 (Delete)
                     const row = event.target.closest('tr');
                     if (row && row.closest('table').classList.contains('delete-mode')) {
-                        if (row.closest('tbody').rows.length > 1) row.remove();
-                        else alert("최소 1개 행은 유지해야 합니다.");
+                        const line = row.closest('.line-schedule-section').dataset.line;
+                        saveState(line); // State 저장
+                        handleRowDelete(row);
+                    }
+
+                    // 6. 실행 취소 (Undo)
+                    if (event.target.closest('.undo-btn')) {
+                        const btn = event.target.closest('.undo-btn');
+                        const line = btn.closest('.line-schedule-section').dataset.line;
+                        undoState(line);
+                    }
+
+                    // 7. 다시 실행 (Redo)
+                    if (event.target.closest('.redo-btn')) {
+                        const btn = event.target.closest('.redo-btn');
+                        const line = btn.closest('.line-schedule-section').dataset.line;
+                        redoState(line);
                     }
                 }
             });
@@ -588,6 +750,9 @@
                         const modalContent = document.querySelector('#schedule-modal .modal-content');
                         modalContent.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
                         document.getElementById(`tab-content-${targetLine}`).classList.add('active');
+                        
+                        // 탭 전환 시 불러오기 메뉴 닫기
+                        document.querySelectorAll('.import-options-container').forEach(el => el.classList.remove('active'));
                     }
                 });
             }
@@ -669,7 +834,7 @@
         let currentView = { mode: 'current_week', data: {} };
         let viewHistory = [], forwardHistory = [], currentSelectedWeekInfo = {};
         let managerList = [], companyList = [];
-
+        
         function isEditAllowed() {
             const r = localStorage.getItem('ppms_user_role');
             if(r==='admin') return true;
@@ -727,13 +892,22 @@
             }).then(r=>r.json()).then(d=>{ if(d.message){alert(d.message);closeModal();renderContent();}else alert("Error"); });
         }
 
-        async function resetSchedules() {
+        // [초기화 버튼 로직 변경: 현재 탭 내용만 비움 & Undo 지원]
+        function resetSchedules() {
             if(localStorage.getItem('ppms_user_role')!=='admin') return alert('권한 없음');
-            if(!confirm('초기화?')) return;
-            const {year,month,weekNum} = currentSelectedWeekInfo;
-            await fetch(`http://127.0.0.1:5000/api/production/schedules?year=${year}&month=${month}&weekNum=${weekNum}`, {method:'DELETE'});
-            alert('완료');
-            for(const l in lineControls) { lineControls[l].tableBody.innerHTML=''; addNewScheduleRow(lineControls[l].tableBody,l); }
+            
+            const activeSection = document.querySelector('.line-schedule-section.active');
+            if(!activeSection) return;
+            
+            const line = activeSection.dataset.line;
+            
+            if(!confirm(`${line} 라인의 작성중인 내용을 초기화하시겠습니까?`)) return;
+            
+            saveState(line); // 초기화 전 상태 저장 (Undo 가능)
+            
+            const tbody = activeSection.querySelector('tbody');
+            tbody.innerHTML = '';
+            addNewScheduleRow(tbody, line); // 빈 행 추가
         }
 
         function openWeekSelectorDropup() {
@@ -761,6 +935,14 @@
             const role = localStorage.getItem('ppms_user_role');
             modalTitle.textContent = `${weekInfo.month}월 ${weekInfo.weekNum}주차 생산 일정 ${role!=='admin'?'(읽기 전용)':''}`;
             for(const l in lineControls) lineControls[l].tableBody.innerHTML='';
+            
+            // Undo/Redo 스택 초기화
+            ['A', 'B', 'C'].forEach(l => {
+                historyState[l].undoStack = [];
+                historyState[l].redoStack = [];
+                updateHistoryButtons(l);
+            });
+
             await loadMasterData();
             const res = await fetch(`http://127.0.0.1:5000/api/production/schedules?year=${weekInfo.year}&month=${weekInfo.month}&weekNum=${weekInfo.weekNum}`);
             const data = await res.json();
@@ -770,10 +952,87 @@
         }
         function closeModal() { modalOverlay.classList.remove('visible'); }
 
+        // [Undo/Redo 로직]
+        function captureLineState(line) {
+            const tbody = document.getElementById(`schedule-table-body-${line}`);
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+            return rows.map(row => ({
+                id: row.dataset.scheduleId,
+                company: row.querySelector('[data-field="company-modal"]').value,
+                orderYear: row.querySelector('[data-field="orderYear"]').value,
+                model: row.querySelector('[data-field="model-modal"]').value,
+                orderMonth: row.querySelector('[data-field="orderMonth"]').value,
+                tb: row.querySelector('[data-field="tb-modal"]').value,
+                lot: row.querySelector('[data-field="lot-modal"]').value,
+                startDate: row.querySelector('.start-date-select').value,
+                endDate: row.querySelector('.end-date-select').value
+            }));
+        }
+
+        function restoreLineState(line, state) {
+            const tbody = document.getElementById(`schedule-table-body-${line}`);
+            tbody.innerHTML = '';
+            state.forEach(data => {
+                addNewScheduleRow(tbody, line, data);
+            });
+            // 만약 빈 상태라면 빈 행 하나 추가
+            if (state.length === 0) addNewScheduleRow(tbody, line);
+        }
+
+        function saveState(line) {
+            const currentState = captureLineState(line);
+            historyState[line].undoStack.push(currentState);
+            historyState[line].redoStack = []; // 새 작업 시 redo 스택 초기화
+            updateHistoryButtons(line);
+        }
+
+        function undoState(line) {
+            if (historyState[line].undoStack.length === 0) return;
+            
+            const currentState = captureLineState(line);
+            historyState[line].redoStack.push(currentState);
+            
+            const prevState = historyState[line].undoStack.pop();
+            restoreLineState(line, prevState);
+            updateHistoryButtons(line);
+        }
+
+        function redoState(line) {
+            if (historyState[line].redoStack.length === 0) return;
+            
+            const currentState = captureLineState(line);
+            historyState[line].undoStack.push(currentState);
+            
+            const nextState = historyState[line].redoStack.pop();
+            restoreLineState(line, nextState);
+            updateHistoryButtons(line);
+        }
+
+        function updateHistoryButtons(line) {
+            const section = document.querySelector(`.line-schedule-section[data-line="${line}"]`);
+            if(!section) return;
+            
+            const undoBtn = section.querySelector('.undo-btn');
+            const redoBtn = section.querySelector('.redo-btn');
+            
+            if(undoBtn) {
+                undoBtn.disabled = historyState[line].undoStack.length === 0;
+                if(!undoBtn.disabled) undoBtn.removeAttribute('disabled');
+            }
+            if(redoBtn) {
+                redoBtn.disabled = historyState[line].redoStack.length === 0;
+                if(!redoBtn.disabled) redoBtn.removeAttribute('disabled');
+            }
+        }
+
+        // [행 추가 함수]
         function addNewScheduleRow(target, line, data={}, after=null) {
             const role = localStorage.getItem('ppms_user_role');
             const ro = role!=='admin'?'disabled':'';
+            
             const row = after ? target.insertRow(after.rowIndex) : target.insertRow();
+            row.classList.add('animate-in'); 
+            
             row.dataset.scheduleId = data.id||'';
             const opts = (lst,v) => lst.map(i=>`<option value="${i.name}" ${v===i.name?'selected':''}>${i.name}</option>`).join('');
             let mOpts = ''; for(let i=1; i<=12; i++) mOpts+=`<option value="${i}월분" ${(data.orderMonth||'').trim()===`${i}월분`?'selected':''}>${i}월분</option>`;
@@ -791,9 +1050,62 @@
                 <td style="display:flex;gap:5px;"><select class="start-date-select form-select" ${ro}></select>~<select class="end-date-select form-select" ${ro}></select></td>
             `;
             populateDateSelectors(currentSelectedWeekInfo, row);
-            const sels = row.querySelectorAll('select');
-            sels[3].value = data.startDate||''; sels[4].value = data.endDate||'';
+            
+            const startSel = row.querySelector('.start-date-select');
+            const endSel = row.querySelector('.end-date-select');
+            if(startSel) startSel.value = data.startDate||''; 
+            if(endSel) endSel.value = data.endDate||'';
+            
             return row;
+        }
+
+        // [삭제 로직]
+        function handleRowDelete(row) {
+            row.classList.add('animate-out');
+            setTimeout(() => {
+                const tbody = row.closest('tbody');
+                const section = tbody.closest('.line-schedule-section');
+                const line = section.dataset.line;
+                
+                row.remove();
+                // 모두 삭제되었으면 빈 행 추가
+                if (tbody.rows.length === 0) {
+                    addNewScheduleRow(tbody, line);
+                }
+            }, 300);
+        }
+        
+        // [다른 라인에서 일정 가져오기]
+        function copyScheduleFromLine(sourceLine, targetLine) {
+            const sourceTbody = document.getElementById(`schedule-table-body-${sourceLine}`);
+            const targetTbody = document.getElementById(`schedule-table-body-${targetLine}`);
+            
+            if(!sourceTbody || !targetTbody) return;
+
+            const sourceRows = sourceTbody.querySelectorAll('tr');
+            if(sourceRows.length === 0) {
+                alert(`${sourceLine} 라인에 복사할 데이터가 없습니다.`);
+                return;
+            }
+
+            sourceRows.forEach(row => {
+                const company = row.querySelector('[data-field="company-modal"]').value;
+                const model = row.querySelector('[data-field="model-modal"]').value;
+                
+                if(company || model) {
+                    const data = {
+                        company: company,
+                        orderYear: row.querySelector('[data-field="orderYear"]').value,
+                        model: model,
+                        orderMonth: row.querySelector('[data-field="orderMonth"]').value,
+                        tb: row.querySelector('[data-field="tb-modal"]').value,
+                        lot: row.querySelector('[data-field="lot-modal"]').value,
+                        startDate: row.querySelector('.start-date-select').value,
+                        endDate: row.querySelector('.end-date-select').value
+                    };
+                    addNewScheduleRow(targetTbody, targetLine, data);
+                }
+            });
         }
 
         function populateDateSelectors(info, row) {
