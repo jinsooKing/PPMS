@@ -1,299 +1,340 @@
 /* =========================================
-   1. 페이지 레이아웃 (메인 영역)
+   [1. 테마 변수]
    ========================================= */
-.dip-layout {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    height: 100%;
-    padding: 20px;
-    box-sizing: border-box;
-    overflow: hidden;
+:root {
+    --bg-dark: #1f2029;
+    --card-bg: #2a2b38;
+    --text-color: #c4c3ca;
+    --text-white: #ffffff;
+    --point-gold: #ffeba7;
+    --accent-blue: #102770;
+    --danger-red: #ff4444;
+    --success-green: #00e676;
+    --border-color: rgba(255, 235, 167, 0.1);
 }
 
-/* --- 모델별 그룹핑 리스트 영역 --- */
+/* =========================================
+   [2. 레이아웃]
+   ========================================= */
+body {
+    background-color: var(--bg-dark);
+    background-image: url('https://s3-us-west-2.amazonaws.com/s.cdpn.io/1462889/pat.svg');
+    background-position: center;
+    background-repeat: repeat;
+    background-size: 300%;
+    color: var(--text-color);
+    font-family: 'Poppins', 'BMDOHYEON', sans-serif;
+    margin: 0;
+    overflow: hidden;
+    opacity: 0; 
+}
+
+a, a:hover { text-decoration: none; color: inherit; }
+
+.page-container {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    backdrop-filter: blur(2px);
+}
+
+.content-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    overflow: hidden; 
+    width: 100%;
+}
+
+/* =========================================
+   [3. 헤더 & 푸터]
+   ========================================= */
+
+.main-header, .main-footer {
+    background: rgba(31, 32, 41, 0.95);
+    border-bottom: 1px solid var(--border-color);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    padding: 10px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 100;
+    flex-shrink: 0;
+    position: relative; 
+}
+
+.main-footer {
+    border-top: 1px solid var(--border-color);
+    border-bottom: none;
+}
+
+.header-left, .footer-left { flex: 1; display: flex; align-items: center; justify-content: flex-start; gap: 15px; }
+.header-right, .footer-right { flex: 1; display: flex; align-items: center; justify-content: flex-end; gap: 15px; }
+
+.header-center, .footer-center {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1;
+    white-space: nowrap;
+    gap: 15px; 
+}
+
+.common-box, .footer-btn {
+    background: var(--card-bg) !important;
+    color: var(--text-color);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 30px;
+    padding: 6px 18px;
+    font-family: 'BMJUA', sans-serif;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    box-shadow: none; white-space: nowrap;
+}
+
+.common-box:hover, .footer-btn:hover {
+    background: var(--point-gold) !important;
+    color: var(--accent-blue) !important;
+    box-shadow: 0 0 15px rgba(255, 235, 167, 0.4);
+    border-color: transparent;
+}
+
+.header-center .common-box { 
+    background: transparent !important; border: none; color: var(--point-gold); 
+    font-family: 'Poppins', 'BMDOHYEON', sans-serif; font-weight: 800; font-size: 1.8rem; 
+    letter-spacing: 2px; text-transform: uppercase; pointer-events: none; 
+}
+.time-display { 
+    color: var(--text-color); font-family: 'Poppins', sans-serif; 
+    font-weight: 500; font-size: 1rem; background: transparent !important; border: none; 
+}
+
+/* =========================================
+   [4. DIP 메인 콘텐츠]
+   ========================================= */
+
+/* [신규] 상태 탭 메뉴 스타일 */
+#status-tabs {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    
+    /* ▼ 부모 요소(.content-area)의 패딩(20px)을 무시하고 화면 전체 너비를 씀 */
+    width: 100vw;       
+    margin-left: -20px; /* 부모 패딩만큼 왼쪽으로 당김 */
+    
+    /* ▼ 스크롤바가 생겨도 중심축이 흔들리지 않도록 보정 */
+    gap: 10px;
+    margin-bottom: 20px;
+    padding-bottom: 10px; /* 밑줄과 간격 */
+    border-bottom: 1px solid rgba(255, 235, 167, 0.1);
+    
+    /* 상단 여백 추가 (헤더와 너무 붙지 않게) */
+    padding-top: 5px; 
+}
+
+.status-tab {
+    background: var(--card-bg);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    padding: 8px 15px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: 'BMDOHYEON', sans-serif;
+    font-size: 0.95rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.status-tab:hover {
+    background: #3a3b4c;
+}
+
+.status-tab.active {
+    background: var(--point-gold) !important;
+    color: var(--accent-blue) !important;
+    border-color: var(--point-gold);
+    box-shadow: 0 0 10px rgba(255, 235, 167, 0.3);
+}
+
+/* 1. 래퍼: 가로(Row) 배치 강제 적용 */
 #dip-history-wrapper {
     flex-grow: 1;
     overflow-y: auto;
     display: flex;
-    flex-direction: column;
-    gap: 30px;
-    padding-right: 10px;
+    flex-direction: row !important; /* 가로 배치 강제 */
+    flex-wrap: wrap !important;     /* 줄바꿈 허용 */
+    align-content: flex-start;
+    gap: 15px;                      /* 간격 축소 */
+    padding-right: 20px; 
 }
 
-/* =========================================
-   2. 모델 그룹 카드 스타일
-   ========================================= */
+/* 2. 모델 그룹 카드: 2열 배치 및 컴팩트 스타일 */
 .model-group-wrapper {
-    background-color: #2C2C2E;
-    border: 1px solid #444;
-    border-radius: 10px;
-    padding: 20px;
+    background-color: var(--card-bg);
+    border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 12px;
     transition: all 0.3s ease;
-}
-.model-group-wrapper.edit-mode-active {
-    border-color: #f0ad4e;
-    box-shadow: 0 0 10px rgba(240, 173, 78, 0.3);
-}
-.model-group-wrapper.ready-to-complete {
-    border: 2px solid #28a745;
-    box-shadow: 0 0 15px rgba(40, 167, 69, 0.2);
-}
-.model-group-wrapper.status-completed {
-    opacity: 0.7;
-    border-color: #555;
-    background-color: #222;
-}
-.model-group-wrapper.status-completed .dip-title {
-    text-decoration: line-through;
-    color: #888;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+    
+    /* 너비: 절반 크기 (간격 고려) */
+    width: calc(50% - 15px) !important;
+    flex: 0 0 calc(50% - 15px) !important;
+    
+    /* 내부 여백 축소 */
+    padding: 10px 12px;
+    box-sizing: border-box;
 }
 
+.model-group-wrapper.ready-to-complete {
+    border: 2px solid var(--success-green);
+    box-shadow: 0 0 20px rgba(0, 230, 118, 0.2);
+}
+
+.model-group-wrapper.edit-mode-active {
+    border: 1px dashed var(--point-gold);
+}
+
+/* 3. 헤더 폰트 축소 */
 .model-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding-bottom: 10px;
-    margin-bottom: 15px;
-    border-bottom: 2px solid #555;
-    color: #FFFFFF;
+    display: flex; justify-content: space-between; align-items: center;
+    padding-bottom: 5px; margin-bottom: 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    color: var(--text-white);
     font-family: 'BMDOHYEON', sans-serif;
-    font-size: clamp(18px, 1.8vw, 26px);
+    font-size: clamp(14px, 1.2vw, 18px) !important; /* 폰트 줄임 */
 }
-.model-name-display, .lot-display {
-    font-weight: bold;
-    margin-right: 20px;
-}
-.lot-display { color: #ccc; font-size: 0.9em; }
+.model-info { display: flex; align-items: center; gap: 10px; }
+.lot-display { color: #888; font-size: 0.8em; font-weight: bold; font-family: 'Poppins'; }
+.model-name-display { font-weight: bold; }
 .model-controls { display: flex; align-items: center; gap: 10px; }
 
-.dip-table-pair { display: flex; flex-direction: row; gap: 20px; }
+/* 테이블 영역 */
+.dip-table-pair { display: flex; flex-direction: row; gap: 10px; }
 .dip-history-table-box { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+
 .dip-title {
-    color: #FFFFFF;
-    font-family: 'BMDOHYEON', sans-serif;
-    font-size: clamp(14px, 1.2vw, 20px);
-    margin-bottom: 10px;
-}
-
-/* =========================================
-   3. 모달 레이아웃 (공통)
-   ========================================= */
-#dip-registration-modal .modal-content,
-#group-manage-modal .modal-content {
-    display: flex;
-    flex-direction: row;
-    gap: 20px;
-    flex-grow: 1;
-    min-height: 0;
-    padding-bottom: 10px;
-    overflow-x: hidden; 
-}
-
-.dip-modal-form-section,
-.dip-modal-other-section {
-    flex: 1; /* 1:1 균등 분할 */
-    display: flex;
-    flex-direction: column;
-    max-width: none;
-    max-height: 600px;
-    overflow-y: auto;
-}
-
-.dip-modal-other-section {
-    border: 1px solid #444;
-    border-radius: 8px;
-    background-color: #1E1E1E;
-    padding: 15px;
-}
-
-.dip-modal-separator { width: 2px; background-color: #555; flex-shrink: 0; }
-
-
-/* =========================================
-   [수정] 그룹 관리 모달 (크기 축소 및 아코디언 스타일)
-   ========================================= */
-
-/* 1. 모달 윈도우 크기 축소 */
-#group-manage-modal .modal-window,
-#dip-registration-modal .modal-window {
-    width: 90vw;
-    max-width: 850px; /* [수정] 두 모달 모두 콤팩트한 너비 적용 */
-    height: auto !important; /* 높이 자동 조절 */
-    max-height: 85vh;
-    transition: max-width 0.3s ease;
-}
-
-/* 2. [신규] 업체별 아코디언(카테고리) 스타일 */
-.company-category-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    
+    color: var(--point-gold);
     font-family: 'BMJUA', sans-serif;
-    font-size: 1.1rem;
-    color: #fff;
-    background-color: #333;
-    
-    padding: 10px 15px;
-    margin-top: 10px;
-    border: 1px solid #555;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.2s;
-}
-.company-category-header:hover {
-    background-color: #444;
-}
-.company-category-header.active {
-    background-color: #007BFF; /* 활성 시 파란색 */
-    border-color: #007BFF;
-}
-.company-category-header:first-child { margin-top: 0; }
-
-/* 카테고리 아이콘 (화살표) */
-.company-category-header i {
-    transition: transform 0.3s;
-}
-.company-category-header.active i {
-    transform: rotate(180deg); /* 활성 시 회전 */
+    font-size: clamp(12px, 1vw, 14px) !important; /* 폰트 줄임 */
+    margin: 0 0 5px 0;
 }
 
-/* 모델 리스트 (숨김/표시) */
-.company-models-list {
-    display: none; /* 기본 숨김 */
-    flex-direction: column;
-    gap: 5px;
-    padding: 10px;
-    background-color: #252525;
-    border: 1px solid #444;
-    border-top: none;
-    border-bottom-left-radius: 5px;
-    border-bottom-right-radius: 5px;
-    margin-bottom: 5px;
+/* 테이블 스타일 (컴팩트) */
+table.editable-table { width: 100%; border-collapse: collapse; font-family: 'Poppins', sans-serif; color: var(--text-color); font-size: 0.8rem; }
+table.editable-table th { 
+    background-color: #15151a; color: #aaa; padding: 4px; text-align: center; 
+    border-bottom: 1px solid rgba(255,255,255,0.1); font-weight: 600; 
+    font-size: clamp(11px, 0.9vw, 13px) !important; /* 폰트 줄임 */
 }
-/* 활성화되면 보임 */
-.company-models-list.open {
-    display: flex;
-    animation: slideDown 0.3s ease-out;
+table.editable-table td { 
+    padding: 4px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.05); 
+    font-size: clamp(11px, 0.9vw, 13px) !important; /* 폰트 줄임 */
+}
+table.editable-table tbody tr:hover { background-color: rgba(255,255,255,0.03); }
+
+/* 반응형: 화면이 좁을 땐 다시 1열(세로)로 */
+@media (max-width: 1000px) {
+    .model-group-wrapper {
+        width: 100% !important;
+        flex: 0 0 100% !important;
+    }
 }
 
-@keyframes slideDown {
-    from { opacity: 0; transform: translateY(-10px); }
-    to { opacity: 1; transform: translateY(0); }
+/* --- 버튼 스타일 --- */
+.row-delete-btn { 
+    position: absolute; right: 5px; top: 50%; transform: translateY(-50%);
+    background: var(--danger-red); color: #fff; border: none; border-radius: 4px;
+    padding: 2px 8px; font-size: 0.7rem; cursor: pointer; display: none; 
 }
+.model-group-wrapper.delete-mode-active .row-delete-btn { display: inline-block; }
+.cumulative-cell { position: relative; color: var(--point-gold); font-weight: bold; }
+
+.delete-toggle-icon { background: none; border: none; color: #666; cursor: pointer; font-size: 1.2rem; transition: color 0.2s; }
+.delete-toggle-icon:hover { color: var(--danger-red); }
+.delete-toggle-icon.active { color: var(--danger-red); transform: scale(1.1); }
+
+.group-delete-btn { 
+    font-family: 'BMJUA'; padding: 6px 14px; font-size: 0.9rem; border-radius: 20px; 
+    cursor: pointer; border: none; color: #fff; background-color: var(--danger-red);
+}
+.group-delete-btn:hover { background-color: #d32f2f; box-shadow: 0 0 10px rgba(255, 68, 68, 0.4); }
+
+.group-complete-btn { 
+    font-family: 'BMJUA'; padding: 6px 14px; font-size: 0.9rem; border-radius: 20px; 
+    cursor: pointer; border: none; color: #fff; background-color: var(--success-green);
+    animation: pulse-green 2s infinite; 
+}
+.group-complete-btn:hover { background-color: #00c853; }
+
+@keyframes pulse-green { 0% { box-shadow: 0 0 0 0 rgba(0, 230, 118, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(0, 230, 118, 0); } 100% { box-shadow: 0 0 0 0 rgba(0, 230, 118, 0); } }
 
 /* =========================================
-   4. 폼 & 테이블 스타일 (기존 유지)
+   [5. 모달 스타일]
    ========================================= */
-.dip-form-grid { display: flex; flex-direction: column; gap: 15px; padding-right: 5px; }
-#group-manage-modal .dip-form-grid { padding: 10px; }
-.dip-input-group { display: flex; flex-direction: column; gap: 8px; }
-.dip-input-group label { color: #FFFFFF; font-family: 'BMDOHYEON', sans-serif; font-size: clamp(13px, 1vw, 16px); }
-.form-input { width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #555; background: #1E1E1E; color: #FFFFFF; font-family: 'BMDOHYEON', sans-serif; font-size: clamp(14px, 1.1vw, 16px); box-sizing: border-box; }
-input[type="date"] { color-scheme: dark; }
+.modal-overlay { background-color: rgba(0, 0, 0, 0.85); backdrop-filter: blur(5px); z-index: 1000; display: none; justify-content: center; align-items: center; position: fixed; top: 0; left: 0; width: 100%; height: 100%; }
+.modal-window { 
+    background-color: #23242d; border: 1px solid var(--border-color);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6); color: #fff;
+    display: flex; flex-direction: column; 
+    width: 90vw; max-width: 900px; max-height: 85vh; border-radius: 12px;
+}
+.modal-content { flex: 1; overflow: hidden; display: flex; flex-direction: row; gap: 20px; padding: 20px; }
+.close-btn { position: absolute; top: 15px; right: 20px; color: #888; font-size: 2rem; background: none; border: none; cursor: pointer; z-index: 10; }
+.close-btn:hover { color: var(--point-gold); }
+
+/* 모달 내부 */
+.dip-modal-form-section, .dip-modal-other-section { flex: 1; display: flex; flex-direction: column; overflow-y: auto; }
+.dip-modal-other-section { background: #1a1b23; border-radius: 8px; padding: 15px; border: 1px solid rgba(255,255,255,0.05); }
+.dip-modal-separator { width: 1px; background-color: rgba(255,255,255,0.1); margin: 0 10px; }
+.modal-title { color: var(--point-gold); font-family: 'BMJUA'; font-size: 1.5rem; margin-bottom: 20px; }
+.dip-form-grid { display: flex; flex-direction: column; gap: 15px; }
+.dip-input-group label { color: #aaa; font-size: 0.9rem; margin-bottom: 5px; display: block; }
+
+.form-input { 
+    width: 100%; padding: 10px; border-radius: 5px; border: 1px solid rgba(255,255,255,0.1); 
+    background: rgba(255,255,255,0.05); color: #fff; font-family: 'Poppins', 'BMDOHYEON'; box-sizing: border-box;
+}
+.form-input:focus { border-color: var(--point-gold); outline: none; background: rgba(255,255,255,0.1); }
 
 .dip-type-selector { display: flex; gap: 10px; }
-.dip-type-selector .common-box { flex: 1; text-align: center; padding: 10px; font-size: clamp(14px, 1.1vw, 16px); }
-.dip-type-selector .selected { background-color: #007BFF; color: #fff; border-bottom-width: 2px; transform: translateY(1px); }
-.dip-type-selector .not-selected { opacity: 0.6; }
+.dip-type-selector .common-box { flex: 1; text-align: center; padding: 10px; opacity: 0.5; border: 1px solid #555; }
+.dip-type-selector .selected { opacity: 1; background-color: var(--point-gold) !important; color: var(--accent-blue); border-color: transparent; }
 
-.register-button-group { display: flex; flex-direction: row; gap: 10px; margin-top: 10px; }
-#dip-register-btn, #dip-cancel-btn, #save-group-btn { flex: 1; text-align: center; font-size: clamp(15px, 1.2vw, 18px); }
-#save-group-btn { width: 100%; display: block; box-sizing: border-box; }
+.register-button-group { display: flex; gap: 10px; margin-top: 10px; }
+#dip-register-btn, #save-group-btn { flex: 1; background: var(--accent-blue) !important; color: #fff; text-align: center; justify-content: center; }
+#dip-register-btn:hover, #save-group-btn:hover { background: #0056b3 !important; }
+#dip-cancel-btn { flex: 1; background: #444 !important; text-align: center; justify-content: center; }
 
-#dip-register-btn, #save-group-btn { background-color: #007BFF; color: white; }
-#dip-register-btn:hover, #save-group-btn:hover { background-color: #0056b3; }
-#dip-cancel-btn { background-color: #6c757d; color: white; }
-#dip-cancel-btn:hover { background-color: #5a6268; }
+/* 아코디언 */
+.company-category-header {
+    display: flex; justify-content: space-between; align-items: center;
+    background: #2a2b38; padding: 12px; border-radius: 6px; cursor: pointer;
+    margin-bottom: 5px; border: 1px solid rgba(255,255,255,0.05); transition: all 0.2s;
+}
+.company-category-header:hover { background: #333; }
+.company-category-header.active { background: var(--accent-blue); color: var(--point-gold); border-color: var(--accent-blue); }
+.company-models-list { display: none; flex-direction: column; gap: 5px; padding: 5px 0 10px 10px; }
+.company-models-list.open { display: flex; }
 
-.editable-table th { background-color: #3A3A3C; font-size: clamp(11px, 1vw, 14px); top: 0; }
-.quantity-cell { text-align: center; }
-.cumulative-cell { text-align: center; position: relative; padding-left: 35px !important; padding-right: 35px !important; font-weight: bold; color: #ffd700; }
-.row-delete-btn { position: absolute; right: 5px; top: 50%; transform: translateY(-50%); font-family: 'BMDOHYEON', sans-serif; padding: 2px 8px; font-size: 12px; background-color: #dc3545; color: white; border: 1px solid #555; border-radius: 4px; cursor: pointer; display: none; }
-.row-delete-btn:hover { background-color: #a71d2a; }
-.model-group-wrapper.delete-mode-active .row-delete-btn { display: inline-block; }
-
-.delete-toggle-icon { font-size: 14px; padding: 5px 10px; background-color: #dc3545; color: white; border: 1px solid #555; border-radius: 5px; cursor: pointer; }
-.delete-toggle-icon.active { background-color: #f0ad4e; }
-.group-delete-btn { font-family: 'BMDOHYEON', sans-serif; padding: 5px 10px; font-size: 12px; border: 1px solid #dc3545; border-radius: 5px; color: #fff; background-color: #dc3545; cursor: pointer; display: none; }
-.group-delete-btn:hover { background-color: #a71d2a; }
-.group-complete-btn { font-family: 'BMDOHYEON', sans-serif; padding: 5px 10px; font-size: 12px; border: 1px solid #28a745; border-radius: 5px; color: #fff; background-color: #28a745; cursor: pointer; animation: pulse 2s infinite; }
-.group-complete-btn:hover { background-color: #218838; }
-
-@keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(40, 167, 69, 0); } 100% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0); } }
-
-.model-group-wrapper.edit-mode-active .delete-toggle-icon { display: none; }
-.model-group-wrapper.edit-mode-active .group-delete-btn { display: inline-block; }
-.model-group-wrapper.edit-mode-active .group-complete-btn { display: inline-block; }
-
-.footer-action-group { display: flex; align-items: center; gap: 15px; }
-
-/* 모달 등장 애니메이션 */
 @keyframes modalSlideUpFade { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes fadeInOverlay { from { background-color: rgba(0, 0, 0, 0); } to { background-color: rgba(0, 0, 0, 0.4); } }
 .modal-overlay.visible { backdrop-filter: blur(5px); background-color: rgba(0, 0, 0, 0.4); animation: fadeInOverlay 0.4s ease-out forwards; }
-.modal-overlay.visible .modal-window { animation: modalSlideUpFade 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards; box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
+.modal-overlay.visible .modal-window { animation: modalSlideUpFade 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
 
-/* =========================================
-   [수정] 가로 배치 및 컴팩트 스타일 적용
-   ========================================= */
-
-/* 1. 컨테이너: 세로(Column) -> 가로(Row) 배치로 변경 */
-#dip-history-wrapper {
-    flex-direction: row !important; /* 가로 방향 강제 적용 */
-    flex-wrap: wrap;                /* 공간 부족 시 줄바꿈 */
-    align-content: flex-start;      /* 내용이 적을 때 위쪽 정렬 */
-    gap: 15px;                      /* 카드 사이 간격 (기존 30px -> 15px 축소) */
-}
-
-/* 2. 카드: 한 줄에 2개씩 들어가도록 너비 조정 */
-.model-group-wrapper {
-    /* (전체 100% - 사이간격 15px) / 2 = 정확히 반반 */
-    width: calc(50% - 7.5px); 
-    flex: 0 0 calc(50% - 7.5px);    /* 너비 고정 */
-    
-    /* 내부 여백 줄임 */
-    padding: 12px 15px;
-    box-sizing: border-box;
-}
-
-/* 3. 폰트 및 내부 여백 최적화 (컴팩트 모드) */
-
-/* 카드 헤더 (모델명 부분) */
-.model-header {
-    font-size: clamp(14px, 1.4vw, 22px); /* 폰트 크기 약간 축소 */
-    margin-bottom: 10px;
-    padding-bottom: 8px;
-}
-
-/* 테이블 제목 (SMD 출고 / DIP 입고) */
-.dip-title {
-    font-size: clamp(12px, 1vw, 16px);   /* 폰트 크기 축소 */
-    margin-bottom: 5px;
-}
-
-/* 테이블 간격 좁히기 */
-.dip-table-pair {
-    gap: 10px; /* 기존 20px -> 10px */
-}
-
-/* 테이블 셀 스타일 (폰트와 여백 대폭 축소) */
-table.editable-table th,
-table.editable-table td {
-    padding: 4px 2px;              /* 셀 여백 축소 */
-    font-size: clamp(11px, 0.9vw, 13px); /* 글자 크기 축소 */
-}
-
-/* 입력창도 같이 작게 */
-table.editable-table input {
-    font-size: clamp(11px, 0.9vw, 13px);
-}
-
-/* 4. [반응형] 화면이 너무 좁아지면(노트북 이하) 다시 한 줄로 복귀 */
-@media (max-width: 1280px) {
-    .model-group-wrapper {
-        width: 100%;
-        flex: 0 0 100%;
-    }
+@media (max-width: 768px) {
+    .main-header { padding: 10px; flex-direction: column; height: auto; gap: 10px; }
+    .header-center, .footer-center { position: static; transform: none; order: -1; margin-bottom: 5px; }
+    .header-left { width: 100%; justify-content: space-between; }
+    .header-right { display: none; }
+    #dip-registration-modal .modal-content, #group-manage-modal .modal-content { flex-direction: column; }
+    .dip-table-pair { flex-direction: column; }
 }
