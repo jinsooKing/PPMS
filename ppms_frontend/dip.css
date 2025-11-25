@@ -234,3 +234,66 @@ input[type="date"] { color-scheme: dark; }
 @keyframes fadeInOverlay { from { background-color: rgba(0, 0, 0, 0); } to { background-color: rgba(0, 0, 0, 0.4); } }
 .modal-overlay.visible { backdrop-filter: blur(5px); background-color: rgba(0, 0, 0, 0.4); animation: fadeInOverlay 0.4s ease-out forwards; }
 .modal-overlay.visible .modal-window { animation: modalSlideUpFade 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards; box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
+
+/* =========================================
+   [수정] 가로 배치 및 컴팩트 스타일 적용
+   ========================================= */
+
+/* 1. 컨테이너: 세로(Column) -> 가로(Row) 배치로 변경 */
+#dip-history-wrapper {
+    flex-direction: row !important; /* 가로 방향 강제 적용 */
+    flex-wrap: wrap;                /* 공간 부족 시 줄바꿈 */
+    align-content: flex-start;      /* 내용이 적을 때 위쪽 정렬 */
+    gap: 15px;                      /* 카드 사이 간격 (기존 30px -> 15px 축소) */
+}
+
+/* 2. 카드: 한 줄에 2개씩 들어가도록 너비 조정 */
+.model-group-wrapper {
+    /* (전체 100% - 사이간격 15px) / 2 = 정확히 반반 */
+    width: calc(50% - 7.5px); 
+    flex: 0 0 calc(50% - 7.5px);    /* 너비 고정 */
+    
+    /* 내부 여백 줄임 */
+    padding: 12px 15px;
+    box-sizing: border-box;
+}
+
+/* 3. 폰트 및 내부 여백 최적화 (컴팩트 모드) */
+
+/* 카드 헤더 (모델명 부분) */
+.model-header {
+    font-size: clamp(14px, 1.4vw, 22px); /* 폰트 크기 약간 축소 */
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+}
+
+/* 테이블 제목 (SMD 출고 / DIP 입고) */
+.dip-title {
+    font-size: clamp(12px, 1vw, 16px);   /* 폰트 크기 축소 */
+    margin-bottom: 5px;
+}
+
+/* 테이블 간격 좁히기 */
+.dip-table-pair {
+    gap: 10px; /* 기존 20px -> 10px */
+}
+
+/* 테이블 셀 스타일 (폰트와 여백 대폭 축소) */
+table.editable-table th,
+table.editable-table td {
+    padding: 4px 2px;              /* 셀 여백 축소 */
+    font-size: clamp(11px, 0.9vw, 13px); /* 글자 크기 축소 */
+}
+
+/* 입력창도 같이 작게 */
+table.editable-table input {
+    font-size: clamp(11px, 0.9vw, 13px);
+}
+
+/* 4. [반응형] 화면이 너무 좁아지면(노트북 이하) 다시 한 줄로 복귀 */
+@media (max-width: 1280px) {
+    .model-group-wrapper {
+        width: 100%;
+        flex: 0 0 100%;
+    }
+}

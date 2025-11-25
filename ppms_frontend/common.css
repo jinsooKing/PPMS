@@ -621,3 +621,31 @@ body {
 body.fade-out {
     opacity: 0;
 }
+
+/* --- [공용 로고 스타일 (common.css)] --- */
+.svg-sprite { position: absolute; width: 0; height: 0; overflow: hidden; }
+
+.header-logo-wrapper { 
+    position: relative; 
+    display: flex; 
+    align-items: center; 
+    transform: translateZ(0); 
+    cursor: pointer; 
+    flex-shrink: 0; 
+}
+
+.header-logo { 
+    height: 35px; 
+    width: auto; 
+    fill: var(--point-gold); /* common.css의 변수 사용 */
+    transition: fill 0.2s ease; 
+    filter: drop-shadow(0 0 5px rgba(255, 235, 167, 0.4)); 
+    display: block; 
+}
+
+/* 마우스 호버 시 글리치 효과 활성화 */
+.header-logo-wrapper.btn-glitch-active .header-logo { 
+    fill: #ffffff; 
+    -webkit-filter: url('#filter'); 
+    filter: url('#filter'); 
+}

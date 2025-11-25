@@ -5,22 +5,374 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PPMS - DIP (외주 관리)</title>
-    <link rel="stylesheet" href="common.css">
-    <link rel="stylesheet" href="header.css">
-    <link rel="stylesheet" href="footer.css">
-    <link rel="stylesheet" href="dip.css">
     
+    <link rel="stylesheet" href="common.css">
     <link href="https://hangeul.pstatic.net/hangeul_static/css/bmdohyeon.css" rel="stylesheet">
     <link href="https://hangeul.pstatic.net/hangeul_static/css/bmjua.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    
+    <link rel="stylesheet" href="https://unicons.iconscout.com/release/v2.1.9/css/unicons.css">
+    <link href="https://fonts.googleapis.com/css?family=Poppins:400,500,600,700,800,900" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Roboto+Mono" rel="stylesheet">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+    <script src="logo.js"></script>
+
     <script src="auth.js"></script>
+
+
+    <style>
+        /* =========================================
+           [1. 테마 변수]
+           ========================================= */
+        :root {
+            --bg-dark: #1f2029;
+            --card-bg: #2a2b38;
+            --text-color: #c4c3ca;
+            --text-white: #ffffff;
+            --point-gold: #ffeba7;
+            --accent-blue: #102770;
+            --danger-red: #ff4444;
+            --success-green: #00e676;
+            --border-color: rgba(255, 235, 167, 0.1);
+        }
+
+        /* =========================================
+           [2. 레이아웃]
+           ========================================= */
+        body {
+            background-color: var(--bg-dark);
+            background-image: url('https://s3-us-west-2.amazonaws.com/s.cdpn.io/1462889/pat.svg');
+            background-position: center;
+            background-repeat: repeat;
+            background-size: 300%;
+            color: var(--text-color);
+            font-family: 'Poppins', 'BMDOHYEON', sans-serif;
+            margin: 0;
+            overflow: hidden;
+            opacity: 0; 
+        }
+
+        a, a:hover { text-decoration: none; color: inherit; }
+
+        .page-container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            backdrop-filter: blur(2px);
+        }
+
+        .content-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            overflow: hidden; 
+            width: 100%;
+        }
+
+        /* =========================================
+           [3. 헤더 & 푸터]
+           ========================================= */
+
+        
+        .main-header, .main-footer {
+            background: rgba(31, 32, 41, 0.95);
+            border-bottom: 1px solid var(--border-color);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            padding: 10px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+            flex-shrink: 0;
+            position: relative; 
+        }
+
+        .main-footer {
+            border-top: 1px solid var(--border-color);
+            border-bottom: none;
+        }
+
+        .header-left, .footer-left { flex: 1; display: flex; align-items: center; justify-content: flex-start; gap: 15px; }
+        .header-right, .footer-right { flex: 1; display: flex; align-items: center; justify-content: flex-end; gap: 15px; }
+        
+        .header-center, .footer-center {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1;
+            white-space: nowrap;
+            gap: 15px; 
+        }
+
+        .common-box, .footer-btn {
+            background: var(--card-bg) !important;
+            color: var(--text-color);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 30px;
+            padding: 6px 18px;
+            font-family: 'BMJUA', sans-serif;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            box-shadow: none; white-space: nowrap;
+        }
+
+        .common-box:hover, .footer-btn:hover {
+            background: var(--point-gold) !important;
+            color: var(--accent-blue) !important;
+            box-shadow: 0 0 15px rgba(255, 235, 167, 0.4);
+            border-color: transparent;
+        }
+
+        .header-center .common-box { 
+            background: transparent !important; border: none; color: var(--point-gold); 
+            font-family: 'Poppins', 'BMDOHYEON', sans-serif; font-weight: 800; font-size: 1.8rem; 
+            letter-spacing: 2px; text-transform: uppercase; pointer-events: none; 
+        }
+        .time-display { 
+            color: var(--text-color); font-family: 'Poppins', sans-serif; 
+            font-weight: 500; font-size: 1rem; background: transparent !important; border: none; 
+        }
+
+        /* =========================================
+           [4. DIP 메인 콘텐츠]
+           ========================================= */
+        
+        /* [신규] 상태 탭 메뉴 스타일 */
+        #status-tabs {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            
+            /* ▼ 부모 요소(.content-area)의 패딩(20px)을 무시하고 화면 전체 너비를 씀 */
+            width: 100vw;       
+            margin-left: -20px; /* 부모 패딩만큼 왼쪽으로 당김 */
+            
+            /* ▼ 스크롤바가 생겨도 중심축이 흔들리지 않도록 보정 (선택사항) */
+            /* position: relative; 로 두면 흐름을 방해하지 않으면서 너비만 확장됨 */
+            
+            gap: 10px;
+            margin-bottom: 20px;
+            padding-bottom: 10px; /* 밑줄과 간격 */
+            border-bottom: 1px solid rgba(255, 235, 167, 0.1);
+            
+            /* 상단 여백 추가 (헤더와 너무 붙지 않게) */
+            padding-top: 5px; 
+        }
+
+        .status-tab {
+            background: var(--card-bg);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            padding: 8px 15px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: 'BMDOHYEON', sans-serif;
+            font-size: 0.95rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .status-tab:hover {
+            background: #3a3b4c;
+        }
+
+        .status-tab.active {
+            background: var(--point-gold) !important;
+            color: var(--accent-blue) !important;
+            border-color: var(--point-gold);
+            box-shadow: 0 0 10px rgba(255, 235, 167, 0.3);
+        }
+
+        /* 1. 래퍼: 가로(Row) 배치 강제 적용 */
+        #dip-history-wrapper {
+            flex-grow: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: row !important; /* 가로 배치 강제 */
+            flex-wrap: wrap !important;     /* 줄바꿈 허용 */
+            align-content: flex-start;
+            gap: 15px;                      /* 간격 축소 */
+            padding-right: 20px; 
+        }
+
+        /* 2. 모델 그룹 카드: 2열 배치 및 컴팩트 스타일 */
+        .model-group-wrapper {
+            background-color: var(--card-bg);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+            
+            /* 너비: 절반 크기 (간격 고려) */
+            width: calc(50% - 15px) !important;
+            flex: 0 0 calc(50% - 15px) !important;
+            
+            /* 내부 여백 축소 */
+            padding: 10px 12px;
+            box-sizing: border-box;
+        }
+
+        .model-group-wrapper.ready-to-complete {
+            border: 2px solid var(--success-green);
+            box-shadow: 0 0 20px rgba(0, 230, 118, 0.2);
+        }
+
+        .model-group-wrapper.edit-mode-active {
+            border: 1px dashed var(--point-gold);
+        }
+
+        /* 3. 헤더 폰트 축소 */
+        .model-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding-bottom: 5px; margin-bottom: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            color: var(--text-white);
+            font-family: 'BMDOHYEON', sans-serif;
+            font-size: clamp(14px, 1.2vw, 18px) !important; /* 폰트 줄임 */
+        }
+        .model-info { display: flex; align-items: center; gap: 10px; }
+        .lot-display { color: #888; font-size: 0.8em; font-weight: bold; font-family: 'Poppins'; }
+        .model-name-display { font-weight: bold; }
+        .model-controls { display: flex; align-items: center; gap: 10px; }
+
+        /* 테이블 영역 */
+        .dip-table-pair { display: flex; flex-direction: row; gap: 10px; }
+        .dip-history-table-box { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+        
+        .dip-title {
+            color: var(--point-gold);
+            font-family: 'BMJUA', sans-serif;
+            font-size: clamp(12px, 1vw, 14px) !important; /* 폰트 줄임 */
+            margin: 0 0 5px 0;
+        }
+
+        /* 테이블 스타일 (컴팩트) */
+        table.editable-table { width: 100%; border-collapse: collapse; font-family: 'Poppins', sans-serif; color: var(--text-color); font-size: 0.8rem; }
+        table.editable-table th { 
+            background-color: #15151a; color: #aaa; padding: 4px; text-align: center; 
+            border-bottom: 1px solid rgba(255,255,255,0.1); font-weight: 600; 
+            font-size: clamp(11px, 0.9vw, 13px) !important; /* 폰트 줄임 */
+        }
+        table.editable-table td { 
+            padding: 4px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.05); 
+            font-size: clamp(11px, 0.9vw, 13px) !important; /* 폰트 줄임 */
+        }
+        table.editable-table tbody tr:hover { background-color: rgba(255,255,255,0.03); }
+
+        /* 반응형: 화면이 좁을 땐 다시 1열(세로)로 */
+        @media (max-width: 1000px) {
+            .model-group-wrapper {
+                width: 100% !important;
+                flex: 0 0 100% !important;
+            }
+        }
+
+        /* --- 버튼 스타일 --- */
+        .row-delete-btn { 
+            position: absolute; right: 5px; top: 50%; transform: translateY(-50%);
+            background: var(--danger-red); color: #fff; border: none; border-radius: 4px;
+            padding: 2px 8px; font-size: 0.7rem; cursor: pointer; display: none; 
+        }
+        .model-group-wrapper.delete-mode-active .row-delete-btn { display: inline-block; }
+        .cumulative-cell { position: relative; color: var(--point-gold); font-weight: bold; }
+
+        .delete-toggle-icon { background: none; border: none; color: #666; cursor: pointer; font-size: 1.2rem; transition: color 0.2s; }
+        .delete-toggle-icon:hover { color: var(--danger-red); }
+        .delete-toggle-icon.active { color: var(--danger-red); transform: scale(1.1); }
+
+        .group-delete-btn { 
+            font-family: 'BMJUA'; padding: 6px 14px; font-size: 0.9rem; border-radius: 20px; 
+            cursor: pointer; border: none; color: #fff; background-color: var(--danger-red);
+        }
+        .group-delete-btn:hover { background-color: #d32f2f; box-shadow: 0 0 10px rgba(255, 68, 68, 0.4); }
+
+        .group-complete-btn { 
+            font-family: 'BMJUA'; padding: 6px 14px; font-size: 0.9rem; border-radius: 20px; 
+            cursor: pointer; border: none; color: #fff; background-color: var(--success-green);
+            animation: pulse-green 2s infinite; 
+        }
+        .group-complete-btn:hover { background-color: #00c853; }
+
+        @keyframes pulse-green { 0% { box-shadow: 0 0 0 0 rgba(0, 230, 118, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(0, 230, 118, 0); } 100% { box-shadow: 0 0 0 0 rgba(0, 230, 118, 0); } }
+
+        /* =========================================
+           [5. 모달 스타일]
+           ========================================= */
+        .modal-overlay { background-color: rgba(0, 0, 0, 0.85); backdrop-filter: blur(5px); z-index: 1000; display: none; justify-content: center; align-items: center; position: fixed; top: 0; left: 0; width: 100%; height: 100%; }
+        .modal-window { 
+            background-color: #23242d; border: 1px solid var(--border-color);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6); color: #fff;
+            display: flex; flex-direction: column; 
+            width: 90vw; max-width: 900px; max-height: 85vh; border-radius: 12px;
+        }
+        .modal-content { flex: 1; overflow: hidden; display: flex; flex-direction: row; gap: 20px; padding: 20px; }
+        .close-btn { position: absolute; top: 15px; right: 20px; color: #888; font-size: 2rem; background: none; border: none; cursor: pointer; z-index: 10; }
+        .close-btn:hover { color: var(--point-gold); }
+
+        /* 모달 내부 */
+        .dip-modal-form-section, .dip-modal-other-section { flex: 1; display: flex; flex-direction: column; overflow-y: auto; }
+        .dip-modal-other-section { background: #1a1b23; border-radius: 8px; padding: 15px; border: 1px solid rgba(255,255,255,0.05); }
+        .dip-modal-separator { width: 1px; background-color: rgba(255,255,255,0.1); margin: 0 10px; }
+        .modal-title { color: var(--point-gold); font-family: 'BMJUA'; font-size: 1.5rem; margin-bottom: 20px; }
+        .dip-form-grid { display: flex; flex-direction: column; gap: 15px; }
+        .dip-input-group label { color: #aaa; font-size: 0.9rem; margin-bottom: 5px; display: block; }
+        
+        .form-input { 
+            width: 100%; padding: 10px; border-radius: 5px; border: 1px solid rgba(255,255,255,0.1); 
+            background: rgba(255,255,255,0.05); color: #fff; font-family: 'Poppins', 'BMDOHYEON'; box-sizing: border-box;
+        }
+        .form-input:focus { border-color: var(--point-gold); outline: none; background: rgba(255,255,255,0.1); }
+        
+        .dip-type-selector { display: flex; gap: 10px; }
+        .dip-type-selector .common-box { flex: 1; text-align: center; padding: 10px; opacity: 0.5; border: 1px solid #555; }
+        .dip-type-selector .selected { opacity: 1; background-color: var(--point-gold) !important; color: var(--accent-blue); border-color: transparent; }
+
+        .register-button-group { display: flex; gap: 10px; margin-top: 10px; }
+        #dip-register-btn, #save-group-btn { flex: 1; background: var(--accent-blue) !important; color: #fff; text-align: center; justify-content: center; }
+        #dip-register-btn:hover, #save-group-btn:hover { background: #0056b3 !important; }
+        #dip-cancel-btn { flex: 1; background: #444 !important; text-align: center; justify-content: center; }
+
+        /* 아코디언 */
+        .company-category-header {
+            display: flex; justify-content: space-between; align-items: center;
+            background: #2a2b38; padding: 12px; border-radius: 6px; cursor: pointer;
+            margin-bottom: 5px; border: 1px solid rgba(255,255,255,0.05); transition: all 0.2s;
+        }
+        .company-category-header:hover { background: #333; }
+        .company-category-header.active { background: var(--accent-blue); color: var(--point-gold); border-color: var(--accent-blue); }
+        .company-models-list { display: none; flex-direction: column; gap: 5px; padding: 5px 0 10px 10px; }
+        .company-models-list.open { display: flex; }
+        
+        @keyframes modalSlideUpFade { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeInOverlay { from { background-color: rgba(0, 0, 0, 0); } to { background-color: rgba(0, 0, 0, 0.4); } }
+        .modal-overlay.visible { backdrop-filter: blur(5px); background-color: rgba(0, 0, 0, 0.4); animation: fadeInOverlay 0.4s ease-out forwards; }
+        .modal-overlay.visible .modal-window { animation: modalSlideUpFade 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+
+        @media (max-width: 768px) {
+            .main-header { padding: 10px; flex-direction: column; height: auto; gap: 10px; }
+            .header-center, .footer-center { position: static; transform: none; order: -1; margin-bottom: 5px; }
+            .header-left { width: 100%; justify-content: space-between; }
+            .header-right { display: none; }
+            #dip-registration-modal .modal-content, #group-manage-modal .modal-content { flex-direction: column; }
+            .dip-table-pair { flex-direction: column; }
+        }
+    </style>
 </head>
 
 <body>
     <div class="page-container">
         <header class="main-header">
-            <div class="header-left"><a href="index.html">홈으로</a></div>
+            <div class="header-left">
+                <a href="index.html" class="ppms-logo-placeholder"></a>
+            </div>
             <div class="header-center">
                 <div class="common-box font-35pt">DIP (외주 관리)</div>
             </div>
@@ -30,25 +382,32 @@
         </header>
 
         <main class="content-area dip-layout">
+            
+            <div id="status-tabs">
+                <button class="status-tab active" data-status="all">전체</button>
+                <button class="status-tab" data-status="ongoing">미완료</button>
+                <button class="status-tab" data-status="completed">완료</button>
+            </div>
+
             <div id="dip-history-wrapper">
                 <div id="empty-message" style="text-align: center; color: #888; margin-top: 50px; display: none;">
                     등록된 모델 그룹이 없습니다.<br>우측 하단의 '그룹추가' 버튼을 눌러 그룹을 생성하세요.
                 </div>
-            </div>
+                </div>
         </main>
 
         <footer class="main-footer">
             <div class="footer-left footer-action-group">
-                <div class="common-box font-15pt clickable-box" id="open-dip-modal-btn"><i class="fas fa-plus-circle"></i> 출입고 등록</div>
+                <div class="common-box font-15pt clickable-box" id="open-dip-modal-btn"><i class="uil uil-plus-circle"></i> 출입고 등록</div>
             </div>
             <div class="footer-center footer-action-group">
-                <div class="common-box font-15pt clickable-box" id="dip-back-btn" onclick="history.back();"><i class="fas fa-arrow-left"></i></div>
-                <a href="index.html" id="dip-home-link"><div class="common-box font-15pt clickable-box" id="dip-home-btn" style="background-color: #333;"><i class="fas fa-home"></i></div></a>
-                <div class="common-box font-15pt clickable-box" id="dip-forward-btn" onclick="history.forward();"><i class="fas fa-arrow-right"></i></div>
+                <div class="common-box font-15pt clickable-box" id="dip-back-btn" onclick="history.back();"><i class="uil uil-arrow-left"></i></div>
+                <a href="index.html" id="dip-home-link"><div class="common-box font-15pt clickable-box" id="dip-home-btn"><i class="uil uil-home"></i></div></a>
+                <div class="common-box font-15pt clickable-box" id="dip-forward-btn" onclick="history.forward();"><i class="uil uil-arrow-right"></i></div>
             </div>
             <div class="footer-right footer-action-group">
-                <div class="common-box font-15pt clickable-box" id="edit-group-btn" style="background-color: #6c757d;"><i class="fas fa-edit"></i> 그룹편집</div>
-                <div class="common-box font-15pt clickable-box" id="add-group-btn" style="background-color: #007bff;"><i class="fas fa-layer-group"></i> 그룹추가</div>
+                <div class="common-box font-15pt clickable-box" id="edit-group-btn" style="background-color: #3a3a3c;"><i class="uil uil-edit"></i> 그룹편집</div>
+                <div class="common-box font-15pt clickable-box" id="add-group-btn" style="background-color: #102770;"><i class="uil uil-layer-group"></i> 그룹추가</div>
             </div>
         </footer>
     </div>
@@ -115,6 +474,11 @@
     </div>
 
     <script>
+        /* [로고 애니메이션 (GSAP)] */
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => { document.body.style.opacity = '1'; }, 50);
+        });
+
         function updateTime() {
             const timeDisplay = document.getElementById('current-time');
             if (!timeDisplay) return;
@@ -122,15 +486,21 @@
             timeDisplay.textContent = `${now.getFullYear()}년 ${String(now.getMonth() + 1).padStart(2, '0')}월 ${String(now.getDate()).padStart(2, '0')}일 ${String(now.getHours()).padStart(2, '0')}시 ${String(now.getMinutes()).padStart(2, '0')}분`;
         }
 
+        // [수정됨] 이름은 유지하되, 내용은 월-일(MM-DD)만 반환하도록 변경
         function formatDateYYMMDD(dateString) {
-            if (dateString && dateString.length === 10) return dateString.substring(2);
-            if (dateString && dateString.length === 8) return dateString;
-            return '';
+            // "YYYY-MM-DD" 형태에서 앞의 5글자(YYYY-)를 잘라내어 "MM-DD"만 반환
+            if (dateString && dateString.length >= 10) {
+                return dateString.substring(5); 
+            }
+            return dateString;
         }
 
         let groupList = [];
         let productionModelsCache = [];
         const API_BASE = 'http://127.0.0.1:5000/api/dip';
+        
+        // [신규] 현재 탭 필터 상태 (all / ongoing / completed)
+        let currentStatusFilter = 'all';
 
         const wrapper = document.getElementById('dip-history-wrapper');
         const emptyMsg = document.getElementById('empty-message');
@@ -192,9 +562,9 @@
 
             editGroupModeBtn.addEventListener('click', toggleGroupEditMode);
             wrapper.addEventListener('click', handleWrapperClick);
-            groupLotInput.addEventListener('input', function(e) { this.value = this.value.replace(/[^0-9]/g, ''); });
+            groupLotInput.addEventListener('input', function(e) { this.value = this.value.replace(/[^0-9/]/g, ''); });
 
-            // [신규] 아코디언 헤더 클릭 이벤트 위임 (두 모달 모두 적용)
+            // 아코디언 헤더 이벤트
             document.addEventListener('click', (e) => {
                 const header = e.target.closest('.company-category-header');
                 if (header) {
@@ -205,6 +575,26 @@
                     }
                 }
             });
+            
+            // [신규] 탭 메뉴 이벤트 리스너 추가
+            const statusTabs = document.getElementById('status-tabs');
+            if (statusTabs) {
+                statusTabs.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('status-tab')) {
+                        const newStatus = e.target.dataset.status;
+                        
+                        // 1. 필터 상태 업데이트
+                        currentStatusFilter = newStatus;
+                        
+                        // 2. 활성화된 탭 스타일 업데이트
+                        document.querySelectorAll('.status-tab').forEach(btn => btn.classList.remove('active'));
+                        e.target.classList.add('active');
+                        
+                        // 3. 그룹 목록 새로 렌더링
+                        renderGroups();
+                    }
+                });
+            }
         });
 
         async function fetchGroups() {
@@ -216,7 +606,6 @@
             } catch (error) { console.error(error); }
         }
 
-        // 생산 완료 모델 (업체별)
         async function fetchProductionModels() {
             productionModelsList.innerHTML = '<p style="text-align:center;">로딩중...</p>';
             try {
@@ -247,10 +636,10 @@
 
                 let html = '';
                 Object.keys(groupedByCompany).sort().forEach(company => {
-                    html += `<div class="company-category-header"><span>${company}</span><i class="fas fa-chevron-down"></i></div>
+                    html += `<div class="company-category-header"><span>${company}</span><i class="uil uil-angle-down"></i></div>
                              <div class="company-models-list">`;
                     groupedByCompany[company].forEach(m => {
-                        html += `<div class="common-box clickable-box" style="margin-bottom:5px; font-size:14px; padding:5px 10px;" 
+                        html += `<div class="common-box clickable-box" style="margin-bottom:5px; font-size:14px; padding:5px 10px; text-align:left;" 
                                       onclick="fillGroupForm('${m.model}', '${m.lot}', '${m.year}', '${m.month}')">
                                     <span style="color:#fff; font-weight:bold;">${m.model} (${m.month})</span>
                                     <span style="color:#aaa; font-size:0.9em; margin-left:10px;">(LOT: ${m.lot})</span>
@@ -264,19 +653,50 @@
             }
         }
 
-        // --- 렌더링 ---
         function renderGroups() {
             wrapper.innerHTML = '';
-            const activeGroups = groupList.filter(g => g.status !== 'completed');
+            
+            // [수정: 중요 필터링 로직 변경]
+            // 모든 탭은 기본적으로 'active' (미완료) 그룹만을 대상으로 합니다.
+            // status === 'completed' (DB에 저장된 과거 기록)은 모든 탭에서 숨깁니다.
+            let activeGroups = groupList.filter(g => g.status !== 'completed');
+            let filteredGroups = [];
 
-            if (activeGroups.length === 0) {
+            if (currentStatusFilter === 'ongoing') {
+                // [미완료 탭]: 수량이 아직 덜 찬 그룹 (Total Ship != Target OR Total Receive != Target)
+                filteredGroups = activeGroups.filter(g => {
+                    const totalShip = g.shipping.reduce((sum, item) => sum + parseInt(item.quantity), 0);
+                    const totalReceive = g.receiving.reduce((sum, item) => sum + parseInt(item.quantity), 0);
+                    const targetLot = parseInt(g.lot);
+                    return (totalShip !== targetLot || totalReceive !== targetLot);
+                });
+            } else if (currentStatusFilter === 'completed') {
+                // [완료 탭]: 수량이 다 차서 완료 버튼이 활성화된 그룹 (DB 저장 대기중)
+                filteredGroups = activeGroups.filter(g => {
+                    const totalShip = g.shipping.reduce((sum, item) => sum + parseInt(item.quantity), 0);
+                    const totalReceive = g.receiving.reduce((sum, item) => sum + parseInt(item.quantity), 0);
+                    const targetLot = parseInt(g.lot);
+                    return (totalShip === targetLot && totalReceive === targetLot);
+                });
+            } else {
+                // [전체 탭]: 'all' (단, DB에 저장된 과거 기록은 제외하고 현재 진행중인 모든 것)
+                filteredGroups = activeGroups;
+            }
+
+            if (filteredGroups.length === 0) {
                 wrapper.appendChild(emptyMsg);
                 emptyMsg.style.display = 'block';
+                // 메시지 텍스트를 탭 상황에 맞게 조금 수정
+                if (currentStatusFilter === 'completed') {
+                    emptyMsg.innerHTML = "완료 대기중인 그룹이 없습니다.<br><span style='font-size:0.8em'>수량이 모두 채워지면 이곳에 나타납니다.</span>";
+                } else {
+                    emptyMsg.innerHTML = "등록된 모델 그룹이 없습니다.<br>우측 하단의 '그룹추가' 버튼을 눌러 그룹을 생성하세요.";
+                }
                 return;
             }
             emptyMsg.style.display = 'none';
 
-            activeGroups.forEach(group => {
+            filteredGroups.forEach(group => {
                 const groupEl = document.createElement('div');
                 groupEl.className = 'model-group-wrapper';
                 
@@ -291,6 +711,7 @@
                 }
                 
                 if(isGroupEditMode) groupEl.classList.add('edit-mode-active');
+                
                 groupEl.dataset.groupId = group.id;
 
                 let controlsHtml = '';
@@ -300,13 +721,13 @@
                     if (isReadyToComplete) {
                          controlsHtml += `<button class="group-complete-btn" title="그룹 완료 처리">완료</button>`;
                     }
-                    controlsHtml += `<button class="delete-toggle-icon" title="행 삭제 모드 켜기"><i class="fas fa-trash"></i></button>`;
+                    controlsHtml += `<button class="delete-toggle-icon" title="행 삭제 모드 켜기"><i class="uil uil-trash-alt"></i></button>`;
                 }
 
                 const displayModelName = `${group.model} (${group.month})`;
 
                 const headerHtml = `
-                    <div class="model-header ${isGroupEditMode ? 'clickable-box' : ''}" style="${isGroupEditMode ? 'border: 2px dashed #007bff; padding: 10px; border-radius: 5px;' : ''}">
+                    <div class="model-header ${isGroupEditMode ? 'clickable-box' : ''}" style="${isGroupEditMode ? 'border: 1px dashed var(--point-gold); padding: 10px; border-radius: 5px;' : ''}">
                         <div class="model-info">
                             <span class="model-name-display">${displayModelName}</span>
                             <span class="lot-display">LOT: ${group.lot}</span>
@@ -314,12 +735,17 @@
                         <div class="model-controls">${controlsHtml}</div>
                     </div>`;
 
+                // [수정] 날짜 열 너비 18%로 축소, 나머지를 41%씩 분배
                 const tablesHtml = `
                     <div class="dip-table-pair">
                         <div class="dip-history-table-box">
                             <h3 class="dip-title" style="margin-top: 0;">SMD 출고 (외주) <span style="font-size:0.8em; color:#aaa;">(합계: ${totalShip})</span></h3>
                             <table class="editable-table history-table" data-type="ship">
-                                <colgroup><col style="width: 25%;"><col style="width: 35%;"><col style="width: 40%;"></colgroup>
+                                <colgroup>
+                                    <col style="width: 18%;"> 
+                                    <col style="width: 41%;"> 
+                                    <col style="width: 41%;"> 
+                                </colgroup>
                                 <thead><tr><th>날짜</th><th>출고 수량</th><th>누계수량</th></tr></thead>
                                 <tbody>${renderRows(group.shipping)}</tbody>
                             </table>
@@ -327,7 +753,11 @@
                         <div class="dip-history-table-box">
                             <h3 class="dip-title" style="margin-top: 0;">DIP 입고 (회수) <span style="font-size:0.8em; color:#aaa;">(합계: ${totalReceive})</span></h3>
                             <table class="editable-table history-table" data-type="receive">
-                                <colgroup><col style="width: 25%;"><col style="width: 35%;"><col style="width: 40%;"></colgroup>
+                                <colgroup>
+                                    <col style="width: 18%;"> 
+                                    <col style="width: 41%;"> 
+                                    <col style="width: 41%;"> 
+                                </colgroup>
                                 <thead><tr><th>날짜</th><th>입고 수량</th><th>누계수량</th></tr></thead>
                                 <tbody>${renderRows(group.receiving)}</tbody>
                             </table>
@@ -346,29 +776,30 @@
                 sum += parseInt(row.quantity);
                 return { ...row, cumulative: sum };
             });
-            return rowsWithCumulative.reverse().map(row => `
+            // 최신순 정렬
+            return rowsWithCumulative.map(row => `
                 <tr data-row-id="${row.id}" class="clickable-row">
-                    <td>${formatDateYYMMDD(row.date)}</td>
+                    <td>${formatDateYYMMDD(row.date)}</td> 
                     <td class="quantity-cell">${row.quantity}</td>
                     <td class="cumulative-cell">
                         ${row.cumulative}
-                        <button class="row-delete-btn">-</button>
+                        <button class="row-delete-btn"><i class="uil uil-minus"></i></button>
                     </td>
                 </tr>
             `).join('');
         }
 
-        // [수정] '출/입고 미완료 제품' 리스트 (업체별 아코디언)
+        // '출/입고 미완료 제품' 리스트 (등록 모달용)
         function renderAvailableGroups() {
             availableGroupsList.innerHTML = '';
+            // 여기서는 '등록'이 목적이므로 active 그룹만 보여주면 됨
             const activeGroups = groupList.filter(g => g.status !== 'completed');
             
             if (activeGroups.length === 0) {
-                availableGroupsList.innerHTML = '<p style="text-align:center;">미완료된 제품이 없습니다.</p>';
+                availableGroupsList.innerHTML = '<p style="text-align:center; color:#888;">미완료된 제품이 없습니다.</p>';
                 return;
             }
 
-            // 1. 업체별 그룹화
             const groupedByCompany = {};
             activeGroups.forEach(g => {
                 const companyName = g.company || '업체 미지정';
@@ -376,14 +807,13 @@
                 groupedByCompany[companyName].push(g);
             });
 
-            // 2. 렌더링
             let html = '';
             Object.keys(groupedByCompany).sort().forEach(company => {
-                html += `<div class="company-category-header"><span>${company}</span><i class="fas fa-chevron-down"></i></div>
+                html += `<div class="company-category-header"><span>${company}</span><i class="uil uil-angle-down"></i></div>
                          <div class="company-models-list">`;
                 
                 groupedByCompany[company].forEach(g => {
-                    html += `<div class="common-box clickable-box" style="margin-bottom:5px; font-size:14px; padding:5px 10px;" 
+                    html += `<div class="common-box clickable-box" style="margin-bottom:5px; font-size:14px; padding:5px 10px; text-align:left;" 
                                   onclick="fillRegForm('${g.model}')">
                                 <span style="font-weight:bold;">${g.model} (${g.month})</span> 
                                 <span style="color:#aaa; font-size:0.9em;">(LOT: ${g.lot})</span>
@@ -394,7 +824,6 @@
             availableGroupsList.innerHTML = html;
         }
 
-        // --- 핸들러 ---
         window.fillGroupForm = function(model, lot, year, month) {
             groupModelInput.value = model;
             groupLotInput.value = lot;
@@ -496,6 +925,7 @@
             const group = groupList.find(g => g.id == groupId);
             if (!group) return;
 
+            // 완료 버튼 클릭 처리
             if (target.closest('.group-complete-btn')) {
                 if (confirm(`'${group.model}' 그룹을 완료 처리하시겠습니까?\n화면에서 사라지지만 DB에는 보존됩니다.`)) {
                     completeGroup(groupId);
@@ -503,6 +933,7 @@
                 return;
             }
 
+            // 그룹 삭제 버튼 클릭 처리
             if (target.closest('.group-delete-btn')) {
                 if (confirm(`'${group.model}' 그룹을 삭제하시겠습니까?\n영구 삭제됩니다.`)) {
                     deleteGroup(groupId);
@@ -510,12 +941,13 @@
                 return;
             }
 
+            // 행 삭제 모드 토글
             if (!isGroupEditMode && target.closest('.delete-toggle-icon')) {
                 const btn = target.closest('.delete-toggle-icon');
                 const isActive = groupEl.classList.toggle('delete-mode-active');
                 btn.classList.toggle('active', isActive);
                 const icon = btn.querySelector('i');
-                icon.className = isActive ? 'fas fa-check' : 'fas fa-trash';
+                icon.className = isActive ? 'uil uil-check' : 'uil uil-trash-alt';
                 return;
             }
 
@@ -634,11 +1066,29 @@
             groupEditIdInput.value = '';
             openModal(groupModal);
         }
+
+       /* [최종 수정] '편집 완료' 시 배경색 강제 적용 (!important 추가) */
         function toggleGroupEditMode() {
             isGroupEditMode = !isGroupEditMode;
-            editGroupModeBtn.style.backgroundColor = isGroupEditMode ? '#ffc107' : '#6c757d';
-            editGroupModeBtn.style.color = isGroupEditMode ? '#000' : '#fff';
-            editGroupModeBtn.innerHTML = isGroupEditMode ? '<i class="fas fa-check"></i> 편집 완료' : '<i class="fas fa-edit"></i> 그룹편집';
+            
+            if (isGroupEditMode) {
+                // [편집 모드 ON] -> 배경 금색, 글씨 남색 (CSS 우선순위 무시하고 강제 적용)
+                editGroupModeBtn.style.setProperty('background-color', '#ffeba7', 'important');
+                editGroupModeBtn.style.setProperty('color', '#102770', 'important');
+                editGroupModeBtn.style.setProperty('border-color', '#ffeba7', 'important');
+                
+                editGroupModeBtn.style.fontWeight = ''; // 폰트 굵기는 CSS 상속
+                editGroupModeBtn.innerHTML = '<i class="uil uil-check"></i> 편집 완료';
+            } else {
+                // [편집 모드 OFF] -> 원래 어두운 색으로 복구
+                editGroupModeBtn.style.setProperty('background-color', '#3a3a3c', 'important');
+                editGroupModeBtn.style.setProperty('color', '#ffffff', 'important');
+                editGroupModeBtn.style.setProperty('border-color', 'rgba(255, 255, 255, 0.1)', 'important');
+                
+                editGroupModeBtn.style.fontWeight = '';
+                editGroupModeBtn.innerHTML = '<i class="uil uil-edit"></i> 그룹편집';
+            }
+            
             renderGroups(); 
         }
     </script>
