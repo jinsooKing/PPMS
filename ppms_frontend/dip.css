@@ -48,44 +48,6 @@ a, a:hover { text-decoration: none; color: inherit; }
     width: 100%;
 }
 
-/* =========================================
-   [3. 헤더 & 푸터]
-   ========================================= */
-
-.main-header, .main-footer {
-    background: rgba(31, 32, 41, 0.95);
-    border-bottom: 1px solid var(--border-color);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-    padding: 10px 30px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    z-index: 100;
-    flex-shrink: 0;
-    position: relative; 
-}
-
-.main-footer {
-    border-top: 1px solid var(--border-color);
-    border-bottom: none;
-}
-
-.header-left, .footer-left { flex: 1; display: flex; align-items: center; justify-content: flex-start; gap: 15px; }
-.header-right, .footer-right { flex: 1; display: flex; align-items: center; justify-content: flex-end; gap: 15px; }
-
-.header-center, .footer-center {
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1;
-    white-space: nowrap;
-    gap: 15px; 
-}
-
 .common-box, .footer-btn {
     background: var(--card-bg) !important;
     color: var(--text-color);

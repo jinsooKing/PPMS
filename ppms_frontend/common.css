@@ -1,651 +1,541 @@
-/* --- 기본 폰트 설정 및 전체 레이아웃 --- */
-body,
-html {
+/* =========================================
+   [1. 전역 테마 설정 및 변수]
+   ========================================= */
+:root {
+    --bg-dark: #1f2029;
+    --card-bg: #2a2b38;
+    --text-color: #c4c3ca;
+    --text-white: #ffffff;
+    
+    /* 고급스러운 포인트 컬러 */
+    --point-gold: #ffeba7;
+    --accent-blue: #102770;
+    --danger-red: #ff4444;
+    --success-green: #00e676;
+    
+    /* 은은한 테두리 색상 */
+    --border-color: rgba(255, 235, 167, 0.15); 
+    --glass-border: 1px solid var(--border-color);
+}
+
+/* =========================================
+   [2. 기본 레이아웃 & 배경]
+   ========================================= */
+body, html {
     margin: 0;
     padding: 0;
     height: 100%;
-    background-color: #121212;
+    background-color: var(--bg-dark);
+    /* 고급스러운 패턴 배경 적용 */
+    background-image: url('https://s3-us-west-2.amazonaws.com/s.cdpn.io/1462889/pat.svg');
+    background-position: center;
+    background-repeat: repeat;
+    background-size: 300%;
+    color: var(--text-color);
+    font-family: 'Poppins', 'BMDOHYEON', sans-serif;
+    
+    /* 페이지 페이드인 효과 */
+    opacity: 1;
+    transition: opacity 0.5s ease-in-out;
+    overflow: hidden; /* 스크롤은 content-area에서 처리 */
 }
+
+body.fade-out { opacity: 0; }
+
+a { color: inherit; text-decoration: none; transition: color 0.2s; }
+a:hover { color: var(--point-gold); }
 
 .page-container {
     display: flex;
     flex-direction: column;
-    min-height: 100%;
+    height: 100vh;
+    backdrop-filter: blur(2px); /* 배경 흐림 효과 */
 }
 
-a {
-    color: inherit;
-    text-decoration: none;
-}
-
-/* --- 공용 컨텐츠 영역 스타일 --- */
 .content-area {
     flex: 1;
     display: flex;
     justify-content: center;
-    align-items: center;
-    padding: 35px;
-    background-color: #2C2C2E;
+    align-items: flex-start; /* 상단 정렬로 변경 */
+    padding: 20px;
+    overflow-y: auto; /* 스크롤 허용 */
+    width: 100%;
+    position: relative;
 }
 
-/* --- 공용 컴포넌트 스타일 --- */
-.common-box {
-    width: fit-content;
+/* =========================================
+   [3. 헤더 & 푸터 (높이 고정 & 디자인 통일)]
+   ========================================= */
+.main-header,
+.main-footer {
+    height: 70px; /* 높이 고정 */
+    background: rgba(31, 32, 41, 0.95);
+    border-bottom: var(--glass-border);
+    box-shadow: 0 10px 30px 0 rgba(0, 0, 0, 0.3);
+    padding: 0 30px; /* 상하 0, 좌우 30px */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 100;
+    flex-shrink: 0;
+    position: relative;
+    box-sizing: border-box;
+}
+
+.main-footer {
+    border-top: var(--glass-border);
+    border-bottom: none;
+}
+
+/* 내부 요소 정렬 */
+.header-left, .header-right, 
+.footer-left, .footer-right {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+.header-right, .footer-right { justify-content: flex-end; }
+
+.header-center, .footer-center {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10;
+    gap: 15px;
+}
+
+/* 헤더 타이틀 폰트 */
+.header-center .common-box {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    color: var(--point-gold);
+    font-family: 'Poppins', 'BMDOHYEON', sans-serif;
+    font-weight: 800;
+    font-size: clamp(1.2rem, 2.5vw, 2rem);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    pointer-events: none;
+}
+
+/* 시계 폰트 */
+.time-display {
+    color: var(--text-color);
+    font-family: 'Poppins', sans-serif;
+    font-weight: 500;
+    font-size: 1rem !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+/* 반응형 헤더 */
+@media (max-width: 768px) {
+    .main-header, .main-footer {
+        height: auto;
+        padding: 15px 20px;
+        flex-direction: column;
+        gap: 10px;
+    }
+    .header-center, .footer-center {
+        position: static; transform: none; margin-bottom: 10px;
+    }
+}
+
+/* =========================================
+   [4. 공통 UI 컴포넌트 (버튼, 박스)]
+   ========================================= */
+/* 기본 박스 & 버튼 스타일 */
+.common-box, .footer-btn {
+    background-color: var(--card-bg);
+    color: var(--text-color);
     padding: 7px 18px;
-    border-radius: 10px;
-    background-color: #000000;
-    color: #FFFFFF;
+    border-radius: 30px; /* 둥근 버튼 */
     font-weight: bold;
     white-space: nowrap;
-
-    border: 1px solid #555;
-    border-bottom: 3px solid #333;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    font-size: clamp(6px, 1.2vw, 30px);
-
-}
-
-/* 폰트 크기 유틸리티 클래스 */
-
-.font-45pt {
-    font-size: 3rem;
-}
-
-/* 클릭 효과 유틸리티 클래스 */
-.clickable-box {
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    font-size: 0.9rem;
+    font-family: 'BMJUA', sans-serif;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    transition: all 0.3s ease;
     cursor: pointer;
-    transition: all 0.1s ease-out;
 }
 
-.clickable-box:active {
+/* 호버 효과 (금색 배경 + 남색 글씨) */
+.common-box:hover, .footer-btn:hover, .clickable-box:hover {
+    background-color: var(--point-gold) !important;
+    color: var(--accent-blue) !important;
+    border-color: transparent;
+    box-shadow: 0 0 15px rgba(255, 235, 167, 0.4);
+    transform: translateY(-2px);
+}
+
+/* 클릭 효과 */
+.clickable-box:active, .footer-btn:active {
     transform: translateY(1px);
-    border-bottom-width: 2px;
 }
 
-/* --- 그리드 레이아웃 스타일 --- */
-.grid-container {
-    display: grid;
-    gap: 20px;
-}
+/* 관리자 버튼 전용 (index.html) */
+.admin-custom-btn { color: var(--point-gold) !important; }
+.admin-custom-btn:hover { color: var(--accent-blue) !important; background: var(--point-gold) !important; }
 
-.grid-layout-2-col {
-    grid-template-columns: repeat(2, 1fr);
-}
+/* 폰트 유틸리티 */
+.font-45pt { font-size: 3rem; }
+.font-35pt { font-size: clamp(25px, 3.5vw, 35px); }
+.font-15pt { font-size: clamp(13px, 1.2vw, 18px); }
 
-.grid-layout-3-col {
-    grid-template-columns: repeat(3, 1fr);
-}
+/* 그리드 레이아웃 */
+.grid-container { display: grid; gap: 20px; }
+.grid-layout-2-col { grid-template-columns: repeat(2, 1fr); }
+.grid-layout-3-col { grid-template-columns: repeat(3, 1fr); }
 
-/* 생산 페이지의 주차별 UI를 위한 작은 박스 스타일 */
+/* =========================================
+   [5. 생산/주차별 UI 요소 (기존 기능 보존 + 디자인 UP)]
+   ========================================= */
 .week-box {
     font-family: 'BMJUA', sans-serif;
-    font-size: 1.5rem;
+    font-size: 1.2rem;
     font-weight: bold;
-    background-color: #000000;
-    color: #FFFFFF;
-    padding: 14px 28px;
+    background: linear-gradient(145deg, #2a2b38, #23242d); /* 그라데이션 배경 */
+    color: #c4c3ca;
+    padding: 20px 10px;
     border-radius: 10px;
     text-align: center;
-    border: 1px solid #555;
-    border-bottom: 4px solid #444;
-    box-shadow: 0 3px 5px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.2);
     cursor: pointer;
-    transition: all 0.1s ease-out;
+    transition: all 0.3s ease;
 }
 
-.week-box:active {
-    transform: translateY(2px);
-    border-bottom-width: 2px;
+.week-box:hover {
+    background: var(--point-gold);
+    color: var(--accent-blue);
+    transform: translateY(-5px);
+    box-shadow: 0 8px 15px rgba(255, 235, 167, 0.3);
+    border-color: transparent;
 }
 
-/* 현재 주차를 강조하는 네온 효과 스타일 */
 .week-box.current-week {
-    border-color: #00BFFF;
-    box-shadow: 0 0 6px 1px rgba(0, 191, 255, 0.5), 0 0 10px 3px rgba(0, 191, 255, 0.3);
+    border-color: var(--point-gold);
+    box-shadow: 0 0 10px rgba(255, 235, 167, 0.2);
+    color: var(--point-gold);
 }
 
-/* [복원] 드롭업 메뉴 스타일 (크기 축소 이전 버전으로 복원) */
-.dropup-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.7);
-    display: none;
-    justify-content: center;
-    align-items: flex-end;
-    z-index: 999;
-}
-
-.dropup-content {
-    background-color: #2C2C2E;
-    width: 100%;
-    max-width: 1200px;
-    padding: 20px;
-    border-top-left-radius: 20px;
-    border-top-right-radius: 20px;
-    box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.3);
-    animation: slideUp 0.3s ease-out;
-}
-
-@keyframes slideUp {
-    from {
-        transform: translateY(100%);
-    }
-
-    to {
-        transform: translateY(0);
-    }
-}
-
-.dropup-overlay.visible {
-    display: flex;
-}
-
-/* 모달(팝업) 창 스타일 */
-.modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.7);
-    display: none;
-    justify-content: center;
-    align-items: center;
+/* =========================================
+   [6. 모달 (Modal) 스타일]
+   ========================================= */
+.modal-overlay, .dropup-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background-color: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(5px);
+    display: none; justify-content: center; align-items: center;
     z-index: 1000;
 }
 
+.dropup-overlay { align-items: flex-end; z-index: 999; }
+
+.modal-overlay.visible, .dropup-overlay.visible { display: flex; animation: fadeInOverlay 0.3s forwards; }
+
 .modal-window {
-    background-color: #2C2C2E;
-    padding: 20px;
-    border-radius: 10px;
-    border: 1px solid #555;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
-    width: 95vw;
-    max-width: 1400px;
-    height: 90vh;
+    background-color: #23242d;
+    padding: 0; /* 패딩 제거하고 내부 content에서 처리 */
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+    width: 95vw; max-width: 1400px; height: 90vh;
     position: relative;
-    font-family: 'BMDOHYEON', sans-serif;
-    font-weight: bold;
-    display: flex;
-    flex-direction: column;
+    display: flex; flex-direction: column;
+    color: #fff;
+    animation: modalSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.dropup-content {
+    background-color: #23242d; width: 100%; max-width: 1200px; padding: 20px;
+    border-top-left-radius: 20px; border-top-right-radius: 20px;
+    box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.5);
+    animation: slideUp 0.3s ease-out;
 }
 
 .modal-title {
-    color: #FFFFFF;
-    font-size: 1.6rem;
-    margin: 0 0 10px 0;
-    padding-bottom: 10px;
-    font-family: inherit;
-    font-weight: inherit;
+    color: var(--point-gold);
+    font-size: 1.5rem;
+    padding: 15px 20px;
+    margin: 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    font-family: 'BMJUA', sans-serif;
+}
+
+.modal-content {
+    flex-grow: 1; display: flex; flex-direction: column; gap: 20px;
+    padding: 20px; overflow-y: auto;
+}
+
+.modal-footer {
+    padding: 15px 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex; justify-content: space-between; align-items: center;
     flex-shrink: 0;
 }
 
 .close-btn {
-    position: absolute;
-    top: 10px;
-    right: 20px;
-    font-size: 2.3rem;
-    color: #888;
-    cursor: pointer;
-    border: none;
-    background: none;
-    z-index: 10;
+    position: absolute; top: 15px; right: 20px;
+    font-size: 2rem; color: #888; cursor: pointer;
+    border: none; background: none; z-index: 10; transition: color 0.2s;
 }
+.close-btn:hover { color: var(--point-gold); }
 
-.close-btn:hover {
-    color: #FFFFFF;
+/* 모달 애니메이션 */
+@keyframes fadeInOverlay { from { background-color: rgba(0,0,0,0); } to { background-color: rgba(0,0,0,0.85); } }
+@keyframes modalSlideUp { from { opacity: 0; transform: translateY(30px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+/* 다운로드 선택 작은 모달 */
+.small-modal {
+    max-width: 350px; height: auto; padding: 0;
 }
+.small-modal .modal-content { flex-grow: 0; }
+.choice-buttons { display: flex; flex-direction: column; gap: 15px; padding: 20px; }
+.choice-buttons .common-box { width: 100%; box-sizing: border-box; justify-content: center; padding: 12px; }
 
-.modal-overlay.visible {
-    display: flex;
-}
-
-.modal-content {
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    min-height: 0;
-}
-
-.line-schedule-section {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    border-top: 1px solid #555;
-    padding-top: 5px;
-    min-height: 0;
-    overflow: hidden;
-}
-
-.line-header {
-    display: flex;
-    /* Flexbox 레이아웃 적용 */
-    justify-content: space-between;
-    /* 양쪽 끝으로 요소를 밀어냄 */
-    align-items: center;
-    /* 세로 중앙 정렬 */
-    padding-right: 5px;
-    /* 오른쪽 끝에 약간의 여백 */
-}
-
-.line-title {
-    /* 최소 18px, 이상적으로는 화면 너비의 2.2%, 최대 24px */
-    font-size: clamp(12px, 2.2vw, 24px);
-    margin: 0;
-
-    color : #eaeaea
-
-}
-
-.action-buttons {
-    display: flex;
-    gap: 8px;
-}
-
-.plus-btn,
-.minus-btn {
-    width: auto;
-    height: auto;
-    padding: 4px 10px;
-    font-size: 1.1rem;
-    font-weight: bold;
-    color: #FFFFFF;
-    background-color: #000000;
-    border: 1px solid #555;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: all 0.1s ease-out;
-}
-
-.plus-btn:hover {
-    background-color: #007BFF;
-}
-
-.minus-btn:hover {
-    background-color: #dc3545;
-}
-
-.plus-btn:active,
-.minus-btn:active {
-    transform: translateY(1px);
-}
-
+/* =========================================
+   [7. 테이블 스타일 (고급 테마 적용)]
+   ========================================= */
 .table-container {
-    flex: 1;
-    min-height: 0;
-    overflow-y: auto;
-    border: 1px solid #555;
+    flex: 1; min-height: 0; overflow-y: auto;
+    border: 1px solid rgba(255, 255, 255, 0.05);
     border-radius: 8px;
+    background-color: rgba(0,0,0,0.2);
 }
 
 table.editable-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-family: inherit;
-    table-layout: fixed;
+    width: 100%; border-collapse: collapse; font-family: inherit; table-layout: fixed;
 }
 
-.editable-table th,
-.editable-table td {
-    padding: 6px;
-    text-align: center;
-    border-bottom: 1px solid #FFFFFF;
-    border-right: 1px solid #FFFFFF;
-    color: #FFFFFF;
+.editable-table th, .editable-table td {
+    padding: 8px 6px; text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    color: var(--text-color);
     font-size: clamp(11px, 1.1vw, 14px);
-    font-weight: bold;
 }
 
-.editable-table thead th {
-    background-color: #3A3A3C;
-    top: 0;
-}
-
-.editable-table th:last-child,
-.editable-table td:last-child {
-    border-right: none;
-}
-
-.data-cell {
-    padding: 0 !important;
-}
-
-.editable-table tbody tr:nth-child(even) {
-    background-color: #3A3A3C;
+.editable-table th {
+    background-color: #1a1b23;
+    color: var(--point-gold);
+    font-weight: 600;
+    text-transform: uppercase;
+    border-bottom: 2px solid rgba(255, 235, 167, 0.2);
+    position: sticky; top: 0; z-index: 5;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
 }
 
 .editable-table tbody tr:hover {
-    background-color: #555;
+    background-color: rgba(255, 235, 167, 0.05);
 }
 
-.editable-table input,
-.editable-table select {
-    width: 100%;
-    height: 100%;
-    padding: 8px;
-    background: transparent;
-    border: none;
-    color: #FFFFFF;
+/* 테이블 인풋/셀렉트 */
+.editable-table input, .editable-table select {
+    width: 100%; height: 100%; padding: 5px;
+    background: transparent; border: 1px solid transparent;
+    color: #fff; font-family: 'Poppins', 'BMJUA';
+    text-align: center; border-radius: 4px;
+}
+.editable-table input:focus, .editable-table select:focus {
+    outline: none; background-color: #15151a; border-color: var(--point-gold);
+}
+
+/* 생산 모달 내부 섹션 */
+.line-schedule-section {
+    background-color: var(--card-bg);
+    border-radius: 10px; padding: 10px 15px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    margin-bottom: 10px; display: flex; flex-direction: column; min-height: 0;
+}
+
+.line-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 8px; padding-bottom: 5px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.line-title {
     font-family: 'BMDOHYEON', sans-serif;
-    font-weight: bold;
-    font-size: clamp(11px, 1.1vw, 14px);
-    box-sizing: border-box;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    appearance: none;
-    text-align: center;
+    font-size: 1.3rem; color: #fff; margin: 0;
+    display: flex; align-items: center; gap: 10px;
+}
+.line-title::before {
+    content: ''; display: block; width: 4px; height: 16px;
+    background-color: var(--point-gold); border-radius: 2px;
 }
 
-.editable-table input::placeholder {
-    color: #888;
+/* 버튼들 */
+.text-btn { 
+    background: #3a3a3c; border: 1px solid #555; color: #fff; 
+    font-size: 0.85rem; font-family: 'BMJUA'; cursor: pointer; 
+    padding: 4px 10px; border-radius: 4px; transition: all 0.2s;
 }
-
-.editable-table input:focus,
-.editable-table select:focus {
-    outline: none;
-    background-color: #000000;
-}
-
-.editable-table .date-select-group {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 5px;
-}
-
-.modal-footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding-top: 15px;
-    border-top: 1px solid #555;
-    flex-shrink: 0;
-}
-
-.reset-btn {
-    background-color: #721c24;
-}
-
-.reset-btn:hover {
-    background-color: #dc3545;
-}
-
-.no-data-message {
-    font-family: 'BMDOHYEON', sans-serif;
-    font-size: 1.6rem;
-    color: #888;
-    font-weight: bold;
-}
+.text-btn:hover { background: #555; color: var(--point-gold); }
 
 .icon-btn {
-    background: #3a3a3c;
-    border: 1px solid #555;
-    color: #fff;
-    font-size: 14px;    /* 아이콘 크기 줄임 */
-    width: 32px;        /* 버튼 너비 줄임 */
-    height: 32px;       /* 버튼 높이 줄임 */
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.2s;
+    background: #3a3a3c; border: 1px solid #555; color: #fff;
+    width: 30px; height: 30px; border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: all 0.2s;
 }
+.icon-btn:hover { background: #555; color: var(--point-gold); }
 
-.icon-btn:hover {
-    background: #555;
-}
+.reset-btn { background-color: #5a1a1a !important; border-color: #ff4444 !important; }
+.reset-btn:hover { background-color: #8b0000 !important; }
 
-/* 다운로드 선택 모달 최종 수정 스타일 */
-.small-modal {
-    max-width: 300px;
-    padding: 20px 25px 25px 25px;
-    /* ✨ 높이를 자동으로 설정하여 내용물 크기에 따라 줄어들게 함 */
-    height: auto;
-    /* ✨ flex 컨테이너 설정을 추가하여 내부 요소 정렬을 명확히 함 */
-    display: flex;
-    flex-direction: column;
-}
+/* =========================================
+   [8. 기타 유틸리티 및 로고]
+   ========================================= */
+.svg-sprite { position: absolute; width: 0; height: 0; }
+.header-logo-wrapper { position: relative; display: flex; align-items: center; cursor: pointer; }
+.header-logo { height: 35px; width: auto; fill: var(--point-gold); transition: fill 0.2s ease; filter: drop-shadow(0 0 5px rgba(255, 235, 167, 0.4)); }
+.header-logo-wrapper.btn-glitch-active .header-logo { fill: #ffffff; filter: url('#filter'); }
 
-/* 작은 모달창 내부의 콘텐츠 영역이 불필요하게 늘어나지 않도록 설정 */
-.small-modal .modal-content {
-    /* ✨ flex-grow: 0; 이 핵심입니다. 
-       부모에게 남는 공간이 있어도 스스로 늘어나지 않도록 만듭니다. */
-    flex-grow: 0;
-    /* 또는 flex: none; */
-}
-
-/* 기존 버튼 스타일 (참고용) */
-.choice-buttons {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    padding-top: 20px;
-}
-
-.choice-buttons .common-box {
-    width: 100%;
-    text-align: center;
-    box-sizing: border-box;
-    padding-top: 12px;
-    padding-bottom: 12px;
-}
-
-.choice-buttons .common-box i {
-    margin-right: 10px;
-}
-
-/* production-view-table의 td에 position 속성 추가 */
-.production-view-table td {
-    position: relative; /* 자식 요소의 absolute 위치 기준이 됨 */
-}
-
-.registration-table td {
-    position: relative; /* 등록 모달 테이블의 td에도 동일한 위치 기준 적용 */
-}
-
-/* 유효성 검사 안내 메시지 스타일 */
+/* 유효성 검사 메시지 */
 .validation-message {
-    position: absolute;
-    top: -28px; /* 메시지가 두 줄이 될 경우를 대비해 조금 더 위로 조정 */
-    left: 0;
-    width: 100%;
-    box-sizing: border-box; /* 너비 계산이 깨지지 않도록 추가 */
-    background-color: #d35400;
-    color: white;
-    padding: 4px 5px;
-    border-radius: 4px;
-    text-align: center;
-    z-index: 10;
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.3s, visibility 0.3s;
-    
-    /* ✨ 1. clamp() 함수로 유동적인 폰트 크기 적용 */
-    font-size: clamp(2px, 1.2vw, 12px);
-
-    /* ✨ 2. nowrap을 삭제하여 공간이 부족하면 자동으로 줄바꿈되도록 허용 */
-    white-space: normal;
-    line-height: 1.2; /* 줄바꿈 시 줄 간격 조절 */
-    pointer-events: none; /* 메시지가 다른 입력을 방해하지 않도록 함 */
+    position: absolute; top: -28px; left: 0; width: 100%;
+    background-color: var(--danger-red); color: white;
+    padding: 2px 5px; border-radius: 4px; text-align: center;
+    font-size: 0.75rem; opacity: 0; visibility: hidden;
+    transition: opacity 0.3s; pointer-events: none; z-index: 10;
 }
+.validation-message.visible { opacity: 1; visibility: visible; }
 
-/* 메시지가 보여질 때의 스타일 */
-.validation-message.visible {
-    opacity: 1;
-    visibility: visible;
-}
-
-/* --- common.css 또는 header.css 파일 등에 적용 --- */
-
-/* 기존의 .font-15pt, .font-35pt 규칙을 아래 코드로 교체합니다. */
-
-/* 약 15pt에 해당하는 유동형 폰트 크기 */
-.font-15pt {
-    /* 최소 13px, 이상적으로는 화면 너비의 1.2%, 최대 18px */
-    font-size: clamp(13px, 1.2vw, 18px);
-}
-
-/* 약 35pt에 해당하는 유동형 폰트 크기 */
-.font-35pt {
-    /* 최소 28px, 이상적으로는 화면 너비의 3.5%, 최대 47px */
-    font-size: clamp(25px, 3.5vw, 35px);
-}
-
-/* (참고) 다른 폰트 크기 클래스가 있다면 동일한 방식으로 clamp()로 변경할 수 있습니다. */
-
-/* --- 생산 등록 모달 테이블 내 버튼 스타일 --- */
-.editable-table .row-actions {
-    /* 버튼들이 들어갈 마지막 칸의 스타일 */
-    width: 10%; /* 너비 확보 */
-    padding: 2px;
-}
-
-.editable-table .action-btn {
-    /* 행마다 추가될 버튼들의 공통 스타일 */
-    width: 45%;
-    height: 28px;
-    margin: 0 2%;
-    font-size: 1rem;
-    font-weight: bold;
-    color: #FFFFFF;
-    background-color: #000000;
-    border: 1px solid #555;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: all 0.1s ease-out;
-}
-
-.editable-table .action-btn:hover {
-    transform: scale(1.05);
-}
-
-.editable-table .add-row-btn:hover {
-    background-color: #007BFF; /* 추가 버튼 호버 색상 */
-}
-
-.editable-table .delete-row-btn:hover {
-    background-color: #dc3545; /* 삭제 버튼 호버 색상 */
-}
-
+/* =========================================
+   [8. 캘린더 팝업 (이전 데이터) - 미니 & 주간 선택]
+   ========================================= */
 .custom-calendar-popup {
     position: absolute;
-    /* 버튼(부모 relative) 기준으로 위치를 잡습니다. */
-    /* 위치는 각 페이지 상황에 맞춰 JS나 추가 CSS로 조정 가능 */
-    bottom: 100%; /* 버튼 바로 위 */
+    bottom: 120%;
     right: 0;
-    margin-bottom: 10px;
+    width: 280px; /* [수정] 너비 축소 (340 -> 280) */
     
-    width: 300px;
-    background-color: #2C2C2E;
-    border: 1px solid #555;
-    border-radius: 10px;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.5);
-    padding: 15px;
+    background-color: rgba(42, 43, 56, 0.98);
+    border: 1px solid var(--point-gold);
+    border-radius: 12px;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6);
+    
+    padding: 15px; /* [수정] 패딩 축소 */
     z-index: 2000;
     display: none;
     font-family: 'BMDOHYEON', sans-serif;
+    backdrop-filter: blur(10px);
+    
+    animation: popupSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    transform-origin: bottom right;
 }
 
-.custom-calendar-popup.visible {
-    display: block;
+.custom-calendar-popup.visible { display: block; }
+
+@keyframes popupSlideUp {
+    from { opacity: 0; transform: translateY(20px) scale(0.95); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
+/* 헤더 (년월) */
 .calendar-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 10px;
-    color: white;
+    margin-bottom: 15px;
+    color: var(--point-gold);
+    font-size: 1.1rem; /* [수정] 폰트 축소 */
+    padding: 0 5px;
 }
 
 .calendar-nav-btn {
-    background: none;
-    border: none;
-    color: #ccc;
-    font-size: 1.2rem;
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-color);
+    width: 28px; /* [수정] 버튼 크기 축소 */
+    height: 28px;
+    border-radius: 50%;
     cursor: pointer;
-    padding: 0 10px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s ease;
+    font-size: 0.9rem;
 }
-.calendar-nav-btn:hover { color: white; }
 
+.calendar-nav-btn:hover {
+    background-color: var(--point-gold);
+    color: var(--accent-blue);
+    border-color: var(--point-gold);
+}
+
+/* 요일 헤더 */
 .calendar-days-header {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
     text-align: center;
     margin-bottom: 5px;
     color: #888;
-    font-size: 12px;
+    font-size: 0.75rem; /* [수정] 폰트 축소 */
+    font-family: 'Poppins', sans-serif;
 }
 
+/* 날짜 그리드 */
 .calendar-body {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 2px; /* 행 간격 좁힘 */
 }
 
+/* [핵심 수정] 주(Week) 단위 스타일 */
 .calendar-week-row {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    cursor: pointer;
-    border-radius: 4px;
-    transition: background-color 0.1s;
+    gap: 0;
+    border-radius: 6px;
+    cursor: pointer; /* 행 전체에 포인터 */
+    transition: all 0.2s;
+    padding: 2px 0;
 }
 
+/* 마우스 올렸을 때 행 전체 하이라이트 */
+.calendar-week-row:hover {
+    background-color: var(--point-gold);
+    transform: scale(1.02);
+    box-shadow: 0 4px 10px rgba(255, 235, 167, 0.2);
+}
+
+/* 날짜 셀 */
 .day-cell {
-    text-align: center;
-    padding: 8px 0;
-    color: white;
-    font-size: 14px;
-    border-radius: 4px;
+    height: 30px; /* [수정] 높이 축소 (38 -> 30) */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 0.8rem; /* [수정] 폰트 축소 */
+    pointer-events: none; /* 클릭 이벤트를 부모(Row)가 받도록 통과시킴 */
 }
 
+/* 호버 시 글자색 반전 (남색) */
+.calendar-week-row:hover .day-cell {
+    color: var(--accent-blue);
+    font-weight: bold;
+}
+
+/* 일요일 */
+.day-cell.sunday { color: var(--danger-red); }
+
+/* 오늘 */
+.day-cell.today {
+    border: 1px solid var(--point-gold);
+    border-radius: 50%;
+}
+.calendar-week-row:hover .day-cell.today {
+    border-color: var(--accent-blue);
+}
+
+/* 이전/다음 달 */
 .day-cell.other-month { opacity: 0.3; }
-.day-cell.sunday { color: #ff4d4d; }
-
-/* 마우스 올렸을 때 (일요일 제외) 하이라이트 */
-.calendar-week-row:hover .day-cell:not(.sunday) {
-    background-color: #007BFF;
-    color: white;
-}
-
-body {
-    /* 기본적으로 불투명(보임) 상태 */
-    opacity: 1;
-    /* 투명도가 변할 때 0.5초 동안 부드럽게 변함 */
-    transition: opacity 0.5s ease-in-out;
-}
-
-/* 페이지가 사라질 때 적용할 클래스 */
-body.fade-out {
-    opacity: 0;
-}
-
-/* --- [공용 로고 스타일 (common.css)] --- */
-.svg-sprite { position: absolute; width: 0; height: 0; overflow: hidden; }
-
-.header-logo-wrapper { 
-    position: relative; 
-    display: flex; 
-    align-items: center; 
-    transform: translateZ(0); 
-    cursor: pointer; 
-    flex-shrink: 0; 
-}
-
-.header-logo { 
-    height: 35px; 
-    width: auto; 
-    fill: var(--point-gold); /* common.css의 변수 사용 */
-    transition: fill 0.2s ease; 
-    filter: drop-shadow(0 0 5px rgba(255, 235, 167, 0.4)); 
-    display: block; 
-}
-
-/* 마우스 호버 시 글리치 효과 활성화 */
-.header-logo-wrapper.btn-glitch-active .header-logo { 
-    fill: #ffffff; 
-    -webkit-filter: url('#filter'); 
-    filter: url('#filter'); 
-}

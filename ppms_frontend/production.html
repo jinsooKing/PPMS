@@ -422,6 +422,8 @@
         let currentView = { mode: 'current_week', data: {} };
         let viewHistory = [], forwardHistory = [], currentSelectedWeekInfo = {};
         let managerList = [], companyList = [];
+
+        
         
         function isEditAllowed() {
             const r = localStorage.getItem('ppms_user_role');
@@ -735,69 +737,181 @@
                 ['A', 'B', 'C'].forEach(line => {
                     const el = document.getElementById(`notes-content-${line}`);
                     if(byLine[line].length > 0) {
-                        el.innerHTML = byLine[line].map(s => `
-                            <div class="note-item">
-                                <h4>${s.company||'-'} / ${s.model||'-'} (LOT:${s.lot})</h4>
-                                <textarea data-note-id="${s.id}" placeholder="비고 입력...">${s.notes||''}</textarea>
+                        el.innerHTML = byLine[line].map(s => {
+                            // [수정됨] 저장된 노트에서 숨김 태그 분리
+                            const rawNote = s.notes || '';
+                            const isHidden = rawNote.includes('[HIDDEN]');
+                            const cleanNote = rawNote.replace('[HIDDEN]', ''); // 텍스트 박스엔 태그 없이 표시
+                            
+                            return `
+                            <div class="note-item" data-schedule-id="${s.id}">
+                                <div class="note-header-row">
+                                    <h4>${s.company||'-'} / ${s.model||'-'} (LOT:${s.lot})</h4>
+                                    <label class="note-toggle-label">
+                                        <input type="checkbox" class="hide-icon-cb" ${isHidden ? 'checked' : ''}>
+                                        아이콘 숨기기
+                                    </label>
+                                </div>
+                                <textarea placeholder="비고 입력...">${cleanNote}</textarea>
                             </div>
-                        `).join('');
+                        `}).join('');
                     } else el.innerHTML = '<p style="color:#666; text-align:center; margin-top:20px;">일정이 없습니다.</p>';
                 });
                 notesModal.classList.add('visible');
             } catch (e) { alert('오류 발생'); }
         }
+
         async function handleNoteSave(e) {
             if(!isEditAllowed()) return alert('권한 없음');
-            if(e.target.tagName!=='TEXTAREA') return;
-            const id = e.target.dataset.noteId;
-            const notes = e.target.value;
+            
+            // [수정됨] textarea 또는 checkbox 변경 시 모두 저장 트리거
+            const target = e.target;
+            if(target.tagName !== 'TEXTAREA' && !target.classList.contains('hide-icon-cb')) return;
+            
+            // 부모 요소(.note-item)를 찾아 ID와 값 추출
+            const itemWrapper = target.closest('.note-item');
+            const id = itemWrapper.dataset.scheduleId;
+            const textarea = itemWrapper.querySelector('textarea');
+            const checkbox = itemWrapper.querySelector('.hide-icon-cb');
+            
+            let noteText = textarea.value;
+            
+            // 체크박스가 켜져있으면 태그 붙임
+            if (checkbox.checked) {
+                noteText = '[HIDDEN]' + noteText;
+            }
+            
             try {
                 const res = await fetch(`http://127.0.0.1:5000/api/production/schedules/${id}/notes`, {
-                    method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({notes})
+                    method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({notes: noteText})
                 });
-                if(res.ok) console.log('Note Saved');
+                if(res.ok) {
+                    console.log('Note Saved');
+                    // (선택사항) 메인 화면 즉시 갱신을 원하면 아래 줄 주석 해제
+                    displayScheduleForWeek(currentView.data.year, currentView.data.month, currentView.data.weekNum);
+                }
             } catch(e) { console.error(e); }
         }
+        
+        // [추가] 메인 화면 탭 전환 함수
+        function switchMainTab(targetLine) {
+            // 1. 모든 탭 컨텐츠 숨기기
+            const allContents = document.querySelectorAll('#schedule-display-area .tab-content');
+            allContents.forEach(el => el.classList.remove('active'));
+            
+            // 2. 선택된 탭 컨텐츠 보이기
+            const targetContent = document.getElementById(`main-content-${targetLine}`);
+            if(targetContent) targetContent.classList.add('active');
+            
+            // 3. 탭 버튼 스타일 업데이트
+            const allBtns = document.querySelectorAll('.main-view-tabs .line-tab-btn');
+            allBtns.forEach(btn => {
+                if(btn.textContent.includes(targetLine + ' LINE')) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+        }
 
+        // [수정됨] 메인 화면을 탭 구조로 생성하는 함수
         function createScheduleTableHTML(schedules) {
             const byLine = {A:[], B:[], C:[]};
-            schedules.forEach(s=>{ if(byLine[s.line]) byLine[s.line].push(s); });
-            const ro = isEditAllowed()?'':'disabled';
-            let html='';
+            schedules.forEach(s => { if(byLine[s.line]) byLine[s.line].push(s); });
+            
+            const ro = isEditAllowed() ? '' : 'disabled';
+            
+            // 1. 상단 탭 네비게이션 생성
+            let html = `
+                <nav class="line-tab-nav main-view-tabs" style="margin-bottom: 0; border-radius: 12px 12px 0 0;">
+                    <button class="line-tab-btn active" onclick="switchMainTab('A')">A LINE</button>
+                    <button class="line-tab-btn" onclick="switchMainTab('B')">B LINE</button>
+                    <button class="line-tab-btn" onclick="switchMainTab('C')">C LINE</button>
+                </nav>
+            `;
+            
+            // 2. 각 라인별 컨텐츠 생성
             for(const line in byLine) {
+                // 첫 번째 라인(A)만 보이게 설정
+                const isActive = line === 'A' ? 'active' : '';
+                
+                // 탭 컨텐츠 래퍼 시작
+                html += `<div id="main-content-${line}" class="tab-content ${isActive}" style="width:100%;">`;
+                
                 let header = `
                     <div class="line-header" style="border-bottom:none;">
                         <div class="line-title">
                             <span>${line} LINE</span>
-                            <div class="progress-bar-container"><div class="progress-bar-fill" id="progress-bar-${line}"></div><span class="progress-bar-text" id="progress-text-${line}">0%</span></div>
+                            <div class="progress-bar-container">
+                                <div class="progress-bar-fill" id="progress-bar-${line}"></div>
+                                <span class="progress-bar-text" id="progress-text-${line}">0%</span>
+                            </div>
                         </div>
-                        ${line==='A'?`<div style="display:flex; gap:5px;"><button id="open-notes-modal-btn" class="icon-btn" title="메모"><i class="uil uil-notes"></i></button><button id="open-export-modal-btn" class="icon-btn" title="다운로드"><i class="uil uil-import"></i></button></div>`:''}
+                        ${line === 'A' ? `<div style="display:flex; gap:5px;">
+                            <button id="open-notes-modal-btn" class="icon-btn" title="메모"><i class="uil uil-notes"></i></button>
+                            <button id="open-export-modal-btn" class="icon-btn" title="다운로드"><i class="uil uil-import"></i></button>
+                        </div>` : ''}
                     </div>`;
-                html+=`<section class="line-schedule-section" data-line="${line}">${header}`;
-                if(byLine[line].length>0) {
+                
+                html += `<section class="line-schedule-section" data-line="${line}" style="border-top-left-radius: 0; border-top-right-radius: 0;">${header}`;
+                
+                if(byLine[line].length > 0) {
                     const rows = byLine[line].map(s => {
-                        const mOpts = managerList.map(m=>`<option value="${m.name}" ${s.manager===m.name?'selected':''}>${m.name}</option>`).join('');
-                        const cOpts = companyList.map(c=>`<option value="${c.name}" ${s.company===c.name?'selected':''}>${c.name}</option>`).join('');
-                        let moOpts = ''; for(let i=1;i<=12;i++) moOpts+=`<option value="${i}월분" ${(s.orderMonth||'').trim()===`${i}월분`?'selected':''}>${i}월분</option>`;
+                        const mOpts = managerList.map(m => `<option value="${m.name}" ${s.manager === m.name ? 'selected' : ''}>${m.name}</option>`).join('');
+                        const cOpts = companyList.map(c => `<option value="${c.name}" ${s.company === c.name ? 'selected' : ''}>${c.name}</option>`).join('');
+                        
+                        let moOpts = ''; 
+                        for(let i = 1; i <= 12; i++) {
+                            moOpts += `<option value="${i}월분" ${(s.orderMonth || '').trim() === `${i}월분` ? 'selected' : ''}>${i}월분</option>`;
+                        }
+                        
+                        const rawNote = s.notes || '';
+                        const isHidden = rawNote.includes('[HIDDEN]');
+                        const cleanNote = rawNote.replace('[HIDDEN]', '').trim();
+                        const hasNote = cleanNote.length > 0;
+                        
+                        const noteIcon = (hasNote && !isHidden) 
+                            ? `<i class="uil uil-comment-alt-notes note-badge-icon" data-tooltip="${cleanNote.replace(/"/g, '&quot;')}"></i>` 
+                            : '';
+
                         return `<tr data-schedule-id="${s.id}" data-line="${line}">
                             <td><select class="form-select" data-field="manager" ${ro}><option value="">-</option>${mOpts}</select></td>
                             <td><select class="form-select" data-field="company" ${ro}><option value="">-</option>${cOpts}</select></td>
-                            <td><input type="text" class="form-input" data-field="model" value="${s.model||''}" ${ro}></td>
+                            <td>
+                                <div class="model-cell-wrapper">
+                                    <input type="text" class="form-input" data-field="model" value="${s.model || ''}" ${ro}>
+                                    ${noteIcon}
+                                </div>
+                            </td>
                             <td><select class="form-select" data-field="orderMonth" ${ro}><option value="">-</option>${moOpts}</select></td>
-                            <td><select class="form-select" data-field="tb" ${ro}><option value="Top" ${s.tb==='Top'?'selected':''}>Top</option><option value="Bot" ${s.tb==='Bot'?'selected':''}>Bot</option><option value="T/O" ${s.tb==='T/O'?'selected':''}>T/O</option><option value="B/O" ${s.tb==='B/O'?'selected':''}>B/O</option></select></td>
-                            <td><input type="text" class="form-input" data-field="lot" value="${s.lot||''}" ${ro}></td>
-                            <td><input type="text" class="form-input" data-field="actualProd" value="${s.actualProd||''}" ${ro}></td>
+                            <td><select class="form-select" data-field="tb" ${ro}><option value="Top" ${s.tb === 'Top' ? 'selected' : ''}>Top</option><option value="Bot" ${s.tb === 'Bot' ? 'selected' : ''}>Bot</option><option value="T/O" ${s.tb === 'T/O' ? 'selected' : ''}>T/O</option><option value="B/O" ${s.tb === 'B/O' ? 'selected' : ''}>B/O</option></select></td>
+                            <td><input type="text" class="form-input" data-field="lot" value="${s.lot || ''}" ${ro}></td>
+                            <td><input type="text" class="form-input" data-field="actualProd" value="${s.actualProd || ''}" ${ro}></td>
                             <td><select class="form-select prod-start-date" data-field="prodStart" ${ro}></select></td>
                             <td><select class="form-select prod-end-date" data-field="prodEnd" ${ro}></select></td>
                             <td style="color:var(--point-gold);">${s.startDate}~${s.endDate}</td>
                         </tr>`;
                     }).join('');
-                    html+=`<div class="table-container"><table class="editable-table">
-                        <colgroup><col style="width:6%"><col style="width:6%"><col><col style="width:6%"><col style="width:6%"><col style="width:8%"><col style="width:6%"><col style="width:8%"><col style="width:8%"><col style="width:20%"></colgroup>
-                        <thead><tr><th>담당</th><th>업체</th><th>모델명</th><th>주문월</th><th>T/B</th><th>LOT</th><th>실생산</th><th>시작</th><th>종료</th><th>예정일</th></tr></thead>
-                        <tbody>${rows}</tbody></table></div>`;
-                } else html+=`<p class="no-line-data-message">일정 없음</p>`;
-                html+=`</section>`;
+                    
+                    html += `<div class="table-container">
+                        <table class="editable-table">
+                            <colgroup>
+                                <col style="width:6%"> <col style="width:6%"> <col> 
+                                <col style="width:6%"> <col style="width:6%"> <col style="width:8%">
+                                <col style="width:6%"> <col style="width:8%"> <col style="width:8%"> <col style="width:20%">
+                            </colgroup>
+                            <thead>
+                                <tr>
+                                    <th>담당</th><th>업체</th><th>모델명</th><th>주문월</th><th>T/B</th><th>LOT</th><th>실생산</th><th>시작</th><th>종료</th><th>예정일</th>
+                                </tr>
+                            </thead>
+                            <tbody>${rows}</tbody>
+                        </table>
+                    </div>`;
+                } else {
+                    html += `<p class="no-line-data-message">일정 없음</p>`;
+                }
+                html += `</section></div>`; // tab-content 닫기
             }
             return html;
         }
@@ -903,6 +1017,40 @@
         function updateTime() {
             const d = new Date(); document.getElementById('current-time').textContent = `${d.getFullYear()}년 ${(d.getMonth()+1).toString().padStart(2,'0')}월 ${d.getDate().toString().padStart(2,'0')}일 ${d.getHours().toString().padStart(2,'0')}시 ${d.getMinutes().toString().padStart(2,'0')}분`;
         }
+    </script>
+
+    <div id="global-tooltip"></div>
+
+    <script>
+        /* -------------------------------------------------------------
+           전역 툴팁 제어 스크립트 (테이블 밖, 화면 최상위에 표시)
+           ------------------------------------------------------------- */
+        const globalTooltip = document.getElementById('global-tooltip');
+
+        document.addEventListener('mouseover', function(e) {
+            // 아이콘에 마우스가 올라갔을 때
+            if (e.target.classList.contains('note-badge-icon')) {
+                const text = e.target.getAttribute('data-tooltip');
+                if (text) {
+                    globalTooltip.textContent = text;
+                    globalTooltip.style.display = 'block';
+                    
+                    const rect = e.target.getBoundingClientRect();
+                    
+                    // 아이콘의 바로 오른쪽 상단에 위치하도록 계산
+                    // (스크롤 위치 포함)
+                    globalTooltip.style.top = (rect.top - 30) + 'px'; 
+                    globalTooltip.style.left = (rect.right + 10) + 'px';
+                }
+            }
+        });
+
+        document.addEventListener('mouseout', function(e) {
+            // 마우스가 떠나면 숨김
+            if (e.target.classList.contains('note-badge-icon')) {
+                globalTooltip.style.display = 'none';
+            }
+        });
     </script>
 </body>
 </html>
