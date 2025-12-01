@@ -1,109 +1,156 @@
+/* =========================================
+   [통계 분석 (Statistics) 전용 스타일]
+   ========================================= */
+
+/* 메인 컨텐츠 영역 */
 .content-area {
-    /* common.css의 padding: 35px;를 덮어씁니다. */
-    padding: 15px 35px 35px 35px; /* 상단 패딩만 15px로 줄임 */
-    
-    align-items: flex-start;
+    align-items: flex-start !important; /* 왼쪽 정렬 */
     flex-direction: column;
+    padding: 30px 35px;
+    gap: 20px;
 }
 
+/* 검색 컨트롤 바 */
 .statistics-controls {
     display: flex;
     gap: 15px;
     align-items: center;
-    margin-bottom: 20px;
-    width: 100%;
+    background-color: var(--card-bg);
+    padding: 15px 25px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    margin-bottom: 10px;
+    width: auto; 
 }
 
-/* common.css의 .editable-table select 스타일 재사용 */
+/* 입력 필드 (연도, 월) */
+.statistics-controls input[type="number"],
 .statistics-controls select {
-    font-family: 'BMDOHYEON', sans-serif;
-    font-weight: bold;
-    font-size: clamp(11px, 1.1vw, 14px);
-    background-color: #1c1c1e;
+    background-color: #15151a;
     color: #fff;
-    border: 1px solid #555;
-    border-radius: 5px;
-    padding: 8px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    padding: 8px 15px;
+    font-family: 'BMDOHYEON', sans-serif;
+    font-size: 1rem;
+    height: 40px;
+    width: 140px;
+    text-align: center;
+    outline: none;
+    transition: all 0.2s;
+    box-sizing: border-box;
 }
 
-/* common.css의 .clickable-box 스타일 재사용 */
+.statistics-controls input[type="number"]:focus,
+.statistics-controls select:focus {
+    border-color: var(--point-gold);
+    box-shadow: 0 0 8px rgba(255, 235, 167, 0.3);
+}
+
+/* [수정 1] 조회 버튼 스타일 변경 (평소엔 다크, 호버 시 포인트) */
 .search-btn {
-    padding: 9px 25px;
+    padding: 8px 30px;
+    height: 40px;
+    font-size: 1rem;
+    
+    /* 기본: 다른 버튼들과 동일한 다크 테마 */
+    background-color: var(--card-bg) !important; 
+    color: var(--text-color) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
 }
 
+.search-btn:hover {
+    /* 호버: 금색 배경 + 남색 글씨 */
+    background-color: var(--point-gold) !important;
+    color: var(--accent-blue) !important;
+    border-color: transparent !important;
+    box-shadow: 0 0 15px rgba(255, 235, 167, 0.4);
+    transform: translateY(-2px);
+}
+
+/* [수정 2] 결과 영역 (Clamp 적용으로 가로 스크롤 방지) */
 #statistics-result-area {
-    width: 100%;
+    /* clamp(최소너비, 권장너비, 최대너비) */
+    /* 화면이 작아져도 600px 이하로는 안 줄어들고, 커지면 95vw까지 늘어나며, 1600px을 넘지 않음 */
+    width: clamp(600px, 95vw, 1600px);
+    
+    flex: 1;
+    overflow: hidden; /* 가로 스크롤 제거 (내용물은 clamp에 맞춰짐) */
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-/* production.css의 .editable-table 스타일 재사용 */
+/* 통계 테이블 */
 .statistics-table {
     width: 100%;
     border-collapse: collapse;
-    font-family: 'BMDOHYEON', sans-serif;
-    table-layout: fixed;
+    font-family: 'Poppins', 'BMJUA', sans-serif;
+    white-space: nowrap;
+    /* 테이블 레이아웃 고정 (칸 너비 준수) */
+    table-layout: fixed; 
 }
 
-.statistics-controls input[type="number"] {
-    font-family: 'BMDOHYEON', sans-serif;
-    font-weight: bold;
-    font-size: clamp(11px, 1.1vw, 14px);
-    background-color: #1c1c1e;
-    color: #fff;
-    border: 1px solid #555;
-    border-radius: 5px;
-    padding: 8px 12px;
-    width: 100px; /* 적절한 너비 지정 */
+.statistics-table th {
+    background-color: #15151a;
+    color: var(--point-gold);
+    padding: 15px;
+    position: sticky; top: 0; z-index: 10;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+    font-size: 1rem;
 }
 
+.statistics-table td {
+    padding: 12px;
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    font-size: 0.95rem;
+    color: var(--text-color);
+    /* 내용이 넘치면 말줄임표 처리 */
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.statistics-table tbody tr:hover {
+    background-color: rgba(255, 235, 167, 0.05);
+}
+
+/* 상태별 강조 색상 */
+.stats-problem-yellow { color: #FFD700 !important; font-weight: bold; }
+.stats-problem-red { color: var(--danger-red) !important; font-weight: bold; }
+
+/* 상세보기 아이콘 버튼 */
 .stats-details-btn {
-    font-size: 1rem;      /* 아이콘 크기 */
-    padding: 5px 8px;     /* 버튼 크기 */
-    font-family: 'BMDOHYEON', sans-serif;
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.2);
     color: #fff;
-    background-color: #3A3A3C;
-    border: 1px solid #555;
-    border-radius: 5px;
+    width: 32px; height: 32px;
+    border-radius: 50%;
     cursor: pointer;
-    transition: background-color 0.2s;
+    transition: all 0.2s;
+    font-size: 1rem;
 }
 .stats-details-btn:hover {
-    background-color: #555;
+    background-color: var(--point-gold);
+    color: var(--accent-blue);
+    border-color: var(--point-gold);
+    transform: scale(1.1);
 }
 
-.editable-table td.stats-problem-yellow {
-    color: #FFD700;
-    font-weight: bold;
-}
-
-.editable-table td.stats-problem-red {
-    color: #FF4500; /* 더 강한 경고색 (오렌지 레드) */
-    font-weight: bold;
-}
-
-/* 3. 상세 내역 모달 스타일 (common.css 재사용 + 커스텀) */
+/* 상세 내역 모달 */
 #details-modal .modal-window {
-    max-width: 800px; /* 모달 너비 */
-    height: 70vh;     /* 모달 높이 */
-}
-
-#details-modal .modal-content {
-    overflow-y: auto; /* 내용 많으면 스크롤 */
-}
-
-/* 4. 상세 내역 모달 안의 테이블 스타일 (common.css 재사용) */
-#details-modal-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-family: 'BMDOHYEON', sans-serif;
-    table-layout: fixed;
+    max-width: 900px;
+    height: 80vh;
 }
 
 #details-modal-table a {
-    color: #00BFFF; /* 밝은 파란색 */
-    text-decoration: underline;
+    color: var(--point-gold);
+    text-decoration: none;
     font-weight: bold;
-    cursor: pointer;
+    border-bottom: 1px dashed var(--point-gold);
 }
 #details-modal-table a:hover {
-    color: #00ffff; /* 사이언 색 */
+    color: #fff;
+    border-bottom-style: solid;
 }
