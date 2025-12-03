@@ -1,90 +1,247 @@
 /* =========================================
-   [AOI 페이지 전용 스타일 - 리뉴얼]
+   [AOI 페이지 전용 스타일 - 높이 오류 완전 해결]
    ========================================= */
 
+/* 1. 레이아웃 및 기본 설정 */
 .content-area {
-    flex-direction: column; padding: 30px; gap: 20px; align-items: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    
+    /* [수정] flex: 1을 사용하여 남은 높이를 자동으로 차지하게 함 (height: 100% 제거) */
+    flex: 1; 
+    
+    /* 상단 패딩으로 헤더와 간격 확보, 하단은 여유 있게 */
+    padding: clamp(15px, 3vw, 40px); 
+    
+    /* 전체 화면 스크롤 방지 */
+    overflow: hidden; 
+    box-sizing: border-box;
+    
+    /* 최소 높이 설정 (헤더/푸터 겹침 방지) */
+    min-height: 0;
 }
 
 .line-schedule-section {
-    width: 100%; max-width: 1600px; background-color: var(--card-bg);
-    border-radius: 12px; padding: 20px; box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+    width: 100%; 
+    max-width: 1600px; 
+    background-color: var(--card-bg);
+    border-radius: 12px; 
+    padding: 20px; 
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
     border: 1px solid rgba(255, 255, 255, 0.08);
-    display: flex; flex-direction: column; gap: 20px; min-height: 600px; 
+    
+    /* [핵심] 부모(content-area)의 남은 공간을 꽉 채우되, 넘치지는 않게 설정 */
+    display: flex; 
+    flex-direction: column; 
+    height: 100%; /* 가용 공간을 모두 씀 */
+    max-height: 100%; /* 더 커지지 않도록 제한 */
+    
+    gap: 20px; 
+    overflow: hidden; /* 내부 요소가 박스를 뚫고 나가지 않게 함 */
+    box-sizing: border-box;
 }
 
 .aoi-header {
-    display: flex; justify-content: space-between; align-items: center;
-    padding-bottom: 15px; border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex; 
+    justify-content: space-between; /* 양쪽 끝 정렬 */
+    align-items: center;            /* 수직 중앙 정렬 */
+    
+    padding-bottom: 15px; 
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    
+    /* [핵심] 자식 요소가 넘칠 경우를 대비 */
+    min-width: 0; 
+    width: 100%;
+    box-sizing: border-box;
+    overflow: visible; /* 내용이 잘리지 않도록 설정 */
 }
 
 .aoi-title {
-    font-family: 'BMDOHYEON', sans-serif; font-size: 1.4rem; color: var(--text-white);
-    display: flex; align-items: center; gap: 10px;
+    font-family: 'BMDOHYEON', sans-serif; 
+    font-size: 1.4rem; 
+    color: var(--text-white);
+    
+    display: flex; 
+    align-items: center; 
+    gap: 10px;
+    
+    /* [핵심] 줄바꿈 방지 및 축소 방지 */
+    white-space: nowrap; 
+    flex-shrink: 0; 
+    
+    /* 텍스트 높이 확보 */
+    line-height: 1.5; 
+    padding-right: 20px; /* 오른쪽 여백 확보 */
 }
 .aoi-title::before {
-    content: ''; display: block; width: 5px; height: 20px;
-    background-color: var(--point-gold); border-radius: 2px;
+    content: ''; 
+    display: block; 
+    width: 5px; 
+    height: 20px;
+    background-color: var(--point-gold); 
+    border-radius: 2px;
+    flex-shrink: 0; /* 장식바도 줄어들지 않게 */
 }
 
-/* 테이블 스타일 */
 .table-container {
-    width: 100%; flex: 1; overflow: auto;
-    border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.05);
+    width: 100%; 
+    
+    /* [핵심] 남은 공간을 모두 차지 */
+    flex: 1; 
+    
+    /* [중요] auto: 내용이 넘칠 때만 스크롤 생성, 아니면 숨김 */
+    overflow: auto; 
+    
+    /* Flexbox 자식의 스크롤 버그 방지용 */
+    min-height: 0; 
+    
+    border-radius: 8px; 
+    border: 1px solid rgba(255, 255, 255, 0.05);
     background-color: rgba(0, 0, 0, 0.2);
 }
 .table-container::-webkit-scrollbar { width: 8px; height: 8px; }
 .table-container::-webkit-scrollbar-track { background: #1f2029; }
 .table-container::-webkit-scrollbar-thumb { background: #555; border-radius: 4px; }
 
+/* 2. 테이블 스타일 (Absolute Positioning 적용) */
 table.aoi-table {
-    width: 100%; border-collapse: collapse;
-    font-family: 'Poppins', 'BMJUA', sans-serif; white-space: nowrap;
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed; /* [필수] 열 너비 고정 */
+    white-space: nowrap;
+    border-spacing: 0;
 }
-table.aoi-table th {
-    background-color: #15151a; color: var(--point-gold);
-    font-weight: bold; padding: 12px 5px; text-align: center;
-    border-bottom: 2px solid rgba(255, 235, 167, 0.2);
-    position: sticky; top: 0; z-index: 10; font-size: 0.85rem;
+
+/* 행 높이 40px로 강력 고정 */
+table.aoi-table tr {
+    height: 40px !important;
 }
+
+/* 셀(th, td) 공통 스타일 */
+table.aoi-table th, 
 table.aoi-table td {
-    padding: 4px; text-align: center;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-    color: #fff; font-size: 0.85rem; height: 36px;
+    height: 40px !important;        /* 높이 40px 고정 */
+    padding: 0 !important;          /* 패딩 제거 */
+    margin: 0 !important;
+    vertical-align: middle !important; /* 수직 중앙 정렬 */
+    box-sizing: border-box !important;
+    font-size: 0.85rem;
+    text-align: center;
+    position: relative; /* [핵심] 내부 요소(input)의 기준점 */
+
+    border-right: 1px solid rgba(255, 255, 255, 0.05) !important;
+}
+table.aoi-table th:last-child,
+table.aoi-table td:last-child {
+    border-right: none !important;
+}
+
+/* 헤더 전용 */
+table.aoi-table th {
+    background-color: #15151a;
+    color: var(--point-gold);
+    font-weight: bold;
+    border-bottom: 2px solid rgba(255, 235, 167, 0.2);
+    position: sticky; top: 0; z-index: 10;
+    line-height: 40px !important; /* 텍스트 수직 정렬 */
+}
+
+/* 데이터 전용 */
+table.aoi-table td {
+    /* [수정] 가로 구분선 (행 구분) 농도 강화 (0.05 -> 0.15) */
+    border-bottom: 1px solid rgba(255, 255, 255, 0.15) !important; 
+    color: #fff;
 }
 table.aoi-table tbody tr:hover { background-color: rgba(255, 235, 167, 0.05); }
-
-/* 입력창 스타일 */
+/* 3. 입력창(Input) 스타일 - Absolute로 강제 맞춤 */
 table.aoi-table input {
-    width: 100%; height: 28px; background: transparent;
-    border: 1px solid transparent; border-radius: 4px;
-    color: #fff; text-align: center; font-family: inherit; font-weight: bold;
-    transition: all 0.2s; font-size: 0.9rem;
+    /* [핵심 솔루션] 절대 위치로 셀 크기에 강제로 맞춤 */
+    position: absolute !important;
+    top: 0;
+    left: 0;
+    width: 100% !important;
+    height: 100% !important;
+    
+    /* 스타일 초기화 */
+    border: none !important;
+    outline: none !important;
+    background: transparent !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    
+    /* 텍스트 스타일 */
+    color: #fff !important;
+    text-align: center !important;
+    font-family: inherit !important;
+    font-weight: bold !important;
+    font-size: 0.9rem !important;
+    
+    /* 브라우저 기본 UI 제거 */
+    -webkit-appearance: none !important;
+    border-radius: 0 !important;
 }
-table.aoi-table input:focus {
-    background-color: #1f2029; border-color: var(--point-gold);
-    outline: none; box-shadow: 0 0 5px rgba(255, 235, 167, 0.3);
+table.aoi-table input[type=number]::-webkit-outer-spin-button,
+table.aoi-table input[type=number]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+table.aoi-table input[type=number] {
+    -moz-appearance: textfield; /* Firefox 전용 */
 }
 
-/* 모델 리스트 모달 */
-.model-list-container {
-    display: flex; flex-direction: column; gap: 10px;
-    max-height: 60vh; overflow-y: auto; padding-right: 5px;
+/* 입력창 포커스 (크기 영향 없는 inset shadow 사용) */
+table.aoi-table input:focus {
+    background-color: #1f2029 !important;
+    box-shadow: inset 0 0 0 1px var(--point-gold) !important;
+    z-index: 2; /* 포커스 시 위로 */
 }
-.model-select-card {
-    background-color: #1a1b23; border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 8px; padding: 15px;
-    display: flex; justify-content: space-between; align-items: center;
-    cursor: pointer; transition: all 0.2s;
+
+/* 4. 모델명 말줄임표 스타일 (td 자체에 적용) */
+.model-name-ellipsis {
+    /* display: block 제거 (td 속성 유지) */
+    
+    /* 말줄임표 필수 속성 */
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    
+    /* 텍스트 정렬 */
+    text-align: center !important;
+    line-height: 40px !important; /* 높이와 동일하게 하여 수직 중앙 정렬 */
+    
+    /* 내용이 셀 경계에 붙지 않도록 (선택 사항) */
+    padding: 0 5px !important; 
 }
-.model-select-card:hover {
-    background-color: rgba(255, 235, 167, 0.1); border-color: var(--point-gold);
-    transform: translateX(5px);
-}
-.model-card-info h4 { margin: 0 0 5px 0; color: #fff; font-family: 'BMDOHYEON'; }
-.model-card-info p { margin: 0; color: #888; font-size: 0.85rem; }
-.model-card-status {
-    font-size: 0.8rem; padding: 4px 8px; border-radius: 4px; font-weight: bold;
-}
-.status-ongoing { background-color: #2D9CDB; color: #fff; }
-.status-pending { background-color: #F2994A; color: #fff; }
+
+/* ------------------------------------------------------------------ */
+/* [기타 모달 및 드롭다운 스타일 (기존 유지)] */
+/* ------------------------------------------------------------------ */
+.model-list-modal .modal-window { width: 95%; max-width: 1400px; height: auto; display: flex; flex-direction: column; margin: 0 auto; box-sizing: border-box; }
+.modal-content { padding: 20px; max-height: 80vh !important; overflow-y: auto; overflow-x: hidden; width: 100%; box-sizing: border-box; }
+.model-list-container { display: flex; flex-direction: column; gap: 10px; width: 100%; }
+.company-section { margin-bottom: 10px; padding-bottom: 0; border-bottom: none; width: 100%; }
+.company-title { background-color: var(--card-bg); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; padding: 12px 20px; cursor: pointer; transition: all 0.2s; font-size: 1.1rem; font-weight: 600; color: var(--text-color); margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center; width: 100%; box-sizing: border-box; }
+.company-title span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-right: 10px; }
+.company-title:hover { background-color: rgba(255, 235, 167, 0.1); }
+.company-title.active { background-color: var(--accent-blue); color: var(--point-gold); border-color: var(--accent-blue); box-shadow: 0 4px 12px rgba(16, 39, 112, 0.4); }
+.company-title i.uil-angle-down { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); font-size: 1.3rem; }
+.company-title.active i.uil-angle-down { transform: rotate(180deg); }
+.accordion-wrapper { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.3s ease-out; }
+.accordion-wrapper.open { grid-template-rows: 1fr; }
+.model-grid { overflow: hidden; display: flex; flex-direction: column; gap: 8px; opacity: 0; transform: translateY(-10px); transition: opacity 0.3s ease, transform 0.3s ease, padding 0.3s ease; padding: 0; }
+.accordion-wrapper.open .model-grid { opacity: 1; transform: translateY(0); padding: 10px 5px 15px 5px; }
+.model-select-card { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 15px 25px; cursor: pointer; transition: all 0.2s ease; display: flex; justify-content: space-between; align-items: center; gap: 40px; width: 100%; box-sizing: border-box; }
+.model-select-card:hover { background: rgba(255, 235, 167, 0.15); border-color: var(--point-gold); transform: translateY(-2px); }
+.model-name { flex: 1; min-width: 0; color: #fff; font-size: 1.15rem; font-weight: 600; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: left; }
+.model-info { flex-shrink: 0; font-size: 1rem; color: #bbb; display: flex; align-items: center; gap: 30px; white-space: nowrap; font-family: 'Roboto Mono', monospace; }
+.model-lot { color: var(--point-gold); font-weight: 700; min-width: 120px; text-align: right; }
+.date-range-wrapper { display: flex; align-items: center; gap: 5px; background-color: rgba(255, 255, 255, 0.05); padding: 5px 12px; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.1); }
+.period-select { background-color: #1a1b23; color: #fff; border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 4px; padding: 5px 2px; font-family: 'Roboto Mono', monospace; font-size: 0.9rem; cursor: pointer; outline: none; transition: all 0.2s; text-align: center; }
+.year-select { width: 70px; }
+.month-select { width: 50px; }
+.period-select:hover { border-color: var(--point-gold); }
+.period-select:focus { border-color: var(--point-gold); box-shadow: 0 0 5px rgba(255, 235, 167, 0.3); }
+.range-separator { color: var(--point-gold); font-weight: bold; margin: 0 5px; }
+.refresh-btn { background: transparent; border: none; color: var(--point-gold); cursor: pointer; font-size: 1.2rem; padding: 0 5px; margin-left: 5px; transition: transform 0.3s; }
+.refresh-btn:hover { transform: rotate(180deg); color: #fff; }

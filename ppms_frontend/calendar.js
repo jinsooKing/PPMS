@@ -178,3 +178,4 @@ function getWeekNumber(d) {
     
     return Math.ceil((date.getDate() + dayOfWeek) / 7);
 }
+

@@ -539,3 +539,47 @@ table.editable-table {
 
 /* 이전/다음 달 */
 .day-cell.other-month { opacity: 0.3; }
+
+.month-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    padding: 10px 0;
+}
+
+/* 월 선택 셀 */
+.month-cell {
+    padding: 10px;
+    text-align: center;
+    border-radius: 6px;
+    cursor: pointer;
+    background-color: var(--card-bg); /* 기본 배경 */
+    color: var(--text-color);
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.2s;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.month-cell:hover {
+    background-color: #3a3a3c;
+}
+
+/* 선택된 월 스타일 */
+.month-cell.selected-start {
+    background-color: var(--point-gold) !important;
+    color: var(--accent-blue) !important;
+    font-weight: bold;
+}
+
+.month-cell.in-range {
+    background-color: rgba(255, 235, 167, 0.2) !important;
+}
+
+/* 기간 선택 버튼 텍스트가 길어질 경우 대비 */
+.aoi-controls .footer-btn span {
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}

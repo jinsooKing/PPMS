@@ -10,6 +10,7 @@ from routes.production import bp as production_bp
 from routes.statistics import bp as statistics_bp
 from routes.auth import bp as auth_bp
 from routes.dip import bp as dip_bp
+from routes.aoi import bp as aoi_bp
 
 # 'login_manager' 설정 (db, bcrypt는 설정 필요 없음)
 @login_manager.user_loader
@@ -35,6 +36,7 @@ def create_app():
     app.register_blueprint(statistics_bp)
     app.register_blueprint(auth_bp)
     app.register_blueprint(dip_bp)
+    app.register_blueprint(aoi_bp)
 
     # 5. DB 테이블 생성 (기존과 동일)
     with app.app_context():

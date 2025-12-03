@@ -122,3 +122,65 @@ class DipHistory(db.Model):
             'type': self.type,
             'quantity': self.quantity
         }
+        
+        # models.py에 추가
+class AoiRecord(db.Model):
+    __tablename__ = 'aoi_records'
+
+    id = db.Column(db.Integer, primary_key=True)
+    
+    # 1. 고유 주문 키
+    model = db.Column(db.String(100), nullable=False)
+    order_year = db.Column(db.Integer, nullable=False)
+    order_month = db.Column(db.String(20), nullable=False)
+    lot = db.Column(db.String(50), nullable=False) 
+    
+    # 2. 기본 정보
+    date = db.Column(db.String(20))      # 검사일
+    
+    # 3. 검사 기준 정보
+    inspection_point = db.Column(db.Integer, default=0) # 검사 포인트
+    inspection_qty = db.Column(db.Integer, default=0)   # 검사 수량
+    
+    # 4. 세부 불량 유형 (14개)
+    reverse = db.Column(db.Integer, default=0)    # 역삽
+    missing = db.Column(db.Integer, default=0)    # 미삽
+    wrong = db.Column(db.Integer, default=0)      # 오삽
+    skewed = db.Column(db.Integer, default=0)     # 틀어짐
+    flipped = db.Column(db.Integer, default=0)    # 뒤집힘
+    unsoldered = db.Column(db.Integer, default=0) # 미납
+    damaged = db.Column(db.Integer, default=0)    # 파손
+    manhattan = db.Column(db.Integer, default=0)  # 맨하탄
+    short = db.Column(db.Integer, default=0)      # 쇼트
+    cold = db.Column(db.Integer, default=0)       # 냉납
+    lifted = db.Column(db.Integer, default=0)     # 들뜸
+    detached = db.Column(db.Integer, default=0)   # 이탈
+    material = db.Column(db.Integer, default=0)   # 원자재 불량
+    dip = db.Column(db.Integer, default=0)        # DIP 불량
+    
+    # 5. 합계 데이터
+    total_defect = db.Column(db.Integer, default=0) # 총 불량 (자동계산)
+    good_qty = db.Column(db.Integer, default=0)     # 양품 (자동계산)
+    
+    created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'model': self.model,
+            'year': self.order_year,
+            'month': self.order_month,
+            'lot': self.lot,
+            'date': self.date,
+            'inspection_point': self.inspection_point,
+            'inspection_qty': self.inspection_qty,
+            # 불량 상세
+            'reverse': self.reverse, 'missing': self.missing, 'wrong': self.wrong,
+            'skewed': self.skewed, 'flipped': self.flipped, 'unsoldered': self.unsoldered,
+            'damaged': self.damaged, 'manhattan': self.manhattan, 'short': self.short,
+            'cold': self.cold, 'lifted': self.lifted, 'detached': self.detached,
+            'material': self.material, 'dip': self.dip,
+            # 합계
+            'total_defect': self.total_defect,
+            'good_qty': self.good_qty
+        }
