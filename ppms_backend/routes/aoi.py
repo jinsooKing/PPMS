@@ -160,3 +160,14 @@ def update_aoi_record(record_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({'success': False, 'message': str(e)}), 500
+    
+@bp.route('/records/<int:record_id>', methods=['DELETE'])
+def delete_aoi_record(record_id):
+    try:
+        record = AoiRecord.query.get_or_404(record_id)
+        db.session.delete(record)
+        db.session.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500
