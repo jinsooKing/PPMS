@@ -55,30 +55,43 @@
                     <table class="aoi-table">
                         <colgroup>
                             <col style="width: 200px;"> 
-                            <col style="width: 80px;">  
-                            <col style="width: 80px;">  
-                            <col style="width: 80px;">  
-                            <col style="width: 80px;">  
+                            <col style="width: 80px;" class="detail-col group-basic">
+                            <col style="width: 80px;" class="detail-col group-basic">
+                            <col style="width: 80px;" class="detail-col group-basic">
+                            <col style="width: 80px;" class="detail-col group-basic">
                             
                             <col style="width: 80px;"> 
-                            <col style="width: 60px;" span="5" class="detail-col group-a"> 
+                            <col style="width: 60px;" class="detail-col group-a">
+                            <col style="width: 60px;" class="detail-col group-a">
+                            <col style="width: 60px;" class="detail-col group-a">
+                            <col style="width: 60px;" class="detail-col group-a">
+                            <col style="width: 60px;" class="detail-col group-a">
                             
                             <col style="width: 80px;"> 
-                            <col style="width: 60px;" span="3" class="detail-col group-b"> 
+                            <col style="width: 60px;" class="detail-col group-b">
+                            <col style="width: 60px;" class="detail-col group-b">
+                            <col style="width: 60px;" class="detail-col group-b">
                             
                             <col style="width: 80px;"> 
-                            <col style="width: 60px;" span="3" class="detail-col group-c"> 
+                            <col style="width: 60px;" class="detail-col group-c">
+                            <col style="width: 60px;" class="detail-col group-c">
+                            <col style="width: 60px;" class="detail-col group-c">
                             
                             <col style="width: 80px;"> 
-                            <col style="width: 60px;" span="2" class="detail-col group-d"> 
+                            <col style="width: 60px;" class="detail-col group-d">
+                            <col style="width: 60px;" class="detail-col group-d">
+                            
+                            <col style="width: auto;">
                         </colgroup>
                         <thead>
                             <tr>
-                                <th class="model-name-ellipsis">모델명</th>
-                                <th>Point</th>
-                                <th>수량</th>
-                                <th>양품</th>
-                                <th>총불량</th>
+                                <th class="group-toggle-header model-name-ellipsis" onclick="toggleGroup('basic')" style="text-align:center;">
+                                    모델명 <i class="uil uil-angle-right"></i>
+                                </th>
+                                <th class="detail-col group-basic">Point</th>
+                                <th class="detail-col group-basic">수량</th>
+                                <th class="detail-col group-basic">양품</th>
+                                <th class="detail-col group-basic">총불량</th>
                                 
                                 <th>실장오류(A)</th>
                                 <th class="detail-col group-a">미삽</th>
@@ -100,7 +113,8 @@
                                 <th>기타(D)</th>
                                 <th class="detail-col group-d">원자재</th>
                                 <th class="detail-col group-d">DIP</th>
-                            </tr>
+                                
+                                <th></th> </tr>
                         </thead>
                         <tbody id="aoi-list-body"></tbody>
                     </table>
@@ -160,47 +174,61 @@
             document.getElementById('forward-btn').addEventListener('click', () => history.forward());
 
             // ----------------------------------------------------------------
-            // [기능 0] 뷰 모드 토글 (통합 버튼)
+            // [기능 0] 뷰 모드 토글 (통합 버튼) -> 불량 열만 제어
             // ----------------------------------------------------------------
             const toggleViewBtn = document.getElementById('toggle-view-btn');
-            let isDetailMode = false; // 기본값: 간편보기
+            let isDetailMode = false; // 기본: 간편보기 (숨김)
 
             if (toggleViewBtn) {
                 toggleViewBtn.addEventListener('click', () => {
-                    isDetailMode = !isDetailMode; // 상태 반전
+                    isDetailMode = !isDetailMode; 
                     updateViewMode();
+                    // 테이블 레이아웃 재계산을 위해 보정 함수 호출
+                    if(typeof adjustTableScrollbar === 'function') adjustTableScrollbar();
                 });
             }
 
             function updateViewMode() {
                 const btnIcon = toggleViewBtn.querySelector('i');
                 const btnText = toggleViewBtn.querySelector('span');
-                const detailGroups = ['a', 'b', 'c', 'd'];
+                const defectGroups = ['a', 'b', 'c', 'd'];
 
                 if (isDetailMode) {
-                    // [자세히 보기 상태]
-                    toggleViewBtn.classList.add('detail-active'); // 색상 변경용 클래스
+                    toggleViewBtn.classList.add('detail-active'); 
                     btnIcon.className = 'uil uil-eye-slash';
                     btnText.textContent = '간편 보기';
                     
-                    // 상세 열 표시
-                    detailGroups.forEach(g => {
+                    defectGroups.forEach(g => {
                         document.querySelectorAll(`.detail-col.group-${g}`).forEach(col => col.classList.add('visible'));
                     });
                 } else {
-                    // [간편 보기 상태]
                     toggleViewBtn.classList.remove('detail-active');
                     btnIcon.className = 'uil uil-eye';
                     btnText.textContent = '자세히 보기';
                     
-                    // 상세 열 숨김
-                    detailGroups.forEach(g => {
+                    defectGroups.forEach(g => {
                         document.querySelectorAll(`.detail-col.group-${g}`).forEach(col => col.classList.remove('visible'));
                     });
                 }
             }
 
-            // 관리(삭제) 모드
+            // 스크롤바 너비 보정
+            function adjustTableScrollbar() {
+                const container = document.querySelector('.table-container');
+                const table = document.querySelector('.aoi-table');
+                const thead = table.querySelector('thead');
+                if (!container || !thead) return;
+
+                const scrollbarWidth = container.offsetWidth - container.clientWidth;
+                // thead의 마지막 th에 패딩 부여 (빈 열이 없을 경우 유용)
+                const lastTh = thead.querySelector('tr:first-child th:last-child');
+                if (lastTh) {
+                    lastTh.style.paddingRight = scrollbarWidth > 0 ? `${scrollbarWidth}px` : '0';
+                }
+            }
+            window.addEventListener('resize', adjustTableScrollbar);
+
+            // 관리/삭제 모드
             const manageBtn = document.getElementById('manage-btn');
             const aoiTable = document.querySelector('.aoi-table');
             let isDeleteMode = false;
@@ -338,7 +366,7 @@
                     const records = await response.json();
                     
                     if (!records || records.length === 0) {
-                        tbody.innerHTML = `<tr><td colspan="18" style="padding:30px; color:#666;">기록 없음</td></tr>`;
+                        tbody.innerHTML = `<tr><td colspan="20" style="padding:30px; color:#666;">기록 없음</td></tr>`;
                         return;
                     }
 
@@ -353,12 +381,11 @@
 
                         return `
                         <tr data-id="${r.id}">
-                            <td class="model-name-ellipsis" title="${r.model}">${r.model}</td>
-                            <td><input type="number" value="${safe(r.inspection_point)}" onchange="updateRecord(${r.id}, 'inspection_point', this.value)"></td>
-                            <td><input type="number" value="${safe(r.inspection_qty)}" onchange="updateRecord(${r.id}, 'inspection_qty', this.value)"></td>
-                            
-                            <td class="good-col" style="color:${goodColor}; font-weight:bold;">${safe(r.good_qty)}</td>
-                            <td class="defect-total-col" style="color:var(--danger-red); font-weight:bold;">${safe(r.total_defect)}</td>
+                            <td class="model-name-ellipsis" onclick="toggleGroup('basic')" style="cursor:pointer;" title="${r.model}">${r.model}</td>
+                            <td class="detail-col group-basic"><input type="number" value="${safe(r.inspection_point)}" onchange="updateRecord(${r.id}, 'inspection_point', this.value)"></td>
+                            <td class="detail-col group-basic"><input type="number" value="${safe(r.inspection_qty)}" onchange="updateRecord(${r.id}, 'inspection_qty', this.value)"></td>
+                            <td class="detail-col group-basic good-col" style="color:${goodColor}; font-weight:bold;">${safe(r.good_qty)}</td>
+                            <td class="detail-col group-basic defect-total-col" style="color:var(--danger-red); font-weight:bold;">${safe(r.total_defect)}</td>
                             
                             <td class="group-sum-cell">${sumA}</td>
                             <td class="detail-col group-a"><input type="number" value="${safe(r.missing)}" onchange="updateRecord(${r.id}, 'missing', this.value)"></td>
@@ -380,14 +407,26 @@
                             <td class="group-sum-cell">${sumD}</td>
                             <td class="detail-col group-d"><input type="number" value="${safe(r.material)}" onchange="updateRecord(${r.id}, 'material', this.value)"></td>
                             <td class="detail-col group-d"><input type="number" value="${safe(r.dip)}" onchange="updateRecord(${r.id}, 'dip', this.value)"></td>
-                        </tr>`;
+                            
+                            <td></td> </tr>`;
                     }).join('');
                     
-                    // 테이블 렌더링 후 현재 뷰 모드에 맞춰 상세 열 표시/숨김 적용
+                    // 렌더링 후 뷰 모드 적용 및 스크롤 보정
                     updateViewMode();
-                    
+                    adjustTableScrollbar();
+
                 } catch(e) { console.error(e); }
             }
+
+            // 전역 함수: 개별 그룹 토글
+            window.toggleGroup = function(groupName) {
+                const cols = document.querySelectorAll(`.detail-col.group-${groupName}`);
+                const isOpened = cols[0].classList.contains('visible');
+                cols.forEach(col => {
+                    if (isOpened) col.classList.remove('visible');
+                    else col.classList.add('visible');
+                });
+            };
 
             window.updateRecord = async function (id, field, value) {
                 if (isDeleteMode) return;
@@ -398,7 +437,7 @@
                     });
                     const res = await response.json();
                     if (res.success) {
-                        renderAoiTable(); // 합계 갱신
+                        renderAoiTable();
                     }
                 } catch (e) { console.error(e); }
             };
