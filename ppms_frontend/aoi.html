@@ -42,13 +42,24 @@
                 <div class="aoi-header">
                     <div class="aoi-title">금일 검사 현황</div>
                     
-                    <button id="toggle-view-btn" class="view-toggle-btn">
-                        <i class="uil uil-eye"></i> <span>자세히 보기</span>
-                    </button>
+                    <div class="header-command-bar">
+                        <i class="uil uil-keyboard cmd-icon"></i>
+                        <input type="text" id="command-input" placeholder="명령어 입력 (예: 미삽 1)" autocomplete="off">
+                    </div>
 
-                    <button id="manage-btn" class="manage-btn">
-                        <i class="uil uil-cog"></i> 관리
-                    </button>
+                    <div class="header-btn-group">
+                        <button id="pin-mode-btn" class="header-btn" title="모델 고정 모드">
+                            <i class="uil uil-map-pin-alt"></i> <span>고정</span>
+                        </button>
+
+                        <button id="toggle-view-btn" class="header-btn">
+                            <i class="uil uil-eye"></i> <span>자세히 보기</span>
+                        </button>
+    
+                        <button id="manage-btn" class="header-btn">
+                            <i class="uil uil-cog"></i> <span>관리</span>
+                        </button>
+                    </div>
                 </div>
 
                 <div class="table-container">
@@ -60,61 +71,51 @@
                             <col style="width: 80px;" class="detail-col group-basic">
                             <col style="width: 80px;" class="detail-col group-basic">
                             
-                            <col style="width: 80px;"> 
-                            <col style="width: 60px;" class="detail-col group-a">
-                            <col style="width: 60px;" class="detail-col group-a">
-                            <col style="width: 60px;" class="detail-col group-a">
-                            <col style="width: 60px;" class="detail-col group-a">
-                            <col style="width: 60px;" class="detail-col group-a">
+                            <col class="group-sum-col" style="width: 80px;"> 
+                            <col style="width: 60px;" span="5" class="detail-col group-a"> 
                             
-                            <col style="width: 80px;"> 
-                            <col style="width: 60px;" class="detail-col group-b">
-                            <col style="width: 60px;" class="detail-col group-b">
-                            <col style="width: 60px;" class="detail-col group-b">
+                            <col class="group-sum-col" style="width: 80px;"> 
+                            <col style="width: 60px;" span="3" class="detail-col group-b"> 
                             
-                            <col style="width: 80px;"> 
-                            <col style="width: 60px;" class="detail-col group-c">
-                            <col style="width: 60px;" class="detail-col group-c">
-                            <col style="width: 60px;" class="detail-col group-c">
+                            <col class="group-sum-col" style="width: 80px;"> 
+                            <col style="width: 60px;" span="3" class="detail-col group-c"> 
                             
-                            <col style="width: 80px;"> 
-                            <col style="width: 60px;" class="detail-col group-d">
-                            <col style="width: 60px;" class="detail-col group-d">
+                            <col class="group-sum-col" style="width: 80px;"> 
+                            <col style="width: 60px;" span="2" class="detail-col group-d">
                             
-                            <col style="width: auto;">
+                            <col class="spacer-col" style="width: auto;">
                         </colgroup>
                         <thead>
                             <tr>
-                                <th class="group-toggle-header model-name-ellipsis" onclick="toggleGroup('basic')" style="text-align:center;">
-                                    모델명 <i class="uil uil-angle-right"></i>
-                                </th>
+                                <th class="model-name-ellipsis" style="text-align:center;">모델명</th>
                                 <th class="detail-col group-basic">Point</th>
                                 <th class="detail-col group-basic">수량</th>
                                 <th class="detail-col group-basic">양품</th>
                                 <th class="detail-col group-basic">총불량</th>
                                 
-                                <th>실장오류(A)</th>
+                                <th class="sum-header">실장오류</th>
                                 <th class="detail-col group-a">미삽</th>
                                 <th class="detail-col group-a">오삽</th>
                                 <th class="detail-col group-a">역삽</th>
                                 <th class="detail-col group-a">틀어짐</th>
                                 <th class="detail-col group-a">뒤집힘</th>
                                 
-                                <th>부품결함(B)</th>
+                                <th class="sum-header">부품결함</th>
                                 <th class="detail-col group-b">파손</th>
                                 <th class="detail-col group-b">맨하탄</th>
                                 <th class="detail-col group-b">이탈</th>
                                 
-                                <th>납땜불량(C)</th>
+                                <th class="sum-header">납땜불량</th>
                                 <th class="detail-col group-c">냉납</th>
                                 <th class="detail-col group-c">미납</th>
                                 <th class="detail-col group-c">쇼트</th>
                                 
-                                <th>기타(D)</th>
+                                <th class="sum-header">기타</th>
                                 <th class="detail-col group-d">원자재</th>
                                 <th class="detail-col group-d">DIP</th>
                                 
-                                <th></th> </tr>
+                                <th></th>
+                            </tr>
                         </thead>
                         <tbody id="aoi-list-body"></tbody>
                     </table>
@@ -136,6 +137,8 @@
             </div>
         </footer>
     </div>
+
+    <div id="toast-container"></div>
 
     <div class="modal-overlay model-list-modal">
         <div class="modal-window">
@@ -173,17 +176,21 @@
             document.getElementById('home-btn').addEventListener('click', () => window.location.href = 'index.html');
             document.getElementById('forward-btn').addEventListener('click', () => history.forward());
 
-            // ----------------------------------------------------------------
-            // [기능 0] 뷰 모드 토글 (통합 버튼) -> 불량 열만 제어
-            // ----------------------------------------------------------------
             const toggleViewBtn = document.getElementById('toggle-view-btn');
-            let isDetailMode = false; // 기본: 간편보기 (숨김)
+            const pinModeBtn = document.getElementById('pin-mode-btn');
+            const manageBtn = document.getElementById('manage-btn');
+            const commandInput = document.getElementById('command-input');
+            const table = document.querySelector('.aoi-table');
+            
+            let isDetailMode = false;
+            let isPinMode = false;
+            let isDeleteMode = false;
+            let pinnedRowId = null;
 
             if (toggleViewBtn) {
                 toggleViewBtn.addEventListener('click', () => {
                     isDetailMode = !isDetailMode; 
                     updateViewMode();
-                    // 테이블 레이아웃 재계산을 위해 보정 함수 호출
                     if(typeof adjustTableScrollbar === 'function') adjustTableScrollbar();
                 });
             }
@@ -192,35 +199,196 @@
                 const btnIcon = toggleViewBtn.querySelector('i');
                 const btnText = toggleViewBtn.querySelector('span');
                 const defectGroups = ['a', 'b', 'c', 'd'];
+                const basicGroupCols = document.querySelectorAll('.detail-col.group-basic');
+                const sumCols = table.querySelectorAll('colgroup .group-sum-col');
+                const sumHeaders = table.querySelectorAll('thead .sum-header');
+                const sumCells = table.querySelectorAll('tbody .group-sum-cell');
+                const spacerCol = document.querySelector('col.spacer-col');
 
                 if (isDetailMode) {
-                    toggleViewBtn.classList.add('detail-active'); 
+                    toggleViewBtn.classList.add('active'); 
                     btnIcon.className = 'uil uil-eye-slash';
                     btnText.textContent = '간편 보기';
                     
+                    sumCols.forEach(el => el.style.display = 'none');
+                    sumHeaders.forEach(el => el.style.display = 'none');
+                    sumCells.forEach(el => el.style.display = 'none');
+
+                    basicGroupCols.forEach(col => col.classList.add('visible'));
                     defectGroups.forEach(g => {
                         document.querySelectorAll(`.detail-col.group-${g}`).forEach(col => col.classList.add('visible'));
                     });
+                    
+                    table.style.width = 'max-content';
+                    if(spacerCol) spacerCol.style.width = '0px';
+
                 } else {
-                    toggleViewBtn.classList.remove('detail-active');
+                    toggleViewBtn.classList.remove('active');
                     btnIcon.className = 'uil uil-eye';
                     btnText.textContent = '자세히 보기';
                     
+                    sumCols.forEach(el => {
+                        el.style.display = 'table-column';
+                        el.style.width = 'auto'; 
+                    });
+                    sumHeaders.forEach(el => el.style.display = 'table-cell');
+                    sumCells.forEach(el => el.style.display = 'table-cell');
+                    
+                    basicGroupCols.forEach(col => col.classList.remove('visible'));
                     defectGroups.forEach(g => {
                         document.querySelectorAll(`.detail-col.group-${g}`).forEach(col => col.classList.remove('visible'));
                     });
+
+                    table.style.width = '100%';
+                    if(spacerCol) spacerCol.style.width = '0px';
                 }
             }
 
-            // 스크롤바 너비 보정
+            if (pinModeBtn) {
+                pinModeBtn.addEventListener('click', () => {
+                    if (isDeleteMode) return;
+                    isPinMode = !isPinMode;
+                    if (isPinMode) {
+                        pinModeBtn.classList.add('active');
+                        commandInput.placeholder = "모델명을 클릭하여 고정하세요.";
+                    } else {
+                        pinModeBtn.classList.remove('active');
+                        commandInput.placeholder = "명령어 입력 (예: 미삽 1)";
+                        pinnedRowId = null;
+                        document.querySelectorAll('.pinned-row').forEach(row => row.classList.remove('pinned-row'));
+                    }
+                });
+            }
+
+            if (manageBtn) {
+                manageBtn.addEventListener('click', () => {
+                    if (isPinMode) pinModeBtn.click();
+                    isDeleteMode = !isDeleteMode;
+                    const tableEl = document.querySelector('.aoi-table');
+                    if (isDeleteMode) {
+                        manageBtn.classList.add('active');
+                        manageBtn.querySelector('span').textContent = '완료';
+                        manageBtn.querySelector('i').className = 'uil uil-check';
+                        tableEl.classList.add('delete-mode');
+                    } else {
+                        manageBtn.classList.remove('active');
+                        manageBtn.querySelector('span').textContent = '관리';
+                        manageBtn.querySelector('i').className = 'uil uil-cog';
+                        tableEl.classList.remove('delete-mode');
+                    }
+                });
+            }
+
+            document.getElementById('aoi-list-body').addEventListener('click', async (e) => {
+                const row = e.target.closest('tr');
+                if (!row) return;
+                const id = row.dataset.id;
+                const modelNameTarget = e.target.closest('.model-name-ellipsis');
+
+                if (isDeleteMode) {
+                    const modelName = row.querySelector('.model-name-ellipsis').textContent;
+                    if (confirm(`[${modelName}] 기록을 삭제하시겠습니까?`)) {
+                        await deleteAoiRecord(id, row);
+                    }
+                    return;
+                }
+
+                if (modelNameTarget) {
+                    if (isPinMode) {
+                        if (pinnedRowId !== id) {
+                            document.querySelectorAll('.pinned-row').forEach(r => r.classList.remove('pinned-row'));
+                            row.classList.add('pinned-row');
+                            pinnedRowId = id;
+                            const name = modelNameTarget.textContent;
+                            commandInput.placeholder = `[${name}] 입력 대기...`;
+                            commandInput.focus();
+                        }
+                    } else {
+                        toggleGroup('basic');
+                    }
+                }
+            });
+
+            const cmdMap = {
+                '미삽': 'missing', 'ㅁㅅ': 'missing',
+                '오삽': 'wrong', 'ㅇㅅ': 'wrong',
+                '역삽': 'reverse', 'ㅇㅇ': 'reverse', '역': 'reverse',
+                '틀어짐': 'skewed', 'ㅌㅇ': 'skewed',
+                '뒤집힘': 'flipped', 'ㄷㅈ': 'flipped', '뒤': 'flipped',
+                '파손': 'damaged', 'ㅍㅅ': 'damaged',
+                '맨하탄': 'manhattan', 'ㅁㅎ': 'manhattan', '맨': 'manhattan',
+                '이탈': 'detached', 'ㅇㅌ': 'detached',
+                '냉납': 'cold', 'ㄴㄴ': 'cold',
+                '미납': 'unsoldered', 'ㅁㄴ': 'unsoldered',
+                '쇼트': 'short', 'ㅅㅌ': 'short',
+                '원자재': 'material', 'ㅇㅈ': 'material', '원': 'material',
+                'dip': 'dip', '딮': 'dip', 'ㄷ': 'dip',
+            };
+
+            commandInput.addEventListener('keydown', async (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (!pinnedRowId) {
+                        showToast('고정된 모델이 없습니다.', 'error');
+                        return;
+                    }
+                    const text = commandInput.value.trim();
+                    if (!text) return;
+                    const parts = text.split(' ');
+                    if (parts.length < 2) {
+                        showToast('형식 오류 (예: 미삽 1)', 'error');
+                        return;
+                    }
+                    const typeKey = parts[0];
+                    const qty = parseInt(parts[1]);
+                    const dbField = cmdMap[typeKey];
+                    if (!dbField) {
+                        showToast(`알 수 없는 유형: ${typeKey}`, 'error');
+                        return;
+                    }
+                    if (isNaN(qty)) return;
+
+                    const row = document.querySelector(`tr[data-id="${pinnedRowId}"]`);
+                    const input = row.querySelector(`input[onchange*="'${dbField}'"]`);
+                    if (!input) return;
+                    const currentVal = parseInt(input.value) || 0;
+                    const newVal = currentVal + qty;
+                    await window.updateRecord(pinnedRowId, dbField, newVal);
+                    commandInput.value = '';
+                    commandInput.focus();
+                    showToast(`${typeKey} +${qty} 처리됨`);
+                }
+            });
+
+            function showToast(msg, type = 'success') {
+                const container = document.getElementById('toast-container');
+                const toast = document.createElement('div');
+                toast.className = `toast-msg ${type}`;
+                toast.innerText = msg;
+                container.appendChild(toast);
+                setTimeout(() => toast.remove(), 2000);
+            }
+
+            async function deleteAoiRecord(id, rowElement) {
+                try {
+                    const response = await fetch(`http://127.0.0.1:5000/api/aoi/records/${id}`, { method: 'DELETE' });
+                    const res = await response.json();
+                    if (res.success) {
+                        rowElement.remove();
+                        if(pinnedRowId === id) {
+                            pinnedRowId = null;
+                            commandInput.placeholder = "명령어 입력";
+                        }
+                    } else alert('삭제 실패');
+                } catch (e) { alert('오류 발생'); }
+            }
+
             function adjustTableScrollbar() {
                 const container = document.querySelector('.table-container');
                 const table = document.querySelector('.aoi-table');
                 const thead = table.querySelector('thead');
                 if (!container || !thead) return;
-
                 const scrollbarWidth = container.offsetWidth - container.clientWidth;
-                // thead의 마지막 th에 패딩 부여 (빈 열이 없을 경우 유용)
                 const lastTh = thead.querySelector('tr:first-child th:last-child');
                 if (lastTh) {
                     lastTh.style.paddingRight = scrollbarWidth > 0 ? `${scrollbarWidth}px` : '0';
@@ -228,55 +396,10 @@
             }
             window.addEventListener('resize', adjustTableScrollbar);
 
-            // 관리/삭제 모드
-            const manageBtn = document.getElementById('manage-btn');
-            const aoiTable = document.querySelector('.aoi-table');
-            let isDeleteMode = false;
-
-            if (manageBtn) {
-                manageBtn.addEventListener('click', () => {
-                    isDeleteMode = !isDeleteMode;
-                    if (isDeleteMode) {
-                        manageBtn.classList.add('active');
-                        manageBtn.innerHTML = '<i class="uil uil-check"></i> 완료';
-                        aoiTable.classList.add('delete-mode');
-                    } else {
-                        manageBtn.classList.remove('active');
-                        manageBtn.innerHTML = '<i class="uil uil-cog"></i> 관리';
-                        aoiTable.classList.remove('delete-mode');
-                    }
-                });
-            }
-
-            // 삭제 이벤트
-            document.getElementById('aoi-list-body').addEventListener('click', async (e) => {
-                if (!isDeleteMode) return;
-                const row = e.target.closest('tr');
-                if (!row) return;
-                const id = row.dataset.id;
-                const modelName = row.querySelector('.model-name-ellipsis').textContent;
-                if (confirm(`[${modelName}] 기록을 삭제하시겠습니까?`)) {
-                    await deleteAoiRecord(id, row);
-                }
-            });
-
-            async function deleteAoiRecord(id, rowElement) {
-                try {
-                    const response = await fetch(`http://127.0.0.1:5000/api/aoi/records/${id}`, { method: 'DELETE' });
-                    const res = await response.json();
-                    if (res.success) rowElement.remove();
-                    else alert('삭제 실패');
-                } catch (e) { alert('오류 발생'); }
-            }
-
-            // 초기화
             renderAoiTable();
             setInterval(updateTime, 1000);
             updateTime();
 
-            // ----------------------------------------------------------------
-            // [기능 1] 모델 추가 및 기간 선택
-            // ----------------------------------------------------------------
             const modelAddBtn = document.querySelector('.aoi-add-btn');
             const modelModal = document.querySelector('.model-list-modal');
             const closeModalBtn = document.querySelector('.close-modal-btn');
@@ -294,7 +417,6 @@
                 sYearSel.innerHTML = yearOpts; eYearSel.innerHTML = yearOpts;
                 let monthOpts = ''; for(let m=1; m<=12; m++) monthOpts+=`<option value="${m}">${m}월</option>`;
                 sMonthSel.innerHTML = monthOpts; eMonthSel.innerHTML = monthOpts;
-                
                 const prev = new Date(now.getFullYear(), now.getMonth()-1, 1);
                 const next = new Date(now.getFullYear(), now.getMonth()+1, 1);
                 sYearSel.value = prev.getFullYear(); sMonthSel.value = prev.getMonth()+1;
@@ -328,9 +450,7 @@
                     title.innerHTML=`<span><i class="uil uil-building"></i> ${group.company} (${group.models.length})</span> <i class="uil uil-angle-down"></i>`;
                     const wrapper = document.createElement('div'); wrapper.className='accordion-wrapper';
                     const grid = document.createElement('div'); grid.className='model-grid';
-                    
                     title.addEventListener('click', ()=>{ title.classList.toggle('active'); wrapper.classList.toggle('open'); });
-                    
                     group.models.forEach(item => {
                         const card = document.createElement('div'); card.className='model-select-card';
                         card.innerHTML=`<div class="model-name">${item.model}</div><div class="model-info"><span>${item.year}.${item.month}</span><span>LOT: ${item.lot}</span></div>`;
@@ -356,24 +476,18 @@
                 } catch(e) { alert('오류'); }
             }
 
-            // -----------------------------------------------------------
-            // [기능 3] 메인 테이블 렌더링
-            // -----------------------------------------------------------
             async function renderAoiTable() {
                 const tbody = document.getElementById('aoi-list-body');
                 try {
                     const response = await fetch('http://127.0.0.1:5000/api/aoi/records');
                     const records = await response.json();
-                    
                     if (!records || records.length === 0) {
                         tbody.innerHTML = `<tr><td colspan="20" style="padding:30px; color:#666;">기록 없음</td></tr>`;
                         return;
                     }
-
                     tbody.innerHTML = records.map(r => {
                         const safe = (v) => v || 0;
                         const goodColor = r.good_qty < 0 ? 'var(--danger-red)' : 'var(--success-green)';
-                        
                         const sumA = safe(r.missing) + safe(r.wrong) + safe(r.reverse) + safe(r.skewed) + safe(r.flipped);
                         const sumB = safe(r.damaged) + safe(r.manhattan) + safe(r.detached);
                         const sumC = safe(r.cold) + safe(r.unsoldered) + safe(r.short);
@@ -381,7 +495,8 @@
 
                         return `
                         <tr data-id="${r.id}">
-                            <td class="model-name-ellipsis" onclick="toggleGroup('basic')" style="cursor:pointer;" title="${r.model}">${r.model}</td>
+                            <td class="model-name-ellipsis" title="${r.model}">${r.model}</td>
+                            
                             <td class="detail-col group-basic"><input type="number" value="${safe(r.inspection_point)}" onchange="updateRecord(${r.id}, 'inspection_point', this.value)"></td>
                             <td class="detail-col group-basic"><input type="number" value="${safe(r.inspection_qty)}" onchange="updateRecord(${r.id}, 'inspection_qty', this.value)"></td>
                             <td class="detail-col group-basic good-col" style="color:${goodColor}; font-weight:bold;">${safe(r.good_qty)}</td>
@@ -408,17 +523,14 @@
                             <td class="detail-col group-d"><input type="number" value="${safe(r.material)}" onchange="updateRecord(${r.id}, 'material', this.value)"></td>
                             <td class="detail-col group-d"><input type="number" value="${safe(r.dip)}" onchange="updateRecord(${r.id}, 'dip', this.value)"></td>
                             
-                            <td></td> </tr>`;
+                            <td></td>
+                        </tr>`;
                     }).join('');
-                    
-                    // 렌더링 후 뷰 모드 적용 및 스크롤 보정
                     updateViewMode();
                     adjustTableScrollbar();
-
                 } catch(e) { console.error(e); }
             }
 
-            // 전역 함수: 개별 그룹 토글
             window.toggleGroup = function(groupName) {
                 const cols = document.querySelectorAll(`.detail-col.group-${groupName}`);
                 const isOpened = cols[0].classList.contains('visible');
@@ -426,6 +538,7 @@
                     if (isOpened) col.classList.remove('visible');
                     else col.classList.add('visible');
                 });
+                adjustTableScrollbar();
             };
 
             window.updateRecord = async function (id, field, value) {
