@@ -87,13 +87,81 @@ def get_available_models():
         return jsonify({'error': str(e)}), 500
 
 # [API 2] 메인 화면 테이블 데이터 (오늘 날짜 기록)
+# [API 2] 메인 화면 테이블 데이터 (누적 수량 계산 로직 추가)
 @bp.route('/records', methods=['GET'])
 def get_aoi_records():
     try:
-        target_date = request.args.get('date', datetime.now().strftime('%Y-%m-%d'))
-        records = AoiRecord.query.filter_by(date=target_date).order_by(AoiRecord.id.desc()).all()
-        return jsonify([r.to_dict() for r in records])
+        # 프론트엔드에서 보낸 필터 조건 받기
+        model = request.args.get('model')
+        year = request.args.get('year')
+        month = request.args.get('month')
+        lot = request.args.get('lot')
+        
+        # 날짜 범위 검색 파라미터
+        start_date = request.args.get('start_date')
+        end_date = request.args.get('end_date')
+
+        # 기본 쿼리 시작
+        query = AoiRecord.query
+
+        # 1. 모델/LOT 등 특정 조건이 있는 경우 (필터링 우선)
+        if model and year and month and lot:
+            query = query.filter_by(
+                model=model,
+                order_year=year,
+                order_month=month,
+                lot=lot
+            )
+        # 2. 날짜 범위가 있는 경우 (기간 조회)
+        elif start_date and end_date:
+            query = query.filter(
+                AoiRecord.date >= start_date,
+                AoiRecord.date <= end_date
+            )
+        # 3. 아무 조건도 없으면 오늘 날짜 기준 (기본값)
+        else:
+            target_date = request.args.get('date', datetime.now().strftime('%Y-%m-%d'))
+            query = query.filter_by(date=target_date)
+
+        # 최신순 정렬하여 목록 가져오기
+        records = query.order_by(AoiRecord.id.desc()).all()
+        
+        # ---------------------------------------------------------
+        # [핵심 수정] 각 레코드별 '누적 수량(cumulative_qty)' 계산
+        # ---------------------------------------------------------
+        results = []
+        
+        # 중복 쿼리 방지를 위한 캐시 (한 화면에 같은 LOT가 여러 번 나올 경우 대비)
+        lot_cache = {} 
+
+        for r in records:
+            # 1. 현재 레코드를 딕셔너리로 변환
+            r_dict = r.to_dict()
+            
+            # 2. 고유 주문 키 생성 (모델 + 연 + 월 + LOT)
+            lot_key = (r.model, r.order_year, r.order_month, r.lot)
+            
+            # 3. 캐시에 없으면 DB에서 전체 기간 합계 조회
+            if lot_key not in lot_cache:
+                total_qty = db.session.query(func.sum(AoiRecord.inspection_qty)).filter_by(
+                    model=r.model,
+                    order_year=r.order_year,
+                    order_month=r.order_month,
+                    lot=r.lot
+                ).scalar()
+                
+                # 결과가 없으면(None) 0으로 처리
+                lot_cache[lot_key] = total_qty or 0
+            
+            # 4. 조회한 누적 수량을 데이터에 추가
+            r_dict['cumulative_qty'] = lot_cache[lot_key]
+            
+            results.append(r_dict)
+
+        return jsonify(results)
+
     except Exception as e:
+        print(f"Error fetching records: {e}")
         return jsonify({"error": str(e)}), 500
 
 # [API 3] 기록 생성 (모델 선택 시 행 추가)
