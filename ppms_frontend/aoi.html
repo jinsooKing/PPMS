@@ -253,7 +253,7 @@
                 });
             }
 
-            /* 뷰 모드 제어 함수 */
+            /* [최종 수정] 뷰 모드 제어 함수 (레퍼런스/수량 표시 전환) */
             function updateViewMode() {
                 const btnIcon = toggleViewBtn.querySelector('i');
                 const btnText = toggleViewBtn.querySelector('span');
@@ -266,40 +266,54 @@
                 const spacerHeader = table.querySelector('thead tr th:last-child');
 
                 if (isDetailMode) {
-                    // [자세히 보기]
+                    // [자세히 보기 모드]
+                    // 1. 스타일 클래스 제거 (2줄 표시: 레퍼런스 + 수량)
+                    table.classList.remove('simple-view-mode');
+
+                    // 2. 버튼 상태 변경
                     toggleViewBtn.classList.add('active');
                     btnIcon.className = 'uil uil-eye-slash';
                     btnText.textContent = '간편 보기';
 
+                    // 3. 대분류 합계 숨김 (상세 내용을 보므로 합계 불필요)
                     sumCols.forEach(el => el.style.display = 'none');
                     sumHeaders.forEach(el => el.style.display = 'none');
                     sumCells.forEach(el => el.style.display = 'none');
 
+                    // 4. 모든 상세 불량 열 표시
                     defectGroups.forEach(g => {
                         document.querySelectorAll(`.detail-col.group-${g}`).forEach(col => col.classList.add('visible'));
                     });
 
+                    // 5. 레이아웃: 내용에 맞춰 너비 자동 확장 (스크롤 발생)
                     table.style.width = 'max-content';
                     if (spacerCol) spacerCol.style.display = 'none';
                     if (spacerHeader) spacerHeader.style.display = 'none';
 
                 } else {
-                    // [간편 보기]
+                    // [간편 보기 모드]
+                    // 1. 스타일 클래스 추가 (1줄 표시: 레퍼런스 숨김, 수량만 표시)
+                    table.classList.add('simple-view-mode');
+
+                    // 2. 버튼 상태 변경
                     toggleViewBtn.classList.remove('active');
                     btnIcon.className = 'uil uil-eye';
                     btnText.textContent = '자세히 보기';
 
+                    // 3. 대분류 합계 표시 & 너비 자동 분배
                     sumCols.forEach(el => {
                         el.style.display = 'table-column';
-                        el.style.width = ''; // 자동 분배
+                        el.style.width = ''; // table-layout: fixed 자동 분배 유도
                     });
                     sumHeaders.forEach(el => el.style.display = 'table-cell');
                     sumCells.forEach(el => el.style.display = 'table-cell');
 
+                    // 4. 상세 불량 열 모두 숨김 (기본값)
                     defectGroups.forEach(g => {
                         document.querySelectorAll(`.detail-col.group-${g}`).forEach(col => col.classList.remove('visible'));
                     });
 
+                    // 5. 레이아웃: 화면 꽉 채우기 (100%)
                     table.style.width = '100%';
                     if (spacerCol) spacerCol.style.display = 'none';
                     if (spacerHeader) spacerHeader.style.display = 'none';
@@ -309,30 +323,25 @@
             // ----------------------------------------------------------------
             // [기능: 테이블 렌더링 (수량/진행도 분리, 입력창 0 숨김)]
             // ----------------------------------------------------------------
-            /* [최종 수정] renderTableRows 함수 - 레이아웃 밀림 해결 버전 */
+            /* [최종 수정] renderTableRows - 모든 좌측 컬럼 병합 적용 */
             function renderTableRows(records) {
                 const tbody = document.getElementById('aoi-list-body');
                 const tableContainer = document.querySelector('.table-container');
                 const noRecordMsg = document.getElementById('no-record-msg');
 
-                // 1. 데이터 없음 처리
                 if (!records || records.length === 0) {
                     if (tableContainer) tableContainer.style.display = 'none';
                     if (noRecordMsg) noRecordMsg.style.display = 'flex';
                     return;
                 }
-
                 if (tableContainer) tableContainer.style.display = 'block';
                 if (noRecordMsg) noRecordMsg.style.display = 'none';
 
-                // 펼침 상태 확인 헬퍼
                 const getVis = (group) => expandedGroups.has(group) ? 'visible' : '';
 
-                // 2. 데이터 렌더링
                 tbody.innerHTML = records.map(r => {
                     const safe = (v) => v || 0;
 
-                    // --- 수량 계산 로직 ---
                     const lotQty = r.lot || 0;
                     const todayQty = safe(r.inspection_qty);
                     const totalQty = (r.cumulative_qty !== undefined) ? r.cumulative_qty : todayQty;
@@ -345,82 +354,123 @@
                     const isCompleted = lotQty > 0 && totalQty >= lotQty;
                     const barClass = isCompleted ? 'qty-progress-fill completed' : 'qty-progress-fill';
                     const textClass = isCompleted ? 'qty-info-text completed' : 'qty-info-text';
+
                     const remainQty = lotQty - totalQty;
                     const statusText = isCompleted ? "완료됨" : `${remainQty > 0 ? remainQty + '개 남음' : '초과 달성'}`;
                     const rowTitle = `[${r.model}] LOT: ${lotQty} / 누적: ${totalQty} (${statusText})`;
-                    // ---------------------
 
-                    const goodColor = r.good_qty < 0 ? 'var(--danger-red)' : 'var(--success-green)';
                     const sumA = safe(r.missing) + safe(r.wrong) + safe(r.reverse) + safe(r.skewed) + safe(r.flipped);
                     const sumB = safe(r.damaged) + safe(r.manhattan) + safe(r.detached);
                     const sumC = safe(r.cold) + safe(r.unsoldered) + safe(r.short);
                     const sumD = safe(r.material) + safe(r.dip);
+                    const goodColor = r.good_qty < 0 ? 'var(--danger-red)' : 'var(--success-green)';
 
                     return `
-        <tr data-id="${r.id}" data-lot="${lotQty}" data-base-cumulative="${baseCumulative}">
-            <td class="model-name-ellipsis" style="cursor:pointer;" title="${rowTitle}">
-                ${r.model}
+        <tr class="upper-row" data-id="${r.id}" data-lot="${lotQty}" data-base-cumulative="${baseCumulative}">
+            
+            <td class="merge-top" style="cursor:pointer;" title="${rowTitle}">
+                <div class="row-span-wrapper model-text">${r.model}</div>
             </td>
             
-            <td class="detail-col group-basic">
-                <input type="number" value="${safe(r.inspection_point)}" onchange="updateRecord(${r.id}, 'inspection_point', this.value)">
+            <td class="detail-col group-basic merge-top">
+                <div class="row-span-wrapper">
+                    <input type="number" value="${safe(r.inspection_point)}" onchange="updateRecord(${r.id}, 'inspection_point', this.value)">
+                </div>
             </td>
             
-            <td class="detail-col group-basic">
-                <input type="number" class="qty-input-visible"
-                       value="${todayQty}" 
-                       placeholder="0" 
-                       onchange="updateRecord(${r.id}, 'inspection_qty', this.value)">
+            <td class="detail-col group-basic merge-top">
+                <div class="row-span-wrapper">
+                    <input type="number" class="qty-input-visible" value="${todayQty}" placeholder="0" onchange="updateRecord(${r.id}, 'inspection_qty', this.value)">
+                </div>
             </td>
             
-            <td class="detail-col group-basic">
-                <div class="progress-cell-wrapper">
-                    <div class="qty-progress-track" title="달성률: ${parseInt(percent)}%">
-                        <div class="${barClass}" style="width: ${percent}%;"></div>
-                    </div>
-                    <div class="${textClass}">
-                        <span class="acc-val" title="누적 수량">${totalQty}</span>
-                        <span class="lot-val" title="전체 LOT">/ ${lotQty}</span>
+            <td class="detail-col group-basic merge-top">
+                <div class="row-span-wrapper" style="flex-direction:column; padding:0 5px;">
+                    <div class="progress-cell-wrapper" style="width:100%; height:100%; justify-content:center;">
+                        <div class="qty-progress-track" title="달성률: ${parseInt(percent)}%">
+                            <div class="${barClass}" style="width: ${percent}%;"></div>
+                        </div>
+                        <div class="${textClass}">
+                            <span class="acc-val">${totalQty}</span>
+                            <span class="lot-val">/ ${lotQty}</span>
+                        </div>
                     </div>
                 </div>
             </td>
+            
+            <td class="detail-col group-basic good-col merge-top">
+                <div class="row-span-wrapper" style="color:${goodColor}; font-weight:bold;">${safe(r.good_qty)}</div>
+            </td>
+            
+            <td class="detail-col group-basic defect-total-col merge-top">
+                <div class="row-span-wrapper" style="color:var(--danger-red); font-weight:bold;">${safe(r.total_defect)}</div>
+            </td>
 
-            <td class="detail-col group-basic good-col" style="color:${goodColor}; font-weight:bold;">${safe(r.good_qty)}</td>
-            <td class="detail-col group-basic defect-total-col" style="color:var(--danger-red); font-weight:bold;">${safe(r.total_defect)}</td>
-            
-            <td class="group-sum-cell">${sumA}</td>
-            <td class="detail-col group-a ${getVis('a')}"><input type="number" value="${safe(r.missing)}" onchange="updateRecord(${r.id}, 'missing', this.value)"></td>
-            <td class="detail-col group-a ${getVis('a')}"><input type="number" value="${safe(r.wrong)}" onchange="updateRecord(${r.id}, 'wrong', this.value)"></td>
-            <td class="detail-col group-a ${getVis('a')}"><input type="number" value="${safe(r.reverse)}" onchange="updateRecord(${r.id}, 'reverse', this.value)"></td>
-            <td class="detail-col group-a ${getVis('a')}"><input type="number" value="${safe(r.skewed)}" onchange="updateRecord(${r.id}, 'skewed', this.value)"></td>
-            <td class="detail-col group-a ${getVis('a')}"><input type="number" value="${safe(r.flipped)}" onchange="updateRecord(${r.id}, 'flipped', this.value)"></td>
-            
-            <td class="group-sum-cell">${sumB}</td>
-            <td class="detail-col group-b ${getVis('b')}"><input type="number" value="${safe(r.damaged)}" onchange="updateRecord(${r.id}, 'damaged', this.value)"></td>
-            <td class="detail-col group-b ${getVis('b')}"><input type="number" value="${safe(r.manhattan)}" onchange="updateRecord(${r.id}, 'manhattan', this.value)"></td>
-            <td class="detail-col group-b ${getVis('b')}"><input type="number" value="${safe(r.detached)}" onchange="updateRecord(${r.id}, 'detached', this.value)"></td>
-            
-            <td class="group-sum-cell">${sumC}</td>
-            <td class="detail-col group-c ${getVis('c')}"><input type="number" value="${safe(r.cold)}" onchange="updateRecord(${r.id}, 'cold', this.value)"></td>
-            <td class="detail-col group-c ${getVis('c')}"><input type="number" value="${safe(r.unsoldered)}" onchange="updateRecord(${r.id}, 'unsoldered', this.value)"></td>
-            <td class="detail-col group-c ${getVis('c')}"><input type="number" value="${safe(r.short)}" onchange="updateRecord(${r.id}, 'short', this.value)"></td>
-            
-            <td class="group-sum-cell">${sumD}</td>
-            <td class="detail-col group-d ${getVis('d')}"><input type="number" value="${safe(r.material)}" onchange="updateRecord(${r.id}, 'material', this.value)"></td>
-            <td class="detail-col group-d ${getVis('d')}"><input type="number" value="${safe(r.dip)}" onchange="updateRecord(${r.id}, 'dip', this.value)"></td>
+            <td class="group-sum-cell merge-top">
+                <div class="row-span-wrapper">${sumA}</div>
+            </td>
+            <td class="detail-col group-a ${getVis('a')} ref-cell"><input type="text" class="defect-ref" value="${r.missing_ref || ''}" placeholder="Ref" onchange="updateRecord(${r.id}, 'missing_ref', this.value)"></td>
+            <td class="detail-col group-a ${getVis('a')} ref-cell"><input type="text" class="defect-ref" value="${r.wrong_ref || ''}" placeholder="Ref" onchange="updateRecord(${r.id}, 'wrong_ref', this.value)"></td>
+            <td class="detail-col group-a ${getVis('a')} ref-cell"><input type="text" class="defect-ref" value="${r.reverse_ref || ''}" placeholder="Ref" onchange="updateRecord(${r.id}, 'reverse_ref', this.value)"></td>
+            <td class="detail-col group-a ${getVis('a')} ref-cell"><input type="text" class="defect-ref" value="${r.skewed_ref || ''}" placeholder="Ref" onchange="updateRecord(${r.id}, 'skewed_ref', this.value)"></td>
+            <td class="detail-col group-a ${getVis('a')} ref-cell"><input type="text" class="defect-ref" value="${r.flipped_ref || ''}" placeholder="Ref" onchange="updateRecord(${r.id}, 'flipped_ref', this.value)"></td>
+
+            <td class="group-sum-cell merge-top">
+                <div class="row-span-wrapper">${sumB}</div>
+            </td>
+            <td class="detail-col group-b ${getVis('b')} ref-cell"><input type="text" class="defect-ref" value="${r.damaged_ref || ''}" placeholder="Ref" onchange="updateRecord(${r.id}, 'damaged_ref', this.value)"></td>
+            <td class="detail-col group-b ${getVis('b')} ref-cell"><input type="text" class="defect-ref" value="${r.manhattan_ref || ''}" placeholder="Ref" onchange="updateRecord(${r.id}, 'manhattan_ref', this.value)"></td>
+            <td class="detail-col group-b ${getVis('b')} ref-cell"><input type="text" class="defect-ref" value="${r.detached_ref || ''}" placeholder="Ref" onchange="updateRecord(${r.id}, 'detached_ref', this.value)"></td>
+
+            <td class="group-sum-cell merge-top">
+                <div class="row-span-wrapper">${sumC}</div>
+            </td>
+            <td class="detail-col group-c ${getVis('c')} ref-cell"><input type="text" class="defect-ref" value="${r.cold_ref || ''}" placeholder="Ref" onchange="updateRecord(${r.id}, 'cold_ref', this.value)"></td>
+            <td class="detail-col group-c ${getVis('c')} ref-cell"><input type="text" class="defect-ref" value="${r.unsoldered_ref || ''}" placeholder="Ref" onchange="updateRecord(${r.id}, 'unsoldered_ref', this.value)"></td>
+            <td class="detail-col group-c ${getVis('c')} ref-cell"><input type="text" class="defect-ref" value="${r.short_ref || ''}" placeholder="Ref" onchange="updateRecord(${r.id}, 'short_ref', this.value)"></td>
+
+            <td class="group-sum-cell merge-top">
+                <div class="row-span-wrapper">${sumD}</div>
+            </td>
+            <td class="detail-col group-d ${getVis('d')} ref-cell"><input type="text" class="defect-ref" value="${r.material_ref || ''}" placeholder="Ref" onchange="updateRecord(${r.id}, 'material_ref', this.value)"></td>
+            <td class="detail-col group-d ${getVis('d')} ref-cell"><input type="text" class="defect-ref" value="${r.dip_ref || ''}" placeholder="Ref" onchange="updateRecord(${r.id}, 'dip_ref', this.value)"></td>
+        </tr>
+
+        <tr class="lower-row" data-id="${r.id}">
+            <td class="merge-bottom"></td>
+            <td class="detail-col group-basic merge-bottom"></td>
+            <td class="detail-col group-basic merge-bottom"></td>
+            <td class="detail-col group-basic merge-bottom"></td>
+            <td class="detail-col group-basic good-col merge-bottom"></td>
+            <td class="detail-col group-basic defect-total-col merge-bottom"></td>
+
+            <td class="group-sum-cell merge-bottom"></td>
+            <td class="detail-col group-a ${getVis('a')} qty-cell"><input type="number" class="defect-qty" value="${safe(r.missing)}" onchange="updateRecord(${r.id}, 'missing', this.value)"></td>
+            <td class="detail-col group-a ${getVis('a')} qty-cell"><input type="number" class="defect-qty" value="${safe(r.wrong)}" onchange="updateRecord(${r.id}, 'wrong', this.value)"></td>
+            <td class="detail-col group-a ${getVis('a')} qty-cell"><input type="number" class="defect-qty" value="${safe(r.reverse)}" onchange="updateRecord(${r.id}, 'reverse', this.value)"></td>
+            <td class="detail-col group-a ${getVis('a')} qty-cell"><input type="number" class="defect-qty" value="${safe(r.skewed)}" onchange="updateRecord(${r.id}, 'skewed', this.value)"></td>
+            <td class="detail-col group-a ${getVis('a')} qty-cell"><input type="number" class="defect-qty" value="${safe(r.flipped)}" onchange="updateRecord(${r.id}, 'flipped', this.value)"></td>
+
+            <td class="group-sum-cell merge-bottom"></td>
+            <td class="detail-col group-b ${getVis('b')} qty-cell"><input type="number" class="defect-qty" value="${safe(r.damaged)}" onchange="updateRecord(${r.id}, 'damaged', this.value)"></td>
+            <td class="detail-col group-b ${getVis('b')} qty-cell"><input type="number" class="defect-qty" value="${safe(r.manhattan)}" onchange="updateRecord(${r.id}, 'manhattan', this.value)"></td>
+            <td class="detail-col group-b ${getVis('b')} qty-cell"><input type="number" class="defect-qty" value="${safe(r.detached)}" onchange="updateRecord(${r.id}, 'detached', this.value)"></td>
+
+            <td class="group-sum-cell merge-bottom"></td>
+            <td class="detail-col group-c ${getVis('c')} qty-cell"><input type="number" class="defect-qty" value="${safe(r.cold)}" onchange="updateRecord(${r.id}, 'cold', this.value)"></td>
+            <td class="detail-col group-c ${getVis('c')} qty-cell"><input type="number" class="defect-qty" value="${safe(r.unsoldered)}" onchange="updateRecord(${r.id}, 'unsoldered', this.value)"></td>
+            <td class="detail-col group-c ${getVis('c')} qty-cell"><input type="number" class="defect-qty" value="${safe(r.short)}" onchange="updateRecord(${r.id}, 'short', this.value)"></td>
+
+            <td class="group-sum-cell merge-bottom"></td>
+            <td class="detail-col group-d ${getVis('d')} qty-cell"><input type="number" class="defect-qty" value="${safe(r.material)}" onchange="updateRecord(${r.id}, 'material', this.value)"></td>
+            <td class="detail-col group-d ${getVis('d')} qty-cell"><input type="number" class="defect-qty" value="${safe(r.dip)}" onchange="updateRecord(${r.id}, 'dip', this.value)"></td>
         </tr>`;
                 }).join('');
 
-                // 3. 뷰 모드 초기화 (여기서 expandedGroups가 닫혀버림)
                 updateViewMode();
-
-                // 4. [핵심 수정] 기억해둔 펼쳐진 그룹을 다시 강제로 열기
-                // updateViewMode가 닫아버린 것을 다시 복구하여 레이아웃을 맞춤
                 expandedGroups.forEach(groupName => {
-                    const cols = document.querySelectorAll(`.detail-col.group-${groupName}`);
-                    cols.forEach(col => col.classList.add('visible'));
+                    document.querySelectorAll(`.detail-col.group-${groupName}`).forEach(col => col.classList.add('visible'));
                 });
-
                 adjustTableScrollbar();
             }
             function adjustTableScrollbar() {
@@ -484,23 +534,32 @@
                 });
             }
 
-            // [모델명 클릭 시 고정 처리]
+            /* [수정됨] 모델명 클릭 시 고정 처리 (상/하단 행 동시 적용) */
             document.getElementById('aoi-list-body').addEventListener('click', (e) => {
                 if (!isPinMode || isDeleteMode) return;
+
+                // 클릭된 요소가 모델명 텍스트(div)이거나 그 부모 셀(td)인지 확인
                 const target = e.target;
-                if (target.classList.contains('model-name-ellipsis')) {
+                const modelCell = target.closest('.model-text') || target.closest('.merge-top'); // 클릭 영역 확장
+
+                // 첫 번째 컬럼(모델명)을 클릭했을 때만 반응
+                if (modelCell && target.closest('td').cellIndex === 0) {
                     const row = target.closest('tr');
                     if (!row) return;
 
+                    // 1. 기존 고정 해제
                     if (pinnedRowId) {
-                        const prevRow = document.querySelector(`tr[data-id="${pinnedRowId}"]`);
-                        if (prevRow) prevRow.classList.remove('pinned-row');
+                        const prevRows = document.querySelectorAll(`tr[data-id="${pinnedRowId}"]`);
+                        prevRows.forEach(r => r.classList.remove('pinned-row'));
                     }
 
+                    // 2. 새로운 고정 적용 (상단행 + 하단행 모두)
                     pinnedRowId = row.dataset.id;
-                    row.classList.add('pinned-row');
+                    const targetRows = document.querySelectorAll(`tr[data-id="${pinnedRowId}"]`);
+                    targetRows.forEach(r => r.classList.add('pinned-row'));
 
-                    const modelName = target.textContent.trim();
+                    // 3. 입력창 플레이스홀더 변경
+                    const modelName = row.querySelector('.model-text') ? row.querySelector('.model-text').textContent.trim() : '모델';
                     commandInput.placeholder = `[${modelName}] 고정됨 - 명령어 입력`;
                     commandInput.focus();
                     e.stopPropagation();
@@ -545,16 +604,26 @@
                     if (!dbField) { showToast(`알 수 없는 명령어: ${typeKey}`, 'error'); return; }
                     if (isNaN(inputVal)) { showToast('숫자를 입력해주세요.', 'error'); return; }
 
-                    const row = document.querySelector(`tr[data-id="${pinnedRowId}"]`);
-                    if (!row) return;
+                    // [핵심 수정] 상단 행과 하단 행을 모두 찾습니다.
+                    const upperRow = document.querySelector(`tr.upper-row[data-id="${pinnedRowId}"]`);
+                    const lowerRow = document.querySelector(`tr.lower-row[data-id="${pinnedRowId}"]`);
+
+                    if (!upperRow || !lowerRow) { showToast('행을 찾을 수 없습니다.', 'error'); return; }
 
                     let input;
+
+                    // 1. 수량(qty)인 경우 상단 행의 전용 클래스 검색
                     if (dbField === 'inspection_qty') {
-                        input = row.querySelector('.qty-input-visible'); // 입력 전용 클래스
-                    } else {
-                        input = row.querySelector(`input[onchange*="'${dbField}'"]`);
+                        input = upperRow.querySelector('.qty-input-visible');
                     }
-                    if (!input) { showToast('항목 오류', 'error'); return; }
+                    // 2. 그 외(불량 등)는 상단/하단 모두 검색
+                    else {
+                        const selector = `input[onchange*="'${dbField}'"]`;
+                        // 상단 행에 없으면 하단 행에서 찾음
+                        input = upperRow.querySelector(selector) || lowerRow.querySelector(selector);
+                    }
+
+                    if (!input) { showToast('항목 오류 (입력창을 찾을 수 없음)', 'error'); return; }
 
                     // 값 변경 로직
                     if (dbField === 'inspection_point' || dbField === 'inspection_qty') {
@@ -566,10 +635,10 @@
                         showToast(`${typeKey} +${inputVal} 처리됨`);
                     }
 
-                    // [실시간 프로그레스 업데이트]
+                    // [실시간 프로그레스 업데이트] - 진행바는 항상 상단 행(upperRow)에 있음
                     if (dbField === 'inspection_qty') {
-                        const lotQty = parseInt(row.dataset.lot) || 0;
-                        const baseCumulative = parseInt(row.dataset.baseCumulative) || 0;
+                        const lotQty = parseInt(upperRow.dataset.lot) || 0;
+                        const baseCumulative = parseInt(upperRow.dataset.baseCumulative) || 0;
                         const newTodayQty = parseInt(input.value) || 0;
                         const newTotal = baseCumulative + newTodayQty;
 
@@ -578,9 +647,9 @@
                         if (percent > 100) percent = 100;
                         const isCompleted = lotQty > 0 && newTotal >= lotQty;
 
-                        const barEl = row.querySelector('.qty-progress-fill');
-                        const accTextEl = row.querySelector('.acc-val');
-                        const textContainer = row.querySelector('.qty-info-text');
+                        const barEl = upperRow.querySelector('.qty-progress-fill');
+                        const accTextEl = upperRow.querySelector('.acc-val');
+                        const textContainer = upperRow.querySelector('.qty-info-text');
 
                         if (barEl) {
                             barEl.style.width = `${percent}%`;
@@ -672,20 +741,71 @@
                 });
             }
 
-            document.getElementById('aoi-list-body').addEventListener('click', async (e) => {
-                if (!isDeleteMode) return;
-                const row = e.target.closest('tr');
-                if (!row) return;
-                const id = row.dataset.id;
-                const modelName = row.querySelector('.model-name-ellipsis').textContent.trim();
-                if (confirm(`[${modelName}] 기록을 삭제하시겠습니까?`)) {
-                    try {
-                        const response = await fetch(`http://127.0.0.1:5000/api/aoi/records/${id}`, { method: 'DELETE' });
-                        const res = await response.json();
-                        if (res.success) { row.remove(); renderTableRows(getDisplayedRecords()); }
-                        else alert('삭제 실패');
-                    } catch (e) { alert('오류 발생'); }
+            /* [최종 수정] 클릭 이벤트 핸들러 (고정 범위 확대 & 수량 조절 클릭 제거) */
+            document.getElementById('aoi-list-body').addEventListener('click', (e) => {
+                // 1. 관리(삭제) 모드일 때의 동작
+                if (isDeleteMode) {
+                    const row = e.target.closest('tr');
+                    if (!row) return;
+                    const id = row.dataset.id;
+                    // 상단 행에서 모델명을 찾거나, 하단 행이면 상단 행을 찾아서 모델명을 가져옴
+                    const upperRow = document.querySelector(`tr.upper-row[data-id="${id}"]`);
+                    const modelName = upperRow ? upperRow.querySelector('.model-text').textContent.trim() : '모델';
+
+                    if (confirm(`[${modelName}] 기록을 삭제하시겠습니까?`)) {
+                        fetch(`http://127.0.0.1:5000/api/aoi/records/${id}`, { method: 'DELETE' })
+                            .then(res => res.json())
+                            .then(res => {
+                                if (res.success) {
+                                    // 화면에서 즉시 제거 (상/하단 행 모두)
+                                    document.querySelectorAll(`tr[data-id="${id}"]`).forEach(r => r.remove());
+                                } else { alert('삭제 실패'); }
+                            })
+                            .catch(() => alert('오류 발생'));
+                    }
+                    return; // 삭제 모드일 때는 고정 로직 실행 안 함
                 }
+
+                // 2. 고정(Pin) 모드일 때의 동작 (수정됨)
+                if (isPinMode) {
+                    const target = e.target;
+                    // 클릭된 요소가 속한 셀(td)을 찾습니다.
+                    const cell = target.closest('td');
+
+                    // ★ 핵심: 첫 번째 열(인덱스 0)을 클릭했을 때만 반응 (모델명, merge-top, merge-bottom 모두 포함)
+                    if (cell && cell.cellIndex === 0) {
+                        const row = cell.closest('tr'); // 클릭된 행 (upper 혹은 lower)
+                        if (!row) return;
+
+                        const clickedId = row.dataset.id;
+
+                        // (1) 기존 고정 해제 (다른 모델을 클릭했다면)
+                        if (pinnedRowId && pinnedRowId !== clickedId) {
+                            document.querySelectorAll(`tr[data-id="${pinnedRowId}"]`).forEach(r => r.classList.remove('pinned-row'));
+                        }
+
+                        // (2) 고정 상태 토글 (이미 고정된 걸 누르면 해제, 아니면 고정)
+                        // 사용자 편의를 위해 '항상 고정'으로 하려면 토글 로직 대신 add만 사용해도 됩니다.
+                        // 여기서는 "새로운 놈을 누르면 걔가 고정됨" 로직을 따릅니다.
+                        pinnedRowId = clickedId;
+
+                        // 상단 행과 하단 행 모두에 pinned-row 클래스 부여
+                        const targetRows = document.querySelectorAll(`tr[data-id="${clickedId}"]`);
+                        targetRows.forEach(r => r.classList.add('pinned-row'));
+
+                        // (3) 입력창 플레이스홀더 업데이트
+                        const upperRow = document.querySelector(`tr.upper-row[data-id="${clickedId}"]`);
+                        const modelName = upperRow ? upperRow.querySelector('.model-text').textContent.trim() : '모델';
+                        commandInput.placeholder = `[${modelName}] 고정됨 - 명령어 입력`;
+                        commandInput.focus();
+
+                        e.stopPropagation(); // 이벤트 전파 중단
+                    }
+                }
+
+                // ★ 주의: 여기에 'else'나 다른 코드가 없으므로, 
+                // 첫 번째 열 이외의 곳(수량 칸 등)을 클릭했을 때는 아무 일도 일어나지 않습니다.
+                // (입력창 클릭은 input 태그 자체의 이벤트로 처리되므로 정상 작동합니다.)
             });
 
             // 삭제 후 화면 갱신을 위해 현재 화면의 레코드를 다시 읽는 헬퍼가 필요하나, 
