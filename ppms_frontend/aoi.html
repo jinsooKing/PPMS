@@ -64,7 +64,7 @@
                 </div>
 
                 <div class="table-container">
-                    <table class="aoi-table">
+                    <table class="aoi-table" id="aoi-table-main">
                         <colgroup>
                             <col style="width: 200px;">
                             <col style="width: 80px;" class="detail-col group-basic">
@@ -83,45 +83,57 @@
 
                             <col class="group-sum-col" style="width: 80px;">
                             <col style="width: 60px;" span="2" class="detail-col group-d">
-
-                            <col class="spacer-col" style="width: auto;">
                         </colgroup>
                         <thead>
                             <tr>
-                                <th class="model-name-ellipsis group-toggle-header" onclick="toggleGroup('basic')"
-                                    style="text-align:center;">
+                                <th rowspan="2" class="model-name-ellipsis group-toggle-header"
+                                    onclick="toggleGroup('basic')" style="text-align:center;">
                                     모델명 <i class="uil uil-angle-right"></i>
                                 </th>
-                                <th class="detail-col group-basic">Point</th>
+                                <th rowspan="2" class="detail-col group-basic">Point</th>
+                                <th rowspan="2" class="detail-col group-basic">수량</th>
+                                <th rowspan="2" class="detail-col group-basic">진행도</th>
+                                <th rowspan="2" class="detail-col group-basic good-col">양품</th>
+                                <th rowspan="2" class="detail-col group-basic defect-total-col">총불량</th>
 
-                                <th class="detail-col group-basic">수량</th>
-                                <th class="detail-col group-basic">진행도</th>
+                                <th class="sum-header" onclick="toggleGroup('a')" style="cursor:pointer;">실장오류</th>
+                                <th colspan="5" class="detail-col group-a group-header-box" style="cursor:pointer;"
+                                    onclick="toggleGroup('a')">실장오류 (그룹 A)</th>
 
-                                <th class="detail-col group-basic">양품</th>
-                                <th class="detail-col group-basic">총불량</th>
+                                <th class="sum-header" onclick="toggleGroup('b')" style="cursor:pointer;">부품결함</th>
+                                <th colspan="3" class="detail-col group-b group-header-box" style="cursor:pointer;"
+                                    onclick="toggleGroup('b')">부품결함 (그룹 B)</th>
 
-                                <th class="sum-header">실장오류</th>
-                                <th class="detail-col group-a">미삽</th>
+                                <th class="sum-header" onclick="toggleGroup('c')" style="cursor:pointer;">납땜불량</th>
+                                <th colspan="3" class="detail-col group-c group-header-box" style="cursor:pointer;"
+                                    onclick="toggleGroup('c')">납땜불량 (그룹 C)</th>
+
+                                <th class="sum-header" onclick="toggleGroup('d')" style="cursor:pointer;">기타</th>
+                                <th colspan="2" class="detail-col group-d group-header-box" style="cursor:pointer;"
+                                    onclick="toggleGroup('d')">기타 (그룹 D)</th>
+                            </tr>
+                            <tr>
+                                <th class="group-sum-col"></th>
+
+                                <th class="detail-col group-a group-start">미삽</th>
                                 <th class="detail-col group-a">오삽</th>
                                 <th class="detail-col group-a">역삽</th>
                                 <th class="detail-col group-a">틀어짐</th>
-                                <th class="detail-col group-a">뒤집힘</th>
+                                <th class="detail-col group-a group-end">뒤집힘</th>
 
-                                <th class="sum-header">부품결함</th>
-                                <th class="detail-col group-b">파손</th>
+                                <th class="group-sum-col"></th>
+                                <th class="detail-col group-b group-start">파손</th>
                                 <th class="detail-col group-b">맨하탄</th>
-                                <th class="detail-col group-b">이탈</th>
+                                <th class="detail-col group-b group-end">이탈</th>
 
-                                <th class="sum-header">납땜불량</th>
-                                <th class="detail-col group-c">냉납</th>
+                                <th class="group-sum-col"></th>
+                                <th class="detail-col group-c group-start">냉납</th>
                                 <th class="detail-col group-c">미납</th>
-                                <th class="detail-col group-c">쇼트</th>
+                                <th class="detail-col group-c group-end">쇼트</th>
 
-                                <th class="sum-header">기타</th>
-                                <th class="detail-col group-d">원자재</th>
-                                <th class="detail-col group-d">DIP</th>
-
-                                <th></th>
+                                <th class="group-sum-col"></th>
+                                <th class="detail-col group-d group-start">원자재</th>
+                                <th class="detail-col group-d group-end">DIP</th>
                             </tr>
                         </thead>
                         <tbody id="aoi-list-body"></tbody>
@@ -193,28 +205,50 @@
         </div>
     </div>
 
+    <div id="global-tooltip"></div>
+
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            // ----------------------------------------------------------------
+            // [초기 설정]
+            // ----------------------------------------------------------------
             const userRole = localStorage.getItem('ppms_user_role');
-            if (!userRole) { window.location.href = 'login.html'; return; }
+            if (!userRole) { /* window.location.href = 'login.html'; */ }
             setTimeout(() => { document.body.style.opacity = '1'; }, 50);
-            setupLogoutButton();
+
+            if (typeof setupLogoutButton === 'function') setupLogoutButton();
             if (typeof PPMS_LOGO !== 'undefined' && PPMS_LOGO.init) PPMS_LOGO.init();
 
-            // 네비게이션 버튼
-            document.getElementById('back-btn').addEventListener('click', () => history.back());
-            document.getElementById('home-btn').addEventListener('click', () => window.location.href = 'index.html');
-            document.getElementById('forward-btn').addEventListener('click', () => history.forward());
-
-            // ----------------------------------------------------------------
-            // [기능: 날짜 선택 (calendar_day.js)]
-            // ----------------------------------------------------------------
+            // 날짜 선택기
             if (typeof setupDatePicker === 'function') {
-                setupDatePicker('date-picker-btn', (dateStr) => {
-                    loadRecordsByDate(dateStr);
-                });
+                setupDatePicker('date-picker-btn', (dateStr) => { loadRecordsByDate(dateStr); });
             }
 
+            // 네비게이션
+            const backBtn = document.getElementById('back-btn');
+            const homeBtn = document.getElementById('home-btn');
+            const forwardBtn = document.getElementById('forward-btn');
+            if (backBtn) backBtn.addEventListener('click', () => history.back());
+            if (homeBtn) homeBtn.addEventListener('click', () => window.location.href = 'index.html');
+            if (forwardBtn) forwardBtn.addEventListener('click', () => history.forward());
+
+            // 전역 변수
+            let pinnedRowId = null;
+            let isPinMode = false;
+            let isDeleteMode = false;
+            let isDetailMode = false;
+            const expandedGroups = new Set();
+
+            // DOM 요소
+            const commandInput = document.getElementById('command-input');
+            const table = document.querySelector('.aoi-table');
+            const pinModeBtn = document.getElementById('pin-mode-btn');
+            const toggleViewBtn = document.getElementById('toggle-view-btn');
+            const manageBtn = document.getElementById('manage-btn');
+
+            // ----------------------------------------------------------------
+            // [1] 데이터 로드
+            // ----------------------------------------------------------------
             async function loadRecordsByDate(dateStr) {
                 const titleEl = document.getElementById('main-table-title');
                 const shortDate = dateStr.slice(2);
@@ -224,7 +258,6 @@
                 const tableContainer = document.querySelector('.table-container');
                 const noRecordMsg = document.getElementById('no-record-msg');
 
-                // 로딩 상태 표시
                 if (tableContainer) tableContainer.style.display = 'block';
                 if (noRecordMsg) noRecordMsg.style.display = 'none';
                 tbody.innerHTML = '<tr><td colspan="30" style="padding:30px; text-align:center;">데이터 조회 중...</td></tr>';
@@ -235,341 +268,120 @@
                     renderTableRows(records);
                 } catch (e) {
                     tbody.innerHTML = '<tr><td colspan="30" style="padding:30px; text-align:center; color:var(--danger-red);">로드 실패</td></tr>';
+                    console.error(e);
                 }
             }
 
             // ----------------------------------------------------------------
-            // [기능: 뷰 모드 토글 (레이아웃 최적화)]
+            // [2] 진행도 UI 업데이트
             // ----------------------------------------------------------------
-            const toggleViewBtn = document.getElementById('toggle-view-btn');
-            const table = document.querySelector('.aoi-table');
-            let isDetailMode = false;
+            function updateProgressUI(upperRow, newTodayQty) {
+                if (!upperRow) return;
 
-            if (toggleViewBtn) {
-                toggleViewBtn.addEventListener('click', () => {
-                    isDetailMode = !isDetailMode;
-                    updateViewMode();
-                    if (typeof adjustTableScrollbar === 'function') adjustTableScrollbar();
-                });
-            }
+                const lotQty = parseInt(upperRow.dataset.lot) || 0;
+                const baseCumulative = parseInt(upperRow.dataset.baseCumulative) || 0;
+                const newTotal = baseCumulative + newTodayQty;
 
-            /* [최종 수정] 뷰 모드 제어 함수 (레퍼런스/수량 표시 전환) */
-            function updateViewMode() {
-                const btnIcon = toggleViewBtn.querySelector('i');
-                const btnText = toggleViewBtn.querySelector('span');
-                const defectGroups = ['a', 'b', 'c', 'd'];
+                let percent = 0;
+                if (lotQty > 0) percent = (newTotal / lotQty) * 100;
+                if (percent > 100) percent = 100;
 
-                const sumCols = table.querySelectorAll('colgroup .group-sum-col');
-                const spacerCol = document.querySelector('col.spacer-col');
-                const sumHeaders = table.querySelectorAll('thead .sum-header');
-                const sumCells = table.querySelectorAll('tbody .group-sum-cell');
-                const spacerHeader = table.querySelector('thead tr th:last-child');
+                const isCompleted = lotQty > 0 && newTotal >= lotQty;
 
-                if (isDetailMode) {
-                    // [자세히 보기 모드]
-                    // 1. 스타일 클래스 제거 (2줄 표시: 레퍼런스 + 수량)
-                    table.classList.remove('simple-view-mode');
+                const barEl = upperRow.querySelector('.qty-progress-fill');
+                if (barEl) {
+                    barEl.style.width = `${percent}%`;
+                    if (isCompleted) barEl.classList.add('completed');
+                    else barEl.classList.remove('completed');
+                }
 
-                    // 2. 버튼 상태 변경
-                    toggleViewBtn.classList.add('active');
-                    btnIcon.className = 'uil uil-eye-slash';
-                    btnText.textContent = '간편 보기';
+                const accTextEl = upperRow.querySelector('.acc-val');
+                if (accTextEl) accTextEl.textContent = newTotal;
 
-                    // 3. 대분류 합계 숨김 (상세 내용을 보므로 합계 불필요)
-                    sumCols.forEach(el => el.style.display = 'none');
-                    sumHeaders.forEach(el => el.style.display = 'none');
-                    sumCells.forEach(el => el.style.display = 'none');
-
-                    // 4. 모든 상세 불량 열 표시
-                    defectGroups.forEach(g => {
-                        document.querySelectorAll(`.detail-col.group-${g}`).forEach(col => col.classList.add('visible'));
-                    });
-
-                    // 5. 레이아웃: 내용에 맞춰 너비 자동 확장 (스크롤 발생)
-                    table.style.width = 'max-content';
-                    if (spacerCol) spacerCol.style.display = 'none';
-                    if (spacerHeader) spacerHeader.style.display = 'none';
-
-                } else {
-                    // [간편 보기 모드]
-                    // 1. 스타일 클래스 추가 (1줄 표시: 레퍼런스 숨김, 수량만 표시)
-                    table.classList.add('simple-view-mode');
-
-                    // 2. 버튼 상태 변경
-                    toggleViewBtn.classList.remove('active');
-                    btnIcon.className = 'uil uil-eye';
-                    btnText.textContent = '자세히 보기';
-
-                    // 3. 대분류 합계 표시 & 너비 자동 분배
-                    sumCols.forEach(el => {
-                        el.style.display = 'table-column';
-                        el.style.width = ''; // table-layout: fixed 자동 분배 유도
-                    });
-                    sumHeaders.forEach(el => el.style.display = 'table-cell');
-                    sumCells.forEach(el => el.style.display = 'table-cell');
-
-                    // 4. 상세 불량 열 모두 숨김 (기본값)
-                    defectGroups.forEach(g => {
-                        document.querySelectorAll(`.detail-col.group-${g}`).forEach(col => col.classList.remove('visible'));
-                    });
-
-                    // 5. 레이아웃: 화면 꽉 채우기 (100%)
-                    table.style.width = '100%';
-                    if (spacerCol) spacerCol.style.display = 'none';
-                    if (spacerHeader) spacerHeader.style.display = 'none';
+                const textContainer = upperRow.querySelector('.qty-info-text');
+                if (textContainer) {
+                    if (isCompleted) textContainer.classList.add('completed');
+                    else textContainer.classList.remove('completed');
                 }
             }
 
-            // ----------------------------------------------------------------
-            // [기능: 테이블 렌더링 (수량/진행도 분리, 입력창 0 숨김)]
-            // ----------------------------------------------------------------
-            /* [최종 수정] renderTableRows - 모든 좌측 컬럼 병합 적용 */
-            function renderTableRows(records) {
-                const tbody = document.getElementById('aoi-list-body');
-                const tableContainer = document.querySelector('.table-container');
-                const noRecordMsg = document.getElementById('no-record-msg');
-
-                if (!records || records.length === 0) {
-                    if (tableContainer) tableContainer.style.display = 'none';
-                    if (noRecordMsg) noRecordMsg.style.display = 'flex';
-                    return;
-                }
-                if (tableContainer) tableContainer.style.display = 'block';
-                if (noRecordMsg) noRecordMsg.style.display = 'none';
-
-                const getVis = (group) => expandedGroups.has(group) ? 'visible' : '';
-
-                tbody.innerHTML = records.map(r => {
-                    const safe = (v) => v || 0;
-
-                    const lotQty = r.lot || 0;
-                    const todayQty = safe(r.inspection_qty);
-                    const totalQty = (r.cumulative_qty !== undefined) ? r.cumulative_qty : todayQty;
-                    const baseCumulative = totalQty - todayQty;
-
-                    let percent = 0;
-                    if (lotQty > 0) percent = (totalQty / lotQty) * 100;
-                    if (percent > 100) percent = 100;
-
-                    const isCompleted = lotQty > 0 && totalQty >= lotQty;
-                    const barClass = isCompleted ? 'qty-progress-fill completed' : 'qty-progress-fill';
-                    const textClass = isCompleted ? 'qty-info-text completed' : 'qty-info-text';
-
-                    const remainQty = lotQty - totalQty;
-                    const statusText = isCompleted ? "완료됨" : `${remainQty > 0 ? remainQty + '개 남음' : '초과 달성'}`;
-                    const rowTitle = `[${r.model}] LOT: ${lotQty} / 누적: ${totalQty} (${statusText})`;
-
-                    const sumA = safe(r.missing) + safe(r.wrong) + safe(r.reverse) + safe(r.skewed) + safe(r.flipped);
-                    const sumB = safe(r.damaged) + safe(r.manhattan) + safe(r.detached);
-                    const sumC = safe(r.cold) + safe(r.unsoldered) + safe(r.short);
-                    const sumD = safe(r.material) + safe(r.dip);
-                    const goodColor = r.good_qty < 0 ? 'var(--danger-red)' : 'var(--success-green)';
-
-                    return `
-        <tr class="upper-row" data-id="${r.id}" data-lot="${lotQty}" data-base-cumulative="${baseCumulative}">
-            
-            <td class="merge-top" style="cursor:pointer;" title="${rowTitle}">
-                <div class="row-span-wrapper model-text">${r.model}</div>
-            </td>
-            
-            <td class="detail-col group-basic merge-top">
-                <div class="row-span-wrapper">
-                    <input type="number" value="${safe(r.inspection_point)}" onchange="updateRecord(${r.id}, 'inspection_point', this.value)">
-                </div>
-            </td>
-            
-            <td class="detail-col group-basic merge-top">
-                <div class="row-span-wrapper">
-                    <input type="number" class="qty-input-visible" value="${todayQty}" placeholder="0" onchange="updateRecord(${r.id}, 'inspection_qty', this.value)">
-                </div>
-            </td>
-            
-            <td class="detail-col group-basic merge-top">
-                <div class="row-span-wrapper" style="flex-direction:column; padding:0 5px;">
-                    <div class="progress-cell-wrapper" style="width:100%; height:100%; justify-content:center;">
-                        <div class="qty-progress-track" title="달성률: ${parseInt(percent)}%">
-                            <div class="${barClass}" style="width: ${percent}%;"></div>
-                        </div>
-                        <div class="${textClass}">
-                            <span class="acc-val">${totalQty}</span>
-                            <span class="lot-val">/ ${lotQty}</span>
-                        </div>
-                    </div>
-                </div>
-            </td>
-            
-            <td class="detail-col group-basic good-col merge-top">
-                <div class="row-span-wrapper" style="color:${goodColor}; font-weight:bold;">${safe(r.good_qty)}</div>
-            </td>
-            
-            <td class="detail-col group-basic defect-total-col merge-top">
-                <div class="row-span-wrapper" style="color:var(--danger-red); font-weight:bold;">${safe(r.total_defect)}</div>
-            </td>
-
-            <td class="group-sum-cell merge-top">
-                <div class="row-span-wrapper">${sumA}</div>
-            </td>
-            <td class="detail-col group-a ${getVis('a')} ref-cell"><input type="text" class="defect-ref" value="${r.missing_ref || ''}" placeholder="Ref" onchange="updateRecord(${r.id}, 'missing_ref', this.value)"></td>
-            <td class="detail-col group-a ${getVis('a')} ref-cell"><input type="text" class="defect-ref" value="${r.wrong_ref || ''}" placeholder="Ref" onchange="updateRecord(${r.id}, 'wrong_ref', this.value)"></td>
-            <td class="detail-col group-a ${getVis('a')} ref-cell"><input type="text" class="defect-ref" value="${r.reverse_ref || ''}" placeholder="Ref" onchange="updateRecord(${r.id}, 'reverse_ref', this.value)"></td>
-            <td class="detail-col group-a ${getVis('a')} ref-cell"><input type="text" class="defect-ref" value="${r.skewed_ref || ''}" placeholder="Ref" onchange="updateRecord(${r.id}, 'skewed_ref', this.value)"></td>
-            <td class="detail-col group-a ${getVis('a')} ref-cell"><input type="text" class="defect-ref" value="${r.flipped_ref || ''}" placeholder="Ref" onchange="updateRecord(${r.id}, 'flipped_ref', this.value)"></td>
-
-            <td class="group-sum-cell merge-top">
-                <div class="row-span-wrapper">${sumB}</div>
-            </td>
-            <td class="detail-col group-b ${getVis('b')} ref-cell"><input type="text" class="defect-ref" value="${r.damaged_ref || ''}" placeholder="Ref" onchange="updateRecord(${r.id}, 'damaged_ref', this.value)"></td>
-            <td class="detail-col group-b ${getVis('b')} ref-cell"><input type="text" class="defect-ref" value="${r.manhattan_ref || ''}" placeholder="Ref" onchange="updateRecord(${r.id}, 'manhattan_ref', this.value)"></td>
-            <td class="detail-col group-b ${getVis('b')} ref-cell"><input type="text" class="defect-ref" value="${r.detached_ref || ''}" placeholder="Ref" onchange="updateRecord(${r.id}, 'detached_ref', this.value)"></td>
-
-            <td class="group-sum-cell merge-top">
-                <div class="row-span-wrapper">${sumC}</div>
-            </td>
-            <td class="detail-col group-c ${getVis('c')} ref-cell"><input type="text" class="defect-ref" value="${r.cold_ref || ''}" placeholder="Ref" onchange="updateRecord(${r.id}, 'cold_ref', this.value)"></td>
-            <td class="detail-col group-c ${getVis('c')} ref-cell"><input type="text" class="defect-ref" value="${r.unsoldered_ref || ''}" placeholder="Ref" onchange="updateRecord(${r.id}, 'unsoldered_ref', this.value)"></td>
-            <td class="detail-col group-c ${getVis('c')} ref-cell"><input type="text" class="defect-ref" value="${r.short_ref || ''}" placeholder="Ref" onchange="updateRecord(${r.id}, 'short_ref', this.value)"></td>
-
-            <td class="group-sum-cell merge-top">
-                <div class="row-span-wrapper">${sumD}</div>
-            </td>
-            <td class="detail-col group-d ${getVis('d')} ref-cell"><input type="text" class="defect-ref" value="${r.material_ref || ''}" placeholder="Ref" onchange="updateRecord(${r.id}, 'material_ref', this.value)"></td>
-            <td class="detail-col group-d ${getVis('d')} ref-cell"><input type="text" class="defect-ref" value="${r.dip_ref || ''}" placeholder="Ref" onchange="updateRecord(${r.id}, 'dip_ref', this.value)"></td>
-        </tr>
-
-        <tr class="lower-row" data-id="${r.id}">
-            <td class="merge-bottom"></td>
-            <td class="detail-col group-basic merge-bottom"></td>
-            <td class="detail-col group-basic merge-bottom"></td>
-            <td class="detail-col group-basic merge-bottom"></td>
-            <td class="detail-col group-basic good-col merge-bottom"></td>
-            <td class="detail-col group-basic defect-total-col merge-bottom"></td>
-
-            <td class="group-sum-cell merge-bottom"></td>
-            <td class="detail-col group-a ${getVis('a')} qty-cell"><input type="number" class="defect-qty" value="${safe(r.missing)}" onchange="updateRecord(${r.id}, 'missing', this.value)"></td>
-            <td class="detail-col group-a ${getVis('a')} qty-cell"><input type="number" class="defect-qty" value="${safe(r.wrong)}" onchange="updateRecord(${r.id}, 'wrong', this.value)"></td>
-            <td class="detail-col group-a ${getVis('a')} qty-cell"><input type="number" class="defect-qty" value="${safe(r.reverse)}" onchange="updateRecord(${r.id}, 'reverse', this.value)"></td>
-            <td class="detail-col group-a ${getVis('a')} qty-cell"><input type="number" class="defect-qty" value="${safe(r.skewed)}" onchange="updateRecord(${r.id}, 'skewed', this.value)"></td>
-            <td class="detail-col group-a ${getVis('a')} qty-cell"><input type="number" class="defect-qty" value="${safe(r.flipped)}" onchange="updateRecord(${r.id}, 'flipped', this.value)"></td>
-
-            <td class="group-sum-cell merge-bottom"></td>
-            <td class="detail-col group-b ${getVis('b')} qty-cell"><input type="number" class="defect-qty" value="${safe(r.damaged)}" onchange="updateRecord(${r.id}, 'damaged', this.value)"></td>
-            <td class="detail-col group-b ${getVis('b')} qty-cell"><input type="number" class="defect-qty" value="${safe(r.manhattan)}" onchange="updateRecord(${r.id}, 'manhattan', this.value)"></td>
-            <td class="detail-col group-b ${getVis('b')} qty-cell"><input type="number" class="defect-qty" value="${safe(r.detached)}" onchange="updateRecord(${r.id}, 'detached', this.value)"></td>
-
-            <td class="group-sum-cell merge-bottom"></td>
-            <td class="detail-col group-c ${getVis('c')} qty-cell"><input type="number" class="defect-qty" value="${safe(r.cold)}" onchange="updateRecord(${r.id}, 'cold', this.value)"></td>
-            <td class="detail-col group-c ${getVis('c')} qty-cell"><input type="number" class="defect-qty" value="${safe(r.unsoldered)}" onchange="updateRecord(${r.id}, 'unsoldered', this.value)"></td>
-            <td class="detail-col group-c ${getVis('c')} qty-cell"><input type="number" class="defect-qty" value="${safe(r.short)}" onchange="updateRecord(${r.id}, 'short', this.value)"></td>
-
-            <td class="group-sum-cell merge-bottom"></td>
-            <td class="detail-col group-d ${getVis('d')} qty-cell"><input type="number" class="defect-qty" value="${safe(r.material)}" onchange="updateRecord(${r.id}, 'material', this.value)"></td>
-            <td class="detail-col group-d ${getVis('d')} qty-cell"><input type="number" class="defect-qty" value="${safe(r.dip)}" onchange="updateRecord(${r.id}, 'dip', this.value)"></td>
-        </tr>`;
-                }).join('');
-
-                updateViewMode();
-                expandedGroups.forEach(groupName => {
-                    document.querySelectorAll(`.detail-col.group-${groupName}`).forEach(col => col.classList.add('visible'));
-                });
-                adjustTableScrollbar();
-            }
-            function adjustTableScrollbar() {
-                const container = document.querySelector('.table-container');
-                const table = document.querySelector('.aoi-table');
-                const thead = table.querySelector('thead');
-                if (!container || !thead) return;
-                const scrollbarWidth = container.offsetWidth - container.clientWidth;
-                const lastTh = thead.querySelector('tr:first-child th:last-child');
-                if (lastTh) {
-                    lastTh.style.paddingRight = scrollbarWidth > 0 ? `${scrollbarWidth}px` : '0';
-                }
-            }
-            window.addEventListener('resize', adjustTableScrollbar);
-
-            // ----------------------------------------------------------------
-            // [기능: 그룹 토글 & 고정 모드 이벤트]
-            // ----------------------------------------------------------------
-
-            const expandedGroups = new Set();
-
-            window.toggleGroup = function (groupName) {
-                // 1. 헤더 클릭 시 언제든 작동하도록 제약 없음
-                const cols = document.querySelectorAll(`.detail-col.group-${groupName}`);
-                if (cols.length === 0) return;
-
-                // 2. 현재 열려있는지 확인 (첫 번째 컬럼 기준)
-                const isOpened = cols[0].classList.contains('visible');
-
-                // 3. 상태 업데이트 및 클래스 토글
-                if (isOpened) {
-                    expandedGroups.delete(groupName); // 닫힘 상태 기억
-                    cols.forEach(col => col.classList.remove('visible'));
-                } else {
-                    expandedGroups.add(groupName); // 열림 상태 기억
-                    cols.forEach(col => col.classList.add('visible'));
-                }
-
-                if (typeof adjustTableScrollbar === 'function') adjustTableScrollbar();
-            };
-
-            const pinModeBtn = document.getElementById('pin-mode-btn');
-            const commandInput = document.getElementById('command-input');
-            let isPinMode = false;
-            let pinnedRowId = null;
-            let isDeleteMode = false;
-
-            if (pinModeBtn) {
-                pinModeBtn.addEventListener('click', () => {
-                    if (isDeleteMode) return;
-                    isPinMode = !isPinMode;
-                    if (isPinMode) {
-                        pinModeBtn.classList.add('active');
-                        commandInput.placeholder = "모델명을 클릭하여 고정하세요.";
-                    } else {
-                        pinModeBtn.classList.remove('active');
-                        commandInput.placeholder = "명령어 입력 (예: 미삽 1)";
-                        pinnedRowId = null;
-                        document.querySelectorAll('.pinned-row').forEach(row => row.classList.remove('pinned-row'));
-                    }
-                });
-            }
-
-            /* [수정됨] 모델명 클릭 시 고정 처리 (상/하단 행 동시 적용) */
-            document.getElementById('aoi-list-body').addEventListener('click', (e) => {
-                if (!isPinMode || isDeleteMode) return;
-
-                // 클릭된 요소가 모델명 텍스트(div)이거나 그 부모 셀(td)인지 확인
-                const target = e.target;
-                const modelCell = target.closest('.model-text') || target.closest('.merge-top'); // 클릭 영역 확장
-
-                // 첫 번째 컬럼(모델명)을 클릭했을 때만 반응
-                if (modelCell && target.closest('td').cellIndex === 0) {
-                    const row = target.closest('tr');
-                    if (!row) return;
-
-                    // 1. 기존 고정 해제
-                    if (pinnedRowId) {
-                        const prevRows = document.querySelectorAll(`tr[data-id="${pinnedRowId}"]`);
-                        prevRows.forEach(r => r.classList.remove('pinned-row'));
-                    }
-
-                    // 2. 새로운 고정 적용 (상단행 + 하단행 모두)
-                    pinnedRowId = row.dataset.id;
-                    const targetRows = document.querySelectorAll(`tr[data-id="${pinnedRowId}"]`);
-                    targetRows.forEach(r => r.classList.add('pinned-row'));
-
-                    // 3. 입력창 플레이스홀더 변경
-                    const modelName = row.querySelector('.model-text') ? row.querySelector('.model-text').textContent.trim() : '모델';
-                    commandInput.placeholder = `[${modelName}] 고정됨 - 명령어 입력`;
-                    commandInput.focus();
-                    e.stopPropagation();
+            document.getElementById('aoi-list-body').addEventListener('input', (e) => {
+                if (e.target.classList.contains('qty-input-visible')) {
+                    const val = parseInt(e.target.value) || 0;
+                    const upperRow = e.target.closest('tr.upper-row');
+                    updateProgressUI(upperRow, val);
                 }
             });
 
             // ----------------------------------------------------------------
-            // [기능: 키보드 입력 처리 (실시간 시각화 반영)]
+            // [3] DB 업데이트
             // ----------------------------------------------------------------
-            const cmdMap = {
+            window.updateRecord = async function (id, field, value) {
+                if (isDeleteMode) return;
+
+                let inputVal = 0;
+                if (field !== 'inspection_point' && !field.endsWith('_ref')) {
+                    inputVal = parseInt(value) || 0;
+                } else {
+                    inputVal = value;
+                }
+
+                const upperRow = document.querySelector(`tr.upper-row[data-id="${id}"]`);
+                const lowerRow = document.querySelector(`tr.lower-row[data-id="${id}"]`);
+
+                if (field === 'inspection_qty' && upperRow) {
+                    updateProgressUI(upperRow, inputVal);
+                }
+
+                try {
+                    const payload = {}; payload[field] = inputVal;
+                    const response = await fetch(`http://127.0.0.1:5000/api/aoi/records/${id}`, {
+                        method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+                    });
+                    const res = await response.json();
+
+                    if (res.success && upperRow) {
+                        const updated = res.updated_record;
+                        const totalDefectWrapper = upperRow.querySelector('.defect-total-col .row-span-wrapper');
+                        const goodQtyWrapper = upperRow.querySelector('.good-col .row-span-wrapper');
+
+                        if (totalDefectWrapper) totalDefectWrapper.textContent = updated.total_defect;
+                        if (goodQtyWrapper) {
+                            goodQtyWrapper.textContent = updated.good_qty;
+                            goodQtyWrapper.style.color = updated.good_qty < 0 ? 'var(--danger-red)' : 'var(--success-green)';
+                        }
+                        updateGroupSums(upperRow, lowerRow);
+                    }
+                } catch (e) { console.error(e); showToast('저장 실패', 'error'); }
+            };
+
+            function updateGroupSums(upperRow, lowerRow) {
+                if (!upperRow || !lowerRow) return;
+                const getVal = (cls) => {
+                    const input = lowerRow.querySelector(`input[onchange*="'${cls}'"]`) ||
+                        upperRow.querySelector(`input[onchange*="'${cls}'"]`);
+                    return input ? (parseInt(input.value) || 0) : 0;
+                };
+                const sumA = getVal('missing') + getVal('wrong') + getVal('reverse') + getVal('skewed') + getVal('flipped');
+                const sumB = getVal('damaged') + getVal('manhattan') + getVal('detached');
+                const sumC = getVal('cold') + getVal('unsoldered') + getVal('short');
+                const sumD = getVal('material') + getVal('dip');
+
+                const sumWrappers = upperRow.querySelectorAll('.group-sum-cell .row-span-wrapper');
+                if (sumWrappers.length >= 4) {
+                    sumWrappers[0].textContent = sumA;
+                    sumWrappers[1].textContent = sumB;
+                    sumWrappers[2].textContent = sumC;
+                    sumWrappers[3].textContent = sumD;
+                }
+            }
+
+            // ----------------------------------------------------------------
+            // [4] 스마트 간편 입력 (Smart Parsing & Merge)
+            // ----------------------------------------------------------------
+
+            // 불량 유형 매핑 (사용자 테이블의 필드명과 일치해야 함)
+            const CMD_MAP = {
                 '포인트': 'inspection_point', '포': 'inspection_point', 'ㅍ': 'inspection_point', 'point': 'inspection_point',
                 '수량': 'inspection_qty', '수': 'inspection_qty', 'ㅅㄹ': 'inspection_qty', 'qty': 'inspection_qty',
                 '미삽': 'missing', 'ㅁㅅ': 'missing',
@@ -587,142 +399,416 @@
                 'dip': 'dip', '딮': 'dip', 'ㄷ': 'dip',
             };
 
-            commandInput.addEventListener('keydown', async (e) => {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    if (!pinnedRowId) { showToast('고정된 모델이 없습니다.', 'error'); return; }
+            /**
+             * 간편 입력 문자열 파싱 (예: "C102 미삽 1")
+             */
+            function parseSimpleInput(inputString) {
+                const parts = inputString.trim().toUpperCase().split(/\s+/).filter(p => p);
+                if (parts.length < 2) return null;
 
-                    const text = commandInput.value.trim();
-                    if (!text) return;
-                    const parts = text.split(' ');
-                    if (parts.length < 2) { showToast('형식 오류 (예: 수량 500)', 'error'); return; }
+                let ref = null;
+                let defectKey = null;
+                let qty = 1;
 
-                    const typeKey = parts[0];
-                    const inputVal = parseInt(parts[1]);
-                    const dbField = cmdMap[typeKey];
-
-                    if (!dbField) { showToast(`알 수 없는 명령어: ${typeKey}`, 'error'); return; }
-                    if (isNaN(inputVal)) { showToast('숫자를 입력해주세요.', 'error'); return; }
-
-                    // [핵심 수정] 상단 행과 하단 행을 모두 찾습니다.
-                    const upperRow = document.querySelector(`tr.upper-row[data-id="${pinnedRowId}"]`);
-                    const lowerRow = document.querySelector(`tr.lower-row[data-id="${pinnedRowId}"]`);
-
-                    if (!upperRow || !lowerRow) { showToast('행을 찾을 수 없습니다.', 'error'); return; }
-
-                    let input;
-
-                    // 1. 수량(qty)인 경우 상단 행의 전용 클래스 검색
-                    if (dbField === 'inspection_qty') {
-                        input = upperRow.querySelector('.qty-input-visible');
+                for (const part of parts) {
+                    // 1. Defect Type 확인
+                    let foundType = false;
+                    for (const key in CMD_MAP) {
+                        if (part === key.toUpperCase()) {
+                            defectKey = CMD_MAP[key];
+                            foundType = true;
+                            break;
+                        }
                     }
-                    // 2. 그 외(불량 등)는 상단/하단 모두 검색
-                    else {
-                        const selector = `input[onchange*="'${dbField}'"]`;
-                        // 상단 행에 없으면 하단 행에서 찾음
-                        input = upperRow.querySelector(selector) || lowerRow.querySelector(selector);
+                    if (foundType) continue;
+
+                    // 2. 숫자 확인 (수량)
+                    const num = parseInt(part);
+                    if (!isNaN(num)) {
+                        qty = num;
+                        continue;
                     }
 
-                    if (!input) { showToast('항목 오류 (입력창을 찾을 수 없음)', 'error'); return; }
+                    // 3. 나머지 (레퍼런스)
+                    ref = part;
+                }
 
-                    // 값 변경 로직
-                    if (dbField === 'inspection_point' || dbField === 'inspection_qty') {
-                        input.value = inputVal;
-                        showToast(`${typeKey} -> ${inputVal} 변경됨`);
+                if (!defectKey) return null;
+                return { ref, defectKey, qty };
+            }
+
+            /**
+             * 레퍼런스 문자열 지능형 병합
+             */
+            function mergeReference(currentRefString, newRefName, addedQty) {
+                if (!newRefName) return currentRefString; // 레퍼런스 없으면 유지
+
+                const refMap = new Map();
+                const refParts = currentRefString.split(',').map(s => s.trim()).filter(s => s);
+                const refRegex = /^([A-Z0-9-]+)\s*(\d+)\s*EA$/i;
+                const upperNewRefName = newRefName.toUpperCase();
+
+                // 기존 파싱
+                for (const part of refParts) {
+                    const match = part.match(refRegex);
+                    if (match) {
+                        refMap.set(match[1].toUpperCase(), parseInt(match[2]));
                     } else {
-                        const currentVal = parseInt(input.value) || 0;
-                        input.value = currentVal + inputVal;
-                        showToast(`${typeKey} +${inputVal} 처리됨`);
+                        refMap.set(part, -1); // 포맷 안 맞는 건 -1로 표시
                     }
+                }
 
-                    // [실시간 프로그레스 업데이트] - 진행바는 항상 상단 행(upperRow)에 있음
-                    if (dbField === 'inspection_qty') {
-                        const lotQty = parseInt(upperRow.dataset.lot) || 0;
-                        const baseCumulative = parseInt(upperRow.dataset.baseCumulative) || 0;
-                        const newTodayQty = parseInt(input.value) || 0;
-                        const newTotal = baseCumulative + newTodayQty;
+                // 병합 또는 추가
+                if (refMap.has(upperNewRefName)) {
+                    const currentQty = refMap.get(upperNewRefName);
+                    if (currentQty !== -1) {
+                        refMap.set(upperNewRefName, currentQty + addedQty);
+                    }
+                } else {
+                    refMap.set(upperNewRefName, addedQty);
+                }
 
-                        let percent = 0;
-                        if (lotQty > 0) percent = (newTotal / lotQty) * 100;
-                        if (percent > 100) percent = 100;
-                        const isCompleted = lotQty > 0 && newTotal >= lotQty;
+                // 문자열 재조립
+                const newRefParts = [];
+                refMap.forEach((q, name) => {
+                    if (q === -1) newRefParts.push(name);
+                    else newRefParts.push(`${name} ${q}EA`);
+                });
 
-                        const barEl = upperRow.querySelector('.qty-progress-fill');
-                        const accTextEl = upperRow.querySelector('.acc-val');
-                        const textContainer = upperRow.querySelector('.qty-info-text');
+                return newRefParts.join(', ');
+            }
 
-                        if (barEl) {
-                            barEl.style.width = `${percent}%`;
-                            if (isCompleted) barEl.classList.add('completed');
-                            else barEl.classList.remove('completed');
+            function triggerChange(el) {
+                el.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+
+            // 간편 입력 이벤트 리스너
+            if (commandInput) {
+                commandInput.addEventListener('keydown', async (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        if (!pinnedRowId) { showToast('고정된 모델이 없습니다.', 'error'); return; }
+
+                        const text = commandInput.value.trim();
+                        if (!text) return;
+
+                        const parsed = parseSimpleInput(text);
+
+                        // 1. 일반 숫자 입력 모드 (예: "미삽 1") - 기존 로직 유지
+                        if (!parsed || !parsed.ref) {
+                            const parts = text.split(' ');
+                            if (parts.length < 2) { showToast('형식 오류 (예: 미삽 1)', 'error'); return; }
+
+                            const typeKey = parts[0];
+                            const inputVal = parseInt(parts[1]);
+                            const dbField = CMD_MAP[typeKey];
+
+                            if (!dbField) { showToast(`알 수 없는 명령어: ${typeKey}`, 'error'); return; }
+                            if (isNaN(inputVal)) { showToast('숫자를 입력해주세요.', 'error'); return; }
+
+                            const upperRow = document.querySelector(`tr.upper-row[data-id="${pinnedRowId}"]`);
+                            const lowerRow = document.querySelector(`tr.lower-row[data-id="${pinnedRowId}"]`);
+                            if (!upperRow || !lowerRow) return;
+
+                            let input;
+                            if (dbField === 'inspection_qty' || dbField === 'inspection_point') {
+                                input = upperRow.querySelector(`input[onchange*="'${dbField}'"]`);
+                            } else {
+                                input = lowerRow.querySelector(`input[onchange*="'${dbField}'"]`);
+                            }
+
+                            if (input) {
+                                if (dbField === 'inspection_point' || dbField === 'inspection_qty') {
+                                    input.value = inputVal;
+                                    showToast(`${typeKey} -> ${inputVal} 변경됨`);
+                                } else {
+                                    const currentVal = parseInt(input.value) || 0;
+                                    input.value = currentVal + inputVal;
+                                    showToast(`${typeKey} +${inputVal} 처리됨`);
+                                }
+                                triggerChange(input);
+                                if (dbField === 'inspection_qty') input.dispatchEvent(new Event('input', { bubbles: true }));
+                            }
                         }
-                        if (accTextEl) accTextEl.textContent = newTotal;
-                        if (textContainer) {
-                            if (isCompleted) textContainer.classList.add('completed');
-                            else textContainer.classList.remove('completed');
+                        // 2. 스마트 레퍼런스 입력 모드 (예: "C102 미삽 1")
+                        else {
+                            const { ref, defectKey, qty } = parsed;
+
+                            const upperRow = document.querySelector(`tr.upper-row[data-id="${pinnedRowId}"]`);
+                            const lowerRow = document.querySelector(`tr.lower-row[data-id="${pinnedRowId}"]`);
+
+                            if (!upperRow || !lowerRow) return;
+
+                            // (1) Ref 입력칸 찾기 (상단 행)
+                            const refInput = upperRow.querySelector(`input[onchange*="'${defectKey}_ref'"]`);
+                            // (2) Qty 입력칸 찾기 (하단 행)
+                            const qtyInput = lowerRow.querySelector(`input[onchange*="'${defectKey}'"]`);
+
+                            if (refInput && qtyInput) {
+                                // Ref 병합 및 업데이트
+                                const newRefString = mergeReference(refInput.value, ref, qty);
+                                refInput.value = newRefString;
+                                triggerChange(refInput);
+
+                                // 수량 업데이트
+                                const currentQty = parseInt(qtyInput.value) || 0;
+                                qtyInput.value = currentQty + qty;
+                                triggerChange(qtyInput);
+
+                                showToast(`[${ref}] ${Object.keys(CMD_MAP).find(k => CMD_MAP[k] === defectKey)} +${qty} 처리됨`);
+                            } else {
+                                showToast('해당 항목을 찾을 수 없습니다.', 'error');
+                            }
+                        }
+
+                        commandInput.value = '';
+                    }
+                });
+            }
+
+            // ----------------------------------------------------------------
+            // [5] 렌더링 함수
+            // ----------------------------------------------------------------
+            function renderTableRows(records) {
+                const tbody = document.getElementById('aoi-list-body');
+                const tableContainer = document.querySelector('.table-container');
+                const noRecordMsg = document.getElementById('no-record-msg');
+
+                if (!records || records.length === 0) {
+                    if (tableContainer) tableContainer.style.display = 'none';
+                    if (noRecordMsg) noRecordMsg.style.display = 'flex';
+                    tbody.innerHTML = '';
+                    return;
+                }
+                if (tableContainer) tableContainer.style.display = 'block';
+                if (noRecordMsg) noRecordMsg.style.display = 'none';
+
+                const getVis = (group) => expandedGroups.has(group) ? 'visible' : '';
+
+                tbody.innerHTML = records.map(r => {
+                    const safe = (v) => v || 0;
+                    const lotQty = r.lot || 0;
+                    const todayQty = safe(r.inspection_qty);
+                    const totalQty = (r.cumulative_qty !== undefined) ? r.cumulative_qty : todayQty;
+                    const baseCumulative = totalQty - todayQty;
+                    let percent = lotQty > 0 ? (totalQty / lotQty) * 100 : 0;
+                    if (percent > 100) percent = 100;
+
+                    const isCompleted = lotQty > 0 && totalQty >= lotQty;
+                    const barClass = isCompleted ? 'qty-progress-fill completed' : 'qty-progress-fill';
+                    const textClass = isCompleted ? 'qty-info-text completed' : 'qty-info-text';
+                    const rowTitle = `[${r.model}] LOT: ${lotQty} / 누적: ${totalQty}`;
+
+                    // 합계 계산
+                    const sumA = safe(r.missing) + safe(r.wrong) + safe(r.reverse) + safe(r.skewed) + safe(r.flipped);
+                    const sumB = safe(r.damaged) + safe(r.manhattan) + safe(r.detached);
+                    const sumC = safe(r.cold) + safe(r.unsoldered) + safe(r.short);
+                    const sumD = safe(r.material) + safe(r.dip);
+                    const goodColor = r.good_qty < 0 ? 'var(--danger-red)' : 'var(--success-green)';
+
+                    return `
+            <tr class="upper-row" data-id="${r.id}" data-lot="${lotQty}" data-base-cumulative="${baseCumulative}">
+                <td class="merge-top" style="cursor:pointer;">
+                    <div class="row-span-wrapper model-text" data-tooltip="${rowTitle}">${r.model}</div>
+                </td>
+                <td class="detail-col group-basic merge-top"><div class="row-span-wrapper"><input type="number" value="${safe(r.inspection_point)}" onchange="updateRecord(${r.id}, 'inspection_point', this.value)"></div></td>
+                <td class="detail-col group-basic merge-top"><div class="row-span-wrapper"><input type="number" class="qty-input-visible" value="${todayQty}" placeholder="0" onchange="updateRecord(${r.id}, 'inspection_qty', this.value)"></div></td>
+                <td class="detail-col group-basic merge-top"><div class="row-span-wrapper" style="flex-direction:column; padding:0 5px;"><div class="progress-cell-wrapper" style="width:100%; height:100%; justify-content:center;"><div class="qty-progress-track" title="달성률: ${parseInt(percent)}%"><div class="${barClass}" style="width: ${percent}%;"></div></div><div class="${textClass}"><span class="acc-val">${totalQty}</span><span class="lot-val">/ ${lotQty}</span></div></div></div></td>
+                <td class="detail-col group-basic good-col merge-top"><div class="row-span-wrapper" style="color:${goodColor}; font-weight:bold;">${safe(r.good_qty)}</div></td>
+                <td class="detail-col group-basic defect-total-col merge-top"><div class="row-span-wrapper" style="color:var(--danger-red); font-weight:bold;">${safe(r.total_defect)}</div></td>
+
+                <td class="group-sum-cell merge-top"><div class="row-span-wrapper">${sumA}</div></td>
+                <td class="detail-col group-a ${getVis('a')} ref-cell group-start"><input type="text" class="defect-ref-input" value="${r.missing_ref || ''}" placeholder="Ref" onchange="updateRecord(${r.id}, 'missing_ref', this.value)"></td>
+                <td class="detail-col group-a ${getVis('a')} ref-cell"><input type="text" class="defect-ref-input" value="${r.wrong_ref || ''}" placeholder="Ref" onchange="updateRecord(${r.id}, 'wrong_ref', this.value)"></td>
+                <td class="detail-col group-a ${getVis('a')} ref-cell"><input type="text" class="defect-ref-input" value="${r.reverse_ref || ''}" placeholder="Ref" onchange="updateRecord(${r.id}, 'reverse_ref', this.value)"></td>
+                <td class="detail-col group-a ${getVis('a')} ref-cell"><input type="text" class="defect-ref-input" value="${r.skewed_ref || ''}" placeholder="Ref" onchange="updateRecord(${r.id}, 'skewed_ref', this.value)"></td>
+                <td class="detail-col group-a ${getVis('a')} ref-cell group-end"><input type="text" class="defect-ref-input" value="${r.flipped_ref || ''}" placeholder="Ref" onchange="updateRecord(${r.id}, 'flipped_ref', this.value)"></td>
+
+                <td class="group-sum-cell merge-top"><div class="row-span-wrapper">${sumB}</div></td>
+                <td class="detail-col group-b ${getVis('b')} ref-cell group-start"><input type="text" class="defect-ref-input" value="${r.damaged_ref || ''}" placeholder="Ref" onchange="updateRecord(${r.id}, 'damaged_ref', this.value)"></td>
+                <td class="detail-col group-b ${getVis('b')} ref-cell"><input type="text" class="defect-ref-input" value="${r.manhattan_ref || ''}" placeholder="Ref" onchange="updateRecord(${r.id}, 'manhattan_ref', this.value)"></td>
+                <td class="detail-col group-b ${getVis('b')} ref-cell group-end"><input type="text" class="defect-ref-input" value="${r.detached_ref || ''}" placeholder="Ref" onchange="updateRecord(${r.id}, 'detached_ref', this.value)"></td>
+
+                <td class="group-sum-cell merge-top"><div class="row-span-wrapper">${sumC}</div></td>
+                <td class="detail-col group-c ${getVis('c')} ref-cell group-start"><input type="text" class="defect-ref-input" value="${r.cold_ref || ''}" placeholder="Ref" onchange="updateRecord(${r.id}, 'cold_ref', this.value)"></td>
+                <td class="detail-col group-c ${getVis('c')} ref-cell"><input type="text" class="defect-ref-input" value="${r.unsoldered_ref || ''}" placeholder="Ref" onchange="updateRecord(${r.id}, 'unsoldered_ref', this.value)"></td>
+                <td class="detail-col group-c ${getVis('c')} ref-cell group-end"><input type="text" class="defect-ref-input" value="${r.short_ref || ''}" placeholder="Ref" onchange="updateRecord(${r.id}, 'short_ref', this.value)"></td>
+
+                <td class="group-sum-cell merge-top"><div class="row-span-wrapper">${sumD}</div></td>
+                <td class="detail-col group-d ${getVis('d')} ref-cell group-start"><input type="text" class="defect-ref-input" value="${r.material_ref || ''}" placeholder="Ref" onchange="updateRecord(${r.id}, 'material_ref', this.value)"></td>
+                <td class="detail-col group-d ${getVis('d')} ref-cell group-end"><input type="text" class="defect-ref-input" value="${r.dip_ref || ''}" placeholder="Ref" onchange="updateRecord(${r.id}, 'dip_ref', this.value)"></td>
+            </tr>
+
+            <tr class="lower-row" data-id="${r.id}">
+                <td class="merge-bottom"></td>
+                <td class="detail-col group-basic merge-bottom"></td>
+                <td class="detail-col group-basic merge-bottom"></td>
+                <td class="detail-col group-basic merge-bottom"></td>
+                <td class="detail-col group-basic good-col merge-bottom"></td>
+                <td class="detail-col group-basic defect-total-col merge-bottom"></td>
+
+                <td class="group-sum-cell merge-bottom"></td>
+                <td class="detail-col group-a ${getVis('a')} qty-cell group-start"><input type="number" class="defect-qty-input" value="${safe(r.missing)}" onchange="updateRecord(${r.id}, 'missing', this.value)"></td>
+                <td class="detail-col group-a ${getVis('a')} qty-cell"><input type="number" class="defect-qty-input" value="${safe(r.wrong)}" onchange="updateRecord(${r.id}, 'wrong', this.value)"></td>
+                <td class="detail-col group-a ${getVis('a')} qty-cell"><input type="number" class="defect-qty-input" value="${safe(r.reverse)}" onchange="updateRecord(${r.id}, 'reverse', this.value)"></td>
+                <td class="detail-col group-a ${getVis('a')} qty-cell"><input type="number" class="defect-qty-input" value="${safe(r.skewed)}" onchange="updateRecord(${r.id}, 'skewed', this.value)"></td>
+                <td class="detail-col group-a ${getVis('a')} qty-cell group-end"><input type="number" class="defect-qty-input" value="${safe(r.flipped)}" onchange="updateRecord(${r.id}, 'flipped', this.value)"></td>
+
+                <td class="group-sum-cell merge-bottom"></td>
+                <td class="detail-col group-b ${getVis('b')} qty-cell group-start"><input type="number" class="defect-qty-input" value="${safe(r.damaged)}" onchange="updateRecord(${r.id}, 'damaged', this.value)"></td>
+                <td class="detail-col group-b ${getVis('b')} qty-cell"><input type="number" class="defect-qty-input" value="${safe(r.manhattan)}" onchange="updateRecord(${r.id}, 'manhattan', this.value)"></td>
+                <td class="detail-col group-b ${getVis('b')} qty-cell group-end"><input type="number" class="defect-qty-input" value="${safe(r.detached)}" onchange="updateRecord(${r.id}, 'detached', this.value)"></td>
+
+                <td class="group-sum-cell merge-bottom"></td>
+                <td class="detail-col group-c ${getVis('c')} qty-cell group-start"><input type="number" class="defect-qty-input" value="${safe(r.cold)}" onchange="updateRecord(${r.id}, 'cold', this.value)"></td>
+                <td class="detail-col group-c ${getVis('c')} qty-cell"><input type="number" class="defect-qty-input" value="${safe(r.unsoldered)}" onchange="updateRecord(${r.id}, 'unsoldered', this.value)"></td>
+                <td class="detail-col group-c ${getVis('c')} qty-cell group-end"><input type="number" class="defect-qty-input" value="${safe(r.short)}" onchange="updateRecord(${r.id}, 'short', this.value)"></td>
+
+                <td class="group-sum-cell merge-bottom"></td>
+                <td class="detail-col group-d ${getVis('d')} qty-cell group-start"><input type="number" class="defect-qty-input" value="${safe(r.material)}" onchange="updateRecord(${r.id}, 'material', this.value)"></td>
+                <td class="detail-col group-d ${getVis('d')} qty-cell group-end"><input type="number" class="defect-qty-input" value="${safe(r.dip)}" onchange="updateRecord(${r.id}, 'dip', this.value)"></td>
+            </tr>`;
+                }).join('');
+
+                updateViewMode();
+                expandedGroups.forEach(groupName => {
+                    document.querySelectorAll(`.detail-col.group-${groupName}`).forEach(col => col.classList.add('visible'));
+                });
+                adjustTableScrollbar();
+            }
+
+            // ----------------------------------------------------------------
+            // [6] 기타 UI 기능 (토글, 핀, 모달 등)
+            // ----------------------------------------------------------------
+            function adjustTableScrollbar() {
+                const container = document.querySelector('.table-container');
+                const thead = document.querySelector('.aoi-table thead');
+                if (!container || !thead) return;
+                const scrollbarWidth = container.offsetWidth - container.clientWidth;
+                const lastTh = thead.querySelector('tr:first-child th:last-child');
+                if (lastTh) lastTh.style.paddingRight = scrollbarWidth > 0 ? `${scrollbarWidth}px` : '0';
+            }
+            window.addEventListener('resize', adjustTableScrollbar);
+
+            window.toggleGroup = function (groupName) {
+                const cols = document.querySelectorAll(`.detail-col.group-${groupName}`);
+                if (cols.length === 0) return;
+                const isOpened = cols[0].classList.contains('visible');
+                if (isOpened) {
+                    expandedGroups.delete(groupName);
+                    cols.forEach(col => col.classList.remove('visible'));
+                } else {
+                    expandedGroups.add(groupName);
+                    cols.forEach(col => col.classList.add('visible'));
+                }
+                adjustTableScrollbar();
+            };
+
+            if (toggleViewBtn) {
+                toggleViewBtn.addEventListener('click', () => {
+                    isDetailMode = !isDetailMode;
+                    updateViewMode();
+                    adjustTableScrollbar();
+                });
+            }
+
+            function updateViewMode() {
+                const btnIcon = toggleViewBtn.querySelector('i');
+                const btnText = toggleViewBtn.querySelector('span');
+                const defectGroups = ['a', 'b', 'c', 'd'];
+                const sumCols = table.querySelectorAll('colgroup .group-sum-col');
+                const sumHeaders = table.querySelectorAll('thead .sum-header');
+                const groupSumCols = table.querySelectorAll('thead .group-sum-col');
+                const sumCells = table.querySelectorAll('tbody .group-sum-cell');
+
+                if (isDetailMode) {
+                    table.classList.remove('simple-view-mode');
+                    toggleViewBtn.classList.add('active');
+                    btnIcon.className = 'uil uil-eye-slash';
+                    btnText.textContent = '간편 보기';
+
+                    sumCols.forEach(el => el.style.display = 'none');
+                    sumHeaders.forEach(el => { el.style.display = 'none'; el.removeAttribute('rowspan'); });
+                    groupSumCols.forEach(el => el.style.display = 'none');
+                    sumCells.forEach(el => el.style.display = 'none');
+
+                    defectGroups.forEach(g => document.querySelectorAll(`.detail-col.group-${g}`).forEach(col => col.classList.add('visible')));
+                    table.style.width = 'max-content';
+                } else {
+                    table.classList.add('simple-view-mode');
+                    toggleViewBtn.classList.remove('active');
+                    btnIcon.className = 'uil uil-eye';
+                    btnText.textContent = '자세히 보기';
+
+                    sumCols.forEach(el => { el.style.display = 'table-column'; el.style.width = ''; });
+                    sumHeaders.forEach(el => { el.style.display = 'table-cell'; el.setAttribute('rowspan', '2'); });
+                    groupSumCols.forEach(el => el.style.display = 'none');
+                    sumCells.forEach(el => el.style.display = 'table-cell');
+
+                    defectGroups.forEach(g => document.querySelectorAll(`.detail-col.group-${g}`).forEach(col => col.classList.remove('visible')));
+                    table.style.width = '100%';
+                }
+            }
+
+            if (pinModeBtn) {
+                pinModeBtn.addEventListener('click', () => {
+                    if (isDeleteMode) return;
+                    isPinMode = !isPinMode;
+                    if (isPinMode) {
+                        pinModeBtn.classList.add('active');
+                        commandInput.placeholder = "모델명을 클릭하여 고정하세요.";
+                    } else {
+                        pinModeBtn.classList.remove('active');
+                        commandInput.placeholder = "명령어 입력 (예: 미삽 1)";
+                        if (pinnedRowId) {
+                            document.querySelectorAll(`tr[data-id="${pinnedRowId}"]`).forEach(r => r.classList.remove('pinned-row'));
+                            pinnedRowId = null;
                         }
                     }
+                });
+            }
 
-                    input.dispatchEvent(new Event('change'));
-                    commandInput.value = '';
+            document.getElementById('aoi-list-body').addEventListener('click', (e) => {
+                if (isDeleteMode) {
+                    const row = e.target.closest('tr');
+                    if (!row) return;
+                    const id = row.dataset.id;
+                    const upperRow = document.querySelector(`tr.upper-row[data-id="${id}"]`);
+                    const modelName = upperRow ? upperRow.querySelector('.model-text').textContent.trim() : '모델';
+                    if (confirm(`[${modelName}] 기록을 삭제하시겠습니까?`)) {
+                        fetch(`http://127.0.0.1:5000/api/aoi/records/${id}`, { method: 'DELETE' })
+                            .then(res => res.json())
+                            .then(res => {
+                                if (res.success) document.querySelectorAll(`tr[data-id="${id}"]`).forEach(r => r.remove());
+                                else alert('삭제 실패');
+                            }).catch(() => alert('오류 발생'));
+                    }
+                    return;
+                }
+
+                if (isPinMode) {
+                    const target = e.target;
+                    const cell = target.closest('td');
+                    if (cell && (cell.cellIndex === 0 || cell.querySelector('.row-span-wrapper.model-text'))) {
+                        const row = cell.closest('tr');
+                        if (!row) return;
+                        const clickedId = row.dataset.id;
+
+                        if (pinnedRowId && pinnedRowId !== clickedId) {
+                            document.querySelectorAll(`tr[data-id="${pinnedRowId}"]`).forEach(r => r.classList.remove('pinned-row'));
+                        }
+                        pinnedRowId = clickedId;
+                        document.querySelectorAll(`tr[data-id="${clickedId}"]`).forEach(r => r.classList.add('pinned-row'));
+
+                        const upperRow = document.querySelector(`tr.upper-row[data-id="${clickedId}"]`);
+                        const modelName = upperRow ? upperRow.querySelector('.model-text').textContent.trim() : '모델';
+                        commandInput.placeholder = `[${modelName}] 고정됨 - 명령어 입력`;
+                        commandInput.focus();
+                        e.stopPropagation();
+                    }
                 }
             });
 
-            function showToast(msg, type = 'success') {
-                const container = document.getElementById('toast-container');
-                const toast = document.createElement('div');
-                toast.className = `toast-msg ${type}`;
-                toast.innerText = msg;
-                container.appendChild(toast);
-                setTimeout(() => toast.remove(), 2000);
-            }
-
-            // ----------------------------------------------------------------
-            // [기능: DB 업데이트 (공통)]
-            // ----------------------------------------------------------------
-            window.updateRecord = async function (id, field, value) {
-                if (isDeleteMode) return;
-                try {
-                    const payload = {}; payload[field] = parseInt(value) || 0;
-                    const response = await fetch(`http://127.0.0.1:5000/api/aoi/records/${id}`, {
-                        method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
-                    });
-                    const res = await response.json();
-                    if (res.success) {
-                        const row = document.querySelector(`tr[data-id="${id}"]`);
-                        if (row) {
-                            const updated = res.updated_record;
-                            row.querySelector('.defect-total-col').textContent = updated.total_defect;
-                            const goodCol = row.querySelector('.good-col');
-                            goodCol.textContent = updated.good_qty;
-                            goodCol.style.color = updated.good_qty < 0 ? 'var(--danger-red)' : 'var(--success-green)';
-                            updateGroupSums(row);
-                        }
-                    }
-                } catch (e) { console.error(e); }
-            };
-
-            function updateGroupSums(row) {
-                const getVal = (cls) => {
-                    const input = row.querySelector(`input[onchange*="'${cls}'"]`);
-                    return input ? (parseInt(input.value) || 0) : 0;
-                };
-                const sumA = getVal('missing') + getVal('wrong') + getVal('reverse') + getVal('skewed') + getVal('flipped');
-                const sumB = getVal('damaged') + getVal('manhattan') + getVal('detached');
-                const sumC = getVal('cold') + getVal('unsoldered') + getVal('short');
-                const sumD = getVal('material') + getVal('dip');
-
-                const sumCells = row.querySelectorAll('.group-sum-cell');
-                if (sumCells.length >= 4) {
-                    sumCells[0].textContent = sumA; sumCells[1].textContent = sumB;
-                    sumCells[2].textContent = sumC; sumCells[3].textContent = sumD;
-                }
-            }
-
-            // ----------------------------------------------------------------
-            // [기능: 관리/삭제 모드]
-            // ----------------------------------------------------------------
-            const manageBtn = document.getElementById('manage-btn');
             if (manageBtn) {
                 manageBtn.addEventListener('click', () => {
                     isDeleteMode = !isDeleteMode;
@@ -731,7 +817,6 @@
                         manageBtn.classList.add('active');
                         manageBtn.innerHTML = '<i class="uil uil-check"></i> 완료';
                         tableEl.classList.add('delete-mode');
-                        // 고정 모드 해제
                         if (isPinMode) pinModeBtn.click();
                     } else {
                         manageBtn.classList.remove('active');
@@ -741,168 +826,14 @@
                 });
             }
 
-            /* [최종 수정] 클릭 이벤트 핸들러 (고정 범위 확대 & 수량 조절 클릭 제거) */
-            document.getElementById('aoi-list-body').addEventListener('click', (e) => {
-                // 1. 관리(삭제) 모드일 때의 동작
-                if (isDeleteMode) {
-                    const row = e.target.closest('tr');
-                    if (!row) return;
-                    const id = row.dataset.id;
-                    // 상단 행에서 모델명을 찾거나, 하단 행이면 상단 행을 찾아서 모델명을 가져옴
-                    const upperRow = document.querySelector(`tr.upper-row[data-id="${id}"]`);
-                    const modelName = upperRow ? upperRow.querySelector('.model-text').textContent.trim() : '모델';
-
-                    if (confirm(`[${modelName}] 기록을 삭제하시겠습니까?`)) {
-                        fetch(`http://127.0.0.1:5000/api/aoi/records/${id}`, { method: 'DELETE' })
-                            .then(res => res.json())
-                            .then(res => {
-                                if (res.success) {
-                                    // 화면에서 즉시 제거 (상/하단 행 모두)
-                                    document.querySelectorAll(`tr[data-id="${id}"]`).forEach(r => r.remove());
-                                } else { alert('삭제 실패'); }
-                            })
-                            .catch(() => alert('오류 발생'));
-                    }
-                    return; // 삭제 모드일 때는 고정 로직 실행 안 함
-                }
-
-                // 2. 고정(Pin) 모드일 때의 동작 (수정됨)
-                if (isPinMode) {
-                    const target = e.target;
-                    // 클릭된 요소가 속한 셀(td)을 찾습니다.
-                    const cell = target.closest('td');
-
-                    // ★ 핵심: 첫 번째 열(인덱스 0)을 클릭했을 때만 반응 (모델명, merge-top, merge-bottom 모두 포함)
-                    if (cell && cell.cellIndex === 0) {
-                        const row = cell.closest('tr'); // 클릭된 행 (upper 혹은 lower)
-                        if (!row) return;
-
-                        const clickedId = row.dataset.id;
-
-                        // (1) 기존 고정 해제 (다른 모델을 클릭했다면)
-                        if (pinnedRowId && pinnedRowId !== clickedId) {
-                            document.querySelectorAll(`tr[data-id="${pinnedRowId}"]`).forEach(r => r.classList.remove('pinned-row'));
-                        }
-
-                        // (2) 고정 상태 토글 (이미 고정된 걸 누르면 해제, 아니면 고정)
-                        // 사용자 편의를 위해 '항상 고정'으로 하려면 토글 로직 대신 add만 사용해도 됩니다.
-                        // 여기서는 "새로운 놈을 누르면 걔가 고정됨" 로직을 따릅니다.
-                        pinnedRowId = clickedId;
-
-                        // 상단 행과 하단 행 모두에 pinned-row 클래스 부여
-                        const targetRows = document.querySelectorAll(`tr[data-id="${clickedId}"]`);
-                        targetRows.forEach(r => r.classList.add('pinned-row'));
-
-                        // (3) 입력창 플레이스홀더 업데이트
-                        const upperRow = document.querySelector(`tr.upper-row[data-id="${clickedId}"]`);
-                        const modelName = upperRow ? upperRow.querySelector('.model-text').textContent.trim() : '모델';
-                        commandInput.placeholder = `[${modelName}] 고정됨 - 명령어 입력`;
-                        commandInput.focus();
-
-                        e.stopPropagation(); // 이벤트 전파 중단
-                    }
-                }
-
-                // ★ 주의: 여기에 'else'나 다른 코드가 없으므로, 
-                // 첫 번째 열 이외의 곳(수량 칸 등)을 클릭했을 때는 아무 일도 일어나지 않습니다.
-                // (입력창 클릭은 input 태그 자체의 이벤트로 처리되므로 정상 작동합니다.)
-            });
-
-            // 삭제 후 화면 갱신을 위해 현재 화면의 레코드를 다시 읽는 헬퍼가 필요하나, 
-            // 여기서는 row.remove()로 충분하므로 getDisplayedRecords는 생략.
-
-            // ----------------------------------------------------------------
-            // [기능: 모델 추가 모달 (최적화 버전)]
-            // ----------------------------------------------------------------
-            const modelAddBtn = document.querySelector('.aoi-add-btn');
-            const modelModal = document.querySelector('.model-list-modal');
-            const closeModalBtn = document.querySelector('.close-modal-btn');
-            const modelListContainer = document.querySelector('.model-list-container');
-            const sYearSel = document.getElementById('start-year');
-            const sMonthSel = document.getElementById('start-month');
-            const eYearSel = document.getElementById('end-year');
-            const eMonthSel = document.getElementById('end-month');
-            const refreshBtn = document.getElementById('refresh-model-list-btn');
-
-            function initDateDropdowns() {
-                const now = new Date();
-                const curYear = now.getFullYear();
-                let yearOpts = ''; for (let y = curYear + 1; y >= curYear - 1; y--) yearOpts += `<option value="${y}">${y}년</option>`;
-                sYearSel.innerHTML = yearOpts; eYearSel.innerHTML = yearOpts;
-                let monthOpts = ''; for (let m = 1; m <= 12; m++) monthOpts += `<option value="${m}">${m}월</option>`;
-                sMonthSel.innerHTML = monthOpts; eMonthSel.innerHTML = monthOpts;
-                const prev = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-                const next = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-                sYearSel.value = prev.getFullYear(); sMonthSel.value = prev.getMonth() + 1;
-                eYearSel.value = next.getFullYear(); eMonthSel.value = next.getMonth() + 1;
-            }
-            initDateDropdowns();
-
-            if (modelAddBtn) {
-                modelAddBtn.addEventListener('click', () => { modelModal.classList.add('visible'); loadModelList(); });
-            }
-            function onRangeChange() { loadModelList(); }
-            [sYearSel, sMonthSel, eYearSel, eMonthSel].forEach(el => el.addEventListener('change', onRangeChange));
-            if (refreshBtn) refreshBtn.addEventListener('click', loadModelList);
-            closeModalBtn.addEventListener('click', () => modelModal.classList.remove('visible'));
-
-            async function loadModelList() {
-                modelListContainer.innerHTML = '<div style="text-align:center; padding:20px; color:#aaa;">로딩 중...</div>';
-                try {
-                    const query = `start_year=${sYearSel.value}&start_month=${sMonthSel.value}&end_year=${eYearSel.value}&end_month=${eMonthSel.value}`;
-                    const response = await fetch(`http://127.0.0.1:5000/api/aoi/available_models?${query}`);
-                    const data = await response.json();
-                    renderModelListUI(data);
-                } catch (e) { modelListContainer.innerHTML = '<div style="text-align:center;">로드 실패</div>'; }
-            }
-
-            function renderModelListUI(listData) {
-                if (!listData || listData.length === 0) {
-                    modelListContainer.innerHTML = '<div style="text-align:center; padding:20px; color:#888;">데이터 없음</div>';
-                    return;
-                }
-                const fullHtml = listData.map(group => {
-                    const modelsHtml = group.models.map(item => `
-                        <div class="model-select-card" data-model="${item.model}" data-year="${item.year}" data-month="${item.month}" data-lot="${item.lot}">
-                            <div class="model-name">${item.model}</div>
-                            <div class="model-info"><span>${item.year}.${item.month}</span><span class="model-lot">LOT: ${item.lot}</span></div>
-                        </div>`).join('');
-                    return `
-                        <div class="company-section">
-                            <div class="company-title">
-                                <span><i class="uil uil-building"></i> ${group.company} (${group.models.length})</span>
-                                <i class="uil uil-angle-down"></i>
-                            </div>
-                            <div class="accordion-wrapper"><div class="model-grid">${modelsHtml}</div></div>
-                        </div>`;
-                }).join('');
-                modelListContainer.innerHTML = fullHtml;
-            }
-
-            modelListContainer.addEventListener('click', async (e) => {
-                const target = e.target;
-                const titleEl = target.closest('.company-title');
-                if (titleEl) {
-                    titleEl.classList.toggle('active');
-                    titleEl.nextElementSibling.classList.toggle('open');
-                    return;
-                }
-                const cardEl = target.closest('.model-select-card');
-                if (cardEl) {
-                    const { model, year, month, lot } = cardEl.dataset;
-                    if (confirm(`[${model}] 모델을 추가하시겠습니까?`)) await createAoiRecord({ model, year, month, lot });
-                }
-            });
-
-            async function createAoiRecord(item) {
-                try {
-                    const today = new Date().toISOString().split('T')[0];
-                    const res = await fetch('http://127.0.0.1:5000/api/aoi/records', {
-                        method: 'POST', headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ model: item.model, year: parseInt(item.year), month: parseInt(item.month), lot: item.lot })
-                    });
-                    if (res.ok) { alert('추가되었습니다.'); modelModal.classList.remove('visible'); loadRecordsByDate(today); }
-                } catch (e) { alert('오류 발생'); }
+            function showToast(msg, type = 'success') {
+                const container = document.getElementById('toast-container');
+                if (!container) return;
+                const toast = document.createElement('div');
+                toast.className = `toast-msg ${type}`;
+                toast.innerText = msg;
+                container.appendChild(toast);
+                setTimeout(() => toast.remove(), 2000);
             }
 
             function updateTime() {
@@ -914,9 +845,190 @@
             setInterval(updateTime, 1000);
             updateTime();
 
-            // 초기 로드
+            // 모델 추가 모달
+            const addModelBtn = document.getElementById('add-model-btn');
+            const modelModal = document.querySelector('.model-list-modal');
+            const closeModalBtn = document.querySelector('.close-modal-btn');
+            const modelListContainer = document.querySelector('.model-list-container');
+            const sYearSel = document.getElementById('start-year'), sMonthSel = document.getElementById('start-month');
+            const eYearSel = document.getElementById('end-year'), eMonthSel = document.getElementById('end-month');
+            const refreshBtn = document.getElementById('refresh-model-list-btn');
+
+            function initDateDropdowns() {
+                const now = new Date(), curYear = now.getFullYear();
+                let yearOpts = ''; for (let y = curYear + 1; y >= curYear - 1; y--) yearOpts += `<option value="${y}">${y}년</option>`;
+                sYearSel.innerHTML = yearOpts; eYearSel.innerHTML = yearOpts;
+                let monthOpts = ''; for (let m = 1; m <= 12; m++) monthOpts += `<option value="${m}">${m}월</option>`;
+                sMonthSel.innerHTML = monthOpts; eMonthSel.innerHTML = monthOpts;
+                sYearSel.value = now.getFullYear(); sMonthSel.value = now.getMonth() + 1;
+                eYearSel.value = now.getFullYear(); eMonthSel.value = now.getMonth() + 1;
+            }
+            initDateDropdowns();
+
+            if (addModelBtn) addModelBtn.addEventListener('click', () => { modelModal.classList.add('visible'); loadModelList(); });
+            [sYearSel, sMonthSel, eYearSel, eMonthSel].forEach(el => el.addEventListener('change', loadModelList));
+            if (refreshBtn) refreshBtn.addEventListener('click', loadModelList);
+            if (closeModalBtn) closeModalBtn.addEventListener('click', () => modelModal.classList.remove('visible'));
+
+            async function loadModelList() {
+                modelListContainer.innerHTML = '<div style="text-align:center; padding:20px; color:#aaa;">로딩 중...</div>';
+                try {
+                    const query = `start_year=${sYearSel.value}&start_month=${sMonthSel.value}&end_year=${eYearSel.value}&end_month=${eMonthSel.value}`;
+                    const response = await fetch(`http://127.0.0.1:5000/api/aoi/available_models?${query}`);
+                    const data = await response.json();
+
+                    if (!data || data.length === 0) {
+                        modelListContainer.innerHTML = '<div style="text-align:center; padding:20px; color:#888;">데이터 없음</div>';
+                        return;
+                    }
+                    const fullHtml = data.map(group => {
+                        const modelsHtml = group.models.map(item => `
+                    <div class="model-select-card" data-model="${item.model}" data-year="${item.year}" data-month="${item.month}" data-lot="${item.lot}">
+                        <div class="model-name">${item.model}</div>
+                        <div class="model-info"><span>${item.year}.${item.month}</span><span class="model-lot">LOT: ${item.lot}</span></div>
+                    </div>`).join('');
+                        return `<div class="company-section">
+                    <div class="company-title"><span><i class="uil uil-building"></i> ${group.company} (${group.models.length})</span><i class="uil uil-angle-down"></i></div>
+                    <div class="accordion-wrapper"><div class="model-grid">${modelsHtml}</div></div>
+                </div>`;
+                    }).join('');
+                    modelListContainer.innerHTML = fullHtml;
+                } catch (e) { modelListContainer.innerHTML = '<div style="text-align:center;">로드 실패</div>'; }
+            }
+
+            modelListContainer.addEventListener('click', async (e) => {
+                const target = e.target;
+                if (target.closest('.company-title')) {
+                    const titleEl = target.closest('.company-title');
+                    titleEl.classList.toggle('active');
+                    titleEl.nextElementSibling.classList.toggle('open');
+                } else if (target.closest('.model-select-card')) {
+                    const { model, year, month, lot } = target.closest('.model-select-card').dataset;
+                    if (confirm(`[${model}] 모델을 추가하시겠습니까?`)) {
+                        try {
+                            const today = new Date().toISOString().split('T')[0];
+                            const res = await fetch('http://127.0.0.1:5000/api/aoi/records', {
+                                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ model, year: parseInt(year), month: parseInt(month), lot })
+                            });
+                            if (res.ok) { alert('추가되었습니다.'); modelModal.classList.remove('visible'); loadRecordsByDate(today); }
+                        } catch (e) { alert('오류 발생'); }
+                    }
+                }
+            });
+
             const initToday = new Date().toISOString().split('T')[0];
             loadRecordsByDate(initToday);
+
+            // =========================================================================
+            // [7] 확장형 에디터 & 툴팁 (Editor & Tooltip)
+            // =========================================================================
+            const editorContainer = document.getElementById('global-tooltip');
+            let activeInput = null;
+
+            if (editorContainer && !document.getElementById('editor-textarea')) {
+                editorContainer.innerHTML = '<textarea id="editor-textarea" spellcheck="false"></textarea>';
+            }
+            const editorTextarea = document.getElementById('editor-textarea');
+
+            function updateEditorPosition() {
+                if (!activeInput || editorContainer.style.display === 'none') return;
+                const rect = activeInput.getBoundingClientRect();
+                if (rect.width === 0 && rect.height === 0) return;
+
+                editorContainer.classList.remove('pos-right', 'pos-left');
+                const editorWidth = 250, screenWidth = window.innerWidth;
+                const targetCenterY = rect.top + window.scrollY + (rect.height / 2);
+                const topPos = targetCenterY - 26;
+
+                let leftPos;
+                if (rect.right + editorWidth + 20 < screenWidth) {
+                    leftPos = rect.right + 12; editorContainer.classList.add('pos-right');
+                } else {
+                    leftPos = rect.left - editorWidth - 12; editorContainer.classList.add('pos-left');
+                }
+                editorContainer.style.top = `${topPos}px`;
+                editorContainer.style.left = `${leftPos}px`;
+            }
+
+            function openEditor(targetEl) {
+                if (!editorContainer || !editorTextarea) return;
+                activeInput = targetEl;
+                editorTextarea.value = targetEl.value.replace(/,\s*/g, '\n');
+                editorContainer.style.display = 'block';
+                updateEditorPosition();
+                requestAnimationFrame(() => editorTextarea.focus());
+            }
+
+            function closeEditor() {
+                if (editorContainer) editorContainer.style.display = 'none';
+            }
+
+            window.addEventListener('resize', updateEditorPosition);
+            window.addEventListener('scroll', updateEditorPosition, true);
+
+            document.addEventListener('focusin', (e) => {
+                if (e.target.classList.contains('defect-ref-input')) openEditor(e.target);
+            });
+
+            if (editorTextarea) {
+                editorTextarea.addEventListener('input', (e) => {
+                    if (activeInput) {
+                        const lines = e.target.value.split('\n').map(l => l.trim()).filter(l => l);
+                        activeInput.value = lines.join(', ');
+                    }
+                });
+
+                editorTextarea.addEventListener('keydown', (e) => {
+                    if (!activeInput) return;
+                    // Shift + Enter: 저장 후 수량 셀로 이동
+                    if (e.shiftKey && e.key === 'Enter') {
+                        e.preventDefault();
+                        triggerChange(activeInput);
+                        closeEditor();
+
+                        const currentTr = activeInput.closest('tr');
+                        const nextTr = currentTr.nextElementSibling;
+                        if (nextTr && nextTr.classList.contains('lower-row')) {
+                            const refInputs = Array.from(currentTr.querySelectorAll('.defect-ref-input'));
+                            const idx = refInputs.indexOf(activeInput);
+                            const qtyInputs = nextTr.querySelectorAll('.defect-qty-input');
+                            if (qtyInputs[idx]) qtyInputs[idx].focus();
+                        }
+                    }
+                });
+
+                editorTextarea.addEventListener('blur', () => {
+                    setTimeout(() => {
+                        closeEditor();
+                        if (activeInput) { triggerChange(activeInput); activeInput = null; }
+                    }, 100);
+                });
+            }
+
+            // 모델명 툴팁
+            const modelTooltip = document.getElementById('model-tooltip-simple') || document.createElement('div');
+            modelTooltip.id = 'model-tooltip-simple';
+            if (!document.getElementById('model-tooltip-simple')) document.body.appendChild(modelTooltip);
+            modelTooltip.style.cssText = `position:fixed; display:none; background:#333; color:#fff; padding:5px 10px; border-radius:4px; z-index:10000; font-size:0.85rem; pointer-events:none; border:1px solid var(--point-gold);`;
+
+            document.addEventListener('mouseover', (e) => {
+                const target = e.target.closest('.model-text');
+                if (target) {
+                    const text = target.getAttribute('data-tooltip');
+                    if (text) {
+                        modelTooltip.textContent = text;
+                        modelTooltip.style.display = 'block';
+                        const rect = target.getBoundingClientRect();
+                        modelTooltip.style.top = (rect.top + 30) + 'px';
+                        modelTooltip.style.left = (rect.right + 10) + 'px';
+                    }
+                }
+            });
+            document.addEventListener('mouseout', (e) => {
+                if (e.target.closest('.model-text')) modelTooltip.style.display = 'none';
+            });
+
         });
     </script>
 </body>
