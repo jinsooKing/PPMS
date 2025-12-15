@@ -1,1 +1,1 @@
-ssh -i "/c/Users/ptel/Desktop/PPMS/ppms_database/ssh-key-2025-11-10.key" ubuntu@168.107.6.145
+ssh -i 'C:\Users\ptel\OneDrive\바탕 화면\PPMS\ppms_database\ssh-key-2025-11-10.key' ubuntu@168.107.6.145

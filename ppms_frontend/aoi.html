@@ -65,79 +65,90 @@
 
                 <div class="table-container">
                     <table class="aoi-table" id="aoi-table-main">
-                        <colgroup>
-                            <col style="width: 200px;">
-                            <col style="width: 80px;" class="detail-col group-basic">
-                            <col style="width: 80px;" class="detail-col group-basic">
-                            <col style="width: 100px;" class="detail-col group-basic">
-                            <col style="width: 80px;" class="detail-col group-basic">
-                            <col style="width: 80px;" class="detail-col group-basic">
-                            <col class="group-sum-col" style="width: 80px;">
-                            <col style="width: 60px;" span="5" class="detail-col group-a">
+                        <table class="aoi-table" id="aoi-table-main">
+                            <colgroup>
+                                <col style="width: 200px;">
 
-                            <col class="group-sum-col" style="width: 80px;">
-                            <col style="width: 60px;" span="3" class="detail-col group-b">
+                                <col style="width: clamp(70px, 6vw, 120px);" class="detail-col group-basic">
+                                <col style="width: clamp(70px, 6vw, 120px);">
+                                <col style="width: clamp(70px, 6vw, 120px);" class="detail-col group-basic">
+                                <col style="width: clamp(70px, 6vw, 120px);" class="detail-col group-basic">
+                                <col style="width: clamp(70px, 6vw, 120px);">
+                                <col style="width: clamp(70px, 6vw, 120px);" class="group-sum-col">
+                                <col style="width: clamp(70px, 6vw, 120px);" class="detail-col group-a">
+                                <col style="width: clamp(70px, 6vw, 120px);" class="detail-col group-a">
+                                <col style="width: clamp(70px, 6vw, 120px);" class="detail-col group-a">
+                                <col style="width: clamp(70px, 6vw, 120px);" class="detail-col group-a">
+                                <col style="width: clamp(70px, 6vw, 120px);" class="detail-col group-a">
+                                <col style="width: clamp(70px, 6vw, 120px);" class="group-sum-col">
+                                <col style="width: clamp(70px, 6vw, 120px);" class="detail-col group-b">
+                                <col style="width: clamp(70px, 6vw, 120px);" class="detail-col group-b">
+                                <col style="width: clamp(70px, 6vw, 120px);" class="detail-col group-b">
+                                <col style="width: clamp(70px, 6vw, 120px);" class="group-sum-col">
+                                <col style="width: clamp(70px, 6vw, 120px);" class="detail-col group-c">
+                                <col style="width: clamp(70px, 6vw, 120px);" class="detail-col group-c">
+                                <col style="width: clamp(70px, 6vw, 120px);" class="detail-col group-c">
+                                <col style="width: clamp(70px, 6vw, 120px);" class="group-sum-col">
+                                <col style="width: clamp(70px, 6vw, 120px);" class="detail-col group-d">
+                                <col style="width: clamp(70px, 6vw, 120px);" class="detail-col group-d">
+                            </colgroup>
+                            <thead>
+                                <tr>
+                                    <th rowspan="2" class="model-name-ellipsis group-toggle-header"
+                                        onclick="toggleGroup('basic')" style="text-align:center;">
+                                        모델명 <i class="uil uil-angle-right"></i>
+                                    </th>
+                                    <th rowspan="2" class="detail-col group-basic">Point</th>
 
-                            <col class="group-sum-col" style="width: 80px;">
-                            <col style="width: 60px;" span="3" class="detail-col group-c">
+                                    <th rowspan="2">수량</th>
 
-                            <col class="group-sum-col" style="width: 80px;">
-                            <col style="width: 60px;" span="2" class="detail-col group-d">
-                        </colgroup>
-                        <thead>
-                            <tr>
-                                <th rowspan="2" class="model-name-ellipsis group-toggle-header"
-                                    onclick="toggleGroup('basic')" style="text-align:center;">
-                                    모델명 <i class="uil uil-angle-right"></i>
-                                </th>
-                                <th rowspan="2" class="detail-col group-basic">Point</th>
-                                <th rowspan="2" class="detail-col group-basic">수량</th>
-                                <th rowspan="2" class="detail-col group-basic">진행도</th>
-                                <th rowspan="2" class="detail-col group-basic good-col">양품</th>
-                                <th rowspan="2" class="detail-col group-basic defect-total-col">총불량</th>
+                                    <th rowspan="2" class="detail-col group-basic">진행도</th>
+                                    <th rowspan="2" class="detail-col group-basic good-col">양품</th>
 
-                                <th class="sum-header" onclick="toggleGroup('a')" style="cursor:pointer;">실장오류</th>
-                                <th colspan="5" class="detail-col group-a group-header-box" style="cursor:pointer;"
-                                    onclick="toggleGroup('a')">실장오류 (그룹 A)</th>
+                                    <th rowspan="2" class="defect-total-col">총불량</th>
 
-                                <th class="sum-header" onclick="toggleGroup('b')" style="cursor:pointer;">부품결함</th>
-                                <th colspan="3" class="detail-col group-b group-header-box" style="cursor:pointer;"
-                                    onclick="toggleGroup('b')">부품결함 (그룹 B)</th>
+                                    <th class="sum-header" onclick="toggleGroup('a')" style="cursor:pointer;">실장오류</th>
+                                    <th colspan="5" class="detail-col group-a group-header-box" style="cursor:pointer;"
+                                        onclick="toggleGroup('a')">실장오류</th>
 
-                                <th class="sum-header" onclick="toggleGroup('c')" style="cursor:pointer;">납땜불량</th>
-                                <th colspan="3" class="detail-col group-c group-header-box" style="cursor:pointer;"
-                                    onclick="toggleGroup('c')">납땜불량 (그룹 C)</th>
+                                    <th class="sum-header" onclick="toggleGroup('b')" style="cursor:pointer;">부품결함</th>
+                                    <th colspan="3" class="detail-col group-b group-header-box" style="cursor:pointer;"
+                                        onclick="toggleGroup('b')">부품결함</th>
 
-                                <th class="sum-header" onclick="toggleGroup('d')" style="cursor:pointer;">기타</th>
-                                <th colspan="2" class="detail-col group-d group-header-box" style="cursor:pointer;"
-                                    onclick="toggleGroup('d')">기타 (그룹 D)</th>
-                            </tr>
-                            <tr>
-                                <th class="group-sum-col"></th>
+                                    <th class="sum-header" onclick="toggleGroup('c')" style="cursor:pointer;">납땜불량</th>
+                                    <th colspan="3" class="detail-col group-c group-header-box" style="cursor:pointer;"
+                                        onclick="toggleGroup('c')">납땜불량</th>
 
-                                <th class="detail-col group-a group-start">미삽</th>
-                                <th class="detail-col group-a">오삽</th>
-                                <th class="detail-col group-a">역삽</th>
-                                <th class="detail-col group-a">틀어짐</th>
-                                <th class="detail-col group-a group-end">뒤집힘</th>
+                                    <th class="sum-header" onclick="toggleGroup('d')" style="cursor:pointer;">기타</th>
+                                    <th colspan="2" class="detail-col group-d group-header-box" style="cursor:pointer;"
+                                        onclick="toggleGroup('d')">기타</th>
+                                </tr>
+                                <tr>
+                                    <th class="group-sum-col"></th>
 
-                                <th class="group-sum-col"></th>
-                                <th class="detail-col group-b group-start">파손</th>
-                                <th class="detail-col group-b">맨하탄</th>
-                                <th class="detail-col group-b group-end">이탈</th>
+                                    <th class="detail-col group-a group-start">미삽</th>
+                                    <th class="detail-col group-a">오삽</th>
+                                    <th class="detail-col group-a">역삽</th>
+                                    <th class="detail-col group-a">틀어짐</th>
+                                    <th class="detail-col group-a group-end">뒤집힘</th>
 
-                                <th class="group-sum-col"></th>
-                                <th class="detail-col group-c group-start">냉납</th>
-                                <th class="detail-col group-c">미납</th>
-                                <th class="detail-col group-c group-end">쇼트</th>
+                                    <th class="group-sum-col"></th>
+                                    <th class="detail-col group-b group-start">파손</th>
+                                    <th class="detail-col group-b">맨하탄</th>
+                                    <th class="detail-col group-b group-end">이탈</th>
 
-                                <th class="group-sum-col"></th>
-                                <th class="detail-col group-d group-start">원자재</th>
-                                <th class="detail-col group-d group-end">DIP</th>
-                            </tr>
-                        </thead>
-                        <tbody id="aoi-list-body"></tbody>
-                    </table>
+                                    <th class="group-sum-col"></th>
+                                    <th class="detail-col group-c group-start">냉납</th>
+                                    <th class="detail-col group-c">미납</th>
+                                    <th class="detail-col group-c group-end">쇼트</th>
+
+                                    <th class="group-sum-col"></th>
+                                    <th class="detail-col group-d group-start">원자재</th>
+                                    <th class="detail-col group-d group-end">DIP</th>
+                                </tr>
+                            </thead>
+                            <tbody id="aoi-list-body"></tbody>
+                        </table>
                 </div>
 
                 <div id="no-record-msg"
@@ -238,6 +249,7 @@
             let isDeleteMode = false;
             let isDetailMode = false;
             const expandedGroups = new Set();
+            let currentSelectedDate = new Date().toISOString().split('T')[0];
 
             // DOM 요소
             const commandInput = document.getElementById('command-input');
@@ -250,6 +262,8 @@
             // [1] 데이터 로드
             // ----------------------------------------------------------------
             async function loadRecordsByDate(dateStr) {
+                currentSelectedDate = dateStr;
+
                 const titleEl = document.getElementById('main-table-title');
                 const shortDate = dateStr.slice(2);
                 titleEl.textContent = `${shortDate} 검사기록`;
@@ -569,6 +583,9 @@
             // ----------------------------------------------------------------
             // [5] 렌더링 함수
             // ----------------------------------------------------------------
+            // ----------------------------------------------------------------
+            // [5] 렌더링 함수
+            // ----------------------------------------------------------------
             function renderTableRows(records) {
                 const tbody = document.getElementById('aoi-list-body');
                 const tableContainer = document.querySelector('.table-container');
@@ -612,10 +629,13 @@
                     <div class="row-span-wrapper model-text" data-tooltip="${rowTitle}">${r.model}</div>
                 </td>
                 <td class="detail-col group-basic merge-top"><div class="row-span-wrapper"><input type="number" value="${safe(r.inspection_point)}" onchange="updateRecord(${r.id}, 'inspection_point', this.value)"></div></td>
-                <td class="detail-col group-basic merge-top"><div class="row-span-wrapper"><input type="number" class="qty-input-visible" value="${todayQty}" placeholder="0" onchange="updateRecord(${r.id}, 'inspection_qty', this.value)"></div></td>
+                
+                <td class="merge-top"><div class="row-span-wrapper"><input type="number" class="qty-input-visible" value="${todayQty}" placeholder="0" onchange="updateRecord(${r.id}, 'inspection_qty', this.value)"></div></td>
+                
                 <td class="detail-col group-basic merge-top"><div class="row-span-wrapper" style="flex-direction:column; padding:0 5px;"><div class="progress-cell-wrapper" style="width:100%; height:100%; justify-content:center;"><div class="qty-progress-track" title="달성률: ${parseInt(percent)}%"><div class="${barClass}" style="width: ${percent}%;"></div></div><div class="${textClass}"><span class="acc-val">${totalQty}</span><span class="lot-val">/ ${lotQty}</span></div></div></div></td>
                 <td class="detail-col group-basic good-col merge-top"><div class="row-span-wrapper" style="color:${goodColor}; font-weight:bold;">${safe(r.good_qty)}</div></td>
-                <td class="detail-col group-basic defect-total-col merge-top"><div class="row-span-wrapper" style="color:var(--danger-red); font-weight:bold;">${safe(r.total_defect)}</div></td>
+                
+                <td class="defect-total-col merge-top"><div class="row-span-wrapper" style="color:var(--danger-red); font-weight:bold;">${safe(r.total_defect)}</div></td>
 
                 <td class="group-sum-cell merge-top"><div class="row-span-wrapper">${sumA}</div></td>
                 <td class="detail-col group-a ${getVis('a')} ref-cell group-start"><input type="text" class="defect-ref-input" value="${r.missing_ref || ''}" placeholder="Ref" onchange="updateRecord(${r.id}, 'missing_ref', this.value)"></td>
@@ -642,10 +662,13 @@
             <tr class="lower-row" data-id="${r.id}">
                 <td class="merge-bottom"></td>
                 <td class="detail-col group-basic merge-bottom"></td>
-                <td class="detail-col group-basic merge-bottom"></td>
+                
+                <td class="merge-bottom"></td>
+                
                 <td class="detail-col group-basic merge-bottom"></td>
                 <td class="detail-col group-basic good-col merge-bottom"></td>
-                <td class="detail-col group-basic defect-total-col merge-bottom"></td>
+                
+                <td class="defect-total-col merge-bottom"></td>
 
                 <td class="group-sum-cell merge-bottom"></td>
                 <td class="detail-col group-a ${getVis('a')} qty-cell group-start"><input type="number" class="defect-qty-input" value="${safe(r.missing)}" onchange="updateRecord(${r.id}, 'missing', this.value)"></td>
@@ -906,12 +929,19 @@
                     const { model, year, month, lot } = target.closest('.model-select-card').dataset;
                     if (confirm(`[${model}] 모델을 추가하시겠습니까?`)) {
                         try {
-                            const today = new Date().toISOString().split('T')[0];
+                            const targetDate = currentSelectedDate;
                             const res = await fetch('http://127.0.0.1:5000/api/aoi/records', {
                                 method: 'POST', headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ model, year: parseInt(year), month: parseInt(month), lot })
+                                // ▼ date: targetDate 를 추가해야 합니다.
+                                body: JSON.stringify({
+                                    model,
+                                    year: parseInt(year),
+                                    month: parseInt(month),
+                                    lot,
+                                    date: targetDate // [핵심] 날짜 정보 추가
+                                })
                             });
-                            if (res.ok) { alert('추가되었습니다.'); modelModal.classList.remove('visible'); loadRecordsByDate(today); }
+                            if (res.ok) { alert('추가되었습니다.'); modelModal.classList.remove('visible'); loadRecordsByDate(targetDate); }
                         } catch (e) { alert('오류 발생'); }
                     }
                 }

@@ -1,5 +1,5 @@
 /* =========================================
-   [AOI 페이지 전용 스타일 - Gold Border Pinned Version]
+   [AOI 페이지 전용 스타일 - Final Fixed Version]
    ========================================= */
 
 /* 1. 레이아웃 & 섹션 */
@@ -50,19 +50,19 @@
 #command-input::placeholder { color: #666; font-family: 'Poppins'; font-size: 0.8rem; }
 .header-btn-group { display: flex; gap: 10px; margin-left: auto; }
 
-/* 3. 테이블 컨테이너 */
+/* 3. 테이블 컨테이너: 외곽선 및 높이 제어 */
 .table-container {
-    width: 100%; flex: 1; overflow: auto;
-    border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.05);
-    background-color: rgba(0, 0, 0, 0.2);
-    min-height: 0; scrollbar-gutter: stable;
-    flex-grow: 1; 
-    /* 내용이 넘칠 때 세로 스크롤바 생성 */
-    overflow-y: auto; 
-    /* 가로 스크롤바도 필요할 수 있으므로 설정 */
-    overflow-x: auto;
-    /* Flex 아이템의 높이가 무한정 늘어나는 것을 방지 (스크롤을 위한 필수 설정) */
+    flex: 0 1 auto !important; 
+    width: 100%;
+    border: 2px solid var(--point-gold) !important;
+    border-radius: 8px;
+    background-color: #1f2029;
+    box-shadow: 0 0 15px rgba(255, 235, 167, 0.1);
+    padding: 0 !important; 
+    box-sizing: border-box;
+    overflow: auto;
     min-height: 0;
+    scrollbar-gutter: stable;
 }
 .table-container::-webkit-scrollbar { width: 8px; height: 8px; }
 .table-container::-webkit-scrollbar-track { background: #1f2029; }
@@ -70,8 +70,12 @@
 
 /* 4. AOI 테이블 스타일 */
 .table-container table.aoi-table {
-    width: 100%; border-collapse: separate; border-spacing: 0; 
-    white-space: nowrap; table-layout: fixed !important; 
+    width: 100% !important; 
+    border-collapse: separate !important; 
+    border-spacing: 0;
+    border: none;
+    white-space: nowrap; 
+    table-layout: fixed !important;
 }
 .table-container table.aoi-table tr { height: 40px; }
 
@@ -79,8 +83,8 @@
 .table-container table.aoi-table th, 
 .table-container table.aoi-table td {
     height: 40px; padding: 0; margin: 0; border: none;
-    /* [기본] 세로선: 흰색 20% */
-    border-right: 1px solid rgba(255, 255, 255, 0.2) !important;
+    border-right: 1px solid rgba(255, 235, 167, 0.5) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2) !important; 
     vertical-align: middle; box-sizing: border-box;
     font-size: 0.85rem; text-align: center; line-height: 40px; 
     position: relative; background-color: #1f2029;
@@ -92,30 +96,29 @@
     border-bottom: 1px solid rgba(255, 255, 255, 0.5) !important;
     position: sticky; top: 0; z-index: 200 !important;
 }
-/* 첫 번째 헤더(모델명) */
+
+/* 5. 모델명 열 (첫 번째 칸) 고정 및 금색 테두리 */
 .table-container table.aoi-table th:first-child {
+    background-color: #15151a !important; 
+    z-index: 500 !important; 
     border-right: 2px solid var(--point-gold) !important;
-    left: 0; z-index: 250 !important;
+    cursor: pointer !important;
+    border-bottom: 2px solid var(--point-gold) !important;
+    left: 0; 
 }
-
-/* 5. 고정된 행 (Pinned Row) */
-.table-container tr.pinned-row td {
-    background-color: rgba(255, 235, 167, 0.3) !important; 
-    color: #fff !important; font-weight: bold;
-}
-.table-container tr.pinned-row td.merge-bottom {
-    background-color: transparent !important;
-}
-
-/* 6. 첫 번째 열 고정 (Sticky Body Column) */
 .table-container table.aoi-table td:first-child {
+    background-color: #1f2029 !important; 
+    z-index: 400 !important; 
+    border-right: none !important; 
     position: sticky !important; left: 0 !important;
-    background-color: #1f2029;
-    z-index: 150 !important;
-    border-right: none !important;
+}
+.table-container table.aoi-table td:first-child .row-span-wrapper {
+    background-color: #1f2029 !important; 
+    z-index: 400 !important; 
+    border-right: 2px solid var(--point-gold) !important; 
 }
 
-/* 7. 입력창 스타일 */
+/* 6. 입력창 스타일 */
 .table-container table.aoi-table input {
     position: absolute; top: 0; left: 0; width: 100%; height: 100%;
     border: none; outline: none; background: transparent;
@@ -132,21 +135,20 @@
     background-color: #1f2029; box-shadow: inset 0 0 0 1px var(--point-gold); z-index: 2;
 }
 
-/* 8. 모델명 & 그룹 */
+/* 7. 모델명 & 그룹 */
 .model-name-ellipsis {
     width: 200px !important; min-width: 200px !important; max-width: 200px !important;
     padding: 0 !important; box-sizing: border-box !important;
     cursor: pointer; font-weight: bold; color: var(--point-gold) !important;
+    background: inherit !important; border: none !important; box-shadow: none !important;
 }
+
+/* 기본적으로 상세 열은 숨김 */
 .detail-col { display: none; }
-.detail-col.group-basic { width: 80px; }
 col.detail-col.visible { display: table-column !important; }
 th.detail-col.visible, td.detail-col.visible { display: table-cell !important; }
-col.group-sum-col { width: 120px !important; }
-.group-sum-cell { background-color: rgba(16, 39, 112, 0.3) !important; font-weight: bold; color: var(--point-gold) !important; }
-.sum-header { background-color: #15151a; color: var(--point-gold); font-weight: bold; }
 
-/* 9. 수량 & 진행도 */
+/* 8. 수량 & 진행도 */
 .qty-input-visible {
     width: 100% !important; height: 100% !important; text-align: center !important;
     background: transparent !important; border: none !important; color: #fff !important;
@@ -175,10 +177,9 @@ col.group-sum-col { width: 120px !important; }
 .qty-info-text.completed span { color: var(--success-green) !important; font-weight: bold; }
 .qty-info-text .acc-val { color: #fff; }
 .qty-info-text .lot-val { color: #666; }
-/* 고정 시 LOT 글자 밝게 */
 tr.pinned-row .lot-val { color: #eee !important; } 
 
-/* 10. 버튼/모달 (기존 유지) */
+/* 9. 버튼 및 UI */
 .header-btn {
     background-color: var(--card-bg); border: 1px solid rgba(255, 255, 255, 0.2); color: #ccc;
     padding: 6px 14px; border-radius: 4px; cursor: pointer;
@@ -195,7 +196,185 @@ tr.pinned-row .lot-val { color: #eee !important; }
 .aoi-table.delete-mode tbody tr:hover td { background-color: rgba(255, 68, 68, 0.2) !important; color: #ffcccc !important; }
 .aoi-table.delete-mode input { pointer-events: none; }
 
-/* 모달 생략 */
+/* 10. 병합(Rowspan) 및 고정행 스타일 */
+.merge-top {
+    height: 40px !important; border-bottom: none !important; padding: 0 !important; overflow: visible !important; z-index: 50 !important;
+}
+.merge-bottom {
+    border-top: none !important; height: 40px !important; background: transparent !important; z-index: 1 !important; position: relative;
+    border-bottom: 2px solid var(--point-gold) !important;
+}
+.row-span-wrapper {
+    position: absolute; top: 0; left: 0; width: 100%; height: 79px; 
+    display: flex; align-items: center; justify-content: center;
+    background-color: #1f2029; z-index: 100 !important;
+    box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.05); box-sizing: border-box !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.5) !important; border-bottom: none !important; 
+}
+.row-span-wrapper.model-text {
+    justify-content: flex-start; padding: 0 10px; display: block; line-height: 79px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    color: var(--point-gold); font-weight: bold;
+}
+.row-span-wrapper input {
+    width: 100%; height: 100%; background: transparent; border: none;
+    text-align: center; color: #fff; font-weight: bold; font-size: 0.9rem; padding: 0;
+}
+.row-span-wrapper input:focus {
+    box-shadow: inset 0 0 0 1px var(--point-gold); background-color: rgba(0, 0, 0, 0.2);
+}
+
+/* =========================================================================
+   [수정 완료] 고정 행 (Pinned Row) 스타일 - 배경색 가림 문제 해결
+   ========================================================================= */
+/* 1. 고정된 행의 일반 셀(TD) 배경색 */
+tr.pinned-row td {
+    background-color: rgba(255, 235, 167, 0.15) !important;
+    color: #fff !important; font-weight: bold;
+}
+
+/* 2. ★[핵심]★ 고정된 행 내부의 '모든' Wrapper 배경색 변경 */
+tr.pinned-row .row-span-wrapper {
+    background-color: #2a2b38 !important; /* 고정 시 밝은 남색 배경 */
+    box-shadow: inset 0 0 0 1px var(--point-gold) !important; /* 내부 금색 테두리 효과 */
+    border-right: 1px solid var(--point-gold) !important;
+}
+
+/* 3. 모델명 텍스트 */
+tr.pinned-row .model-text {
+    color: #fff !important; text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+}
+
+/* 4. 하단 병합 셀(merge-bottom) 처리 */
+tr.pinned-row td.merge-bottom {
+    border-bottom: 2px solid var(--point-gold) !important; /* 바닥 금색선 */
+    z-index: 250 !important; 
+    background-color: #2a2b38 !important; /* Wrapper와 동일한 배경색 */
+}
+
+/* 5. 첫 번째 열(모델명) 고정 스타일 */
+tr.pinned-row td:first-child .row-span-wrapper {
+    border-right: 2px solid var(--point-gold) !important;
+    background-color: #2a2b38 !important;
+}
+
+/* 6. 입력칸(우측 상세 데이터) 테두리 색상 변경 */
+.upper-row td.ref-cell {
+    border-bottom: 1px dashed rgba(255, 255, 255, 0.1) !important; height: 40px !important; background-color: rgba(255, 255, 255, 0.02); vertical-align: bottom !important;
+}
+.lower-row td.qty-cell {
+    border-top: none !important; height: 40px !important; vertical-align: top !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2) !important; border-right: 1px solid rgba(255, 255, 255, 0.5) !important; 
+}
+tr.pinned-row.lower-row td.qty-cell {
+    border-bottom: 2px solid var(--point-gold) !important; 
+    border-right: 1px solid var(--point-gold) !important; 
+}
+tr.pinned-row.upper-row td.ref-cell {
+    border-right: 1px solid var(--point-gold) !important;
+}
+.defect-ref { color: var(--point-gold) !important; font-size: 0.8rem !important; text-align: center; width: 100%; }
+.defect-qty { font-weight: bold; font-size: 1rem; width: 100%; }
+
+/* 그룹핑 효과 */
+.group-header-box { border: 2px solid var(--point-gold) !important; border-bottom: 1px solid var(--point-gold) !important; }
+.group-start { border-left: 2px solid var(--point-gold) !important; }
+.group-end { border-right: 2px solid var(--point-gold) !important; }
+thead th.group-start, thead th.group-end { border-top: 2px solid var(--point-gold) !important; border-bottom: 2px solid var(--point-gold) !important; }
+thead tr:nth-child(2) th.group-start, thead tr:nth-child(2) th.group-end, thead tr:nth-child(2) th.detail-col { 
+    border-top: 1px solid var(--point-gold) !important; border-bottom: 1px solid var(--point-gold) !important;
+}
+tr.pinned-row .group-start { border-left: 2px solid var(--point-gold) !important; }
+tr.pinned-row .group-end { border-right: 2px solid var(--point-gold) !important; }
+
+/* 11. 확장형 에디터 & 툴팁 */
+#global-tooltip {
+    position: absolute; display: none; z-index: 9999;
+    background-color: #2a2b38; border: 2px solid var(--point-gold);
+    border-radius: 8px; box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+    padding: 0; width: 250px; height: 150px; overflow: visible; 
+}
+#global-tooltip textarea {
+    width: 100%; height: 100%; background: transparent; border: none; outline: none;
+    color: #fff; font-size: 0.95rem; font-family: 'Roboto Mono', monospace; 
+    padding: 10px; resize: none; box-sizing: border-box; line-height: 1.5;
+    position: relative; z-index: 2; border-radius: 6px;
+}
+#global-tooltip textarea::-webkit-scrollbar { width: 6px; }
+#global-tooltip textarea::-webkit-scrollbar-thumb { background: #555; border-radius: 3px; }
+#global-tooltip::after {
+    content: ""; position: absolute; width: 12px; height: 12px;
+    background-color: #2a2b38; border: 2px solid var(--point-gold); 
+    transform: rotate(45deg); z-index: 1; 
+}
+#global-tooltip.pos-right::after { top: 20px; left: -8px; border-top: none; border-right: none; }
+#global-tooltip.pos-left::after { top: 20px; right: -8px; border-bottom: none; border-left: none; }
+
+/* 12. 외곽 마감 처리 (이중선 방지) */
+.table-container table.aoi-table th:last-child,
+.table-container table.aoi-table td:last-child,
+.table-container table.aoi-table .group-end:last-child {
+    border-right: none !important;
+}
+.table-container table.aoi-table tbody tr:last-child td {
+    border-bottom: none !important;
+}
+.table-container table.aoi-table thead tr:last-child th {
+    border-bottom: 2px solid var(--point-gold) !important;
+}
+.table-container table.aoi-table td.merge-bottom:first-child,
+tr.pinned-row td.merge-bottom:first-child {
+    background-color: transparent !important; z-index: 410 !important;
+    border-right: none !important; border-bottom: 2px solid var(--point-gold) !important;
+}
+
+/* =========================================================================
+   [13. 화면 모드(View Mode) 제어 - 문제 해결 섹션]
+   ========================================================================= */
+
+/* (1) 기본 상태 (Detail View - 자세히 보기) */
+/* [수정] 헤더 중복 방지: 기본적으로 합계 헤더는 숨김 (상세 헤더가 보여야 하므로) */
+.sum-header { display: none; }
+.group-sum-cell, .group-sum-col { display: none !important; }
+
+/* (2) 간편 보기 상태 (Simple View) */
+/* 상세 컬럼 숨김 */
+.aoi-table.simple-view-mode .detail-col { display: none !important; }
+
+/* 간편 보기일 때만 대분류 합계 헤더 보이기 */
+.aoi-table.simple-view-mode .sum-header { 
+    display: table-cell !important; 
+    vertical-align: middle !important;
+}
+
+/* 합계 컬럼(Group Sum Col) 표시 설정 */
+.aoi-table.simple-view-mode .group-sum-cell, 
+.aoi-table.simple-view-mode col.group-sum-col { 
+    display: table-cell !important; 
+    display: table-column !important; 
+}
+
+/* [문제해결 1] 헤더 병합 문제 해결: 2번째 줄의 합계용 빈 헤더 숨김 */
+.aoi-table.simple-view-mode thead tr:nth-child(2) th.group-sum-col {
+    display: none !important;
+}
+
+/* [문제해결 2] 마지막 셀 테두리 문제 해결 (구조 기반 타겟팅) */
+.aoi-table.simple-view-mode thead tr:first-child th.sum-header:nth-last-child(2) { 
+    border-right: none !important; 
+}
+.aoi-table.simple-view-mode tbody tr td.group-sum-cell:nth-last-child(3) { 
+    border-right: none !important; 
+}
+.aoi-table.simple-view-mode tbody tr td.group-sum-cell:nth-last-child(3) .row-span-wrapper { 
+    border-right: none !important; 
+}
+
+/* 뷰 모드에 따른 입력창 제어 */
+.aoi-table.simple-view-mode .defect-ref-input { display: none !important; }
+.aoi-table.simple-view-mode .defect-qty-input { height: 100% !important; border-top: none !important; }
+
+/* 모달/유틸리티 스타일 유지 (생략 없음) */
 .model-list-modal .modal-window { width: 95%; max-width: 1400px; height: auto; display: flex; flex-direction: column; margin: 0 auto; box-sizing: border-box; }
 .model-list-container { display: flex; flex-direction: column; gap: 10px; width: 100%; }
 .company-section { margin-bottom: 10px; width: 100%; }
@@ -234,566 +413,3 @@ tr.pinned-row .lot-val { color: #eee !important; }
 #custom-calendar-popup-day .day-cell.sunday:hover { color: var(--accent-blue); }
 #custom-calendar-popup-day .day-cell.empty { pointer-events: none; cursor: default; }
 @keyframes toastUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-
-/* =========================================================================================
-   [NEW] 병합(Rowspan), 고정(Sticky), 레이아웃 밀림 방지 통합 스타일
-   ========================================================================================= */
-
-/* 1. 병합 셀 부모 (윗줄 TD) */
-.merge-top {
-    height: 40px !important;
-    border-bottom: none !important;
-    padding: 0 !important;
-    overflow: visible !important;
-    z-index: 50 !important;
-}
-
-/* 2. 병합 셀 부모 (아랫줄 TD) */
-.merge-bottom {
-    border-top: none !important;
-    height: 40px !important;
-    background: transparent !important;
-    z-index: 1 !important;
-    position: relative;
-    /* [기본] 일반 모델 바닥선: 흰색 0.7 */
-    border-bottom: 2px solid rgba(255, 255, 255, 0.7) !important;
-}
-
-/* 3. 병합 내용물 덮개 (Wrapper) */
-.row-span-wrapper {
-    position: absolute; top: 0; left: 0; width: 100%; 
-    height: 79px; /* 바닥선 노출 */
-    display: flex; align-items: center; justify-content: center;
-    background-color: #1f2029;
-    z-index: 100 !important;
-    box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.05);
-    box-sizing: border-box !important;
-    
-    /* [기본] 세로선: 흰색 0.2 (일반 셀과 동일) */
-    border-right: 1px solid rgba(255, 255, 255, 0.2) !important;
-    border-bottom: none !important; 
-}
-
-/* 4. 모델명 텍스트 */
-.row-span-wrapper.model-text {
-    justify-content: flex-start; padding: 0 10px; display: block; line-height: 79px;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    color: var(--point-gold); font-weight: bold;
-}
-
-/* 5. 입력창 오버레이 */
-.row-span-wrapper input {
-    width: 100%; height: 100%; background: transparent; border: none;
-    text-align: center; color: #fff; font-weight: bold; font-size: 0.9rem; padding: 0;
-}
-.row-span-wrapper input:focus {
-    box-shadow: inset 0 0 0 1px var(--point-gold); background-color: rgba(0, 0, 0, 0.2);
-}
-
-/* 6. 고정 열 테두리 */
-.table-container table.aoi-table td:first-child .row-span-wrapper {
-    border-right: 2px solid var(--point-gold) !important;
-}
-.table-container table.aoi-table td:first-child {
-    border-right: none !important;
-    position: sticky !important; left: 0 !important; z-index: 150 !important;
-}
-
-/* 7. ★ 고정 행 (Pinned Row) 스타일 - [핵심] 구분선 금색으로 변경 ★ */
-tr.pinned-row .row-span-wrapper {
-    background-color: #2a2b38 !important;
-    box-shadow: inset 0 0 0 100px rgba(255, 235, 167, 0.15) !important;
-    
-    /* ★ [수정] 고정 시 병합 셀의 세로선을 금색으로 변경 */
-    border-right: 1px solid var(--point-gold) !important;
-}
-tr.pinned-row .model-text {
-    color: #fff !important; text-shadow: 0 1px 2px rgba(0,0,0,0.8);
-}
-
-/* ★ [수정] 고정 시 모델 바닥 구분선(가로)을 금색으로 변경 */
-tr.pinned-row td.merge-bottom {
-    border-bottom: 2px solid var(--point-gold) !important;
-}
-
-/* 첫 번째 컬럼(모델명)은 금색 선 유지 */
-tr.pinned-row td:first-child .row-span-wrapper {
-    border-right: 2px solid var(--point-gold) !important;
-}
-
-/* 8. 우측 불량 입력칸 */
-.upper-row td.ref-cell {
-    border-bottom: 1px dashed rgba(255, 255, 255, 0.1) !important;
-    height: 40px !important; background-color: rgba(255, 255, 255, 0.02);
-    vertical-align: bottom !important;
-}
-/* [기본] 일반 바닥선: 흰색 0.7 */
-.lower-row td.qty-cell {
-    border-top: none !important; height: 40px !important; vertical-align: top !important;
-    border-bottom: 2px solid rgba(255, 255, 255, 0.7) !important;
-    border-right: 1px solid rgba(255, 255, 255, 0.2) !important; 
-}
-/* ★ [수정] 고정 시 바닥선 & 세로선 금색으로 변경 */
-tr.pinned-row.lower-row td.qty-cell {
-    border-bottom: 2px solid var(--point-gold) !important; /* 가로선 */
-    border-right: 1px solid var(--point-gold) !important; /* 세로선 */
-}
-/* 고정 시 상단 행(upper)의 세로선도 금색으로 */
-tr.pinned-row.upper-row td.ref-cell {
-    border-right: 1px solid var(--point-gold) !important;
-}
-
-.defect-ref { color: var(--point-gold) !important; font-size: 0.8rem !important; text-align: center; width: 100%; }
-.defect-qty { font-weight: bold; font-size: 1rem; width: 100%; }
-
-/* 9. 뷰 모드 */
-.aoi-table.simple-view-mode .defect-ref-input { display: none !important; }
-.aoi-table.simple-view-mode .defect-qty-input { height: 100% !important; border-top: none !important; }
-
-/* ==========================================================================
-   [수정] 대분류 그룹핑 효과 (자세히 보기 시 금색 테두리)
-   ========================================================================== */
-
-/* 그룹의 시작 열 (왼쪽 금색 선) */
-.group-start {
-    /* (기존 유지) */
-    border-left: 2px solid var(--point-gold) !important;
-}
-
-/* 그룹의 끝 열 (오른쪽 금색 선) */
-.group-end {
-    /* (기존 유지) */
-    border-right: 2px solid var(--point-gold) !important;
-}
-
-/* ★★★ [수정된 부분] ★★★: 헤더(th)에 대해서는 group-mid 스타일을 제거하고,
-   th.group-start와 th.group-end의 **상단/하단**에만 선을 적용합니다. */
-thead th.group-start, 
-thead th.group-end {
-    /* 상단과 하단에 금색 테두리 추가 */
-    border-top: 2px solid var(--point-gold) !important;
-    border-bottom: 2px solid var(--point-gold) !important;
-}
-
-/* ==========================================================================
-   [수정] 대분류 그룹핑 효과 (자세히 보기 시 금색 테두리)
-   ========================================================================== */
-
-/* 1. 그룹 제목 헤더 (1번째 줄) : 전체 박스 테두리 */
-.group-header-box {
-    border: 2px solid var(--point-gold) !important;
-    border-bottom: 1px solid var(--point-gold) !important;
-}
-
-/* 2. 상세 항목 (2번째 줄 헤더 + 본문) : 왼쪽/오른쪽 벽 세우기 */
-.group-start {
-    border-left: 2px solid var(--point-gold) !important;
-}
-.group-end {
-    border-right: 2px solid var(--point-gold) !important;
-}
-
-/* 3. 상세 항목 헤더 (2번째 줄) : 위/아래 선 추가하여 박스 완성 */
-thead tr:nth-child(2) th.group-start,
-thead tr:nth-child(2) th.group-end,
-thead tr:nth-child(2) th.detail-col { 
-    /* group-start/end 사이의 중간 컬럼들도 위아래 선이 필요하면 여기에 border-top/bottom 추가 */
-    border-top: 1px solid var(--point-gold) !important;
-    border-bottom: 1px solid var(--point-gold) !important;
-}
-
-/* 4. 고정(Pinned) 상태에서도 그룹 테두리는 금색 유지 */
-tr.pinned-row .group-start {
-    border-left: 2px solid var(--point-gold) !important;
-}
-tr.pinned-row .group-end {
-    border-right: 2px solid var(--point-gold) !important;
-}
-
-/* ==========================================================================
-   [수정] 확장형 에디터 (Expandable Editor) 스타일
-   ========================================================================== */
-#global-tooltip {
-    position: fixed;
-    display: none;
-    z-index: 9999;
-    /* 에디터 컨테이너 스타일 */
-    background-color: #2a2b38;
-    border: 2px solid var(--point-gold);
-    border-radius: 8px;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
-    padding: 0; /* 내부 textarea가 꽉 차게 */
-    width: 250px;  /* 에디터 너비 */
-    height: 150px; /* 에디터 높이 */
-    overflow: hidden;
-}
-
-/* 에디터 내부의 실제 입력 공간 */
-#global-tooltip textarea {
-    width: 100%;
-    height: 100%;
-    background: transparent;
-    border: none;
-    outline: none;
-    color: #fff;
-    font-size: 0.95rem;
-    font-family: 'Roboto Mono', monospace; /* 가독성 좋은 폰트 */
-    padding: 10px;
-    resize: none; /* 사용자 크기 조절 막기 */
-    box-sizing: border-box;
-    line-height: 1.5;
-}
-
-/* 스크롤바 커스텀 */
-#global-tooltip textarea::-webkit-scrollbar { width: 6px; }
-#global-tooltip textarea::-webkit-scrollbar-thumb { background: #555; border-radius: 3px; }
-
-/* ==========================================================================
-   [수정] 확장형 에디터 (Expandable Editor) 스타일 & 말풍선 꼬리
-   ========================================================================== */
-#global-tooltip {
-    position: absolute;
-    display: none;
-    z-index: 9999;
-    background-color: #2a2b38;
-    border: 2px solid var(--point-gold);
-    border-radius: 8px;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
-    padding: 0; 
-    width: 250px;  
-    height: 150px; 
-    /* ★ [핵심] 꼬리가 박스 밖으로 튀어나와야 하므로 visible로 변경 */
-    overflow: visible; 
-}
-
-/* 에디터 내부 입력 공간 */
-#global-tooltip textarea {
-    width: 100%;
-    height: 100%;
-    background: transparent;
-    border: none;
-    outline: none;
-    color: #fff;
-    font-size: 0.95rem;
-    font-family: 'Roboto Mono', monospace; 
-    padding: 10px;
-    resize: none; 
-    box-sizing: border-box;
-    line-height: 1.5;
-    /* 텍스트가 꼬리 위로 올라오지 않게 z-index 조정 */
-    position: relative; 
-    z-index: 2; 
-    border-radius: 6px; /* 배경색 넘침 방지 */
-}
-
-#global-tooltip textarea::-webkit-scrollbar { width: 6px; }
-#global-tooltip textarea::-webkit-scrollbar-thumb { background: #555; border-radius: 3px; }
-
-/* -----------------------------------------------------------
-   [말풍선 꼬리 구현 - Rotated Square]
-   ----------------------------------------------------------- */
-#global-tooltip::after {
-    content: "";
-    position: absolute;
-    width: 12px;
-    height: 12px;
-    background-color: #2a2b38; /* 본체와 동일한 배경색 */
-    border: 2px solid var(--point-gold); /* 본체와 동일한 테두리 */
-    
-    /* 45도 회전시켜 다이아몬드 모양 만들기 */
-    transform: rotate(45deg); 
-    
-    /* 본체 테두리 위를 덮어야 하므로 z-index 설정 */
-    z-index: 1; 
-}
-
-/* 1. 에디터가 오른쪽에 있을 때 (꼬리는 왼쪽을 가리킴) */
-#global-tooltip.pos-right::after {
-    top: 20px; /* 위에서부터의 위치 */
-    left: -8px; /* 왼쪽 밖으로 뺌 (테두리 두께 고려) */
-    
-    /* 오른쪽과 위쪽 테두리를 투명하게 하여 '<' 모양 만들기 */
-    border-top: none;
-    border-right: none;
-}
-
-/* 2. 에디터가 왼쪽에 있을 때 (꼬리는 오른쪽을 가리킴) */
-#global-tooltip.pos-left::after {
-    top: 20px;
-    right: -8px; /* 오른쪽 밖으로 뺌 */
-    
-    /* 왼쪽과 아래쪽 테두리를 투명하게 하여 '>' 모양 만들기 */
-    border-bottom: none;
-    border-left: none;
-}
-
-/* ==========================================================================
-   [최종 수정] 프리미엄 골드 테두리 & 레이아웃 완벽 정리 (중첩 제거)
-   ========================================================================== */
-
-/* 1. 테이블 컨테이너: 외곽선 및 높이 제어 */
-.table-container {
-    /* 내용물만큼만 높이 차지 (빈 공간 제거) */
-    flex: 0 1 auto !important; 
-    
-    overflow: auto;
-    width: 100%;
-    
-    /* 전체 외곽선 (가장 바깥쪽 테두리) */
-    border: 2px solid var(--point-gold) !important;
-    border-radius: 8px;
-    background-color: #1f2029;
-    box-shadow: 0 0 15px rgba(255, 235, 167, 0.1);
-    
-    padding: 0 !important; 
-    box-sizing: border-box;
-}
-
-/* 2. 테이블 기본 설정 */
-.table-container table.aoi-table {
-    border-collapse: separate; 
-    border-spacing: 0; 
-    width: 100%;
-    border: none;
-}
-
-/* 3. 일반 셀(헤더+본문) 기본 테두리: 얇고 은은한 금색 */
-.table-container table.aoi-table th,
-.table-container table.aoi-table td {
-    border-right: 1px solid rgba(255, 235, 167, 0.4) !important;
-    border-bottom: 1px solid rgba(255, 235, 167, 0.4) !important;
-    border-top: none !important;
-    border-left: none !important;
-}
-
-/* -----------------------------------------------------------------------
-   [핵심 수정 1] 모델명 열 (첫 번째 칸) 선 중첩 해결
-   ----------------------------------------------------------------------- */
-
-/* (1) 헤더(TH): 헤더는 wrapper가 없으므로 TH 자체에 굵은 선 적용 */
-.table-container table.aoi-table th:first-child {
-    border-right: 2px solid var(--point-gold) !important;
-}
-
-/* (2) 본문(TD): TD의 선을 없애고, 내부 Wrapper가 선을 그리도록 위임 (중첩 방지) */
-.table-container table.aoi-table td:first-child {
-    border-right: none !important; 
-}
-
-/* (3) 본문 Wrapper: 여기서 실제 굵은 금색 선을 그립니다. */
-.table-container table.aoi-table td:first-child .row-span-wrapper {
-    border-right: 2px solid var(--point-gold) !important;
-}
-
-/* -----------------------------------------------------------------------
-   [핵심 수정 2] 외곽 마감 처리 (이중선 방지)
-   ----------------------------------------------------------------------- */
-
-/* (1) 오른쪽 끝: 마지막 열의 오른쪽 선 제거 (컨테이너 테두리와 겹침 방지) */
-.table-container table.aoi-table th:last-child,
-.table-container table.aoi-table td:last-child,
-.table-container table.aoi-table .group-end:last-child {
-    border-right: none !important;
-}
-
-/* (2) 바닥 끝: 마지막 행의 바닥 선 제거 (컨테이너 테두리와 겹침 방지) */
-.table-container table.aoi-table tbody tr:last-child td {
-    border-bottom: none !important;
-}
-
-/* -----------------------------------------------------------------------
-   [핵심 수정 3] 헤더 디자인 통일
-   ----------------------------------------------------------------------- */
-
-/* 마지막 줄 헤더의 바닥 선을 굵게 처리하여 본문과 구분 */
-.table-container table.aoi-table thead tr:last-child th {
-    border-bottom: 2px solid var(--point-gold) !important;
-}
-
-/* 모델명 헤더 텍스트 감싸는 요소 스타일 초기화 (불필요한 그림자/선 제거) */
-.model-name-ellipsis {
-    border: none !important;
-    box-shadow: none !important;
-    background: transparent !important;
-}
-
-/* --- 고정 행(Pinned Row) 스타일 유지 --- */
-tr.pinned-row td.merge-bottom {
-    border-bottom: 2px solid var(--point-gold) !important;
-}
-/* 고정 행일 때도 Wrapper가 선을 담당 */
-tr.pinned-row td:first-child .row-span-wrapper {
-    border-right: 2px solid var(--point-gold) !important;
-}
-
-/* ==========================================================================
-   [긴급 복구] 모델명 헤더 기능 및 Z-Index 계층 재정립
-   ========================================================================== */
-
-/* 1. 모델명 헤더 (가장 최상위: Top-Left Corner) */
-.table-container table.aoi-table th:first-child {
-    /* [핵심] 투명 배경 취소 -> 헤더 고유색(#15151a)으로 채워서 가림 막음 */
-    background-color: #15151a !important; 
-    
-    /* [핵심] Z-Index를 300으로 설정하여 모든 데이터(100~200)보다 무조건 위에 뜸 */
-    z-index: 300 !important; 
-    
-    /* 오른쪽 굵은 금색 선 유지 */
-    border-right: 2px solid var(--point-gold) !important;
-    
-    /* 클릭 커서 강제 */
-    cursor: pointer !important;
-}
-
-/* 2. 모델명 데이터 (좌측 고정 열) */
-.table-container table.aoi-table td:first-child,
-.table-container table.aoi-table td:first-child .row-span-wrapper {
-    /* 배경색: 본문 색상 */
-    background-color: #1f2029 !important;
-    
-    /* Z-Index: 일반 데이터보다 높지만, 헤더보다는 낮아야 함 (200) */
-    z-index: 200 !important;
-    
-    /* 테두리는 Wrapper가 담당하므로 TD는 제거 */
-    border-right: none !important;
-}
-
-/* 3. 모델명 데이터의 내부 Wrapper (실제 선 그리는 곳) */
-.table-container table.aoi-table td:first-child .row-span-wrapper {
-    /* 오른쪽 굵은 선 */
-    border-right: 2px solid var(--point-gold) !important;
-}
-
-/* 4. 모델명 텍스트 클래스 초기화 (선 중복 원인 제거) */
-.model-name-ellipsis {
-    /* 배경은 부모(TH)를 따라가도록 설정 */
-    background: inherit !important;
-    /* 텍스트 요소 자체에는 테두리/그림자 없음 (TH가 다 그림) */
-    border: none !important;
-    box-shadow: none !important;
-}
-
-/* ==========================================================================
-   [긴급 복구 2] merge-bottom 클래스 하단선 및 Z-Index 복구
-   ========================================================================== */
-
-/* 1. pinned-row의 merge-bottom 셀 Z-index를 높여 고정 기능 유지 */
-tr.pinned-row td.merge-bottom {
-    /* pinned-row의 merge-bottom은 항상 가장 위에 있어야 함 (z-index: 250) */
-    z-index: 250 !important; 
-    
-    /* 배경색 지정 (투명으로 인해 뒷 내용 비침 방지) */
-    background-color: #1f2029 !important; 
-    
-    /* [핵심] 굵은 하단 선 (2px gold) 강제 재적용 */
-    border-bottom: 2px solid var(--point-gold) !important;
-}
-
-/* 2. 일반 행의 merge-bottom 셀 (고정 행이 아닐 경우) */
-td.merge-bottom {
-    /* [핵심] 굵은 하단 선 (2px gold) 강제 재적용 */
-    border-bottom: 2px solid var(--point-gold) !important;
-}
-
-/* 3. 모델명 열의 merge-bottom (첫 번째 셀) */
-tr.pinned-row td.merge-bottom:first-child .row-span-wrapper {
-    /* 모델명 열의 고정 스타일 중에서도 하단 선은 굵게 유지 */
-    border-bottom: 2px solid var(--point-gold) !important;
-}
-
-/* ==========================================================================
-   [최종 종합 복구] Gold Border Pinned Table CSS 재적용 및 충돌 해결
-   ========================================================================== */
-
-/* ----------------------------------------------------------------------
-   1. 테이블 레이아웃 및 셀 기본 정의
-   ---------------------------------------------------------------------- */
-
-/* 테이블이 항상 100% 너비를 사용하도록 강제 */
-.table-container table.aoi-table {
-    width: 100% !important; 
-    border-collapse: separate !important; /* collapse를 사용하면 z-index가 제대로 작동하지 않을 수 있습니다. */
-    border-spacing: 0;
-}
-
-/* 모든 셀의 내부 선을 얇게 통일 (금색 50% 투명도) */
-.table-container table.aoi-table th,
-.table-container table.aoi-table td {
-    border-right: 1px solid rgba(255, 235, 167, 0.5) !important;
-    border-bottom: 1px solid rgba(255, 235, 167, 0.5) !important;
-}
-
-/* ----------------------------------------------------------------------
-   2. 외곽 마감 처리 (이중선 방지)
-   ---------------------------------------------------------------------- */
-
-/* (1) 오른쪽 끝: 마지막 열의 오른쪽 선 제거 (컨테이너 테두리와 겹침 방지) */
-.table-container table.aoi-table th:last-child,
-.table-container table.aoi-table td:last-child,
-.table-container table.aoi-table .group-end:last-child {
-    border-right: none !important;
-}
-
-/* (2) 바닥 끝: 마지막 행의 바닥 선 제거 (컨테이너 테두리와 겹침 방지) */
-.table-container table.aoi-table tbody tr:last-child td {
-    border-bottom: none !important;
-}
-
-/* ----------------------------------------------------------------------
-   3. 모델명 열 (첫 번째 칸) 고정 및 금색 테두리
-   ---------------------------------------------------------------------- */
-
-/* 모델명 헤더 (TH: Top-Left Corner) */
-.table-container table.aoi-table th:first-child {
-    background-color: #15151a !important; /* 헤더 배경색으로 채워서 스크롤 시 겹침 방지 */
-    z-index: 300 !important; /* 모든 요소 중 최상위 */
-    border-right: 2px solid var(--point-gold) !important;
-    cursor: pointer !important;
-    /* 헤더 하단선 굵게 재적용 (본문과 분리) */
-    border-bottom: 2px solid var(--point-gold) !important;
-}
-
-/* 모델명 데이터 셀 (TD: Left Pinned Column) */
-.table-container table.aoi-table td:first-child {
-    background-color: #1f2029 !important; /* 본문 배경색으로 채워서 스크롤 시 겹침 방지 */
-    z-index: 200 !important; /* 일반 데이터보다 높게 */
-    border-right: none !important; /* TD 자체의 오른쪽 선은 제거 (Wrapper가 담당) */
-}
-
-/* 모델명 텍스트 Wrapper (실제 텍스트와 금색 우측 선이 들어가는 요소) */
-.table-container table.aoi-table td:first-child .row-span-wrapper {
-    background-color: #1f2029 !important; /* 배경색 유지 */
-    z-index: 200 !important; /* TD와 동일하게 */
-    border-right: 2px solid var(--point-gold) !important; /* 굵은 우측선 */
-}
-
-/* 고정 행(Pinned Row)일 때 Wrapper 배경색 강조 */
-tr.pinned-row td:first-child .row-span-wrapper {
-    background-color: #2a2b38 !important; /* 고정 행 강조색 */
-}
-
-/* ----------------------------------------------------------------------
-   4. merge-bottom 관련 충돌 해결 (텍스트 가림 및 하단선 복구)
-   ---------------------------------------------------------------------- */
-
-/* 일반 merge-bottom 셀 (하단 굵은 선 복구) */
-td.merge-bottom {
-    border-bottom: 2px solid var(--point-gold) !important;
-}
-
-/* 모델명 열(첫 번째 칸)의 하단 셀 (merge-bottom:first-child) */
-/* (이유: row-span-wrapper의 텍스트가 이 셀 위로 확장되어 보이므로 배경을 투명하게 해야 함) */
-.table-container table.aoi-table td.merge-bottom:first-child,
-tr.pinned-row td.merge-bottom:first-child {
-    background-color: transparent !important; /* 투명하게 만들어 텍스트가 보존되도록 함 */
-    z-index: 210 !important; /* Wrapper(200) 위에 있으면서 테두리 역할 */
-    border-right: none !important; /* TD 자체의 오른쪽 선 제거 */
-    border-bottom: 2px solid var(--point-gold) !important; /* 하단 테두리 유지 */
-}
-
-/* 5. 모델명 텍스트 요소 초기화 (불필요한 선/그림자 제거) */
-.model-name-ellipsis {
-    background: inherit !important;
-    border: none !important;
-    box-shadow: none !important;
-}
