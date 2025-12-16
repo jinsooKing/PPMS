@@ -1,380 +1,214 @@
 /* =========================================
-   [AOI 페이지 전용 스타일 - Final Fixed Version]
+   [AOI 페이지 전용 스타일 - FINAL CORRECTED]
    ========================================= */
 
-/* 1. 레이아웃 & 섹션 */
+/* ----------------------------------------------------------------
+   1. 전체 레이아웃
+   ---------------------------------------------------------------- */
 .content-area {
     display: flex; flex-direction: column; align-items: center;
-    padding: clamp(15px, 3vw, 40px);
-    overflow: hidden; box-sizing: border-box;
+    padding: clamp(15px, 3vw, 40px); overflow: hidden; box-sizing: border-box;
 }
-
 .line-schedule-section {
-    width: 100%; max-width: 1600px; 
-    background-color: var(--card-bg);
-    border-radius: 12px; padding: 20px; 
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+    width: 100%; max-width: 1600px; background-color: var(--card-bg);
+    border-radius: 12px; padding: 20px; box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
     border: 1px solid rgba(255, 255, 255, 0.08);
-    display: flex; flex-direction: column; height: 100%; gap: 20px;
-    overflow: hidden; box-sizing: border-box;
+    display: flex; flex-direction: column; height: 100%; gap: 20px; overflow: hidden; box-sizing: border-box;
 }
 
-/* 2. 헤더 섹션 */
+/* ----------------------------------------------------------------
+   2. 헤더 섹션
+   ---------------------------------------------------------------- */
 .aoi-header {
-    display: flex; align-items: center; gap: 20px;
-    padding-bottom: 15px; border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    width: 100%; box-sizing: border-box;
+    display: flex; align-items: center; gap: 20px; padding-bottom: 15px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); width: 100%; box-sizing: border-box;
 }
 .aoi-title {
-    font-family: 'BMDOHYEON', sans-serif; font-size: 1.4rem; color: var(--text-white);
-    display: flex; align-items: center; gap: 10px; white-space: nowrap; flex-shrink: 0;
+    font-family: 'BMDOHYEON', sans-serif; font-size: 1.4rem; color: var(--text-white); display: flex; align-items: center; gap: 10px; white-space: nowrap; flex-shrink: 0;
 }
 .aoi-title::before {
-    content: ''; display: block; width: 5px; height: 20px;
-    background-color: var(--point-gold); border-radius: 2px; flex-shrink: 0;
+    content: ''; display: block; width: 5px; height: 20px; background-color: var(--point-gold); border-radius: 2px; flex-shrink: 0;
 }
 .header-command-bar {
-    flex: 1; max-width: 300px; display: flex; align-items: center; gap: 10px;
-    background-color: rgba(0, 0, 0, 0.2); border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 30px; padding: 5px 15px; transition: all 0.3s ease;
+    flex: 1; max-width: 300px; display: flex; align-items: center; gap: 10px; background-color: rgba(0, 0, 0, 0.2); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 30px; padding: 5px 15px; transition: all 0.3s ease;
 }
 .header-command-bar:focus-within {
-    border-color: var(--point-gold); background-color: rgba(0, 0, 0, 0.4);
-    box-shadow: 0 0 10px rgba(255, 235, 167, 0.1);
+    border-color: var(--point-gold); background-color: rgba(0, 0, 0, 0.4); box-shadow: 0 0 10px rgba(255, 235, 167, 0.1);
 }
 .cmd-icon { color: var(--point-gold); font-size: 1.1rem; }
 #command-input {
-    flex: 1; background: transparent; border: none; outline: none;
-    color: #fff; font-family: 'BMDOHYEON'; font-size: 0.9rem;
+    flex: 1; background: transparent; border: none; outline: none; color: #fff; font-family: 'BMDOHYEON'; font-size: 0.9rem;
 }
-#command-input::placeholder { color: #666; font-family: 'Poppins'; font-size: 0.8rem; }
 .header-btn-group { display: flex; gap: 10px; margin-left: auto; }
+.header-btn {
+    background-color: var(--card-bg); border: 1px solid rgba(255, 255, 255, 0.2); color: #ccc; padding: 6px 14px; border-radius: 4px; cursor: pointer; font-size: 0.9rem; font-weight: bold; display: flex; align-items: center; gap: 6px; transition: all 0.3s ease; font-family: 'BMDOHYEON', sans-serif;
+}
+.header-btn:hover { color: #fff; border-color: #fff; background-color: rgba(255, 255, 255, 0.05); }
+.header-btn.active {
+    background-color: var(--point-gold) !important; color: var(--accent-blue) !important; border-color: var(--point-gold) !important; box-shadow: 0 0 10px rgba(255, 235, 167, 0.4);
+}
+#manage-btn.active { background-color: var(--danger-red) !important; border-color: var(--danger-red) !important; color: #fff !important; }
 
-/* 3. 테이블 컨테이너: 외곽선 및 높이 제어 */
+/* ----------------------------------------------------------------
+   3. 테이블 컨테이너
+   ---------------------------------------------------------------- */
 .table-container {
-    flex: 0 1 auto !important; 
-    width: 100%;
-    border: 2px solid var(--point-gold) !important;
-    border-radius: 8px;
-    background-color: #1f2029;
-    box-shadow: 0 0 15px rgba(255, 235, 167, 0.1);
-    padding: 0 !important; 
-    box-sizing: border-box;
-    overflow: auto;
-    min-height: 0;
-    scrollbar-gutter: stable;
+    flex: 0 1 auto !important; width: 100%; border: 2px solid var(--point-gold) !important; border-radius: 8px; background-color: #1f2029; box-shadow: 0 0 15px rgba(255, 235, 167, 0.1); padding: 0 !important; box-sizing: border-box; overflow: auto; min-height: 0; scrollbar-gutter: stable;
 }
 .table-container::-webkit-scrollbar { width: 8px; height: 8px; }
 .table-container::-webkit-scrollbar-track { background: #1f2029; }
 .table-container::-webkit-scrollbar-thumb { background: #555; border-radius: 4px; }
 
-/* 4. AOI 테이블 스타일 */
+/* ----------------------------------------------------------------
+   4. 테이블 기본 구조
+   ---------------------------------------------------------------- */
 .table-container table.aoi-table {
-    width: 100% !important; 
-    border-collapse: separate !important; 
-    border-spacing: 0;
-    border: none;
-    white-space: nowrap; 
-    table-layout: fixed !important;
+    width: 100% !important; border-collapse: separate !important; border-spacing: 0; border: none; white-space: nowrap; table-layout: fixed !important;
 }
 .table-container table.aoi-table tr { height: 40px; }
-
-/* 셀 공통 스타일 */
-.table-container table.aoi-table th, 
-.table-container table.aoi-table td {
-    height: 40px; padding: 0; margin: 0; border: none;
-    border-right: 1px solid rgba(255, 235, 167, 0.5) !important;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.2) !important; 
-    vertical-align: middle; box-sizing: border-box;
-    font-size: 0.85rem; text-align: center; line-height: 40px; 
-    position: relative; background-color: #1f2029;
+.table-container table.aoi-table th, .table-container table.aoi-table td {
+    height: 40px; padding: 0; margin: 0; border: none; border-right: 1px solid rgba(255, 235, 167, 0.5) !important; border-bottom: 1px solid rgba(255, 255, 255, 0.2) !important; vertical-align: middle; box-sizing: border-box; font-size: 0.85rem; text-align: center; line-height: 40px; position: relative; background-color: #1f2029;
 }
-
-/* 헤더 스타일 */
+/* [수정 후] */
 .table-container table.aoi-table th {
     background-color: #15151a; color: var(--point-gold); font-weight: bold;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.5) !important;
+    border-bottom: 2px solid var(--point-gold) !important; /* 1px -> 2px로 변경하여 모델명과 통일 */
     position: sticky; top: 0; z-index: 200 !important;
 }
 
-/* 5. 모델명 열 (첫 번째 칸) 고정 및 금색 테두리 */
+/* ----------------------------------------------------------------
+   5. 모델명 열 고정 (너비 불일치 해결)
+   ---------------------------------------------------------------- */
+/* 헤더 */
 .table-container table.aoi-table th:first-child {
-    background-color: #15151a !important; 
-    z-index: 500 !important; 
-    border-right: 2px solid var(--point-gold) !important;
-    cursor: pointer !important;
-    border-bottom: 2px solid var(--point-gold) !important;
-    left: 0; 
+    background-color: #15151a !important; z-index: 500 !important;
+    width: 200px !important; min-width: 200px !important; max-width: 200px !important;
+    padding: 0 !important; /* 패딩 제거하여 너비 오차 제거 */
+    border-right: 2px solid var(--point-gold) !important; border-bottom: 2px solid var(--point-gold) !important;
+    left: 0; cursor: pointer !important;
 }
+/* 데이터 셀 */
 .table-container table.aoi-table td:first-child {
-    background-color: #1f2029 !important; 
-    z-index: 400 !important; 
-    border-right: none !important; 
-    position: sticky !important; left: 0 !important;
+    background-color: #1f2029 !important; z-index: 400 !important;
+    width: 200px !important; min-width: 200px !important; max-width: 200px !important;
+    padding: 0 !important; border-right: none !important; position: sticky; left: 0 !important;
 }
+/* 내부 래퍼 */
 .table-container table.aoi-table td:first-child .row-span-wrapper {
-    background-color: #1f2029 !important; 
-    z-index: 400 !important; 
-    border-right: 2px solid var(--point-gold) !important; 
+    background-color: #1f2029 !important; z-index: 400 !important; border-right: 2px solid var(--point-gold) !important;
+    width: 100% !important; box-sizing: border-box !important;
+}
+/* 텍스트 */
+.model-name-ellipsis {
+    width: 100% !important; 
+    padding: 0 10px !important; 
+    box-sizing: border-box !important;
+    cursor: pointer; 
+    font-weight: bold; 
+    color: var(--point-gold) !important;
+    overflow: hidden; 
+    text-overflow: ellipsis; 
+    white-space: nowrap; 
+    display: table-cell !important; /* block 대신 table-cell로 변경하거나 아예 display 속성을 지우세요 */
+    vertical-align: middle; /* 텍스트 세로 중앙 정렬 */
 }
 
-/* 6. 입력창 스타일 */
+/* ----------------------------------------------------------------
+   6. 입력창 & 래퍼
+   ---------------------------------------------------------------- */
+.row-span-wrapper {
+    position: absolute; top: 0; left: 0; width: 100%; height: 79px; display: flex; align-items: center; justify-content: center; background-color: #1f2029; z-index: 100; box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.05); border-right: 1px solid rgba(255, 255, 255, 0.5) !important; border-bottom: none !important;
+}
+.row-span-wrapper.model-text {
+    justify-content: flex-start; padding: 0 10px; display: block; line-height: 79px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--point-gold); font-weight: bold;
+}
 .table-container table.aoi-table input {
-    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-    border: none; outline: none; background: transparent;
-    margin: 0; padding: 0; color: #fff; text-align: center; 
-    font-family: inherit; font-weight: bold; font-size: 0.9rem;
-    -webkit-appearance: none; border-radius: 0; display: block;
-    -moz-appearance: textfield !important; 
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; outline: none; background: transparent; margin: 0; padding: 0; color: #fff; text-align: center; font-family: inherit; font-weight: bold; font-size: 0.9rem; -webkit-appearance: none; border-radius: 0; display: block; -moz-appearance: textfield !important;
 }
-.table-container table.aoi-table input::-webkit-outer-spin-button,
-.table-container table.aoi-table input::-webkit-inner-spin-button {
-    -webkit-appearance: none !important; margin: 0 !important;
-}
-.table-container table.aoi-table input:focus {
+.table-container table.aoi-table input:focus, .row-span-wrapper input:focus {
     background-color: #1f2029; box-shadow: inset 0 0 0 1px var(--point-gold); z-index: 2;
 }
 
-/* 7. 모델명 & 그룹 */
-.model-name-ellipsis {
-    width: 200px !important; min-width: 200px !important; max-width: 200px !important;
-    padding: 0 !important; box-sizing: border-box !important;
-    cursor: pointer; font-weight: bold; color: var(--point-gold) !important;
-    background: inherit !important; border: none !important; box-shadow: none !important;
+/* ----------------------------------------------------------------
+   7. 고정 행 (Pinned)
+   ---------------------------------------------------------------- */
+tr.pinned-row td { background-color: rgba(255, 235, 167, 0.15) !important; color: #fff !important; font-weight: bold; }
+tr.pinned-row .row-span-wrapper {
+    background-color: #2a2b38 !important; box-shadow: inset 0 0 0 1px var(--point-gold) !important; border-right: 1px solid var(--point-gold) !important;
 }
+tr.pinned-row .model-text { color: #fff !important; text-shadow: 0 0 5px rgba(255, 235, 167, 0.5) !important; }
+tr.pinned-row td.merge-bottom {
+    border-bottom: 2px solid var(--point-gold) !important; z-index: 460 !important; background-color: transparent !important;
+}
+tr.pinned-row td:first-child .row-span-wrapper {
+    border-right: 2px solid var(--point-gold) !important; background-color: #2a2b38 !important; z-index: 450 !important;
+}
+tr.pinned-row td.merge-bottom:first-child { border-right: none !important; z-index: 460 !important; }
 
-/* 기본적으로 상세 열은 숨김 */
-.detail-col { display: none; }
-col.detail-col.visible { display: table-column !important; }
-th.detail-col.visible, td.detail-col.visible { display: table-cell !important; }
-
-/* 8. 수량 & 진행도 */
+/* ----------------------------------------------------------------
+   8. 수량 & 진행도 (넘침 방지)
+   ---------------------------------------------------------------- */
 .qty-input-visible {
-    width: 100% !important; height: 100% !important; text-align: center !important;
-    background: transparent !important; border: none !important; color: #fff !important;
-    font-weight: bold !important; font-size: 0.9rem !important;
-}
-.qty-input-visible:focus {
-    background-color: #1f2029 !important; box-shadow: inset 0 0 0 1px var(--point-gold) !important;
+    width: 100% !important; height: 100% !important; text-align: center !important; background: transparent !important; border: none !important; color: #fff !important; font-weight: bold !important; font-size: 0.9rem !important;
 }
 .progress-cell-wrapper {
     display: flex; flex-direction: column; justify-content: center; align-items: center;
-    height: 100%; padding: 0 8px; gap: 4px; box-sizing: border-box;
+    height: 100%; 
+    width: 100% !important; 
+    max-width: 100%; /* 부모를 넘지 못하게 제한 */
+    padding: 0 6px; 
+    box-sizing: border-box; 
+    overflow: hidden; /* 튀어나온 부분 자르기 */
 }
 .qty-progress-track {
-    width: 100%; height: 6px; background-color: rgba(255, 255, 255, 0.1);
-    border-radius: 3px; overflow: hidden;
+    width: 100%; height: 6px; background-color: rgba(255, 255, 255, 0.1); border-radius: 3px; overflow: hidden; margin: 0 auto;
 }
-.qty-progress-fill {
-    height: 100%; background-color: var(--point-gold); width: 0%; transition: width 0.3s ease;
-}
-.qty-progress-fill.completed {
-    background-color: var(--success-green); box-shadow: 0 0 5px rgba(0, 230, 118, 0.5);
-}
+.qty-progress-fill { height: 100%; background-color: var(--point-gold); width: 0%; transition: width 0.3s ease; }
+.qty-progress-fill.completed { background-color: var(--success-green); box-shadow: 0 0 5px rgba(0, 230, 118, 0.5); }
 .qty-info-text {
-    font-size: 0.7rem; color: #aaa; display: flex; justify-content: space-between; width: 100%; line-height: 1;
+    font-size: 0.7rem; color: #aaa; display: flex; justify-content: space-between; width: 100%; line-height: 1.2; margin-top: 4px;
 }
 .qty-info-text.completed span { color: var(--success-green) !important; font-weight: bold; }
 .qty-info-text .acc-val { color: #fff; }
 .qty-info-text .lot-val { color: #666; }
-tr.pinned-row .lot-val { color: #eee !important; } 
+tr.pinned-row .lot-val { color: #eee !important; }
 
-/* 9. 버튼 및 UI */
-.header-btn {
-    background-color: var(--card-bg); border: 1px solid rgba(255, 255, 255, 0.2); color: #ccc;
-    padding: 6px 14px; border-radius: 4px; cursor: pointer;
-    font-size: 0.9rem; font-weight: bold; display: flex; align-items: center; gap: 6px;
-    transition: all 0.3s ease; font-family: 'BMDOHYEON', sans-serif;
-}
-.header-btn:hover { color: #fff; border-color: #fff; background-color: rgba(255, 255, 255, 0.05); }
-.header-btn.active {
-    background-color: var(--point-gold) !important; color: var(--accent-blue) !important;
-    border-color: var(--point-gold) !important; box-shadow: 0 0 10px rgba(255, 235, 167, 0.4);
-}
-.manage-btn.active { background-color: var(--danger-red) !important; border-color: var(--danger-red) !important; color: #fff !important; }
-.aoi-table.delete-mode tbody tr { cursor: pointer; transition: background-color 0.2s; }
-.aoi-table.delete-mode tbody tr:hover td { background-color: rgba(255, 68, 68, 0.2) !important; color: #ffcccc !important; }
-.aoi-table.delete-mode input { pointer-events: none; }
-
-/* 10. 병합(Rowspan) 및 고정행 스타일 */
+/* ----------------------------------------------------------------
+   9. 병합, 테두리, 그룹핑
+   ---------------------------------------------------------------- */
 .merge-top {
     height: 40px !important; border-bottom: none !important; padding: 0 !important; overflow: visible !important; z-index: 50 !important;
 }
 .merge-bottom {
-    border-top: none !important; height: 40px !important; background: transparent !important; z-index: 1 !important; position: relative;
-    border-bottom: 2px solid var(--point-gold) !important;
+    border-top: none !important; height: 40px !important; background: transparent !important; z-index: 1 !important; position: relative; border-bottom: 2px solid var(--point-gold) !important;
 }
-.row-span-wrapper {
-    position: absolute; top: 0; left: 0; width: 100%; height: 79px; 
-    display: flex; align-items: center; justify-content: center;
-    background-color: #1f2029; z-index: 100 !important;
-    box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.05); box-sizing: border-box !important;
-    border-right: 1px solid rgba(255, 255, 255, 0.5) !important; border-bottom: none !important; 
-}
-.row-span-wrapper.model-text {
-    justify-content: flex-start; padding: 0 10px; display: block; line-height: 79px;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    color: var(--point-gold); font-weight: bold;
-}
-.row-span-wrapper input {
-    width: 100%; height: 100%; background: transparent; border: none;
-    text-align: center; color: #fff; font-weight: bold; font-size: 0.9rem; padding: 0;
-}
-.row-span-wrapper input:focus {
-    box-shadow: inset 0 0 0 1px var(--point-gold); background-color: rgba(0, 0, 0, 0.2);
-}
+.upper-row td.ref-cell { border-bottom: 1px dashed rgba(255, 255, 255, 0.1) !important; height: 40px !important; background-color: rgba(255, 255, 255, 0.02); vertical-align: bottom !important; }
+.lower-row td.qty-cell { border-top: none !important; height: 40px !important; vertical-align: top !important; border-bottom: 1px solid rgba(255, 255, 255, 0.2) !important; border-right: 1px solid rgba(255, 255, 255, 0.5) !important; }
+tr.pinned-row.lower-row td.qty-cell { border-bottom: 2px solid var(--point-gold) !important; border-right: 1px solid var(--point-gold) !important; }
+tr.pinned-row.upper-row td.ref-cell { border-right: 1px solid var(--point-gold) !important; }
 
-/* =========================================================================
-   [수정 완료] 고정 행 (Pinned Row) 스타일 - 배경색 가림 문제 해결
-   ========================================================================= */
-/* 1. 고정된 행의 일반 셀(TD) 배경색 */
-tr.pinned-row td {
-    background-color: rgba(255, 235, 167, 0.15) !important;
-    color: #fff !important; font-weight: bold;
-}
-
-/* 2. ★[핵심]★ 고정된 행 내부의 '모든' Wrapper 배경색 변경 */
-tr.pinned-row .row-span-wrapper {
-    background-color: #2a2b38 !important; /* 고정 시 밝은 남색 배경 */
-    box-shadow: inset 0 0 0 1px var(--point-gold) !important; /* 내부 금색 테두리 효과 */
-    border-right: 1px solid var(--point-gold) !important;
-}
-
-/* 3. 모델명 텍스트 */
-tr.pinned-row .model-text {
-    color: #fff !important; text-shadow: 0 1px 2px rgba(0,0,0,0.8);
-}
-
-/* 4. 하단 병합 셀(merge-bottom) 처리 */
-tr.pinned-row td.merge-bottom {
-    border-bottom: 2px solid var(--point-gold) !important; /* 바닥 금색선 */
-    z-index: 250 !important; 
-    background-color: #2a2b38 !important; /* Wrapper와 동일한 배경색 */
-}
-
-/* 5. 첫 번째 열(모델명) 고정 스타일 */
-tr.pinned-row td:first-child .row-span-wrapper {
-    border-right: 2px solid var(--point-gold) !important;
-    background-color: #2a2b38 !important;
-}
-
-/* 6. 입력칸(우측 상세 데이터) 테두리 색상 변경 */
-.upper-row td.ref-cell {
-    border-bottom: 1px dashed rgba(255, 255, 255, 0.1) !important; height: 40px !important; background-color: rgba(255, 255, 255, 0.02); vertical-align: bottom !important;
-}
-.lower-row td.qty-cell {
-    border-top: none !important; height: 40px !important; vertical-align: top !important;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.2) !important; border-right: 1px solid rgba(255, 255, 255, 0.5) !important; 
-}
-tr.pinned-row.lower-row td.qty-cell {
-    border-bottom: 2px solid var(--point-gold) !important; 
-    border-right: 1px solid var(--point-gold) !important; 
-}
-tr.pinned-row.upper-row td.ref-cell {
-    border-right: 1px solid var(--point-gold) !important;
-}
-.defect-ref { color: var(--point-gold) !important; font-size: 0.8rem !important; text-align: center; width: 100%; }
-.defect-qty { font-weight: bold; font-size: 1rem; width: 100%; }
-
-/* 그룹핑 효과 */
 .group-header-box { border: 2px solid var(--point-gold) !important; border-bottom: 1px solid var(--point-gold) !important; }
 .group-start { border-left: 2px solid var(--point-gold) !important; }
 .group-end { border-right: 2px solid var(--point-gold) !important; }
 thead th.group-start, thead th.group-end { border-top: 2px solid var(--point-gold) !important; border-bottom: 2px solid var(--point-gold) !important; }
 thead tr:nth-child(2) th.group-start, thead tr:nth-child(2) th.group-end, thead tr:nth-child(2) th.detail-col { 
-    border-top: 1px solid var(--point-gold) !important; border-bottom: 1px solid var(--point-gold) !important;
+    border-top: 1px solid var(--point-gold) !important; border-bottom: 1px solid var(--point-gold) !important; 
 }
 tr.pinned-row .group-start { border-left: 2px solid var(--point-gold) !important; }
 tr.pinned-row .group-end { border-right: 2px solid var(--point-gold) !important; }
 
-/* 11. 확장형 에디터 & 툴팁 */
-#global-tooltip {
-    position: absolute; display: none; z-index: 9999;
-    background-color: #2a2b38; border: 2px solid var(--point-gold);
-    border-radius: 8px; box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
-    padding: 0; width: 250px; height: 150px; overflow: visible; 
+.table-container table.aoi-table th:last-child, .table-container table.aoi-table td:last-child { border-right: none !important; }
+.table-container table.aoi-table tbody tr:last-child td { border-bottom: none !important; }
+.table-container table.aoi-table thead tr:last-child th { border-bottom: 2px solid var(--point-gold) !important; }
+.table-container table.aoi-table td.merge-bottom:first-child { 
+    background-color: transparent !important; z-index: 410 !important; border-right: none !important; border-bottom: 2px solid var(--point-gold) !important; 
 }
-#global-tooltip textarea {
-    width: 100%; height: 100%; background: transparent; border: none; outline: none;
-    color: #fff; font-size: 0.95rem; font-family: 'Roboto Mono', monospace; 
-    padding: 10px; resize: none; box-sizing: border-box; line-height: 1.5;
-    position: relative; z-index: 2; border-radius: 6px;
-}
-#global-tooltip textarea::-webkit-scrollbar { width: 6px; }
-#global-tooltip textarea::-webkit-scrollbar-thumb { background: #555; border-radius: 3px; }
-#global-tooltip::after {
-    content: ""; position: absolute; width: 12px; height: 12px;
-    background-color: #2a2b38; border: 2px solid var(--point-gold); 
-    transform: rotate(45deg); z-index: 1; 
-}
-#global-tooltip.pos-right::after { top: 20px; left: -8px; border-top: none; border-right: none; }
-#global-tooltip.pos-left::after { top: 20px; right: -8px; border-bottom: none; border-left: none; }
+.aoi-table.delete-mode tbody tr { cursor: pointer; transition: background-color 0.2s; }
+.aoi-table.delete-mode tbody tr:hover td { background-color: rgba(255, 68, 68, 0.2) !important; color: #ffcccc !important; }
+.aoi-table.delete-mode input { pointer-events: none; }
 
-/* 12. 외곽 마감 처리 (이중선 방지) */
-.table-container table.aoi-table th:last-child,
-.table-container table.aoi-table td:last-child,
-.table-container table.aoi-table .group-end:last-child {
-    border-right: none !important;
-}
-.table-container table.aoi-table tbody tr:last-child td {
-    border-bottom: none !important;
-}
-.table-container table.aoi-table thead tr:last-child th {
-    border-bottom: 2px solid var(--point-gold) !important;
-}
-.table-container table.aoi-table td.merge-bottom:first-child,
-tr.pinned-row td.merge-bottom:first-child {
-    background-color: transparent !important; z-index: 410 !important;
-    border-right: none !important; border-bottom: 2px solid var(--point-gold) !important;
-}
-
-/* =========================================================================
-   [13. 화면 모드(View Mode) 제어 - 문제 해결 섹션]
-   ========================================================================= */
-
-/* (1) 기본 상태 (Detail View - 자세히 보기) */
-/* [수정] 헤더 중복 방지: 기본적으로 합계 헤더는 숨김 (상세 헤더가 보여야 하므로) */
-.sum-header { display: none; }
-.group-sum-cell, .group-sum-col { display: none !important; }
-
-/* (2) 간편 보기 상태 (Simple View) */
-/* 상세 컬럼 숨김 */
-.aoi-table.simple-view-mode .detail-col { display: none !important; }
-
-/* 간편 보기일 때만 대분류 합계 헤더 보이기 */
-.aoi-table.simple-view-mode .sum-header { 
-    display: table-cell !important; 
-    vertical-align: middle !important;
-}
-
-/* 합계 컬럼(Group Sum Col) 표시 설정 */
-.aoi-table.simple-view-mode .group-sum-cell, 
-.aoi-table.simple-view-mode col.group-sum-col { 
-    display: table-cell !important; 
-    display: table-column !important; 
-}
-
-/* [문제해결 1] 헤더 병합 문제 해결: 2번째 줄의 합계용 빈 헤더 숨김 */
-.aoi-table.simple-view-mode thead tr:nth-child(2) th.group-sum-col {
-    display: none !important;
-}
-
-/* [문제해결 2] 마지막 셀 테두리 문제 해결 (구조 기반 타겟팅) */
-.aoi-table.simple-view-mode thead tr:first-child th.sum-header:nth-last-child(2) { 
-    border-right: none !important; 
-}
-.aoi-table.simple-view-mode tbody tr td.group-sum-cell:nth-last-child(3) { 
-    border-right: none !important; 
-}
-.aoi-table.simple-view-mode tbody tr td.group-sum-cell:nth-last-child(3) .row-span-wrapper { 
-    border-right: none !important; 
-}
-
-/* 뷰 모드에 따른 입력창 제어 */
-.aoi-table.simple-view-mode .defect-ref-input { display: none !important; }
-.aoi-table.simple-view-mode .defect-qty-input { height: 100% !important; border-top: none !important; }
-
-/* 모달/유틸리티 스타일 유지 (생략 없음) */
+/* ----------------------------------------------------------------
+   10. 모달, 캘린더, 툴팁
+   ---------------------------------------------------------------- */
 .model-list-modal .modal-window { width: 95%; max-width: 1400px; height: auto; display: flex; flex-direction: column; margin: 0 auto; box-sizing: border-box; }
 .model-list-container { display: flex; flex-direction: column; gap: 10px; width: 100%; }
 .company-section { margin-bottom: 10px; width: 100%; }
@@ -412,4 +246,96 @@ tr.pinned-row td.merge-bottom:first-child {
 #custom-calendar-popup-day .day-cell.sunday { color: #ff4444; }
 #custom-calendar-popup-day .day-cell.sunday:hover { color: var(--accent-blue); }
 #custom-calendar-popup-day .day-cell.empty { pointer-events: none; cursor: default; }
+#global-tooltip { position: absolute; display: none; z-index: 9999; background-color: #2a2b38; border: 2px solid var(--point-gold); border-radius: 8px; box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5); padding: 0; width: 250px; height: 150px; overflow: visible; }
+#global-tooltip textarea { width: 100%; height: 100%; background: transparent; border: none; outline: none; color: #fff; font-size: 0.95rem; font-family: 'Roboto Mono', monospace; padding: 10px; resize: none; box-sizing: border-box; line-height: 1.5; position: relative; z-index: 2; border-radius: 6px; }
+#global-tooltip textarea::-webkit-scrollbar { width: 6px; }
+#global-tooltip textarea::-webkit-scrollbar-thumb { background: #555; border-radius: 3px; }
+#global-tooltip::after { content: ""; position: absolute; width: 12px; height: 12px; background-color: #2a2b38; border: 2px solid var(--point-gold); transform: rotate(45deg); z-index: 1; }
+#global-tooltip.pos-right::after { top: 20px; left: -8px; border-top: none; border-right: none; }
+#global-tooltip.pos-left::after { top: 20px; right: -8px; border-bottom: none; border-left: none; }
 @keyframes toastUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+/* =========================================================================
+   [11. 화면 모드(View Mode) 제어 - FINAL CORRECTED]
+   ========================================================================= */
+
+/* [0] 공통: 2번째 줄의 '빈 헤더'는 무조건 숨김 (칸 밀림/겹침 방지) */
+#aoi-table-main thead tr:nth-child(2) th.group-sum-col { display: none !important; }
+
+/* -----------------------------------------------------------
+   [A] 자세히 보기 (Detail View) - 기본 상태
+   ----------------------------------------------------------- */
+/* 1. 합계 관련 요소 숨김 */
+#aoi-table-main:not(.simple-view-mode) .sum-header { display: none !important; }
+#aoi-table-main:not(.simple-view-mode) .group-sum-cell { display: none !important; }
+#aoi-table-main:not(.simple-view-mode) col.group-sum-col { display: none !important; width: 0 !important; }
+
+/* 2. 상세 열 표시 규칙 (토글 기능 정상화) */
+/* (1) 그룹 헤더 박스(클릭 영역)는 항상 표시 */
+#aoi-table-main:not(.simple-view-mode) th.detail-col.group-header-box { display: table-cell !important; }
+
+/* (2) 기본적으로 상세 열은 숨김 (JS가 제어) */
+#aoi-table-main:not(.simple-view-mode) .detail-col { display: none; }
+#aoi-table-main:not(.simple-view-mode) col.detail-col { display: none; width: 0; }
+
+/* (3) JS가 붙인 .visible 클래스가 있으면 표시 (이제 모델명 토글도 작동함) */
+#aoi-table-main:not(.simple-view-mode) .detail-col.visible { display: table-cell !important; }
+#aoi-table-main:not(.simple-view-mode) col.detail-col.visible { display: table-column !important; }
+
+
+/* -----------------------------------------------------------
+   [B] 간편 보기 (Simple View)
+   ----------------------------------------------------------- */
+/* 1. 상세 열 숨김 (단, visible 클래스가 있으면 표시 -> 간편보기에서도 토글 가능) */
+#aoi-table-main.simple-view-mode .detail-col:not(.visible) { display: none !important; }
+#aoi-table-main.simple-view-mode col.detail-col:not(.visible) { display: none !important; width: 0 !important; }
+
+/* 2. 대분류 헤더 표시 */
+#aoi-table-main.simple-view-mode .sum-header {
+    display: table-cell !important; vertical-align: middle !important; z-index: 500 !important;
+    background-color: #15151a !important; color: var(--point-gold) !important;
+}
+
+/* 3. 합계 데이터 셀 표시 */
+#aoi-table-main.simple-view-mode .group-sum-cell {
+    display: table-cell !important; position: relative !important;
+}
+
+/* 4. 합계 데이터 래퍼 스타일 */
+#aoi-table-main.simple-view-mode .group-sum-cell .row-span-wrapper {
+    display: flex !important; visibility: visible !important; opacity: 1 !important;
+    align-items: center; justify-content: center;
+    background-color: rgba(16, 39, 112, 0.4) !important; color: var(--point-gold) !important;
+    font-weight: bold; font-size: 1rem;
+    height: 79px !important; width: 100% !important;
+    position: absolute; top: 0; left: 0; z-index: 100 !important;
+}
+
+/* 5. 합계 열 너비 */
+#aoi-table-main.simple-view-mode col.group-sum-col {
+    display: table-column !important; width: clamp(70px, 6vw, 120px) !important;
+}
+
+/* 6. 디자인 마감 */
+#aoi-table-main.simple-view-mode thead tr:first-child th.sum-header:last-child,
+#aoi-table-main.simple-view-mode tbody tr td.group-sum-cell:last-child,
+#aoi-table-main.simple-view-mode tbody tr td.group-sum-cell:last-child .row-span-wrapper {
+    border-right: none !important;
+}
+
+/* 7. 입력창 숨김 */
+#aoi-table-main.simple-view-mode .defect-ref-input { display: none !important; }
+#aoi-table-main.simple-view-mode .defect-qty-input { height: 100% !important; border-top: none !important; }
+
+/* 숫자 입력창의 위/아래 화살표(스피너) 제거 */
+/* Chrome, Safari, Edge, Opera */
+input[type=number]::-webkit-inner-spin-button, 
+input[type=number]::-webkit-outer-spin-button { 
+    -webkit-appearance: none; 
+    margin: 0; 
+}
+
+/* Firefox */
+input[type=number] {
+    -moz-appearance: textfield; 
+}
