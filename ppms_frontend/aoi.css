@@ -74,6 +74,10 @@
     border-bottom: 2px solid var(--point-gold) !important; /* 1px -> 2px로 변경하여 모델명과 통일 */
     position: sticky; top: 0; z-index: 200 !important;
 }
+.table-container table.aoi-table thead tr:first-child th:nth-child(3) {
+    border-right: 1px solid rgba(255, 235, 167, 0.5) !important;
+    z-index: 210 !important; /* 진행도 헤더보다 위에 그려지도록 설정 */
+}
 
 /* ----------------------------------------------------------------
    5. 모델명 열 고정 (너비 불일치 해결)
@@ -96,6 +100,21 @@
 .table-container table.aoi-table td:first-child .row-span-wrapper {
     background-color: #1f2029 !important; z-index: 400 !important; border-right: 2px solid var(--point-gold) !important;
     width: 100% !important; box-sizing: border-box !important;
+}
+/* =========================================================================
+   [데이터 셀 내부 Wrapper 통일성 확보 - 최종 수정]
+   ========================================================================= */
+
+/* 모든 row-span-wrapper에 box-sizing 및 너비 100% 적용 */
+.table-container table.aoi-table td .row-span-wrapper {
+    /* 부모 셀(td)의 너비를 100% 정확히 따르도록 보장 (너비 불일치 해결) */
+    width: 100% !important; 
+    
+    /* 패딩이 너비를 초과하지 않도록 설정 (진행도 막대 넘침 해결) */
+    box-sizing: border-box !important;
+    
+    /* [핵심 수정] 높이를 100%가 아닌 79px로 고정하여 2줄 병합 유지 */
+    height: 79px !important; 
 }
 /* 텍스트 */
 .model-name-ellipsis {
@@ -286,7 +305,7 @@ tr.pinned-row .group-end { border-right: 2px solid var(--point-gold) !important;
 /* -----------------------------------------------------------
    [B] 간편 보기 (Simple View)
    ----------------------------------------------------------- */
-/* 1. 상세 열 숨김 (단, visible 클래스가 있으면 표시 -> 간편보기에서도 토글 가능) */
+/* 1. 상세 열 숨김 */
 #aoi-table-main.simple-view-mode .detail-col:not(.visible) { display: none !important; }
 #aoi-table-main.simple-view-mode col.detail-col:not(.visible) { display: none !important; width: 0 !important; }
 
@@ -301,14 +320,23 @@ tr.pinned-row .group-end { border-right: 2px solid var(--point-gold) !important;
     display: table-cell !important; position: relative !important;
 }
 
-/* 4. 합계 데이터 래퍼 스타일 */
+/* 4. 합계 데이터 래퍼 스타일 (기본 상태) */
 #aoi-table-main.simple-view-mode .group-sum-cell .row-span-wrapper {
     display: flex !important; visibility: visible !important; opacity: 1 !important;
     align-items: center; justify-content: center;
-    background-color: rgba(16, 39, 112, 0.4) !important; color: var(--point-gold) !important;
+    background-color: #1F2029 !important; /* 기본 배경색 */
+    color: var(--point-gold) !important;
     font-weight: bold; font-size: 1rem;
     height: 79px !important; width: 100% !important;
     position: absolute; top: 0; left: 0; z-index: 100 !important;
+}
+
+/* 4-1. [추가] 고정된 행(Pinned Row)일 때의 합계 셀 스타일 (강제 적용) */
+/* 설명: ID 선택자를 사용하여 기본 배경색(#1F2029)보다 더 높은 우선순위로 덮어씁니다. */
+#aoi-table-main.simple-view-mode tr.pinned-row .group-sum-cell .row-span-wrapper {
+    background-color: #2a2b38 !important; /* 고정 행 배경색 (진한 회색) */
+    box-shadow: inset 0 0 0 1px var(--point-gold) !important; /* 금색 테두리 효과 */
+    color: #fff !important; /* 글자색 흰색으로 강조 */
 }
 
 /* 5. 합계 열 너비 */
@@ -317,16 +345,20 @@ tr.pinned-row .group-end { border-right: 2px solid var(--point-gold) !important;
 }
 
 /* 6. 디자인 마감 */
-#aoi-table-main.simple-view-mode thead tr:first-child th.sum-header:last-child,
-#aoi-table-main.simple-view-mode tbody tr td.group-sum-cell:last-child,
-#aoi-table-main.simple-view-mode tbody tr td.group-sum-cell:last-child .row-span-wrapper {
+/* [헤더] '기타' 합계: 뒤에 숨겨진 상세 헤더(Group D)가 1개 있으므로 끝에서 2번째 */
+#aoi-table-main.simple-view-mode thead tr:first-child th.sum-header:nth-last-child(2) {
+    border-right: none !important;
+}
+
+/* [데이터] '기타' 합계: 뒤에 숨겨진 상세 셀(원자재, DIP)이 2개 있으므로 끝에서 3번째 */
+#aoi-table-main.simple-view-mode tbody tr td.group-sum-cell:nth-last-child(3),
+#aoi-table-main.simple-view-mode tbody tr td.group-sum-cell:nth-last-child(3) .row-span-wrapper {
     border-right: none !important;
 }
 
 /* 7. 입력창 숨김 */
 #aoi-table-main.simple-view-mode .defect-ref-input { display: none !important; }
 #aoi-table-main.simple-view-mode .defect-qty-input { height: 100% !important; border-top: none !important; }
-
 /* 숫자 입력창의 위/아래 화살표(스피너) 제거 */
 /* Chrome, Safari, Edge, Opera */
 input[type=number]::-webkit-inner-spin-button, 

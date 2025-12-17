@@ -17,6 +17,110 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script src="auth.js"></script>
+    
+    <style>
+        /* [추가] 탭 네비게이션 스타일 */
+        .tab-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            width: 100%;
+            max-width: 600px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 12px;
+            background-color: var(--card-bg);
+            color: #666;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            font-family: 'BMDOHYEON', sans-serif;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .tab-btn:hover {
+            background-color: #3a3b48;
+            color: #ccc;
+        }
+
+        .tab-btn.active {
+            background-color: var(--point-gold);
+            color: var(--accent-blue);
+            box-shadow: 0 0 15px rgba(255, 235, 167, 0.4);
+            font-weight: bold;
+            transform: translateY(-2px);
+            border-color: transparent;
+        }
+
+        /* 컨트롤 섹션 애니메이션 */
+        .control-section {
+            display: none; /* 기본 숨김 */
+            width: 100%;
+            animation: fadeIn 0.3s ease;
+        }
+        .control-section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* AOI 테이블 전용 스타일 */
+        .aoi-detail-cell {
+            font-size: 0.85rem;
+            text-align: left;
+            padding: 8px 15px !important;
+            white-space: normal !important; /* 내용 줄바꿈 허용 */
+            line-height: 1.5;
+            min-width: 300px;
+        }
+        
+        .defect-item {
+            display: inline-block;
+            margin-right: 12px;
+            margin-bottom: 4px;
+        }
+        
+        .defect-count { 
+            color: var(--danger-red); 
+            font-weight: bold; 
+            margin-right: 4px;
+            font-family: 'Roboto Mono', monospace;
+        }
+        
+        .ref-text { 
+            color: #aaa; 
+            font-size: 0.8rem;
+        }
+
+        .date-input {
+            background-color: #15151a;
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 1rem;
+            outline: none;
+            cursor: pointer;
+        }
+        .date-input:focus {
+            border-color: var(--point-gold);
+        }
+        
+        /* 캘린더 아이콘 색상 변경 (브라우저 기본값 덮어쓰기 시도) */
+        ::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+            cursor: pointer;
+        }
+    </style>
 </head>
 
 <body>
@@ -65,41 +169,64 @@
         </header>
 
         <main class="content-area">
-            <div class="statistics-controls">
-                <input type="number" id="order-year-input" placeholder="예: 2025">
-                <select id="order-month-select">
-                </select>
-                <div class="common-box clickable-box search-btn" id="search-stats-btn"><i class="uil uil-search"></i> 조회</div>
+            
+            <div class="tab-container">
+                <div class="tab-btn active" data-tab="production">
+                    <i class="uil uil-chart-line"></i> 생산 실적 (월별)
+                </div>
+                <div class="tab-btn" data-tab="aoi">
+                    <i class="uil uil-microscope"></i> AOI 검사 기록 (기간별)
+                </div>
+            </div>
+
+            <div id="production-controls" class="control-section active">
+                <div class="statistics-controls">
+                    <input type="number" id="order-year-input" placeholder="예: 2025">
+                    <select id="order-month-select"></select>
+                    <div class="common-box clickable-box search-btn" id="search-prod-btn">
+                        <i class="uil uil-search"></i> 조회
+                    </div>
+                </div>
+            </div>
+
+            <div id="aoi-controls" class="control-section">
+                <div class="statistics-controls">
+                    <div style="display:flex; align-items:center; gap:10px; color:#fff; font-family:'BMJUA';">
+                        <span style="color:var(--point-gold);">기간 :</span>
+                        <input type="date" id="aoi-start-date" class="date-input">
+                        <span>~</span>
+                        <input type="date" id="aoi-end-date" class="date-input">
+                    </div>
+                    <div class="common-box clickable-box search-btn" id="search-aoi-btn">
+                        <i class="uil uil-search"></i> 분석
+                    </div>
+                </div>
             </div>
 
             <div id="statistics-result-area">
                 <p class="no-line-data-message">
-                    <i class="uil uil-chart-bar" style="font-size:2rem; display:block; margin-bottom:10px;"></i>
-                    조회할 주문 연도와 주문월을 선택해 주세요.
+                    <i class="uil uil-mouse-alt" style="font-size:2rem; display:block; margin-bottom:10px;"></i>
+                    상단의 탭을 선택하여 분석을 시작하세요.
                 </p>
             </div>
 
         </main>
 
         <footer class="main-footer">
-            <div class="footer-left">
-            </div>
+            <div class="footer-left"></div>
             <div class="footer-center">
                 <div class="footer-btn" id="back-btn"><i class="uil uil-arrow-left"></i></div>
                 <div class="footer-btn" id="home-btn"><i class="uil uil-home"></i></div>
                 <div class="footer-btn" id="forward-btn"><i class="uil uil-arrow-right"></i></div>
             </div>
-            <div class="footer-right">
-            </div>
+            <div class="footer-right"></div>
         </footer>
 
         <div class="modal-overlay" id="details-modal">
             <div class="modal-window">
                 <button class="close-btn" id="close-details-modal-btn">&times;</button>
                 <h2 class="modal-title" id="details-modal-title">상세 내역</h2>
-
-                <div class="modal-content" id="details-modal-content">
-                </div>
+                <div class="modal-content" id="details-modal-content"></div>
             </div>
         </div>
     </div>
@@ -132,184 +259,280 @@
             setTimeout(() => { document.body.style.opacity = '1'; }, 50);
             initLogoGlitch();
 
-            // --- 1. 요소 가져오기 ---
-            const monthSelect = document.getElementById('order-month-select');
-            const searchBtn = document.getElementById('search-stats-btn');
+            // 요소 가져오기
             const resultArea = document.getElementById('statistics-result-area');
-            const timeDisplay = document.getElementById('current-time');
+            const tabs = document.querySelectorAll('.tab-btn');
+            const sections = document.querySelectorAll('.control-section');
 
+            // [생산 실적용]
+            const monthSelect = document.getElementById('order-month-select');
             const yearInput = document.getElementById('order-year-input');
-            const detailsModal = document.getElementById('details-modal');
-            const closeDetailsModalBtn = document.getElementById('close-details-modal-btn');
-            const detailsModalTitle = document.getElementById('details-modal-title');
-            const detailsModalContent = document.getElementById('details-modal-content');
+            const searchProdBtn = document.getElementById('search-prod-btn');
 
-            // --- 2. '주문월' 드롭다운 채우기 ---
-            monthSelect.innerHTML = '<option value="">- 월 선택 -</option>';
-            for (let i = 1; i <= 12; i++) {
-                const monthText = `${i}월분`;
-                monthSelect.innerHTML += `<option value="${monthText}">${i}월</option>`;
-            }
+            // [AOI 분석용]
+            const aoiStartInput = document.getElementById('aoi-start-date');
+            const aoiEndInput = document.getElementById('aoi-end-date');
+            const searchAoiBtn = document.getElementById('search-aoi-btn');
 
+            // 초기화
             yearInput.value = new Date().getFullYear();
+            
+            // 주문월 드롭다운 초기화
+            monthSelect.innerHTML = '<option value="">- 월 선택 -</option>';
+            for (let i = 1; i <= 12; i++) monthSelect.innerHTML += `<option value="${i}월분">${i}월</option>`;
 
-            document.addEventListener('click', async (event) => {
+            // 날짜 입력창 초기화 (이번 달 1일 ~ 오늘)
+            const today = new Date();
+            const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+            
+            // 날짜 포맷 (YYYY-MM-DD) 유틸리티 함수
+            const fmt = d => {
+                const y = d.getFullYear();
+                const m = String(d.getMonth() + 1).padStart(2, '0');
+                const day = String(d.getDate()).padStart(2, '0');
+                return `${y}-${m}-${day}`;
+            };
+            
+            aoiStartInput.value = fmt(firstDay);
+            aoiEndInput.value = fmt(today);
 
-                // [A] '조회' 버튼 클릭 시
-                if (event.target.closest('.search-btn')) {
-                    const selectedMonth = monthSelect.value;
-                    const selectedYear = yearInput.value;
+            // ================================================================
+            // 1. 탭 전환 로직
+            // ================================================================
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    // 스타일 활성화
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
 
-                    if (!selectedYear || !selectedMonth) {
-                        alert('주문 연도와 주문월을 모두 선택하세요.');
-                        return;
-                    }
+                    // 컨트롤 섹션 전환
+                    const targetId = tab.dataset.tab === 'production' ? 'production-controls' : 'aoi-controls';
+                    sections.forEach(sec => {
+                        if(sec.id === targetId) sec.classList.add('active');
+                        else sec.classList.remove('active');
+                    });
 
-                    resultArea.innerHTML = `<p class="no-line-data-message">데이터를 불러오는 중입니다...</p>`;
+                    // 결과창 초기화 (안내 메시지)
+                    const isProd = tab.dataset.tab === 'production';
+                    resultArea.innerHTML = `
+                        <p class="no-line-data-message" style="animation:fadeIn 0.5s;">
+                            <i class="${isProd ? 'uil-chart-line' : 'uil-microscope'}" style="font-size:2rem; display:block; margin-bottom:10px;"></i>
+                            ${isProd ? '주문 연도와 월을 선택하고 조회를 누르세요.' : '분석할 기간을 선택하고 분석 버튼을 누르세요.'}
+                        </p>`;
+                    
+                    // AOI 모드일 때 가로 스크롤 허용
+                    resultArea.style.overflowX = isProd ? 'hidden' : 'auto';
+                });
+            });
 
-                    try {
-                        const response = await fetch(`http://127.0.0.1:5000/api/statistics/order_month_summary?order_month=${selectedMonth}&year=${selectedYear}`);
-                        if (!response.ok) throw new Error('서버 응답 오류');
-                        const summaryData = await response.json();
-                        renderStatisticsTable(summaryData, selectedMonth);
-                    } catch (error) {
-                        console.error('통계 데이터 로딩 실패:', error);
-                        resultArea.innerHTML = `<p class="no-line-data-message">데이터 로딩에 실패했습니다.</p>`;
-                    }
-                }
+            // ================================================================
+            // 2. 생산 실적 조회 (기존 기능)
+            // ================================================================
+            searchProdBtn.addEventListener('click', async () => {
+                const selectedMonth = monthSelect.value;
+                const selectedYear = yearInput.value;
 
-                // [B] '상세' 버튼 클릭 시
-                if (event.target.closest('.stats-details-btn')) {
-                    const button = event.target.closest('.stats-details-btn');
-                    const model = button.dataset.model;
-                    const year = button.dataset.year;
-                    const month = button.dataset.month;
-                    openDetailsModal(model, year, month);
+                if (!selectedYear || !selectedMonth) { alert('주문 연도와 월을 선택하세요.'); return; }
+
+                resultArea.innerHTML = `<p class="no-line-data-message">데이터 조회 중...</p>`;
+                try {
+                    const res = await fetch(`http://127.0.0.1:5000/api/statistics/order_month_summary?order_month=${selectedMonth}&year=${selectedYear}`);
+                    const data = await res.json();
+                    renderProductionTable(data);
+                } catch (e) {
+                    console.error(e);
+                    resultArea.innerHTML = `<p class="no-line-data-message">조회 실패: 서버 오류</p>`;
                 }
             });
 
-            function renderStatisticsTable(data, selectedMonth) {
+            function renderProductionTable(data) {
                 if (!data || data.length === 0) {
-                    resultArea.innerHTML = `<p class="no-line-data-message">'${selectedMonth}' 데이터가 없습니다.</p>`;
+                    resultArea.innerHTML = `<p class="no-line-data-message">데이터가 없습니다.</p>`;
                     return;
                 }
 
-                let tableHTML = `<div class="table-container" style="max-height: 100%; border:none; background:transparent;">
+                let html = `
+                    <div class="table-container" style="max-height:100%; border:none; background:transparent;">
                     <table class="statistics-table">
-                    <colgroup>
-                        <col style="width: 35%;"> <col style="width: 25%;"> <col style="width: 25%;"> <col style="width: 15%;"> </colgroup>
-                    <thead>
-                        <tr>
-                            <th>모델명</th>
-                            <th>총주문량</th>
-                            <th>실생산총합</th>
-                            <th>상세</th>
-                        </tr>
-                    </thead>
-                    <tbody>`;
-
+                        <colgroup><col style="width:35%"><col style="width:25%"><col style="width:25%"><col style="width:15%"></colgroup>
+                        <thead><tr><th>모델명</th><th>총주문량</th><th>실생산총합</th><th>상세</th></tr></thead>
+                        <tbody>`;
                 data.forEach(item => {
-
-                    let problemClass = '';
-                    if (item.status === 'shortage') {
-                        problemClass = 'stats-problem-yellow'; 
-                    } else if (item.status === 'imbalance') {
-                        problemClass = 'stats-problem-red'; 
-                    }
-
-                    tableHTML += `
-                        <tr>
-                            <td style="font-weight:bold; color:#fff;">${item.model}</td>
-                            <td>${item.totalQuantity.toLocaleString()}</td>
-                            <td class="${problemClass}">${item.actualProduction.toLocaleString()}</td>
-                            
-                            <td><button class="stats-details-btn" 
-                                data-model="${item.model}" 
-                                data-year="${item.orderYear}" 
-                                data-month="${item.orderMonth}"><i class="uil uil-search"></i></button>
-                            </td>
-                        </tr>
-                    `;
+                    let cls = '';
+                    if (item.status === 'shortage') cls = 'stats-problem-yellow';
+                    else if (item.status === 'imbalance') cls = 'stats-problem-red';
+                    
+                    html += `<tr>
+                        <td style="font-weight:bold; color:#fff;">${item.model}</td>
+                        <td>${item.totalQuantity.toLocaleString()}</td>
+                        <td class="${cls}">${item.actualProduction.toLocaleString()}</td>
+                        <td><button class="stats-details-btn" data-model="${item.model}" data-year="${item.orderYear}" data-month="${item.orderMonth}"><i class="uil uil-search"></i></button></td>
+                    </tr>`;
                 });
-
-                tableHTML += `</tbody></table></div>`;
-                resultArea.innerHTML = tableHTML;
+                html += `</tbody></table></div>`;
+                resultArea.innerHTML = html;
             }
 
-            async function openDetailsModal(model, year, month) {
-                detailsModalTitle.textContent = `${model} (${year}년 ${month}) 상세 내역`;
-                detailsModalContent.innerHTML = `<p class="no-line-data-message">로딩중...</p>`;
-                detailsModal.classList.add('visible');
+            // ================================================================
+            // 3. AOI 검사 기록 분석 (신규 기능)
+            // ================================================================
+            searchAoiBtn.addEventListener('click', async () => {
+                const sDate = aoiStartInput.value;
+                const eDate = aoiEndInput.value;
 
+                if (!sDate || !eDate) { alert('시작일과 종료일을 모두 선택하세요.'); return; }
+
+                resultArea.innerHTML = `<p class="no-line-data-message">AOI 기록 분석 중...</p>`;
                 try {
-                    const response = await fetch(`http://127.0.0.1:5000/api/statistics/model_details?model=${encodeURIComponent(model)}&year=${year}&month=${encodeURIComponent(month)}`);
-                    if (!response.ok) throw new Error('서버 응답 오류');
+                    const res = await fetch(`http://127.0.0.1:5000/api/statistics/aoi_performance?start_date=${sDate}&end_date=${eDate}`);
+                    const data = await res.json();
+                    renderAoiTable(data);
+                } catch (e) {
+                    console.error(e);
+                    resultArea.innerHTML = `<p class="no-line-data-message">분석 실패: 서버 오류</p>`;
+                }
+            });
 
-                    const detailsData = await response.json();
+            function renderAoiTable(data) {
+                if (!data || data.length === 0) {
+                    resultArea.innerHTML = `<p class="no-line-data-message">해당 기간의 검사 기록이 없습니다.</p>`;
+                    return;
+                }
 
-                    if (detailsData.length === 0) {
-                        detailsModalContent.innerHTML = `<p class="no-line-data-message">상세 내역 데이터가 없습니다.</p>`;
-                        return;
-                    }
-
-                    let tableHTML = `<div class="table-container"><table class="statistics-table" id="details-modal-table">
+                // 가로 스크롤이 생길 수 있으므로 최소 너비 지정
+                let html = `
+                    <div class="table-container" style="max-height:100%; border:none; background:transparent; overflow:auto;">
+                    <table class="statistics-table" style="min-width: 1300px;">
+                        <colgroup>
+                            <col style="width: 280px;"> <col style="width: 90px;">  <col style="width: 220px;"> <col style="width: 90px;">  <col style="width: 90px;">  <col style="width: 80px;">  <col style="width: auto;">  </colgroup>
                         <thead>
                             <tr>
-                                <th>생산 주차</th>
-                                <th>라인</th>
-                                <th>T/B</th>
-                                <th>주문량(LOT)</th>
-                                <th>실생산량</th>
+                                <th>모델명 (주문월)</th>
+                                <th>LOT</th>
+                                <th>검사 기간</th>
+                                <th>검사수량</th>
+                                <th>총불량</th>
+                                <th>불량률</th>
+                                <th>주요 불량 내역 (합산)</th>
                             </tr>
                         </thead>
                         <tbody>`;
 
-                    detailsData.forEach(item => {
-                        const lotParts = (item.lot || '0').split('/');
-                        const batchQty = parseInt(lotParts[0], 10) || 0;
-                        const actualProd = parseInt(item.actualProd, 10) || 0;
-                        const isProblem = actualProd !== batchQty;
-                        const problemClass = isProblem ? 'stats-problem-yellow' : '';
+                data.forEach(row => {
+                    const rate = row.inspection_qty > 0 ? ((row.total_defect / row.inspection_qty) * 100).toFixed(2) : 0;
+                    const rateColor = rate > 0 ? 'var(--danger-red)' : 'var(--success-green)';
+                    
+                    // 불량 내역 문자열 생성
+                    let defectDetails = [];
+                    const defectTypes = [
+                        { key: 'missing', label: '미삽' }, { key: 'wrong', label: '오삽' },
+                        { key: 'reverse', label: '역삽' }, { key: 'skewed', label: '틀어짐' },
+                        { key: 'flipped', label: '뒤집힘' }, { key: 'damaged', label: '파손' },
+                        { key: 'manhattan', label: '맨하탄' }, { key: 'detached', label: '이탈' },
+                        { key: 'cold', label: '냉납' }, { key: 'unsoldered', label: '미납' },
+                        { key: 'short', label: '쇼트' }, { key: 'material', label: '자재' },
+                        { key: 'dip', label: 'DIP' }
+                    ];
 
-                        const prodWeekFormatted = `${String(item.prod_year).slice(-2)}-${item.prod_month}-${item.prod_week}`;
-                        const linkURL = `production.html?year=${item.prod_year}&month=${item.prod_month}&week=${item.prod_week}`;
+                    defectTypes.forEach(type => {
+                        const qty = row[type.key] || 0;
+                        if (qty > 0) {
+                            const refs = row[`${type.key}_ref`] || '';
+                            let text = `<span class="defect-item"><span class="defect-count">${type.label} ${qty}</span>`;
+                            if (refs) text += `<span class="ref-text">(${refs})</span>`;
+                            text += `</span>`;
+                            defectDetails.push(text);
+                        }
+                    });
+
+                    const detailHtml = defectDetails.length > 0 ? defectDetails.join('') : '<span style="color:#666;">무결점 (Zero Defect)</span>';
+
+                    html += `<tr>
+                        <td style="font-weight:bold; text-align:left; padding-left:15px;">
+                            ${row.model}<br>
+                            <span style="font-size:0.8rem; color:#888;">${row.order_year}년 ${row.order_month}</span>
+                        </td>
+                        <td>${row.lot}</td>
+                        <td style="font-size:0.85rem; color:#ccc;">${row.period_info}</td>
+                        <td>${row.inspection_qty.toLocaleString()}</td>
+                        <td style="color:var(--danger-red); font-weight:bold;">${row.total_defect.toLocaleString()}</td>
+                        <td style="color:${rateColor}; font-weight:bold;">${rate}%</td>
+                        <td class="aoi-detail-cell">${detailHtml}</td>
+                    </tr>`;
+                });
+
+                html += `</tbody></table></div>`;
+                resultArea.innerHTML = html;
+            }
+
+            // ================================================================
+            // 4. 생산 실적 상세 모달 (기존 기능)
+            // ================================================================
+            const detailsModal = document.getElementById('details-modal');
+            const closeDetailsModalBtn = document.getElementById('close-details-modal-btn');
+            const detailsModalContent = document.getElementById('details-modal-content');
+            const detailsModalTitle = document.getElementById('details-modal-title');
+
+            document.addEventListener('click', async (e) => {
+                if (e.target.closest('.stats-details-btn')) {
+                    const btn = e.target.closest('.stats-details-btn');
+                    const model = btn.dataset.model;
+                    const year = btn.dataset.year;
+                    const month = btn.dataset.month;
+                    
+                    detailsModalTitle.textContent = `${model} (${year}년 ${month}) 상세`;
+                    detailsModalContent.innerHTML = '<p class="no-line-data-message">로딩중...</p>';
+                    detailsModal.classList.add('visible');
+                    
+                    try {
+                        const res = await fetch(`http://127.0.0.1:5000/api/statistics/model_details?model=${encodeURIComponent(model)}&year=${year}&month=${encodeURIComponent(month)}`);
+                        const data = await res.json();
                         
-                        tableHTML += `
-                            <tr>
-                                <td><a href="${linkURL}">${prodWeekFormatted}</a></td>
+                        if (!data || data.length === 0) {
+                            detailsModalContent.innerHTML = '<p class="no-line-data-message">상세 데이터가 없습니다.</p>';
+                            return;
+                        }
+
+                        let html = `
+                            <div class="table-container">
+                            <table class="statistics-table">
+                                <thead><tr><th>주차</th><th>라인</th><th>T/B</th><th>LOT</th><th>실적</th></tr></thead>
+                                <tbody>`;
+                        
+                        data.forEach(item => {
+                            // 주차 표시 (YY-MM-WK)
+                            const wkStr = `${String(item.prod_year).slice(-2)}-${item.prod_month}-${item.prod_week}`;
+                            // 링크 생성
+                            const link = `production.html?year=${item.prod_year}&month=${item.prod_month}&week=${item.prod_week}`;
+                            
+                            html += `<tr>
+                                <td><a href="${link}" style="color:var(--point-gold); text-decoration:underline;">${wkStr}</a></td>
                                 <td>${item.line}</td>
                                 <td>${item.tb}</td>
                                 <td>${item.lot}</td>
-                                <td class="${problemClass}">${item.actualProd}</td>
-                            </tr>
-                        `;
-                    });
+                                <td>${item.actualProd}</td>
+                            </tr>`;
+                        });
+                        html += `</tbody></table></div>`;
+                        detailsModalContent.innerHTML = html;
 
-                    tableHTML += `</tbody></table></div>`;
-                    detailsModalContent.innerHTML = tableHTML;
-
-                } catch (error) {
-                    detailsModalContent.innerHTML = `<p class="no-line-data-message">데이터 로딩 실패</p>`;
+                    } catch(e) { 
+                        console.error(e);
+                        detailsModalContent.innerHTML = '<p class="no-line-data-message">로드 실패</p>'; 
+                    }
                 }
-            }
-
-            function closeDetailsModal() {
-                detailsModal.classList.remove('visible');
-            }
-            closeDetailsModalBtn.addEventListener('click', closeDetailsModal);
-            detailsModal.addEventListener('click', (e) => {
-                if (e.target === detailsModal) closeDetailsModal();
             });
-            detailsModal.querySelector('.modal-window').addEventListener('click', (e) => e.stopPropagation());
 
+            closeDetailsModalBtn.addEventListener('click', () => detailsModal.classList.remove('visible'));
+            detailsModal.addEventListener('click', (e) => {
+                if (e.target === detailsModal) detailsModal.classList.remove('visible');
+            });
+
+            // 시계 및 네비게이션
             function updateTime() {
                 const now = new Date();
-                const year = now.getFullYear();
-                const month = String(now.getMonth() + 1).padStart(2, '0');
-                const day = String(now.getDate()).padStart(2, '0');
-                const hours = String(now.getHours()).padStart(2, '0');
-                const minutes = String(now.getMinutes()).padStart(2, '0');
-                timeDisplay.textContent = `${year}년 ${month}월 ${day}일 ${hours}시 ${minutes}분`;
+                const str = `${now.getFullYear()}년 ${now.getMonth()+1}월 ${now.getDate()}일 ${now.getHours()}시 ${now.getMinutes()}분`;
+                document.getElementById('current-time').textContent = str;
             }
             setInterval(updateTime, 1000);
             updateTime();
@@ -318,10 +541,10 @@
             document.getElementById('back-btn').addEventListener('click', () => window.location.href = 'production.html');
             document.getElementById('forward-btn').addEventListener('click', () => history.forward());
 
+            // 권한 체크
             const userRole = localStorage.getItem('ppms_user_role');
             if (!userRole) { window.location.href = 'login.html'; return; }
         });
     </script>
 </body>
-
 </html>

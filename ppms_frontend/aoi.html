@@ -579,7 +579,7 @@
             }
 
             // ----------------------------------------------------------------
-            // [5] 렌더링 함수 (수정본: 모델명 세부열 제어 클래스 추가)
+            // [5] 렌더링 함수
             // ----------------------------------------------------------------
             function renderTableRows(records) {
                 const tbody = document.getElementById('aoi-list-body');
@@ -618,7 +618,6 @@
                     const sumD = safe(r.material) + safe(r.dip);
                     const goodColor = r.good_qty < 0 ? 'var(--danger-red)' : 'var(--success-green)';
 
-                    // ★ 중요 수정: group-basic 열에도 ${getVis('basic')}을 추가하여 토글 기능 적용 ★
                     return `
             <tr class="upper-row" data-id="${r.id}" data-lot="${lotQty}" data-base-cumulative="${baseCumulative}">
                 <td class="merge-top" style="cursor:pointer;">
@@ -731,14 +730,20 @@
             }
 
             // ----------------------------------------------------------------
-            // [6] 화면 모드 제어 (수정본: 초기 그룹 펼침 설정 포함)
+            // [6] 화면 모드 제어 (수정: 자세히 보기 시 모델명 세부열 제외, 불량 상세 그룹만 펼침)
             // ----------------------------------------------------------------
             function updateViewMode() {
                 const table = document.getElementById('aoi-table-main');
                 const btnIcon = toggleViewBtn.querySelector('i');
                 const btnText = toggleViewBtn.querySelector('span');
 
-                // 고정 헤더 병합 유지 (밀림 방지)
+                // 그룹 목록 정의
+                const allGroups = ['basic', 'a', 'b', 'c', 'd'];
+                // 자세히 보기 시 자동으로 펼쳐질 그룹 (모델명 세부열 'basic' 제외)
+                const defectGroups = ['a', 'b', 'c', 'd'];
+                const modelDetailGroup = 'basic'; // 모델명 세부열(Point, 진행도, 양품)
+
+                // 1. [안전장치] 고정 헤더들은 무조건 rowspan="2" 유지 (밀림 방지)
                 const firstRowHeaders = table.querySelectorAll('thead tr:first-child th');
                 firstRowHeaders.forEach(th => {
                     if (!th.classList.contains('sum-header') && !th.classList.contains('group-header-box')) {
@@ -746,45 +751,52 @@
                     }
                 });
 
-                // 동적 스타일 초기화
+                // 2. 동적 스타일 초기화
                 const allDynamicEls = table.querySelectorAll('.sum-header, .group-sum-cell, .group-sum-col, .detail-col');
                 allDynamicEls.forEach(el => el.style.display = '');
 
                 if (isDetailMode) {
-                    // [자세히 보기]
+                    // --- [자세히 보기 모드] ---
                     table.classList.remove('simple-view-mode');
                     toggleViewBtn.classList.add('active');
                     btnIcon.className = 'uil uil-eye-slash';
                     btnText.textContent = '간편 보기';
 
-                    // 자세히 보기로 전환 시, 기본적으로 모든 그룹을 펼쳐줌 (사용자가 토글할 수 있게)
-                    // 기존에 아무것도 안 펼쳐져 있다면 모든 그룹 추가
-                    if (expandedGroups.size === 0) {
-                        ['basic', 'a', 'b', 'c', 'd'].forEach(g => expandedGroups.add(g));
-                        // 렌더링을 다시 호출하여 .visible 클래스를 적용해야 함
-                        const rows = table.querySelectorAll('tbody tr');
-                        if (rows.length > 0) {
-                            // 데이터가 있을 때만 다시 렌더링 (간단히 클래스만 추가하는 방식으로 최적화 가능하지만, 확실하게 하기 위해 재렌더링 권장)
-                            // 현재는 loadRecordsByDate를 호출할 수 없으므로, DOM 조작으로 클래스 추가
-                            ['basic', 'a', 'b', 'c', 'd'].forEach(g => {
-                                table.querySelectorAll(`.detail-col.group-${g}`).forEach(el => el.classList.add('visible'));
-                            });
-                        }
-                    }
+                    // 1. 불량 상세 그룹('a', 'b', 'c', 'd')만 강제로 펼칩니다.
+                    //    'basic' (모델명 세부열)은 추가하지 않으므로 클릭해야만 열립니다.
+                    defectGroups.forEach(g => expandedGroups.add(g));
 
+                    // 2. DOM에 .visible 클래스 적용
+                    //    expandedGroups에 있는 것들만 보여줌 (basic은 사용자가 열지 않았다면 숨겨짐)
+                    allGroups.forEach(g => {
+                        const shouldBeVisible = expandedGroups.has(g);
+                        table.querySelectorAll(`.detail-col.group-${g}`).forEach(col => {
+                            col.classList.toggle('visible', shouldBeVisible);
+                        });
+                    });
+
+                    // 3. 대분류 합계 헤더(숨겨짐)는 rowspan 제거
                     table.querySelectorAll('.sum-header').forEach(el => el.removeAttribute('rowspan'));
+
                 } else {
-                    // [간편 보기]
+                    // --- [간편 보기 모드] ---
                     table.classList.add('simple-view-mode');
                     toggleViewBtn.classList.remove('active');
                     btnIcon.className = 'uil uil-eye';
                     btnText.textContent = '자세히 보기';
 
-                    // 간편 보기에서는 모든 그룹 접기 (clean slate)
+                    // 간편 보기로 돌아갈 때는 모두 닫고, DOM에서도 숨김
                     expandedGroups.clear();
                     table.querySelectorAll('.detail-col').forEach(el => el.classList.remove('visible'));
 
+                    // 대분류 합계 헤더(보임)는 2줄 차지
                     table.querySelectorAll('.sum-header').forEach(el => el.setAttribute('rowspan', '2'));
+                }
+
+                // 토글 아이콘 상태 업데이트 (모델명 헤더만: basic 그룹)
+                const header = document.querySelector(`.group-toggle-header[onclick*="toggleGroup('${modelDetailGroup}')"] i`);
+                if (header) {
+                    header.className = expandedGroups.has(modelDetailGroup) ? 'uil uil-angle-down' : 'uil uil-angle-right';
                 }
 
                 adjustTableScrollbar();
@@ -894,22 +906,54 @@
             const eYearSel = document.getElementById('end-year'), eMonthSel = document.getElementById('end-month');
             const refreshBtn = document.getElementById('refresh-model-list-btn');
 
+            // ----------------------------------------------------------------
+            // [모달 초기화] 날짜 드롭다운 설정 (수정: 전월 ~ 익월 기본 선택)
+            // ----------------------------------------------------------------
             function initDateDropdowns() {
-                const now = new Date(), curYear = now.getFullYear();
-                let yearOpts = ''; for (let y = curYear + 1; y >= curYear - 1; y--) yearOpts += `<option value="${y}">${y}년</option>`;
-                sYearSel.innerHTML = yearOpts; eYearSel.innerHTML = yearOpts;
-                let monthOpts = ''; for (let m = 1; m <= 12; m++) monthOpts += `<option value="${m}">${m}월</option>`;
-                sMonthSel.innerHTML = monthOpts; eMonthSel.innerHTML = monthOpts;
-                sYearSel.value = now.getFullYear(); sMonthSel.value = now.getMonth() + 1;
-                eYearSel.value = now.getFullYear(); eMonthSel.value = now.getMonth() + 1;
+                const now = new Date();
+                const curYear = now.getFullYear();
+
+                // 1. 연도 옵션 생성 (작년 ~ 내년)
+                let yearOpts = '';
+                for (let y = curYear + 1; y >= curYear - 1; y--) {
+                    yearOpts += `<option value="${y}">${y}년</option>`;
+                }
+                sYearSel.innerHTML = yearOpts;
+                eYearSel.innerHTML = yearOpts;
+
+                // 2. 월 옵션 생성 (1~12월)
+                let monthOpts = '';
+                for (let m = 1; m <= 12; m++) {
+                    monthOpts += `<option value="${m}">${m}월</option>`;
+                }
+                sMonthSel.innerHTML = monthOpts;
+                eMonthSel.innerHTML = monthOpts;
+
+                // 3. [수정] 기본 범위 설정: (이전 달) ~ (다음 달)
+                // Date 생성자에서 월에 -1이나 +1을 넣으면 자동으로 연도까지 계산됩니다.
+                // 예: 1월에서 -1을 하면 작년 12월이 됩니다.
+                const startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+                const endDate = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+
+                sYearSel.value = startDate.getFullYear();
+                sMonthSel.value = startDate.getMonth() + 1;
+
+                eYearSel.value = endDate.getFullYear();
+                eMonthSel.value = endDate.getMonth() + 1;
             }
+
             initDateDropdowns();
 
             if (addModelBtn) addModelBtn.addEventListener('click', () => { modelModal.classList.add('visible'); loadModelList(); });
-            [sYearSel, sMonthSel, eYearSel, eMonthSel].forEach(el => el.addEventListener('change', loadModelList));
-            if (refreshBtn) refreshBtn.addEventListener('click', loadModelList);
+
+            // [수정 사항: 기간 드롭다운 변경 시 즉시 업데이트되는 이벤트 리스너를 제거했습니다.]
+            // [sYearSel, sMonthSel, eYearSel, eMonthSel].forEach(el => el.addEventListener('change', loadModelList)); // <--- 이 코드를 삭제합니다.
+
+            if (refreshBtn) refreshBtn.addEventListener('click', loadModelList); // <--- 새로고침 버튼 클릭 시에만 업데이트됩니다.
             if (closeModalBtn) closeModalBtn.addEventListener('click', () => modelModal.classList.remove('visible'));
 
+
+            // [수정된 함수] 모델 리스트 로드 (완료 가능 상태 시각화 포함)
             async function loadModelList() {
                 modelListContainer.innerHTML = '<div style="text-align:center; padding:20px; color:#aaa;">로딩 중...</div>';
                 try {
@@ -918,52 +962,137 @@
                     const data = await response.json();
 
                     if (!data || data.length === 0) {
-                        modelListContainer.innerHTML = '<div style="text-align:center; padding:20px; color:#888;">데이터 없음</div>';
+                        modelListContainer.innerHTML = '<div style="text-align:center; padding:20px; color:#888;">검사 대기 중인 모델이 없습니다.</div>';
                         return;
                     }
+
                     const fullHtml = data.map(group => {
-                        const modelsHtml = group.models.map(item => `
-                    <div class="model-select-card" data-model="${item.model}" data-year="${item.year}" data-month="${item.month}" data-lot="${item.lot}">
-                        <div class="model-name">${item.model}</div>
-                        <div class="model-info"><span>${item.year}.${item.month}</span><span class="model-lot">LOT: ${item.lot}</span></div>
-                    </div>`).join('');
+                        const modelsHtml = group.models.map(item => {
+                            // 1. 수량 파싱
+                            const aoiQty = parseInt(item.aoi_qty) || 0;
+                            const recvQty = parseInt(item.recv_qty) || 0;
+                            const lotQty = parseInt(item.lot) || 0;
+
+                            // 2. 완료 가능 조건 확인 (AOI검사 == 입고 == LOT)
+                            const isReadyToComplete = (lotQty > 0) && (recvQty === lotQty) && (aoiQty === lotQty);
+
+                            // 3. 스타일 및 상태 설정
+                            const cardStyle = isReadyToComplete
+                                ? 'border: 2px solid var(--success-green); background: rgba(0, 230, 118, 0.1);'
+                                : '';
+                            const statusBadge = isReadyToComplete
+                                ? '<div style="background:var(--success-green); color:#000; padding:2px 8px; border-radius:4px; font-size:0.8rem; font-weight:bold;">검사완료 (클릭하여 마감)</div>'
+                                : '';
+
+                            return `
+                    <div class="model-select-card" 
+                         data-group-id="${item.id}"
+                         data-model="${item.model}" 
+                         data-year="${item.year}" 
+                         data-month="${item.month}" 
+                         data-lot="${item.lot}"
+                         data-ready="${isReadyToComplete}"
+                         style="flex-direction: column; align-items: flex-start; gap: 8px; ${cardStyle}">
+                        
+                        <div style="width:100%; display:flex; justify-content:space-between; align-items:center;">
+                            <div class="model-name" style="font-size:1.1rem;">${item.model}</div>
+                            ${statusBadge}
+                        </div>
+                        
+                        <div class="model-info" style="width:100%; display:flex; justify-content:space-between; align-items:center; font-size:0.85rem; color:#ccc;">
+                            <span style="color:#aaa;">${item.year}.${item.month}</span>
+                            <div style="display:flex; gap:15px; font-family:'Roboto Mono', monospace;">
+                                <span style="color:#ffeb3b;" title="AOI 완료">AOI: ${aoiQty}</span>
+                                <span style="color:#00e676;" title="DIP 입고">입고: ${recvQty}</span>
+                                <span class="model-lot" title="LOT">LOT: ${item.lot}</span>
+                            </div>
+                        </div>
+                        
+                        <div style="width:100%; display:flex; gap:2px; height:4px; margin-top:2px;">
+                            <div style="flex:1; background:rgba(255,255,255,0.1); border-radius:2px; overflow:hidden;" title="입고율">
+                                <div style="width:${Math.min((recvQty / lotQty) * 100, 100)}%; height:100%; background-color:#00e676;"></div>
+                            </div>
+                            <div style="flex:1; background:rgba(255,255,255,0.1); border-radius:2px; overflow:hidden;" title="검사율">
+                                <div style="width:${Math.min((aoiQty / lotQty) * 100, 100)}%; height:100%; background-color:#ffeb3b;"></div>
+                            </div>
+                        </div>
+                    </div>`;
+                        }).join('');
+
                         return `<div class="company-section">
-                    <div class="company-title"><span><i class="uil uil-building"></i> ${group.company} (${group.models.length})</span><i class="uil uil-angle-down"></i></div>
+                    <div class="company-title">
+                        <span><i class="uil uil-building"></i> ${group.company} (${group.models.length})</span>
+                        <i class="uil uil-angle-down"></i>
+                    </div>
                     <div class="accordion-wrapper"><div class="model-grid">${modelsHtml}</div></div>
                 </div>`;
                     }).join('');
+
                     modelListContainer.innerHTML = fullHtml;
-                } catch (e) { modelListContainer.innerHTML = '<div style="text-align:center;">로드 실패</div>'; }
+                } catch (e) {
+                    console.error(e);
+                    modelListContainer.innerHTML = '<div style="text-align:center; color:#ff4444;">로드 실패</div>';
+                }
             }
 
+            // [수정된 이벤트 리스너] 클릭 시 동작 분기 (추가 vs 완료)
             modelListContainer.addEventListener('click', async (e) => {
                 const target = e.target;
+
+                // 1. 아코디언 토글
                 if (target.closest('.company-title')) {
                     const titleEl = target.closest('.company-title');
                     titleEl.classList.toggle('active');
                     titleEl.nextElementSibling.classList.toggle('open');
-                } else if (target.closest('.model-select-card')) {
-                    const { model, year, month, lot } = target.closest('.model-select-card').dataset;
-                    if (confirm(`[${model}] 모델을 추가하시겠습니까?`)) {
-                        try {
-                            const targetDate = currentSelectedDate;
-                            const res = await fetch('http://127.0.0.1:5000/api/aoi/records', {
-                                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                                // ▼ date: targetDate 를 추가해야 합니다.
-                                body: JSON.stringify({
-                                    model,
-                                    year: parseInt(year),
-                                    month: parseInt(month),
-                                    lot,
-                                    date: targetDate // [핵심] 날짜 정보 추가
-                                })
-                            });
-                            if (res.ok) { alert('추가되었습니다.'); modelModal.classList.remove('visible'); loadRecordsByDate(targetDate); }
-                        } catch (e) { alert('오류 발생'); }
+                }
+                // 2. 모델 카드 클릭
+                else if (target.closest('.model-select-card')) {
+                    const card = target.closest('.model-select-card');
+                    const { groupId, model, year, month, lot, ready } = card.dataset;
+                    const isReady = (ready === 'true');
+
+                    // [CASE A] 검사 완료 처리 (리스트에서 숨김)
+                    if (isReady) {
+                        if (confirm(`[${model}] 모든 수량이 일치합니다.\n검사 완료 처리하여 리스트에서 숨기시겠습니까?`)) {
+                            try {
+                                const res = await fetch(`http://127.0.0.1:5000/api/aoi/groups/${groupId}/complete`, {
+                                    method: 'POST'
+                                });
+                                const json = await res.json();
+                                if (json.success) {
+                                    alert('완료 처리되었습니다.');
+                                    loadModelList(); // 리스트 새로고침 (해당 모델 사라짐)
+                                } else {
+                                    alert('오류: ' + json.message);
+                                }
+                            } catch (e) { alert('통신 오류 발생'); }
+                        }
+                    }
+                    // [CASE B] 일반 추가 (검사 기록 생성)
+                    else {
+                        if (confirm(`[${model}] 모델을 추가하시겠습니까?`)) {
+                            try {
+                                const targetDate = currentSelectedDate;
+                                const res = await fetch('http://127.0.0.1:5000/api/aoi/records', {
+                                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({
+                                        model,
+                                        year: parseInt(year),
+                                        month: parseInt(month),
+                                        lot,
+                                        date: targetDate
+                                    })
+                                });
+                                if (res.ok) {
+                                    alert('추가되었습니다.');
+                                    modelModal.classList.remove('visible');
+                                    loadRecordsByDate(targetDate);
+                                }
+                            } catch (e) { alert('오류 발생'); }
+                        }
                     }
                 }
             });
-
             const initToday = new Date().toISOString().split('T')[0];
             loadRecordsByDate(initToday);
 
