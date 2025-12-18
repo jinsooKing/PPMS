@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify
 # [중요] models.py에서 ProductionSchedule 모델을 가져옵니다.
 from models import db, ProductionSchedule, AoiRecord
+from sqlalchemy import func
 
 # [신규] 'statistics' 블루프린트를 '/api/statistics' 주소로 생성합니다.
 bp = Blueprint('statistics', __name__, url_prefix='/api/statistics')
@@ -138,27 +139,25 @@ def get_model_details():
 @bp.route('/aoi_performance', methods=['GET'])
 def get_aoi_period_stats():
     try:
-        # 1. 조회할 기간 받기 (YYYY-MM-DD 형식)
         start_date = request.args.get('start_date')
         end_date = request.args.get('end_date')
 
         if not start_date or not end_date:
-            return jsonify({"error": "조회 시작일과 종료일을 모두 입력해주세요."}), 400
+            return jsonify([])
 
-        # 2. 해당 기간 내의 모든 AOI 기록 조회
-        records = AoiRecord.query.filter(
+        # 1. 해당 기간 내의 기록 조회 (기간 수량 계산용)
+        period_records = AoiRecord.query.filter(
             AoiRecord.date >= start_date,
             AoiRecord.date <= end_date
         ).all()
 
-        if not records:
+        if not period_records:
             return jsonify([])
 
-        # 3. 데이터 그룹화 및 합산 로직
-        # Key: (모델명, 주문년도, 주문월, LOT) -> 고유 주문 식별자
+        # 2. 데이터 그룹화 (기간 내 합계 계산)
         aggregated_data = {}
-
-        # 합산해야 할 숫자 필드 목록
+        
+        # 합산할 숫자 필드들
         sum_fields = [
             'inspection_qty', 'good_qty', 'total_defect',
             'missing', 'wrong', 'reverse', 'skewed', 'flipped',
@@ -166,7 +165,7 @@ def get_aoi_period_stats():
             'cold', 'unsoldered', 'short',
             'material', 'dip'
         ]
-        # 합쳐야 할 문자열(레퍼런스) 필드 목록
+        # 합칠 문자열 필드들
         ref_fields = [
             'missing_ref', 'wrong_ref', 'reverse_ref', 'skewed_ref', 'flipped_ref',
             'damaged_ref', 'manhattan_ref', 'detached_ref',
@@ -174,69 +173,74 @@ def get_aoi_period_stats():
             'material_ref', 'dip_ref'
         ]
 
-        for r in records:
-            # 그룹 Key 생성
+        for r in period_records:
+            # 고유 주문 키: 모델, 연, 월, LOT
             key = (r.model, r.order_year, r.order_month, r.lot)
 
             if key not in aggregated_data:
-                # 초기 데이터 세팅
                 aggregated_data[key] = {
                     'model': r.model,
                     'order_year': r.order_year,
                     'order_month': r.order_month,
                     'lot': r.lot,
-                    'inspection_point': r.inspection_point, # 포인트는 모델 속성이므로 유지
-                    'dates': set() # 어떤 날짜들이 합쳐졌는지 기록용
+                    'inspection_point': r.inspection_point,
+                    'dates': set()
                 }
-                # 숫자 필드 0으로 초기화
                 for field in sum_fields:
                     aggregated_data[key][field] = 0
-                # 레퍼런스 필드 빈 문자열로 초기화
                 for field in ref_fields:
                     aggregated_data[key][field] = []
 
-            # 데이터 합치기
             target = aggregated_data[key]
-            target['dates'].add(r.date) # 날짜 기록
+            target['dates'].add(r.date)
 
-            # (1) 숫자 더하기
+            # (1) 기간 내 수량 합산
             for field in sum_fields:
                 val = getattr(r, field) or 0
                 target[field] += val
             
-            # (2) 레퍼런스 병합 (리스트에 모으기)
+            # (2) 레퍼런스 수집
             for field in ref_fields:
                 val = getattr(r, field)
-                if val: # 값이 있을 때만
-                    # 콤마로 구분된 여러 값일 수 있으므로 쪼개서 추가
+                if val:
                     refs = [x.strip() for x in val.split(',') if x.strip()]
                     target[field].extend(refs)
 
-        # 4. 최종 결과 리스트 변환
+        # 3. 최종 리스트 변환 및 [누적 진행률] 계산
         result_list = []
         for key, data in aggregated_data.items():
-            # 레퍼런스 리스트를 다시 콤마 문자열로 변환 (중복 제거 옵션: set 사용 가능)
+            # 레퍼런스 병합
             for field in ref_fields:
                 if data[field]:
-                    # 중복을 허용하지 않으려면 list(set(data[field])) 사용
-                    # 여기서는 발생 순서 유지를 위해 그냥 join하거나, 정렬해서 join
-                    unique_refs = sorted(list(set(data[field]))) 
+                    unique_refs = sorted(list(set(data[field])))
                     data[field] = ", ".join(unique_refs)
                 else:
                     data[field] = ""
             
-            # 날짜 정보 문자열로 (예: "2024-01-01 ~ 2024-01-07")
+            # 기간 정보 텍스트
             date_list = sorted(list(data['dates']))
             if len(date_list) > 1:
-                data['period_info'] = f"{date_list[0]} ~ {date_list[-1]} ({len(date_list)}일간)"
+                data['period_info'] = f"{date_list[0]} ~ {date_list[-1]}"
             else:
                 data['period_info'] = date_list[0]
+            del data['dates']
+
+            # ★★★ [핵심 수정] 해당 주문(LOT)의 전체 누적 검사 수량 조회 ★★★
+            # 기간 상관없이 DB 전체에서 해당 모델+LOT의 검사 수량을 조회합니다.
+            total_cumulative = db.session.query(func.sum(AoiRecord.inspection_qty)).filter_by(
+                model=data['model'],
+                order_year=data['order_year'],
+                order_month=data['order_month'],
+                lot=data['lot']
+            ).scalar() or 0
             
-            del data['dates'] # set 객체는 JSON 변환 안되므로 삭제
+            # 결과에 누적 수량 추가 (프론트엔드 진행률 바에서 사용)
+            data['cumulative_qty'] = total_cumulative
+
             result_list.append(data)
 
         return jsonify(result_list)
 
     except Exception as e:
-        print(f"Error in get_aoi_period_stats: {e}")
-        return jsonify({"error": str(e)}), 500
+        print(f"Error stats: {e}")
+        return jsonify([])

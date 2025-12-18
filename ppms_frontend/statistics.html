@@ -7,6 +7,7 @@
     <title>PPMS - 통계 분석</title>
     
     <link rel="stylesheet" href="common.css">
+    <link rel="stylesheet" href="aoi.css">
     <link rel="stylesheet" href="statistics.css">
 
     <link href="https://hangeul.pstatic.net/hangeul_static/css/bmdohyeon.css" rel="stylesheet">
@@ -19,138 +20,202 @@
     <script src="auth.js"></script>
     
     <style>
-        /* [추가] 탭 네비게이션 스타일 */
-        .tab-container {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
-            width: 100%;
-            max-width: 600px;
+        /* [통계 페이지 전용 스타일 오버라이드] */
+        
+        /* 1. 레이아웃 */
+        .content-area {
+            display: flex; flex-direction: column; 
+            padding: 15px 25px !important; 
+            gap: 10px; 
+            overflow: hidden;
         }
 
-        .tab-btn {
-            flex: 1;
-            padding: 12px;
-            background-color: var(--card-bg);
-            color: #666;
-            border: 1px solid rgba(255, 255, 255, 0.05);
+        /* 2. 상단 툴바 */
+        .analysis-toolbar {
+            display: flex; justify-content: space-between; align-items: center;
+            background-color: var(--card-bg); 
+            padding: clamp(5px, 1vh, 10px) clamp(10px, 1vw, 20px);
             border-radius: 12px;
-            font-family: 'BMDOHYEON', sans-serif;
-            font-size: 1.1rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-align: center;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.05); 
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            flex-shrink: 0; 
+            flex-wrap: nowrap; 
+            gap: clamp(10px, 2vw, 20px); 
+            z-index: 50;
+            white-space: nowrap; 
+            overflow-x: auto; 
+        }
+        .analysis-toolbar::-webkit-scrollbar { height: 0; width: 0; }
+
+        .tab-group { 
+            display: flex; gap: 5px; 
+            background: rgba(0,0,0,0.2); padding: 3px; border-radius: 8px; 
+            flex-shrink: 0;
+        }
+        .tab-btn {
+            padding: 6px clamp(10px, 1.5vw, 18px); 
+            color: #888; border-radius: 6px; font-family: 'BMDOHYEON', sans-serif;
+            font-size: clamp(0.85rem, 1vw, 1rem); 
+            cursor: pointer; transition: all 0.2s ease; 
+            display: flex; align-items: center; gap: 6px;
+        }
+        .tab-btn:hover { color: #ccc; background-color: rgba(255,255,255,0.05); }
+        .tab-btn.active { background-color: var(--point-gold); color: var(--accent-blue); font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+
+        .control-wrapper { 
+            display: none; align-items: center; 
+            gap: clamp(8px, 1.5vw, 15px); 
+            animation: fadeInRight 0.3s ease; 
+            flex-shrink: 0;
+        }
+        .control-wrapper.active { display: flex; }
+        @keyframes fadeInRight { from { opacity: 0; transform: translateX(10px); } to { opacity: 1; transform: translateX(0); } }
+
+        /* 입력 필드 */
+        .compact-select, .compact-input {
+            background-color: #15151a; color: #fff; border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 6px; padding: 4px 8px; 
+            font-family: 'Poppins', 'BMJUA', sans-serif;
+            font-size: clamp(0.8rem, 0.9vw, 0.95rem); height: 34px; outline: none; text-align: center;
+        }
+        .compact-select:focus, .compact-input:focus { border-color: var(--point-gold); box-shadow: 0 0 5px rgba(255, 235, 167, 0.2); }
+        
+        .compact-btn { 
+            padding: 0 clamp(15px, 2vw, 25px) !important; 
+            height: 34px !important; 
+            font-size: clamp(0.85rem, 0.9vw, 0.95rem) !important; 
+            white-space: nowrap;
         }
 
-        .tab-btn:hover {
-            background-color: #3a3b48;
-            color: #ccc;
+        .period-toggle { 
+            display: flex; background: rgba(255,255,255,0.05); 
+            border-radius: 6px; padding: 2px; border: 1px solid rgba(255,255,255,0.1); 
         }
-
-        .tab-btn.active {
-            background-color: var(--point-gold);
-            color: var(--accent-blue);
-            box-shadow: 0 0 15px rgba(255, 235, 167, 0.4);
-            font-weight: bold;
-            transform: translateY(-2px);
-            border-color: transparent;
+        .period-option { 
+            padding: 4px 10px; font-size: clamp(0.75rem, 0.8vw, 0.85rem); 
+            cursor: pointer; border-radius: 4px; color: #aaa; transition: all 0.2s; font-family: 'BMDOHYEON'; 
         }
+        .period-option.active { background-color: var(--accent-blue); color: #fff; font-weight: bold; }
 
-        /* 컨트롤 섹션 애니메이션 */
-        .control-section {
-            display: none; /* 기본 숨김 */
-            width: 100%;
-            animation: fadeIn 0.3s ease;
-        }
-        .control-section.active {
-            display: block;
-        }
-
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* AOI 테이블 전용 스타일 */
-        .aoi-detail-cell {
-            font-size: 0.85rem;
-            text-align: left;
-            padding: 8px 15px !important;
-            white-space: normal !important; /* 내용 줄바꿈 허용 */
-            line-height: 1.5;
-            min-width: 300px;
+        /* 3. 결과 영역 */
+        #statistics-result-area {
+            flex: 1; min-height: 0; position: relative;
+            background-color: #1f2029;
+            border-radius: 8px; border: none; 
+            overflow: hidden;
+            display: flex; flex-direction: column;
         }
         
-        .defect-item {
-            display: inline-block;
-            margin-right: 12px;
-            margin-bottom: 4px;
+        /* 테이블 컨테이너 */
+        .table-container { 
+            flex: 0 1 auto; 
+            overflow: auto; 
+            width: 100%; 
+            height: auto; 
+            max-height: 100%; 
+            display: none; 
+        } 
+        
+        /* 4. 테이블 스타일 재정의 (AOI 호환 및 생산실적 2단 스타일) */
+        #aoi-table-main .detail-col { display: table-cell !important; }
+        #aoi-table-main col.detail-col { display: table-column !important; }
+        #aoi-table-main .sum-header { display: none !important; } 
+        
+        /* 헤더 고정 */
+        #aoi-table-main thead th,
+        .statistics-table thead th { 
+            position: sticky; top: 0; z-index: 200; 
         }
         
-        .defect-count { 
-            color: var(--danger-red); 
-            font-weight: bold; 
-            margin-right: 4px;
-            font-family: 'Roboto Mono', monospace;
-        }
-        
-        .ref-text { 
-            color: #aaa; 
-            font-size: 0.8rem;
+        /* 모델명 헤더 고정 */
+        #aoi-table-main thead th.model-name-ellipsis {
+            position: sticky !important;
+            left: 0 !important;
+            z-index: 600 !important;
+            background-color: #15151a !important; 
+            box-shadow: 2px 0 5px rgba(0,0,0,0.3);
         }
 
-        .date-input {
-            background-color: #15151a;
-            color: #fff;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 6px;
-            padding: 8px 12px;
-            font-family: 'Poppins', sans-serif;
-            font-size: 1rem;
-            outline: none;
-            cursor: pointer;
+        /* 입력창 커서 */
+        #aoi-table-main input { 
+            pointer-events: auto !important; 
+            cursor: default !important; 
         }
-        .date-input:focus {
-            border-color: var(--point-gold);
+        #aoi-table-main input[type="text"] {
+            cursor: pointer !important;
+        }
+        #aoi-table-main input:focus {
+            box-shadow: inset 0 0 0 1px var(--point-gold) !important; 
+            background-color: rgba(255, 235, 167, 0.05) !important;
+        }
+        #aoi-table-main input::placeholder {
+            color: rgba(255, 255, 255, 0.2); font-weight: normal;
+        }
+
+        /* [신규] 생산 실적 테이블 스타일 */
+        .statistics-table th {
+            background-color: #15151a; color: var(--point-gold);
+            padding: 12px; font-size: 0.95rem;
+            border-bottom: 2px solid var(--point-gold);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        }
+        .statistics-table td {
+            padding: 10px 5px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 0.9rem; vertical-align: middle;
+        }
+        .stats-clickable-val {
+            cursor: pointer; font-weight: bold; color: var(--point-gold);
+            text-decoration: underline; text-underline-offset: 3px;
+            transition: all 0.2s;
+        }
+        .stats-clickable-val:hover { color: #fff; text-decoration-color: #fff; }
+        .stats-lot-val { color: #888; font-size: 0.85em; }
+        
+        .stats-problem-yellow { color: #FFD700 !important; }
+        .stats-problem-red { color: var(--danger-red) !important; }
+
+        /* 5. 뷰어 팝업 */
+        #global-viewer {
+            position: fixed; display: none; z-index: 9999;
+            background: rgba(30, 30, 40, 0.95); backdrop-filter: blur(5px);
+            border: 1px solid var(--point-gold); border-radius: 8px; padding: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5); color: #fff;
+            min-width: 200px; max-width: 400px; font-size: 0.9rem;
+            line-height: 1.5; white-space: pre-wrap; pointer-events: none;
         }
         
-        /* 캘린더 아이콘 색상 변경 (브라우저 기본값 덮어쓰기 시도) */
-        ::-webkit-calendar-picker-indicator {
-            filter: invert(1);
-            cursor: pointer;
+        /* 6. 모델명 툴팁 */
+        #model-tooltip-simple {
+            position: fixed; display: none; background: rgba(30, 30, 40, 0.95); 
+            color: #fff; padding: 8px 12px; border-radius: 6px; z-index: 10000; 
+            font-size: 0.9rem; pointer-events: none; border: 1px solid var(--point-gold);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5); font-family: 'Poppins', sans-serif;
         }
     </style>
 </head>
 
 <body>
-    <svg style="position: absolute; width: 0; height: 0;" width="0" height="0" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" class="svg-sprite">
-        <defs>
-            <filter id="filter">
-                <feTurbulence type="fractalNoise" baseFrequency="0.01 0.004" numOctaves="1" result="warp" seed="1"></feTurbulence>
-                <feDisplacementMap xChannelSelector="R" yChannelSelector="G" scale="30" in="SourceGraphic" in2="warp"></feDisplacementMap>
-            </filter>
-        </defs>
+    <svg style="position: absolute; width: 0; height: 0;" class="svg-sprite">
+        <defs><filter id="filter"><feTurbulence type="fractalNoise" baseFrequency="0.01 0.004" numOctaves="1" result="warp"></feTurbulence><feDisplacementMap xChannelSelector="R" yChannelSelector="G" scale="30" in="SourceGraphic" in2="warp"></feDisplacementMap></filter></defs>
     </svg>
 
     <div class="page-container">
         <header class="main-header">
             <div class="header-left">
                 <a href="index.html" class="header-logo-wrapper btn-glitch">
-                    <svg class="header-logo" version="1.0" xmlns="http://www.w3.org/2000/svg"
-                     width="233.000000pt" height="240.000000pt" viewBox="0 0 233.000000 240.000000"
-                     preserveAspectRatio="xMidYMid meet">
+                    <svg class="header-logo" version="1.0" xmlns="http://www.w3.org/2000/svg" width="233.000000pt" height="240.000000pt" viewBox="0 0 233.000000 240.000000" preserveAspectRatio="xMidYMid meet">
                         <g transform="translate(0.000000,240.000000) scale(0.100000,-0.100000)" stroke="none">
                             <path d="M978 2385 c-184 -31 -309 -94 -433 -219 -143 -144 -199 -279 -198 -481 1 -235 87 -444 246 -592 271 -253 686 -282 997 -70 54 37 151 127 193 181 26 32 16 27 -66 -37 -189 -148 -291 -189 -467 -189 -275 1 -472 113 -575 327 -128 265 -86 586 101 773 99 99 243 150 389 138 172 -14 293 -86 355 -208 38 -77 41 -167 9 -253 -38 -102 -159 -206 -276 -240 l-23 -6 0 188 c0 134 4 193 12 201 7 7 31 12 55 12 32 0 43 4 43 15 0 13 -35 15 -251 15 -196 0 -250 -3 -247 -12 3 -7 24 -14 49 -16 24 -2 47 -9 51 -15 14 -21 10 -661 -4 -675 -7 -7 -31 -12 -55 -12 -32 0 -43 -4 -43 -15 0 -13 34 -15 250 -15 216 0 250 2 250 15 0 11 -12 15 -45 15 -59 0 -65 14 -65 139 l0 100 58 6 c109 11 184 26 236 46 183 68 285 273 230 460 -94 317 -404 487 -776 424z"/>
                             <path d="M1991 638 c-60 -130 -103 -211 -120 -225 l-26 -22 73 -1 c39 0 72 3 72 6 0 3 -9 13 -19 22 -19 16 -19 19 -4 55 l15 37 87 0 c84 0 88 -1 99 -25 18 -38 15 -63 -8 -70 -45 -14 -15 -25 70 -25 50 0 90 3 90 6 0 3 -10 16 -21 28 -12 12 -61 109 -109 216 -48 107 -92 196 -97 197 -5 2 -52 -88 -102 -199z m113 -9 c14 -33 26 -62 26 -65 0 -2 -27 -4 -61 -4 -33 0 -59 4 -57 8 2 4 14 33 27 65 14 31 28 57 32 57 3 0 18 -27 33 -61z"/>
                             <path d="M0 811 c0 -5 11 -16 25 -25 25 -16 25 -17 25 -179 0 -89 -4 -167 -8 -173 -4 -6 -15 -13 -24 -17 -43 -16 -13 -27 72 -27 50 0 90 4 90 9 0 5 -11 16 -25 25 -24 16 -26 22 -23 79 l3 62 85 5 c131 9 180 44 180 130 0 53 -22 84 -76 106 -38 16 -324 20 -324 5z m264 -35 c58 -24 69 -107 18 -146 -19 -15 -40 -20 -88 -20 l-64 0 0 78 c0 47 5 83 12 90 16 16 81 15 122 -2z"/>
-                            <path d="M440 810 c0 -6 11 -15 25 -20 l25 -10 0 -175 0 -175 -25 -10 c-50 -19 -26 -30 65 -30 50 0 90 4 90 9 0 5 -10 15 -22 23 -19 13 -23 26 -26 92 l-4 76 96 0 96 0 0 -75 c0 -68 -2 -76 -25 -91 -14 -9 -25 -20 -25 -25 0 -5 41 -9 90 -9 50 0 90 4 90 9 0 5 -11 16 -25 25 -25 16 -25 17 -25 181 0 164 0 165 25 181 14 9 25 20 25 25 0 5 -40 9 -90 9 -49 0 -90 -4 -90 -9 0 -5 11 -16 25 -25 23 -15 25 -23 25 -86 l0 -70 -96 0 -96 0 4 72 c3 60 7 73 26 86 12 8 22 18 22 23 0 5 -40 9 -90 9 -55 0 -90 -4 -90 -10z"/>
+                            <path d="M440 810 c0 -6 11 -15 25 -20 l25 -10 0 -175 0 -175 -25 -10 c-50 -19 -26 -30 65 -30 50 0 90 4 90 9 0 5 -10 15 -22 23 -19 13 -23 26 -26 92 l-4 76 96 0 96 0 0 -75 c0 -68 -2 -76 -25 -91 -14 -9 -25 -20 -25 -25 0 -5 41 -9 90 -9 50 0 90 4 90 9 0 5 -11 16 -25 25 -25 16 -25 17 -25 181 0 164 0 165 25 181 14 9 25 20 25 25 0 5 -40 9 -90 9 -49 0 -90 -4 -90 -10z"/>
                             <path d="M940 810 c0 -6 11 -15 25 -20 l25 -10 0 -167 c0 -93 -4 -173 -8 -179 -4 -6 -15 -13 -24 -17 -43 -16 -13 -27 72 -27 50 0 90 4 90 9 0 5 -11 16 -25 25 -25 16 -25 17 -25 181 0 164 0 165 25 181 14 9 25 20 25 25 0 5 -40 9 -90 9 -55 0 -90 -4 -90 -10z"/>
                             <path d="M1170 810 c0 -6 8 -14 18 -17 9 -4 20 -11 24 -17 4 -6 8 -83 8 -171 0 -88 -4 -165 -8 -171 -4 -6 -15 -13 -24 -17 -10 -3 -18 -11 -18 -17 0 -6 66 -10 190 -10 l190 0 6 28 c3 15 10 42 15 61 15 60 -7 69 -36 15 -21 -39 -51 -59 -106 -69 -44 -8 -115 10 -123 31 -3 9 -6 81 -6 160 0 142 1 145 25 168 14 13 25 26 25 30 0 3 -40 6 -90 6 -55 0 -90 -4 -90 -10z"/>
                             <path d="M1630 811 c0 -5 11 -16 25 -25 25 -16 25 -17 25 -181 0 -164 0 -165 -25 -181 -14 -9 -25 -20 -25 -25 0 -5 38 -9 85 -9 84 0 104 9 65 30 -19 10 -20 21 -20 185 0 164 1 175 20 185 39 21 19 30 -65 30 -47 0 -85 -4 -85 -9z"/>
                             <path d="M532 273 c3 -17 40 -18 591 -21 582 -2 587 -2 587 18 0 20 -6 20 -591 20 -557 0 -590 -1 -587 -17z"/>
                             <path d="M530 180 c0 -5 14 -10 30 -10 l30 0 0 -80 c0 -64 3 -80 15 -80 12 0 15 16 15 80 l0 80 30 0 c17 0 30 5 30 10 0 6 -32 10 -75 10 -43 0 -75 -4 -75 -10z"/>
-                            <path d="M700 100 l0 -90 65 0 c37 0 65 4 65 10 0 6 -25 10 -55 10 -54 0 -55 0 -55 30 0 29 1 30 50 30 28 0 50 5 50 10 0 6 -22 10 -50 10 -49 0 -50 1 -50 30 0 30 1 30 55 30 30 0 55 5 55 10 0 6 -28 10 -65 10 l-65 0 0 -90z"/>
+                            <path d="M700 100 l0 -90 65 0 c37 0 65 4 65 10 0 6 -25 10 -55 10 -54 0 -55 0 -55 30 0 29 1 30 50 30 28 0 50 5 50 10 0 6 -22 10 -50 10 -49 0 -50 1 -50 30 0 29 1 30 55 30 30 0 55 5 55 10 0 6 -28 10 -65 10 l-65 0 0 -90z"/>
                             <path d="M850 101 l0 -91 60 0 c33 0 60 4 60 10 0 6 -20 10 -45 10 l-44 0 -3 77 c-2 50 -7 78 -15 81 -10 3 -13 -19 -13 -87z"/>
                             <path d="M990 100 l0 -90 65 0 c37 0 65 4 65 10 0 6 -22 10 -50 10 -49 0 -50 1 -50 30 0 29 2 30 44 30 25 0 48 5 51 10 4 6 -13 10 -44 10 -50 0 -51 1 -51 30 0 29 1 30 50 30 28 0 50 5 50 10 0 6 -28 10 -65 10 l-65 0 0 -90z"/>
                             <path d="M1161 164 c-32 -41 -28 -98 9 -136 26 -25 36 -29 62 -24 36 7 68 32 68 53 0 20 -16 16 -32 -8 -16 -24 -59 -29 -83 -9 -20 17 -20 94 1 114 20 20 58 21 78 1 16 -17 36 -20 36 -6 0 19 -45 41 -81 41 -29 0 -43 -6 -58 -26z"/>
@@ -161,55 +226,115 @@
                 </a>
             </div>
             <div class="header-center">
-                <div class="common-box">통계 분석</div>
+                <div class="common-box font-35pt">통계 분석</div>
             </div>
-            <div class="header-right">
-                <div class="common-box time-display" id="current-time"></div>
-            </div>
+            <div class="header-right"><div class="common-box time-display" id="current-time"></div></div>
         </header>
 
         <main class="content-area">
             
-            <div class="tab-container">
-                <div class="tab-btn active" data-tab="production">
-                    <i class="uil uil-chart-line"></i> 생산 실적 (월별)
+            <div class="analysis-toolbar">
+                <div class="tab-group">
+                    <div class="tab-btn active" data-tab="production"><i class="uil uil-chart-line"></i> 생산 실적</div>
+                    <div class="tab-btn" data-tab="aoi"><i class="uil uil-microscope"></i> AOI 분석</div>
                 </div>
-                <div class="tab-btn" data-tab="aoi">
-                    <i class="uil uil-microscope"></i> AOI 검사 기록 (기간별)
-                </div>
-            </div>
 
-            <div id="production-controls" class="control-section active">
-                <div class="statistics-controls">
-                    <input type="number" id="order-year-input" placeholder="예: 2025">
-                    <select id="order-month-select"></select>
-                    <div class="common-box clickable-box search-btn" id="search-prod-btn">
-                        <i class="uil uil-search"></i> 조회
-                    </div>
+                <div id="production-controls" class="control-wrapper active">
+                    <input type="number" id="order-year-input" class="compact-input" placeholder="2025" style="width:70px;">
+                    <select id="order-month-select" class="compact-select"></select>
+                    <div class="common-box clickable-box compact-btn" id="search-prod-btn"><i class="uil uil-search"></i> 조회</div>
                 </div>
-            </div>
 
-            <div id="aoi-controls" class="control-section">
-                <div class="statistics-controls">
-                    <div style="display:flex; align-items:center; gap:10px; color:#fff; font-family:'BMJUA';">
-                        <span style="color:var(--point-gold);">기간 :</span>
-                        <input type="date" id="aoi-start-date" class="date-input">
-                        <span>~</span>
-                        <input type="date" id="aoi-end-date" class="date-input">
+                <div id="aoi-controls" class="control-wrapper">
+                    <div class="period-toggle">
+                        <div class="period-option active" data-type="weekly">주간</div>
+                        <div class="period-option" data-type="monthly">월간</div>
                     </div>
-                    <div class="common-box clickable-box search-btn" id="search-aoi-btn">
-                        <i class="uil uil-search"></i> 분석
+
+                    <div style="display:flex; align-items:center; gap:5px; color:#ccc; font-size:0.9rem;">
+                        <select id="aoi-year-select" class="compact-select"></select>년
+                        <select id="aoi-month-select" class="compact-select"></select>월
+                        <span id="week-select-wrapper"><select id="aoi-week-select" class="compact-select"></select>주</span>
                     </div>
+
+                    <div class="common-box clickable-box compact-btn" id="search-aoi-btn"><i class="uil uil-search"></i> 분석</div>
+                    <div id="period-info-text" style="color:var(--point-gold); font-size:0.8rem; font-weight:bold;"></div>
                 </div>
             </div>
 
             <div id="statistics-result-area">
-                <p class="no-line-data-message">
+                <div id="prod-table-container" class="table-container" style="display:none;"></div>
+
+                <div id="aoi-table-container" class="table-container" style="display:none;">
+                    <table class="aoi-table" id="aoi-table-main">
+                        <colgroup>
+                            <col style="width: 200px;">
+                            <col style="width: clamp(70px, 6vw, 120px);" class="detail-col group-basic">
+                            <col style="width: clamp(70px, 6vw, 120px);">
+                            <col style="width: clamp(70px, 6vw, 120px);" class="detail-col group-basic">
+                            <col style="width: clamp(70px, 6vw, 120px);" class="detail-col group-basic good-col">
+                            <col style="width: clamp(70px, 6vw, 120px);">
+                            
+                            <col style="width: clamp(70px, 6vw, 120px);" class="detail-col group-a">
+                            <col style="width: clamp(70px, 6vw, 120px);" class="detail-col group-a">
+                            <col style="width: clamp(70px, 6vw, 120px);" class="detail-col group-a">
+                            <col style="width: clamp(70px, 6vw, 120px);" class="detail-col group-a">
+                            <col style="width: clamp(70px, 6vw, 120px);" class="detail-col group-a">
+                            
+                            <col style="width: clamp(70px, 6vw, 120px);" class="detail-col group-b">
+                            <col style="width: clamp(70px, 6vw, 120px);" class="detail-col group-b">
+                            <col style="width: clamp(70px, 6vw, 120px);" class="detail-col group-b">
+                            
+                            <col style="width: clamp(70px, 6vw, 120px);" class="detail-col group-c">
+                            <col style="width: clamp(70px, 6vw, 120px);" class="detail-col group-c">
+                            <col style="width: clamp(70px, 6vw, 120px);" class="detail-col group-c">
+                            
+                            <col style="width: clamp(70px, 6vw, 120px);" class="detail-col group-d">
+                            <col style="width: clamp(70px, 6vw, 120px);" class="detail-col group-d">
+                        </colgroup>
+                        <thead>
+                            <tr>
+                                <th rowspan="2" class="model-name-ellipsis" style="text-align:center;">모델명</th>
+                                <th rowspan="2" class="detail-col group-basic">Point</th>
+                                <th rowspan="2">수량</th>
+                                <th rowspan="2" class="detail-col group-basic">진행도</th>
+                                <th rowspan="2" class="detail-col group-basic good-col">양품</th>
+                                <th rowspan="2" class="defect-total-col">총불량</th>
+
+                                <th colspan="5" class="detail-col group-a group-header-box">실장오류</th>
+                                <th colspan="3" class="detail-col group-b group-header-box">부품결함</th>
+                                <th colspan="3" class="detail-col group-c group-header-box">납땜불량</th>
+                                <th colspan="2" class="detail-col group-d group-header-box">기타</th>
+                            </tr>
+                            <tr>
+                                <th class="detail-col group-a group-start">미삽</th>
+                                <th class="detail-col group-a">오삽</th>
+                                <th class="detail-col group-a">역삽</th>
+                                <th class="detail-col group-a">틀어짐</th>
+                                <th class="detail-col group-a group-end">뒤집힘</th>
+
+                                <th class="detail-col group-b group-start">파손</th>
+                                <th class="detail-col group-b">맨하탄</th>
+                                <th class="detail-col group-b group-end">이탈</th>
+
+                                <th class="detail-col group-c group-start">냉납</th>
+                                <th class="detail-col group-c">미납</th>
+                                <th class="detail-col group-c group-end">쇼트</th>
+
+                                <th class="detail-col group-d group-start">자재</th>
+                                <th class="detail-col group-d group-end">DIP</th>
+                            </tr>
+                        </thead>
+                        <tbody id="aoi-list-body">
+                        </tbody>
+                    </table>
+                </div>
+                
+                <p class="no-line-data-message" style="margin-top:50px;">
                     <i class="uil uil-mouse-alt" style="font-size:2rem; display:block; margin-bottom:10px;"></i>
-                    상단의 탭을 선택하여 분석을 시작하세요.
+                    분석할 내용을 선택해주세요.
                 </p>
             </div>
-
         </main>
 
         <footer class="main-footer">
@@ -222,6 +347,12 @@
             <div class="footer-right"></div>
         </footer>
 
+        <div id="global-tooltip">
+            <textarea id="editor-textarea" readonly></textarea>
+        </div>
+        
+        <div id="model-tooltip-simple"></div>
+
         <div class="modal-overlay" id="details-modal">
             <div class="modal-window">
                 <button class="close-btn" id="close-details-modal-btn">&times;</button>
@@ -232,8 +363,10 @@
     </div>
 
     <script>
-        // --- 로고 글리치 효과 ---
-        function initLogoGlitch() {
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => { document.body.style.opacity = '1'; }, 50);
+            
+            // 로고 효과
             const filter = document.querySelector('.svg-sprite');
             if(filter) {
                 const turb = filter.querySelector('#filter feTurbulence');
@@ -247,303 +380,364 @@
                         .set(turbValX, { val: 0.000001 }).set(turbVal, { val: 0.000001 })
                         .to(turbValX, 0.2, { val: 0.4 }, 0.4).to(turbVal, 0.2, { val: 0.002 }, 0.4)
                         .set(turbValX, { val: 0.000001 }).set(turbVal, { val: 0.000001 });
-
                 glitchElements.forEach(el => {
                     el.addEventListener('mouseenter', function() { this.classList.add('btn-glitch-active'); timeline.restart(); });
                     el.addEventListener('mouseleave', function() { this.classList.remove('btn-glitch-active'); timeline.pause(); gsap.set(turbVal, {val:0}); gsap.set(turbValX, {val:0}); turb.setAttribute('baseFrequency', '0.000001 0.000001'); });
                 });
             }
-        }
 
-        document.addEventListener('DOMContentLoaded', () => {
-            setTimeout(() => { document.body.style.opacity = '1'; }, 50);
-            initLogoGlitch();
-
-            // 요소 가져오기
+            // DOM
             const resultArea = document.getElementById('statistics-result-area');
+            const noMsg = resultArea.querySelector('.no-line-data-message');
+            
+            const prodTableContainer = document.getElementById('prod-table-container');
+            const aoiTableContainer = document.getElementById('aoi-table-container');
+
+            const tbody = document.getElementById('aoi-list-body');
             const tabs = document.querySelectorAll('.tab-btn');
-            const sections = document.querySelectorAll('.control-section');
-
-            // [생산 실적용]
-            const monthSelect = document.getElementById('order-month-select');
-            const yearInput = document.getElementById('order-year-input');
-            const searchProdBtn = document.getElementById('search-prod-btn');
-
-            // [AOI 분석용]
-            const aoiStartInput = document.getElementById('aoi-start-date');
-            const aoiEndInput = document.getElementById('aoi-end-date');
-            const searchAoiBtn = document.getElementById('search-aoi-btn');
+            const prodControls = document.getElementById('production-controls');
+            const aoiControls = document.getElementById('aoi-controls');
 
             // 초기화
+            const monthSelect = document.getElementById('order-month-select');
+            const yearInput = document.getElementById('order-year-input');
             yearInput.value = new Date().getFullYear();
-            
-            // 주문월 드롭다운 초기화
-            monthSelect.innerHTML = '<option value="">- 월 선택 -</option>';
+            monthSelect.innerHTML = '<option value="">선택</option>';
             for (let i = 1; i <= 12; i++) monthSelect.innerHTML += `<option value="${i}월분">${i}월</option>`;
 
-            // 날짜 입력창 초기화 (이번 달 1일 ~ 오늘)
-            const today = new Date();
-            const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
-            
-            // 날짜 포맷 (YYYY-MM-DD) 유틸리티 함수
-            const fmt = d => {
-                const y = d.getFullYear();
-                const m = String(d.getMonth() + 1).padStart(2, '0');
-                const day = String(d.getDate()).padStart(2, '0');
-                return `${y}-${m}-${day}`;
-            };
-            
-            aoiStartInput.value = fmt(firstDay);
-            aoiEndInput.value = fmt(today);
+            const aoiYearSel = document.getElementById('aoi-year-select');
+            const aoiMonthSel = document.getElementById('aoi-month-select');
+            const aoiWeekSel = document.getElementById('aoi-week-select');
+            const now = new Date(); const curYear = now.getFullYear();
+            for(let y = curYear - 1; y <= curYear + 1; y++) aoiYearSel.innerHTML += `<option value="${y}" ${y===curYear ? 'selected' : ''}>${y}</option>`;
+            for(let m = 1; m <= 12; m++) aoiMonthSel.innerHTML += `<option value="${m}" ${m===(now.getMonth()+1) ? 'selected' : ''}>${m}</option>`;
+            for(let w = 1; w <= 5; w++) aoiWeekSel.innerHTML += `<option value="${w}">${w}</option>`;
 
-            // ================================================================
-            // 1. 탭 전환 로직
-            // ================================================================
+            // [탭 전환 로직]
             tabs.forEach(tab => {
                 tab.addEventListener('click', () => {
-                    // 스타일 활성화
                     tabs.forEach(t => t.classList.remove('active'));
                     tab.classList.add('active');
-
-                    // 컨트롤 섹션 전환
-                    const targetId = tab.dataset.tab === 'production' ? 'production-controls' : 'aoi-controls';
-                    sections.forEach(sec => {
-                        if(sec.id === targetId) sec.classList.add('active');
-                        else sec.classList.remove('active');
-                    });
-
-                    // 결과창 초기화 (안내 메시지)
-                    const isProd = tab.dataset.tab === 'production';
-                    resultArea.innerHTML = `
-                        <p class="no-line-data-message" style="animation:fadeIn 0.5s;">
-                            <i class="${isProd ? 'uil-chart-line' : 'uil-microscope'}" style="font-size:2rem; display:block; margin-bottom:10px;"></i>
-                            ${isProd ? '주문 연도와 월을 선택하고 조회를 누르세요.' : '분석할 기간을 선택하고 분석 버튼을 누르세요.'}
-                        </p>`;
                     
-                    // AOI 모드일 때 가로 스크롤 허용
-                    resultArea.style.overflowX = isProd ? 'hidden' : 'auto';
+                    if(tab.dataset.tab === 'production') {
+                        prodControls.classList.add('active'); aoiControls.classList.remove('active');
+                        aoiTableContainer.style.display = 'none';
+                        prodTableContainer.style.display = 'none';
+                        noMsg.style.display = 'block'; noMsg.innerHTML = '<i class="uil uil-search" style="font-size:2rem; display:block; margin-bottom:10px;"></i> 조건을 선택하고 조회를 눌러주세요.';
+                    } else {
+                        prodControls.classList.remove('active'); aoiControls.classList.add('active');
+                        prodTableContainer.style.display = 'none';
+                        aoiTableContainer.style.display = 'none';
+                        noMsg.style.display = 'block'; noMsg.innerHTML = '<i class="uil uil-search" style="font-size:2rem; display:block; margin-bottom:10px;"></i> 조건을 선택하고 분석을 눌러주세요.';
+                    }
                 });
             });
 
-            // ================================================================
-            // 2. 생산 실적 조회 (기존 기능)
-            // ================================================================
-            searchProdBtn.addEventListener('click', async () => {
-                const selectedMonth = monthSelect.value;
-                const selectedYear = yearInput.value;
+            // [AOI 분석 실행]
+            let periodType = 'weekly';
+            const periodOpts = document.querySelectorAll('.period-option');
+            const weekWrap = document.getElementById('week-select-wrapper');
+            const infoText = document.getElementById('period-info-text');
 
-                if (!selectedYear || !selectedMonth) { alert('주문 연도와 월을 선택하세요.'); return; }
+            periodOpts.forEach(opt => {
+                opt.addEventListener('click', () => {
+                    periodOpts.forEach(o => o.classList.remove('active')); opt.classList.add('active');
+                    periodType = opt.dataset.type;
+                    weekWrap.style.display = (periodType === 'monthly') ? 'none' : 'inline';
+                    updatePeriodText();
+                });
+            });
+            [aoiYearSel, aoiMonthSel, aoiWeekSel].forEach(el => el.addEventListener('change', updatePeriodText));
 
-                resultArea.innerHTML = `<p class="no-line-data-message">데이터 조회 중...</p>`;
+            function getDates() {
+                const y = parseInt(aoiYearSel.value), m = parseInt(aoiMonthSel.value);
+                if(periodType === 'monthly') {
+                    return { start: new Date(y, m-1, 1), end: new Date(y, m, 0) };
+                } else {
+                    const w = parseInt(aoiWeekSel.value);
+                    const sDay = (w-1)*7 + 1;
+                    const eDay = Math.min(w*7, new Date(y, m, 0).getDate());
+                    return { start: new Date(y, m-1, sDay), end: new Date(y, m-1, eDay) };
+                }
+            }
+            function updatePeriodText() {
+                const {start, end} = getDates();
+                const fmt = d => `${d.getMonth()+1}/${d.getDate()}`;
+                infoText.textContent = `${fmt(start)} ~ ${fmt(end)}`;
+            }
+            updatePeriodText();
+
+            document.getElementById('search-aoi-btn').addEventListener('click', async () => {
+                const {start, end} = getDates();
+                const fmt = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+                
+                noMsg.style.display = 'block'; noMsg.innerHTML = '분석 중...';
+                aoiTableContainer.style.display = 'none'; prodTableContainer.style.display = 'none';
+
                 try {
-                    const res = await fetch(`http://127.0.0.1:5000/api/statistics/order_month_summary?order_month=${selectedMonth}&year=${selectedYear}`);
+                    const res = await fetch(`http://127.0.0.1:5000/api/statistics/aoi_performance?start_date=${fmt(start)}&end_date=${fmt(end)}`);
                     const data = await res.json();
-                    renderProductionTable(data);
-                } catch (e) {
-                    console.error(e);
-                    resultArea.innerHTML = `<p class="no-line-data-message">조회 실패: 서버 오류</p>`;
-                }
+                    renderAoi(data);
+                } catch(e) { noMsg.innerHTML = '실패'; }
             });
 
-            function renderProductionTable(data) {
-                if (!data || data.length === 0) {
-                    resultArea.innerHTML = `<p class="no-line-data-message">데이터가 없습니다.</p>`;
-                    return;
+            function renderAoi(data) {
+                if(!data || data.length === 0) { 
+                    noMsg.style.display = 'block'; noMsg.innerHTML = '데이터 없음'; 
+                    return; 
                 }
+                noMsg.style.display = 'none'; 
+                aoiTableContainer.style.display = 'block'; 
 
-                let html = `
-                    <div class="table-container" style="max-height:100%; border:none; background:transparent;">
-                    <table class="statistics-table">
-                        <colgroup><col style="width:35%"><col style="width:25%"><col style="width:25%"><col style="width:15%"></colgroup>
-                        <thead><tr><th>모델명</th><th>총주문량</th><th>실생산총합</th><th>상세</th></tr></thead>
-                        <tbody>`;
-                data.forEach(item => {
-                    let cls = '';
-                    if (item.status === 'shortage') cls = 'stats-problem-yellow';
-                    else if (item.status === 'imbalance') cls = 'stats-problem-red';
+                tbody.innerHTML = data.map(r => {
+                    const s = (v) => v || 0; const sr = (v) => v || '';
+                    const lot = parseInt(r.lot)||0;
                     
-                    html += `<tr>
-                        <td style="font-weight:bold; color:#fff;">${item.model}</td>
-                        <td>${item.totalQuantity.toLocaleString()}</td>
-                        <td class="${cls}">${item.actualProduction.toLocaleString()}</td>
-                        <td><button class="stats-details-btn" data-model="${item.model}" data-year="${item.orderYear}" data-month="${item.orderMonth}"><i class="uil uil-search"></i></button></td>
+                    const periodInsp = parseInt(r.inspection_qty) || 0; 
+                    const totalInsp = parseInt(r.cumulative_qty) || periodInsp;
+                    const pct = lot > 0 ? Math.min((totalInsp / lot) * 100, 100) : 0;
+                    
+                    const barClass = pct >= 100 ? 'qty-progress-fill completed' : 'qty-progress-fill';
+                    const goodColor = r.good_qty < 0 ? 'var(--danger-red)' : 'var(--success-green)';
+
+                    return `
+                    <tr class="upper-row">
+                        <td class="merge-top" style="cursor:pointer;"><div class="row-span-wrapper model-text" data-tooltip="[${r.model}] ${r.period_info}">${r.model}</div></td>
+                        <td class="detail-col group-basic merge-top"><div class="row-span-wrapper"><input value="${s(r.inspection_point)}" readonly></div></td>
+                        
+                        <td class="merge-top"><div class="row-span-wrapper"><input class="qty-input-visible" value="${periodInsp}" readonly></div></td>
+                        
+                        <td class="detail-col group-basic merge-top">
+                            <div class="row-span-wrapper" style="flex-direction:column; padding:0 5px;">
+                                <div class="progress-cell-wrapper">
+                                    <div class="qty-progress-track" title="누적 달성률 ${parseInt(pct)}% (금주: ${periodInsp})">
+                                        <div class="${barClass}" style="width:${pct}%;"></div>
+                                    </div>
+                                    <div class="qty-info-text"><span class="acc-val">${totalInsp}</span><span class="lot-val">/ ${lot}</span></div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="detail-col group-basic good-col merge-top"><div class="row-span-wrapper" style="color:${goodColor}; font-weight: bold;">${s(r.good_qty)}</div></td>
+                        <td class="defect-total-col merge-top"><div class="row-span-wrapper" style="color:var(--danger-red); font-weight:bold;">${s(r.total_defect)}</div></td>
+                        
+                        <td class="detail-col group-a ref-cell group-start"><input type="text" class="ref-input" value="${sr(r.missing_ref)}" readonly placeholder="Ref"></td>
+                        <td class="detail-col group-a ref-cell"><input type="text" class="ref-input" value="${sr(r.wrong_ref)}" readonly placeholder="Ref"></td>
+                        <td class="detail-col group-a ref-cell"><input type="text" class="ref-input" value="${sr(r.reverse_ref)}" readonly placeholder="Ref"></td>
+                        <td class="detail-col group-a ref-cell"><input type="text" class="ref-input" value="${sr(r.skewed_ref)}" readonly placeholder="Ref"></td>
+                        <td class="detail-col group-a ref-cell group-end"><input type="text" class="ref-input" value="${sr(r.flipped_ref)}" readonly placeholder="Ref"></td>
+
+                        <td class="detail-col group-b ref-cell group-start"><input type="text" class="ref-input" value="${sr(r.damaged_ref)}" readonly placeholder="Ref"></td>
+                        <td class="detail-col group-b ref-cell"><input type="text" class="ref-input" value="${sr(r.manhattan_ref)}" readonly placeholder="Ref"></td>
+                        <td class="detail-col group-b ref-cell group-end"><input type="text" class="ref-input" value="${sr(r.detached_ref)}" readonly placeholder="Ref"></td>
+
+                        <td class="detail-col group-c ref-cell group-start"><input type="text" class="ref-input" value="${sr(r.cold_ref)}" readonly placeholder="Ref"></td>
+                        <td class="detail-col group-c ref-cell"><input type="text" class="ref-input" value="${sr(r.unsoldered_ref)}" readonly placeholder="Ref"></td>
+                        <td class="detail-col group-c ref-cell group-end"><input type="text" class="ref-input" value="${sr(r.short_ref)}" readonly placeholder="Ref"></td>
+
+                        <td class="detail-col group-d ref-cell group-start"><input type="text" class="ref-input" value="${sr(r.material_ref)}" readonly placeholder="Ref"></td>
+                        <td class="detail-col group-d ref-cell group-end"><input type="text" class="ref-input" value="${sr(r.dip_ref)}" readonly placeholder="Ref"></td>
+                    </tr>
+                    <tr class="lower-row">
+                        <td class="merge-bottom"></td>
+                        <td class="detail-col group-basic merge-bottom"></td>
+                        <td class="merge-bottom"></td>
+                        <td class="detail-col group-basic merge-bottom"></td>
+                        <td class="detail-col group-basic good-col merge-bottom"></td>
+                        <td class="defect-total-col merge-bottom"></td>
+
+                        <td class="detail-col group-a qty-cell group-start"><input type="number" value="${s(r.missing)}" readonly></td>
+                        <td class="detail-col group-a qty-cell"><input type="number" value="${s(r.wrong)}" readonly></td>
+                        <td class="detail-col group-a qty-cell"><input type="number" value="${s(r.reverse)}" readonly></td>
+                        <td class="detail-col group-a qty-cell"><input type="number" value="${s(r.skewed)}" readonly></td>
+                        <td class="detail-col group-a qty-cell group-end"><input type="number" value="${s(r.flipped)}" readonly></td>
+
+                        <td class="detail-col group-b qty-cell group-start"><input type="number" value="${s(r.damaged)}" readonly></td>
+                        <td class="detail-col group-b qty-cell"><input type="number" value="${s(r.manhattan)}" readonly></td>
+                        <td class="detail-col group-b qty-cell group-end"><input type="number" value="${s(r.detached)}" readonly></td>
+
+                        <td class="detail-col group-c qty-cell group-start"><input type="number" value="${s(r.cold)}" readonly></td>
+                        <td class="detail-col group-c qty-cell"><input type="number" value="${s(r.unsoldered)}" readonly></td>
+                        <td class="detail-col group-c qty-cell group-end"><input type="number" value="${s(r.short)}" readonly></td>
+
+                        <td class="detail-col group-d qty-cell group-start"><input type="number" value="${s(r.material)}" readonly></td>
+                        <td class="detail-col group-d qty-cell group-end"><input type="number" value="${s(r.dip)}" readonly></td>
                     </tr>`;
-                });
-                html += `</tbody></table></div>`;
-                resultArea.innerHTML = html;
+                }).join('');
             }
 
-            // ================================================================
-            // 3. AOI 검사 기록 분석 (신규 기능)
-            // ================================================================
-            searchAoiBtn.addEventListener('click', async () => {
-                const sDate = aoiStartInput.value;
-                const eDate = aoiEndInput.value;
+            // [레퍼런스 뷰어]
+            const viewer = document.getElementById('global-tooltip');
+            const editorText = document.getElementById('editor-textarea');
+            const tableEl = document.getElementById('aoi-table-main');
 
-                if (!sDate || !eDate) { alert('시작일과 종료일을 모두 선택하세요.'); return; }
+            function updateEditorPosition(targetEl) {
+                if (!targetEl || viewer.style.display === 'none') return;
+                const rect = targetEl.getBoundingClientRect();
+                viewer.classList.remove('pos-right', 'pos-left');
+                const topPos = (rect.top + window.scrollY + (rect.height/2)) - 26;
+                let leftPos;
+                if (rect.right + 250 + 20 < window.innerWidth) {
+                    leftPos = rect.right + 12; viewer.classList.add('pos-right');
+                } else {
+                    leftPos = rect.left - 250 - 12; viewer.classList.add('pos-left');
+                }
+                viewer.style.top = `${topPos}px`; viewer.style.left = `${leftPos}px`;
+            }
 
-                resultArea.innerHTML = `<p class="no-line-data-message">AOI 기록 분석 중...</p>`;
-                try {
-                    const res = await fetch(`http://127.0.0.1:5000/api/statistics/aoi_performance?start_date=${sDate}&end_date=${eDate}`);
-                    const data = await res.json();
-                    renderAoiTable(data);
-                } catch (e) {
-                    console.error(e);
-                    resultArea.innerHTML = `<p class="no-line-data-message">분석 실패: 서버 오류</p>`;
+            tableEl.addEventListener('click', (e) => {
+                const target = e.target;
+                if(target.classList.contains('ref-input') && target.value.trim() !== '' && target.value !== '0') {
+                    editorText.value = target.value.replace(/,\s*/g, '\n');
+                    viewer.style.display = 'block';
+                    updateEditorPosition(target);
+                    e.stopPropagation();
                 }
             });
 
-            function renderAoiTable(data) {
-                if (!data || data.length === 0) {
-                    resultArea.innerHTML = `<p class="no-line-data-message">해당 기간의 검사 기록이 없습니다.</p>`;
-                    return;
+            document.addEventListener('click', (e) => {
+                if(!viewer.contains(e.target)) {
+                    viewer.style.display = 'none';
                 }
+            });
 
-                // 가로 스크롤이 생길 수 있으므로 최소 너비 지정
+            // [모델명 호버 툴팁]
+            const modelTooltip = document.getElementById('model-tooltip-simple');
+            document.addEventListener('mouseover', (e) => {
+                const target = e.target.closest('.model-text');
+                if (target) {
+                    const text = target.dataset.tooltip;
+                    if (text) {
+                        modelTooltip.textContent = text; modelTooltip.style.display = 'block';
+                        const rect = target.getBoundingClientRect();
+                        modelTooltip.style.top = (rect.top + 30) + 'px'; modelTooltip.style.left = (rect.right + 10) + 'px';
+                    }
+                }
+            });
+            document.addEventListener('mouseout', (e) => {
+                if (e.target.closest('.model-text')) modelTooltip.style.display = 'none';
+            });
+
+            // [생산실적 조회]
+            const searchProdBtn = document.getElementById('search-prod-btn');
+            searchProdBtn.addEventListener('click', async () => {
+                const mm = monthSelect.value, yy = yearInput.value;
+                if(!mm || !yy) { alert('선택 필요'); return; }
+                
+                noMsg.style.display = 'block'; noMsg.innerHTML = '조회 중...';
+                aoiTableContainer.style.display = 'none'; prodTableContainer.style.display = 'none';
+
+                try {
+                    const res = await fetch(`http://127.0.0.1:5000/api/statistics/order_month_summary?order_month=${mm}&year=${yy}`);
+                    const data = await res.json();
+                    renderProdTable(data);
+                } catch(e) { noMsg.innerHTML = '실패'; }
+            });
+
+            // [수정된 함수] 생산 실적 테이블 렌더링 (2단 레이아웃 + 열 병합)
+            function renderProdTable(data) {
+                if(!data || data.length===0) { 
+                    noMsg.style.display = 'block'; noMsg.innerHTML='데이터 없음'; 
+                    return; 
+                }
+                noMsg.style.display='none'; 
+                prodTableContainer.style.display = 'block'; 
+
                 let html = `
-                    <div class="table-container" style="max-height:100%; border:none; background:transparent; overflow:auto;">
-                    <table class="statistics-table" style="min-width: 1300px;">
+                    <table class="statistics-table" style="width:100%; table-layout:fixed; border-collapse: separate; border-spacing: 0;">
                         <colgroup>
-                            <col style="width: 280px;"> <col style="width: 90px;">  <col style="width: 220px;"> <col style="width: 90px;">  <col style="width: 90px;">  <col style="width: 80px;">  <col style="width: auto;">  </colgroup>
+                            <col style="width: 22%;"> <col style="width: 22%;"> <col style="width: 1px;"> <col style="width: 10px;"> <col style="width: 22%;"> <col style="width: 22%;"> </colgroup>
                         <thead>
                             <tr>
-                                <th>모델명 (주문월)</th>
-                                <th>LOT</th>
-                                <th>검사 기간</th>
-                                <th>검사수량</th>
-                                <th>총불량</th>
-                                <th>불량률</th>
-                                <th>주요 불량 내역 (합산)</th>
+                                <th>모델명</th>
+                                <th>LOT / 실생산</th>
+                                <th style="padding:0; background:transparent; border:none;"></th>
+                                <th style="padding:0; background:transparent; border:none;"></th>
+                                <th>모델명</th>
+                                <th>LOT / 실생산</th>
                             </tr>
                         </thead>
                         <tbody>`;
 
-                data.forEach(row => {
-                    const rate = row.inspection_qty > 0 ? ((row.total_defect / row.inspection_qty) * 100).toFixed(2) : 0;
-                    const rateColor = rate > 0 ? 'var(--danger-red)' : 'var(--success-green)';
+                for(let i=0; i<data.length; i+=2) {
+                    const item1 = data[i];
+                    const item2 = data[i+1];
                     
-                    // 불량 내역 문자열 생성
-                    let defectDetails = [];
-                    const defectTypes = [
-                        { key: 'missing', label: '미삽' }, { key: 'wrong', label: '오삽' },
-                        { key: 'reverse', label: '역삽' }, { key: 'skewed', label: '틀어짐' },
-                        { key: 'flipped', label: '뒤집힘' }, { key: 'damaged', label: '파손' },
-                        { key: 'manhattan', label: '맨하탄' }, { key: 'detached', label: '이탈' },
-                        { key: 'cold', label: '냉납' }, { key: 'unsoldered', label: '미납' },
-                        { key: 'short', label: '쇼트' }, { key: 'material', label: '자재' },
-                        { key: 'dip', label: 'DIP' }
-                    ];
-
-                    defectTypes.forEach(type => {
-                        const qty = row[type.key] || 0;
-                        if (qty > 0) {
-                            const refs = row[`${type.key}_ref`] || '';
-                            let text = `<span class="defect-item"><span class="defect-count">${type.label} ${qty}</span>`;
-                            if (refs) text += `<span class="ref-text">(${refs})</span>`;
-                            text += `</span>`;
-                            defectDetails.push(text);
-                        }
-                    });
-
-                    const detailHtml = defectDetails.length > 0 ? defectDetails.join('') : '<span style="color:#666;">무결점 (Zero Defect)</span>';
-
-                    html += `<tr>
-                        <td style="font-weight:bold; text-align:left; padding-left:15px;">
-                            ${row.model}<br>
-                            <span style="font-size:0.8rem; color:#888;">${row.order_year}년 ${row.order_month}</span>
-                        </td>
-                        <td>${row.lot}</td>
-                        <td style="font-size:0.85rem; color:#ccc;">${row.period_info}</td>
-                        <td>${row.inspection_qty.toLocaleString()}</td>
-                        <td style="color:var(--danger-red); font-weight:bold;">${row.total_defect.toLocaleString()}</td>
-                        <td style="color:${rateColor}; font-weight:bold;">${rate}%</td>
-                        <td class="aoi-detail-cell">${detailHtml}</td>
-                    </tr>`;
-                });
-
-                html += `</tbody></table></div>`;
-                resultArea.innerHTML = html;
+                    html += `<tr>`;
+                    html += createProdCells(item1);
+                    
+                    // 중앙 구분선 및 여백
+                    html += `<td style="padding:0; background:rgba(255,255,255,0.1); border:none;"></td>`; 
+                    html += `<td style="padding:0; border:none;"></td>`; 
+                    
+                    if (item2) {
+                        html += createProdCells(item2);
+                    } else {
+                        html += `<td></td><td></td>`; // 빈 셀
+                    }
+                    html += `</tr>`;
+                }
+                html += `</tbody></table>`;
+                
+                prodTableContainer.innerHTML = html;
             }
 
-            // ================================================================
-            // 4. 생산 실적 상세 모달 (기존 기능)
-            // ================================================================
-            const detailsModal = document.getElementById('details-modal');
-            const closeDetailsModalBtn = document.getElementById('close-details-modal-btn');
-            const detailsModalContent = document.getElementById('details-modal-content');
-            const detailsModalTitle = document.getElementById('details-modal-title');
+            // [신규 함수] 생산 실적 셀 생성기
+            function createProdCells(item) {
+                // 상태별 색상 클래스 (기존 로직 유지)
+                let statusClass = '';
+                if (item.status === 'shortage') statusClass = 'stats-problem-yellow';
+                else if (item.status === 'imbalance') statusClass = 'stats-problem-red';
+                
+                const lot = item.totalQuantity.toLocaleString();
+                const actual = item.actualProduction.toLocaleString();
+                
+                // 모델명 / [LOT / 실생산(클릭가능)]
+                return `
+                    <td style="color:#fff; font-weight:bold; text-align:center;">${item.model}</td>
+                    <td style="text-align:center;">
+                        <span class="stats-lot-val">${lot}</span>
+                        <span style="color:#666; margin:0 5px;">/</span>
+                        <span class="stats-clickable-val ${statusClass}" 
+                              data-model="${item.model}" 
+                              data-year="${item.orderYear}" 
+                              data-month="${item.orderMonth}">
+                            ${actual}
+                        </span>
+                    </td>
+                `;
+            }
 
-            document.addEventListener('click', async (e) => {
-                if (e.target.closest('.stats-details-btn')) {
-                    const btn = e.target.closest('.stats-details-btn');
-                    const model = btn.dataset.model;
-                    const year = btn.dataset.year;
-                    const month = btn.dataset.month;
-                    
-                    detailsModalTitle.textContent = `${model} (${year}년 ${month}) 상세`;
-                    detailsModalContent.innerHTML = '<p class="no-line-data-message">로딩중...</p>';
-                    detailsModal.classList.add('visible');
-                    
-                    try {
-                        const res = await fetch(`http://127.0.0.1:5000/api/statistics/model_details?model=${encodeURIComponent(model)}&year=${year}&month=${encodeURIComponent(month)}`);
-                        const data = await res.json();
-                        
-                        if (!data || data.length === 0) {
-                            detailsModalContent.innerHTML = '<p class="no-line-data-message">상세 데이터가 없습니다.</p>';
-                            return;
-                        }
-
-                        let html = `
-                            <div class="table-container">
-                            <table class="statistics-table">
-                                <thead><tr><th>주차</th><th>라인</th><th>T/B</th><th>LOT</th><th>실적</th></tr></thead>
-                                <tbody>`;
-                        
-                        data.forEach(item => {
-                            // 주차 표시 (YY-MM-WK)
-                            const wkStr = `${String(item.prod_year).slice(-2)}-${item.prod_month}-${item.prod_week}`;
-                            // 링크 생성
-                            const link = `production.html?year=${item.prod_year}&month=${item.prod_month}&week=${item.prod_week}`;
-                            
-                            html += `<tr>
-                                <td><a href="${link}" style="color:var(--point-gold); text-decoration:underline;">${wkStr}</a></td>
-                                <td>${item.line}</td>
-                                <td>${item.tb}</td>
-                                <td>${item.lot}</td>
-                                <td>${item.actualProd}</td>
-                            </tr>`;
-                        });
-                        html += `</tbody></table></div>`;
-                        detailsModalContent.innerHTML = html;
-
-                    } catch(e) { 
-                        console.error(e);
-                        detailsModalContent.innerHTML = '<p class="no-line-data-message">로드 실패</p>'; 
-                    }
+            // [생산실적 상세 모달] 클릭 리스너 수정 (기존 버튼 -> 새로운 클릭 요소)
+            const modal = document.getElementById('details-modal');
+            const mContent = document.getElementById('details-modal-content');
+            const mTitle = document.getElementById('details-modal-title');
+            document.addEventListener('click', async(e)=>{
+                // .stats-details-btn 대신 .stats-clickable-val 사용
+                const target = e.target.closest('.stats-clickable-val');
+                if(target){
+                    const {model,year,month}=target.dataset;
+                    mTitle.textContent=`${model} 상세`; modal.classList.add('visible');
+                    try{
+                        const res=await fetch(`http://127.0.0.1:5000/api/statistics/model_details?model=${encodeURIComponent(model)}&year=${year}&month=${encodeURIComponent(month)}`);
+                        const d=await res.json();
+                        let html=`<table class="statistics-table" style="width:100%"><thead><tr><th>주차</th><th>라인</th><th>T/B</th><th>LOT</th><th>실적</th></tr></thead><tbody>`;
+                        d.forEach(r=>html+=`<tr><td>${r.prod_week}주</td><td>${r.line}</td><td>${r.tb}</td><td>${r.lot}</td><td>${r.actualProd}</td></tr>`);
+                        html+=`</tbody></table>`;
+                        mContent.innerHTML=html;
+                    }catch(err){mContent.innerHTML='오류';}
                 }
             });
+            document.getElementById('close-details-modal-btn').onclick=()=>modal.classList.remove('visible');
 
-            closeDetailsModalBtn.addEventListener('click', () => detailsModal.classList.remove('visible'));
-            detailsModal.addEventListener('click', (e) => {
-                if (e.target === detailsModal) detailsModal.classList.remove('visible');
-            });
-
-            // 시계 및 네비게이션
-            function updateTime() {
-                const now = new Date();
-                const str = `${now.getFullYear()}년 ${now.getMonth()+1}월 ${now.getDate()}일 ${now.getHours()}시 ${now.getMinutes()}분`;
-                document.getElementById('current-time').textContent = str;
+            // 공통
+            function updateTime(){
+                const n=new Date();
+                document.getElementById('current-time').textContent = n.toLocaleString('ko-KR',{year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'});
             }
-            setInterval(updateTime, 1000);
-            updateTime();
-
-            document.getElementById('home-btn').addEventListener('click', () => window.location.href = 'index.html');
-            document.getElementById('back-btn').addEventListener('click', () => window.location.href = 'production.html');
-            document.getElementById('forward-btn').addEventListener('click', () => history.forward());
-
-            // 권한 체크
-            const userRole = localStorage.getItem('ppms_user_role');
-            if (!userRole) { window.location.href = 'login.html'; return; }
+            setInterval(updateTime,1000); updateTime();
+            document.getElementById('home-btn').onclick=()=>location.href='index.html';
+            document.getElementById('back-btn').onclick=()=>location.href='production.html';
+            document.getElementById('forward-btn').onclick=()=>history.forward();
         });
     </script>
 </body>
