@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PPMS - 공정 기준정보 관리</title>
+
+    <link rel="stylesheet" href="common.css">
+
+    <link href="https://hangeul.pstatic.net/hangeul_static/css/bmdohyeon.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unicons.iconscout.com/release/v2.1.9/css/unicons.css">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script type="text/javascript" src="https://unpkg.com/vis-network@9.1.2/standalone/umd/vis-network.min.js"></script>
+    <script src="auth.js"></script>
+
+    <style>
+        /* -------------------------------------------------------------
+           [Core Layout]
+           ------------------------------------------------------------- */
+        body {
+            overflow: hidden;
+            background-color: #1a1b21;
+            font-family: 'BMDOHYEON', sans-serif;
+        }
+
+        .content-area {
+            padding: 0 !important;
+            position: relative;
+            overflow: hidden;
+            height: calc(100vh - 140px);
+            background-color: #1a1b21;
+            background-image:
+                linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+
+        /* -------------------------------------------------------------
+           [Hybrid Rendering Layer]
+           ------------------------------------------------------------- */
+        #vis-network-layer {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            outline: none;
+            z-index: 1;
+        }
+
+        #html-node-layer {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            z-index: 2;
+            overflow: hidden;
+        }
+
+        /* -------------------------------------------------------------
+           [Custom Node Style]
+           ------------------------------------------------------------- */
+        .custom-node {
+            position: absolute;
+            transform: translate(-50%, -50%);
+            pointer-events: auto;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-color: #1a1b21;
+            border-radius: 4px;
+            width: max-content;
+            min-width: auto;
+            padding: 5px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .custom-node:hover {
+            transform: translate(-50%, -55%);
+            z-index: 10;
+        }
+
+        .node-mask {
+            overflow: hidden;
+            position: relative;
+            padding: 2px 5px;
+        }
+
+        .node-link {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            transform: translateY(100%);
+        }
+
+        .node-text {
+            position: relative;
+            font-family: "BMDOHYEON", sans-serif;
+            font-size: 24px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: transparent;
+            -webkit-text-stroke: 1px rgba(235, 235, 235, 0.8);
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .node-text::after {
+            content: attr(data-text);
+            position: absolute;
+            left: 0;
+            top: 0;
+            color: #ffffff;
+            clip-path: polygon(0 100%, 100% 100%, 100% 100%, 0 100%);
+            transition: clip-path 300ms ease;
+            -webkit-text-stroke: 0;
+        }
+
+        .custom-node:hover .node-text::after {
+            clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+        }
+
+        .custom-node:hover .node-text {
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+        }
+
+        .node-line {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 2px;
+            width: 100%;
+            background: #ffffff;
+            transform: scaleX(0);
+            transform-origin: left center;
+        }
+
+        /* -------------------------------------------------------------
+           [UI Components]
+           ------------------------------------------------------------- */
+        .map-toolbar {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 100;
+            background: #252630;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .tool-btn {
+            width: 40px;
+            height: 40px;
+            background: transparent;
+            color: #aaa;
+            border: 1px solid transparent;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            transition: all 0.2s;
+        }
+
+        .tool-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+
+        .property-panel {
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            width: 420px;
+            max-width: 90vw;
+            background: #23242d;
+            border-left: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: -5px 0 30px rgba(0, 0, 0, 0.5);
+            transform: translateX(100%);
+            transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+            z-index: 200;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .property-panel.open {
+            transform: translateX(0);
+        }
+
+        .panel-header {
+            height: 60px;
+            padding: 0 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #1f2029;
+        }
+
+        .panel-title {
+            color: #fff;
+            font-family: 'BMDOHYEON';
+            font-weight: normal;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: #666;
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+
+        .close-btn:hover {
+            color: #fff;
+        }
+
+        .panel-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        /* --- Panel UI Elements --- */
+        .input-group {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .panel-input {
+            flex: 1;
+            background: #1a1b21;
+            border: 1px solid #444;
+            color: #fff;
+            padding: 10px;
+            border-radius: 4px;
+            outline: none;
+            font-family: 'BMDOHYEON';
+        }
+
+        .panel-btn {
+            background: #102770;
+            color: #fff;
+            border: none;
+            padding: 0 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'BMDOHYEON';
+            white-space: nowrap;
+        }
+
+        .list-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.03);
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 5px;
+            font-family: 'BMDOHYEON';
+            transition: 0.2s;
+            border: 1px solid transparent;
+        }
+
+        .list-row.clickable:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.2);
+            cursor: pointer;
+        }
+
+        .del-row-btn {
+            color: #555;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 5px;
+        }
+
+        .del-row-btn:hover {
+            color: #ff4444;
+        }
+
+        /* 계층형 UI (Nav) */
+        .nav-breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-bottom: 20px;
+            color: #888;
+            font-size: 0.9rem;
+        }
+
+        .nav-breadcrumb span.active {
+            color: #fff;
+            font-weight: bold;
+        }
+
+        .nav-breadcrumb i {
+            font-size: 1.2rem;
+        }
+
+        .nav-btn {
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .nav-btn:hover {
+            color: #fff;
+        }
+
+        /* 데이터 카드 스타일 */
+        .data-card {
+            background: #2b2c3b;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .data-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .data-title {
+            color: #ccc;
+            font-weight: bold;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-badge {
+            font-size: 0.75rem;
+            padding: 2px 8px;
+            border-radius: 10px;
+            background: #444;
+            color: #aaa;
+        }
+
+        .status-badge.active {
+            background: #1a3b8e;
+            color: #fff;
+        }
+
+        .code-area {
+            width: 100%;
+            height: 100px;
+            background: #15151a;
+            border: 1px solid #333;
+            color: #ddd;
+            font-family: 'Roboto Mono', monospace;
+            font-size: 0.8rem;
+            padding: 10px;
+            border-radius: 4px;
+            outline: none;
+            resize: vertical;
+        }
+
+        #context-menu {
+            display: none;
+            position: fixed;
+            z-index: 500;
+            background: #2b2c3b;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            padding: 5px 0;
+            min-width: 160px;
+        }
+
+        .ctx-item {
+            padding: 10px 15px;
+            color: #ccc;
+            cursor: pointer;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: 'BMDOHYEON';
+        }
+
+        .ctx-item:hover {
+            background: #102770;
+            color: #fff;
+        }
+
+        .ctx-separator {
+            height: 1px;
+            background: rgba(255, 255, 255, 0.1);
+            margin: 5px 0;
+        }
+
+        .info-placeholder {
+            text-align: center;
+            color: #666;
+            margin-top: 50px;
+            padding: 20px;
+            border: 2px dashed #333;
+            border-radius: 10px;
+            font-family: 'BMDOHYEON';
+        }
+    </style>
+</head>
+
+<body>
+    <div class="page-container">
+        <header class="main-header">
+            <div class="header-left">
+                <div class="common-box clickable-box" onclick="location.href='admin.html'">
+                    <i class="uil uil-arrow-left"></i> 관리자 홈
+                </div>
+            </div>
+            <div class="header-center">
+                <div class="common-box">공정 기준정보 관리</div>
+            </div>
+            <div class="header-right">
+                <div class="common-box time-display" id="current-time"></div>
+            </div>
+        </header>
+
+        <main class="content-area">
+            <div id="vis-network-layer"></div>
+            <div id="html-node-layer"></div>
+
+            <div class="map-toolbar">
+                <div class="tool-btn" id="btn-add-root" title="최상위 그룹 추가"><i class="uil uil-sitemap"></i></div>
+                <div class="tool-btn" id="btn-fit" title="화면 맞춤"><i class="uil uil-focus-target"></i></div>
+                <div class="tool-btn" id="btn-refresh" title="새로고침"><i class="uil uil-refresh"></i></div>
+            </div>
+
+            <div class="property-panel" id="detail-panel">
+                <div class="panel-header">
+                    <div class="panel-title" id="panel-title-text"></div>
+                    <button class="close-btn" id="close-panel"><i class="uil uil-multiply"></i></button>
+                </div>
+                <div class="panel-content" id="panel-content"></div>
+            </div>
+
+            <div id="context-menu">
+                <div class="ctx-item" id="ctx-add-child"><i class="uil uil-plus-circle"></i> 하위 항목 추가</div>
+                <div class="ctx-item" id="ctx-rename"><i class="uil uil-pen"></i> 이름 변경</div>
+                <div class="ctx-separator"></div>
+                <div class="ctx-item" id="ctx-delete" style="color:#ff6b6b;"><i class="uil uil-trash-alt"></i> 삭제</div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        let network = null;
+        let nodes = new vis.DataSet([]);
+        let edges = new vis.DataSet([]);
+        let selectedNodeId = null;
+        const htmlLayer = document.getElementById('html-node-layer');
+
+        // [초기 데이터]
+        const initialData = {
+            nodes: [
+                { id: 1, label: 'PPMS 생산관리', level: 0, group: 'root' },
+                { id: 2, label: '생산', level: 1, group: 'group', parent: 1 },
+                { id: 3, label: '검사', level: 1, group: 'group', parent: 1 },
+                { id: 4, label: '기능', level: 1, group: 'group', parent: 1 },
+                // [중요] dataType이 API 엔드포인트 또는 로직 키
+                { id: 21, label: '업체', level: 2, group: 'data', parent: 2, dataType: 'companies' },
+                { id: 22, label: '담당자', level: 2, group: 'data', parent: 2, dataType: 'managers' },
+                { id: 31, label: 'BOM/좌표', level: 2, group: 'data', parent: 3, dataType: 'bom_coords' }
+            ],
+            edges: [
+                { from: 1, to: 2 }, { from: 1, to: 3 }, { from: 1, to: 4 },
+                { from: 2, to: 21 }, { from: 2, to: 22 },
+                { from: 3, to: 31 }
+            ]
+        };
+
+        const options = {
+            layout: {
+                hierarchical: {
+                    enabled: true, direction: 'UD', sortMethod: 'directed',
+                    levelSeparation: 160, nodeSpacing: 280, treeSpacing: 300,
+                    blockShifting: true, edgeMinimization: true, parentCentralization: true, shakeTowards: 'leaves'
+                }
+            },
+            physics: false,
+            nodes: {
+                opacity: 0,
+                shape: 'box',
+                margin: 30,
+                widthConstraint: { minimum: 220, maximum: 300 },
+                heightConstraint: { minimum: 60 }
+            },
+            edges: {
+                width: 2,
+                color: { color: '#666', highlight: '#ffeba7' },
+                smooth: { type: 'cubicBezier', forceDirection: 'vertical', roundness: 0.2 },
+                dashes: false,
+                arrows: { to: { enabled: false } },
+                chosen: false
+            },
+            interaction: {
+                dragNodes: false, hover: true, dragView: true, zoomView: true,
+                selectConnectedEdges: false
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initGraph();
+            setupEvents();
+            setInterval(updateTime, 1000); updateTime();
+        });
+
+        function initGraph() {
+            nodes = new vis.DataSet(initialData.nodes);
+            edges = new vis.DataSet(initialData.edges);
+
+            const container = document.getElementById('vis-network-layer');
+            const data = { nodes: nodes, edges: edges };
+
+            network = new vis.Network(container, data, options);
+
+            network.on("afterDrawing", function () {
+                renderHtmlNodes();
+            });
+
+            network.on("click", function (params) {
+                if (params.nodes.length === 0) {
+                    document.getElementById('context-menu').style.display = 'none';
+                    closePanel();
+                }
+            });
+
+            network.on("oncontext", function (params) {
+                if (params.nodes.length === 0) {
+                    params.event.preventDefault();
+                    showContextMenu(null, params.pointer.DOM);
+                }
+            });
+        }
+
+        // HTML 노드 렌더링
+        function renderHtmlNodes() {
+            const nodeIds = nodes.getIds();
+            const positions = network.getPositions(nodeIds);
+
+            nodeIds.forEach(id => {
+                const pos = network.canvasToDOM(positions[id]);
+                let el = document.getElementById(`node-${id}`);
+                const nodeData = nodes.get(id);
+
+                if (!el) {
+                    el = createNodeElement(nodeData);
+                    htmlLayer.appendChild(el);
+
+                    const tl = gsap.timeline();
+                    tl.fromTo(el.querySelector('.node-line'),
+                        { scaleX: 0 },
+                        { duration: 0.65, scaleX: 1, ease: "Expo.inOut" }
+                    )
+                        .fromTo(el.querySelector('.node-link'),
+                            { translateY: "100%" },
+                            { duration: 1.25, translateY: "0%", ease: "elastic.inOut(1, 0.5)" },
+                            "-=0.5"
+                        );
+                }
+
+                el.style.left = `${pos.x}px`;
+                el.style.top = `${pos.y}px`;
+            });
+
+            const htmlNodes = document.querySelectorAll('.custom-node');
+            htmlNodes.forEach(el => {
+                const id = parseInt(el.id.replace('node-', ''));
+                if (!nodes.get(id)) el.remove();
+            });
+        }
+
+        function createNodeElement(data) {
+            const div = document.createElement('div');
+            div.id = `node-${data.id}`;
+            div.className = 'custom-node';
+            const labelText = data.label ? data.label.replace(/\n/g, '<br>') : 'Node';
+
+            div.innerHTML = `
+                <div class="node-mask">
+                    <div class="node-link">
+                        <span class="node-text" data-text="${labelText.replace(/<br>/g, ' ')}">${labelText}</span>
+                    </div>
+                </div>
+                <div class="node-line"></div>
+            `;
+
+            div.addEventListener('click', (e) => {
+                e.stopPropagation();
+                document.getElementById('context-menu').style.display = 'none';
+                openPropertyPanel(data.id);
+            });
+
+            div.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                selectedNodeId = data.id;
+                showContextMenu(data.id, { x: e.clientX, y: e.clientY });
+            });
+
+            return div;
+        }
+
+        function showContextMenu(nodeId, position) {
+            const menu = document.getElementById('context-menu');
+            menu.style.top = position.y + 'px';
+            menu.style.left = position.x + 'px';
+            menu.style.display = 'block';
+
+            const addBtn = document.getElementById('ctx-add-child');
+            const delBtn = document.getElementById('ctx-delete');
+            const renBtn = document.getElementById('ctx-rename');
+
+            if (nodeId) {
+                addBtn.innerHTML = '<i class="uil uil-plus-circle"></i> 하위 항목 추가';
+                delBtn.style.display = 'flex';
+                renBtn.style.display = 'flex';
+            } else {
+                selectedNodeId = null;
+                addBtn.innerHTML = '<i class="uil uil-sitemap"></i> 최상위 그룹 생성';
+                delBtn.style.display = 'none';
+                renBtn.style.display = 'none';
+            }
+        }
+
+        // =========================================================================
+        // [Panel & Data Logic] - Hierarchical Manager
+        // =========================================================================
+
+        function openPropertyPanel(nodeId) {
+            const node = nodes.get(nodeId);
+            const panel = document.getElementById('detail-panel');
+            const titleEl = document.getElementById('panel-title-text');
+            const contentEl = document.getElementById('panel-content');
+
+            titleEl.innerHTML = `<i class="uil uil-cube"></i> ${node.label.replace('\n', ' ')}`;
+            contentEl.innerHTML = '';
+
+            if (node.dataType) {
+                if (node.dataType === 'bom_coords') {
+                    // [핵심] 계층형 관리 UI (업체 -> 모델 -> 데이터)
+                    renderHierarchyManager(contentEl);
+                } else {
+                    // 단순 목록 UI (업체, 담당자)
+                    renderSimpleListUI(node.dataType, contentEl);
+                }
+            } else {
+                contentEl.innerHTML = `
+                    <div class="info-placeholder">
+                        <i class="uil uil-folder-open"></i>
+                        <p style="color:#ccc; margin-bottom:10px;">${node.label.replace('\n', ' ')}</p>
+                        <p style="font-size:0.85rem;">하위 항목을 포함하는 그룹입니다.</p>
+                    </div>`;
+            }
+            panel.classList.add('open');
+        }
+
+        function closePanel() {
+            document.getElementById('detail-panel').classList.remove('open');
+        }
+
+        // --- 1. 단순 리스트 (업체, 담당자) ---
+        async function renderSimpleListUI(apiType, container) {
+            const formHTML = `
+                <div class="input-group">
+                    <input type="text" id="panel-input-name" class="panel-input" placeholder="새 항목 입력">
+                    <button class="panel-btn" onclick="addSimpleItem('${apiType}')">추가</button>
+                </div>
+                <div id="panel-list-area" style="display:flex; flex-direction:column; gap:5px;">
+                    <div style="text-align:center; color:#666; padding:20px;"><i class="uil uil-spinner-alt uil-spin"></i> 로딩 중...</div>
+                </div>
+            `;
+            container.innerHTML = formHTML;
+            loadSimpleItems(apiType);
+
+            // 엔터키
+            setTimeout(() => {
+                const input = document.getElementById('panel-input-name');
+                if (input) input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') addSimpleItem(apiType);
+                });
+            }, 100);
+        }
+
+        async function loadSimpleItems(apiType) {
+            const listArea = document.getElementById('panel-list-area');
+            try {
+                const res = await fetch(`http://127.0.0.1:5000/api/production/${apiType}`);
+                const items = await res.json();
+
+                if (items.length === 0) {
+                    listArea.innerHTML = '<div style="text-align:center; color:#555; padding:20px;">데이터가 없습니다.</div>';
+                } else {
+                    let html = '';
+                    items.forEach(item => {
+                        html += `
+                            <div class="list-row">
+                                <span>${item.name}</span>
+                                <button class="del-row-btn" onclick="deleteSimpleItem('${apiType}', ${item.id})"><i class="uil uil-trash-alt"></i></button>
+                            </div>`;
+                    });
+                    listArea.innerHTML = html;
+                }
+            } catch (e) {
+                listArea.innerHTML = '<div style="color:#ff4444;">로드 실패</div>';
+            }
+        }
+
+        window.addSimpleItem = async function (type) {
+            const input = document.getElementById('panel-input-name');
+            const name = input.value.trim();
+            if (!name) return;
+            try {
+                await fetch(`http://127.0.0.1:5000/api/production/${type}`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name })
+                });
+                loadSimpleItems(type);
+                input.value = '';
+            } catch (e) { alert('오류 발생'); }
+        };
+
+        window.deleteSimpleItem = async function (type, id) {
+            if (!confirm('삭제하시겠습니까?')) return;
+            try {
+                await fetch(`http://127.0.0.1:5000/api/production/${type}/${id}`, { method: 'DELETE' });
+                loadSimpleItems(type);
+            } catch (e) { alert('오류 발생'); }
+        };
+
+
+        // --- 2. 계층형 관리 (BOM/좌표) ---
+        // State for Hierarchy
+        let currentCompany = null;
+        let currentModel = null;
+
+        function renderHierarchyManager(container) {
+            currentCompany = null;
+            currentModel = null;
+            showCompanyListView(container);
+        }
+
+        // [View 1] 업체 선택
+        async function showCompanyListView(container) {
+            container.innerHTML = `
+                <div class="nav-breadcrumb">
+                    <span class="active"><i class="uil uil-building"></i> 업체 선택</span>
+                </div>
+                <div id="hier-list-area" style="display:flex; flex-direction:column; gap:5px;">
+                    <div style="text-align:center; color:#666; padding:20px;"><i class="uil uil-spinner-alt uil-spin"></i> 로딩 중...</div>
+                </div>
+            `;
+
+            const listArea = document.getElementById('hier-list-area');
+            try {
+                const res = await fetch(`http://127.0.0.1:5000/api/production/companies`);
+                const items = await res.json();
+
+                if (items.length === 0) {
+                    listArea.innerHTML = '<div style="text-align:center; color:#555;">등록된 업체가 없습니다.<br>먼저 업체를 추가하세요.</div>';
+                } else {
+                    let html = '';
+                    items.forEach(item => {
+                        html += `
+                            <div class="list-row clickable" onclick="selectCompany(${item.id}, '${item.name}')">
+                                <span><i class="uil uil-folder"></i> ${item.name}</span>
+                                <i class="uil uil-angle-right" style="color:#666;"></i>
+                            </div>`;
+                    });
+                    listArea.innerHTML = html;
+                }
+            } catch (e) { listArea.innerHTML = '로드 실패'; }
+        }
+
+        window.selectCompany = function (id, name) {
+            currentCompany = { id, name };
+            const container = document.getElementById('panel-content');
+            showModelListView(container);
+        };
+
+        // [View 2] 모델 관리
+        async function showModelListView(container) {
+            container.innerHTML = `
+                <div class="nav-breadcrumb">
+                    <span class="nav-btn" onclick="renderHierarchyManager(document.getElementById('panel-content'))">업체</span>
+                    <i class="uil uil-angle-right"></i>
+                    <span class="active">${currentCompany.name}</span>
+                </div>
+                <div class="input-group">
+                    <input type="text" id="model-input-name" class="panel-input" placeholder="새 모델명 입력">
+                    <button class="panel-btn" onclick="addModel()">모델 추가</button>
+                </div>
+                <div id="hier-list-area" style="display:flex; flex-direction:column; gap:5px;"></div>
+            `;
+            loadModels();
+        }
+
+        async function loadModels() {
+            const listArea = document.getElementById('hier-list-area');
+            try {
+                const res = await fetch(`http://127.0.0.1:5000/api/production/companies/${currentCompany.id}/models`);
+                const items = await res.json();
+
+                if (items.length === 0) {
+                    listArea.innerHTML = '<div style="text-align:center; color:#555;">등록된 모델이 없습니다.</div>';
+                } else {
+                    let html = '';
+                    items.forEach(item => {
+                        html += `
+                            <div class="list-row">
+                                <span class="clickable" style="flex:1;" onclick="selectModel(${item.id}, '${item.name}')">
+                                    <i class="uil uil-file-alt"></i> ${item.name}
+                                </span>
+                                <button class="del-row-btn" onclick="deleteModel(${item.id})"><i class="uil uil-trash-alt"></i></button>
+                            </div>`;
+                    });
+                    listArea.innerHTML = html;
+                }
+            } catch (e) { listArea.innerHTML = '로드 실패'; }
+        }
+
+        window.addModel = async function () {
+            const input = document.getElementById('model-input-name');
+            const name = input.value.trim();
+            if (!name) return;
+            try {
+                await fetch(`http://127.0.0.1:5000/api/production/models`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ company_id: currentCompany.id, name: name })
+                });
+                loadModels();
+            } catch (e) { alert('오류'); }
+        };
+
+        window.deleteModel = async function (id) {
+            if (!confirm('모델을 삭제하시겠습니까? 데이터도 함께 삭제됩니다.')) return;
+            try {
+                await fetch(`http://127.0.0.1:5000/api/production/models/${id}`, { method: 'DELETE' });
+                loadModels();
+            } catch (e) { alert('오류'); }
+        };
+
+        window.selectModel = function (id, name) {
+            currentModel = { id, name };
+            const container = document.getElementById('panel-content');
+            showDataManageView(container);
+        };
+
+        // [View 3] 데이터 관리 (파일 업로드 UI로 변경됨)
+        function showDataManageView(container) {
+            container.innerHTML = `
+                <div class="nav-breadcrumb">
+                    <span class="nav-btn" onclick="renderHierarchyManager(document.getElementById('panel-content'))">..</span>
+                    <i class="uil uil-angle-right"></i>
+                    <span class="nav-btn" onclick="showModelListView(document.getElementById('panel-content'))">${currentCompany.name}</span>
+                    <i class="uil uil-angle-right"></i>
+                    <span class="active">${currentModel.name}</span>
+                </div>
+                
+                <div class="data-card" id="card-bom">
+                    <div class="data-header">
+                        <span class="data-title"><i class="uil uil-list-ui-alt"></i> BOM 파일</span>
+                        <span class="status-badge" id="status-bom">Empty</span>
+                    </div>
+                    <div style="margin:10px 0; color:#ddd; font-size:0.9rem;" id="info-bom">등록된 파일 없음</div>
+                    
+                    <div style="display:flex; gap:5px;">
+                        <input type="file" id="file-bom" class="panel-input" accept=".xlsx, .xls, .csv">
+                        <button class="panel-btn" onclick="uploadFile('BOM')">업로드</button>
+                    </div>
+                </div>
+
+                <div class="data-card" id="card-coord">
+                    <div class="data-header">
+                        <span class="data-title"><i class="uil uil-crosshair"></i> 좌표 데이터 파일</span>
+                        <span class="status-badge" id="status-coord">Empty</span>
+                    </div>
+                    <div style="margin:10px 0; color:#ddd; font-size:0.9rem;" id="info-coord">등록된 파일 없음</div>
+                    
+                    <div style="display:flex; gap:5px;">
+                        <input type="file" id="file-coord" class="panel-input" accept=".xlsx, .xls, .csv, .txt">
+                        <button class="panel-btn" onclick="uploadFile('COORDINATE')">업로드</button>
+                    </div>
+                </div>
+            `;
+            loadModelData('BOM');
+            loadModelData('COORDINATE');
+        }
+
+        async function loadModelData(type) {
+            const infoDiv = document.getElementById(type === 'BOM' ? 'info-bom' : 'info-coord');
+            const badge = document.getElementById(type === 'BOM' ? 'status-bom' : 'status-coord');
+
+            try {
+                // 타입별 데이터 조회
+                const res = await fetch(`http://127.0.0.1:5000/api/production/models/${currentModel.id}/data?type=${type}`);
+                const dataList = await res.json();
+
+                if (dataList.length > 0) {
+                    const data = dataList[0]; // content에는 실제 저장된 파일명이 들어있음
+                    // 파일 다운로드 링크 생성
+                    infoDiv.innerHTML = `
+                        <i class="uil uil-file-check-alt"></i> ${data.fileName} 
+                        <a href="http://127.0.0.1:5000/api/production/download/${data.content}" 
+                           class="panel-btn" style="padding:2px 8px; font-size:0.7rem; text-decoration:none; margin-left:10px;">
+                           다운로드
+                        </a>
+                        <span style="display:block; font-size:0.7rem; color:#888; margin-top:5px;">Update: ${new Date(data.updated_at).toLocaleString()}</span>
+                    `;
+                    badge.textContent = 'Saved';
+                    badge.classList.add('active');
+                } else {
+                    infoDiv.innerHTML = '등록된 파일 없음';
+                    badge.textContent = 'Empty';
+                    badge.classList.remove('active');
+                }
+            } catch (e) { console.log(e); }
+        }
+
+        window.uploadFile = async function (type) {
+            const fileInput = document.getElementById(type === 'BOM' ? 'file-bom' : 'file-coord');
+            const file = fileInput.files[0];
+
+            if (!file) return alert('파일을 선택해주세요.');
+
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('type', type);
+
+            try {
+                const res = await fetch(`http://127.0.0.1:5000/api/production/models/${currentModel.id}/data`, {
+                    method: 'POST',
+                    body: formData // JSON 대신 FormData 전송
+                });
+
+                if (res.ok) {
+                    alert('파일이 업로드되었습니다.');
+                    fileInput.value = ''; // 입력 초기화
+                    loadModelData(type); // 상태 갱신
+                } else {
+                    const err = await res.json();
+                    alert('업로드 실패: ' + (err.error || 'Unknown'));
+                }
+            } catch (e) { alert('서버 통신 오류'); }
+        };
+        // --- Event Handlers ---
+        function setupEvents() {
+            document.getElementById('close-panel').addEventListener('click', closePanel);
+
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('#context-menu')) document.getElementById('context-menu').style.display = 'none';
+            });
+
+            document.getElementById('btn-fit').addEventListener('click', () => network.fit({ animation: true }));
+            document.getElementById('btn-refresh').addEventListener('click', () => location.reload());
+
+            document.getElementById('btn-add-root').addEventListener('click', () => {
+                const id = Date.now();
+                nodes.add({ id, label: '새 그룹', level: 0, group: 'root' });
+            });
+
+            document.getElementById('ctx-add-child').addEventListener('click', () => {
+                const newId = Date.now();
+                if (selectedNodeId) {
+                    const parentNode = nodes.get(selectedNodeId);
+                    const newLevel = (parentNode.level || 0) + 1;
+                    const label = prompt("새 항목 이름:", "새 항목");
+                    if (!label) return;
+
+                    let dataType = null;
+                    if (label.includes('업체')) dataType = 'companies';
+                    else if (label.includes('담당자')) dataType = 'managers';
+                    else if (label.includes('BOM') || label.includes('좌표')) dataType = 'bom_coords';
+
+                    nodes.add({ id: newId, label: label, level: newLevel, dataType: dataType, parent: selectedNodeId });
+                    edges.add({ from: selectedNodeId, to: newId });
+                } else {
+                    const label = prompt("최상위 그룹 이름:", "새 그룹");
+                    if (!label) return;
+                    nodes.add({ id: newId, label: label, level: 0, group: 'root' });
+                }
+                document.getElementById('context-menu').style.display = 'none';
+            });
+
+            document.getElementById('ctx-delete').addEventListener('click', () => {
+                if (selectedNodeId) {
+                    if (confirm("삭제하시겠습니까?")) {
+                        nodes.remove(selectedNodeId);
+                        closePanel();
+                    }
+                }
+                document.getElementById('context-menu').style.display = 'none';
+            });
+
+            document.getElementById('ctx-rename').addEventListener('click', () => {
+                if (selectedNodeId) {
+                    const oldLabel = nodes.get(selectedNodeId).label;
+                    const newLabel = prompt("새 이름:", oldLabel);
+                    if (newLabel) {
+                        nodes.update({ id: selectedNodeId, label: newLabel });
+                        const el = document.getElementById(`node-${selectedNodeId}`);
+                        if (el) el.remove();
+                        network.redraw();
+                    }
+                }
+                document.getElementById('context-menu').style.display = 'none';
+            });
+        }
+
+        function updateTime() {
+            const now = new Date();
+            document.getElementById('current-time').textContent = now.toLocaleString('ko-KR', {
+                year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit'
+            });
+        }
+    </script>
+</body>
+
+</html>

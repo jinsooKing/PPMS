@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PPMS - 생산 일정 관리</title>
-    
+
     <link rel="stylesheet" href="common.css">
     <link rel="stylesheet" href="production.css">
     <link href="https://hangeul.pstatic.net/hangeul_static/css/bmdohyeon.css" rel="stylesheet">
@@ -17,12 +17,12 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-    
+
     <script src="auth.js"></script>
     <script src="calendar.js"></script>
     <script src="paperlogy-font.js"></script>
     <script src="logo.js"></script>
-    
+
 </head>
 
 <body>
@@ -70,7 +70,8 @@
             <button class="close-btn" id="close-week-modal-btn" onclick="closeWeekSelectorDropup()">&times;</button>
             <h3 class="modal-title">주차 선택</h3>
             <div class="modal-content">
-                <div class="grid-container" id="week-selector-grid" style="grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));"></div>
+                <div class="grid-container" id="week-selector-grid"
+                    style="grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));"></div>
             </div>
         </div>
     </div>
@@ -79,7 +80,7 @@
         <div class="modal-window" style="width: 95vw; max-width: 1600px;">
             <button class="close-btn" id="close-modal-btn">&times;</button>
             <h2 class="modal-title" id="modal-title">생산 일정 등록</h2>
-            
+
             <nav class="line-tab-nav">
                 <button class="line-tab-btn active" data-line-tab="A">A LINE</button>
                 <button class="line-tab-btn" data-line-tab="B">B LINE</button>
@@ -87,7 +88,7 @@
             </nav>
 
             <div class="modal-content">
-                
+
                 <section class="line-schedule-section tab-content active" id="tab-content-A" data-line="A">
                     <div class="line-header">
                         <div class="line-title-group">
@@ -106,13 +107,23 @@
                     <div class="table-container">
                         <table class="editable-table registration-table" id="table-A">
                             <colgroup>
-                                <col style="width:15%"> <col style="width:8%"> <col style="width:27%"> <col style="width:10%"> 
-                                <col style="width:10%"> <col style="width:10%"> <col style="width:20%">
+                                <col style="width:15%">
+                                <col style="width:8%">
+                                <col style="width:27%">
+                                <col style="width:10%">
+                                <col style="width:10%">
+                                <col style="width:10%">
+                                <col style="width:20%">
                             </colgroup>
                             <thead>
                                 <tr>
-                                    <th>업체</th><th>년도</th><th>모델명</th><th>발주월</th>
-                                    <th>T/B</th><th>LOT</th><th>생산예정일</th>
+                                    <th>업체</th>
+                                    <th>년도</th>
+                                    <th>모델명</th>
+                                    <th>발주월</th>
+                                    <th>T/B</th>
+                                    <th>LOT</th>
+                                    <th>생산예정일</th>
                                 </tr>
                             </thead>
                             <tbody id="schedule-table-body-A"></tbody>
@@ -138,13 +149,23 @@
                     <div class="table-container">
                         <table class="editable-table registration-table" id="table-B">
                             <colgroup>
-                                <col style="width:15%"> <col style="width:8%"> <col style="width:27%"> <col style="width:10%"> 
-                                <col style="width:10%"> <col style="width:10%"> <col style="width:20%">
+                                <col style="width:15%">
+                                <col style="width:8%">
+                                <col style="width:27%">
+                                <col style="width:10%">
+                                <col style="width:10%">
+                                <col style="width:10%">
+                                <col style="width:20%">
                             </colgroup>
                             <thead>
                                 <tr>
-                                    <th>업체</th><th>년도</th><th>모델명</th><th>발주월</th>
-                                    <th>T/B</th><th>LOT</th><th>생산예정일</th>
+                                    <th>업체</th>
+                                    <th>년도</th>
+                                    <th>모델명</th>
+                                    <th>발주월</th>
+                                    <th>T/B</th>
+                                    <th>LOT</th>
+                                    <th>생산예정일</th>
                                 </tr>
                             </thead>
                             <tbody id="schedule-table-body-B"></tbody>
@@ -170,13 +191,23 @@
                     <div class="table-container">
                         <table class="editable-table registration-table" id="table-C">
                             <colgroup>
-                                <col style="width:15%"> <col style="width:8%"> <col style="width:27%"> <col style="width:10%"> 
-                                <col style="width:10%"> <col style="width:10%"> <col style="width:20%">
+                                <col style="width:15%">
+                                <col style="width:8%">
+                                <col style="width:27%">
+                                <col style="width:10%">
+                                <col style="width:10%">
+                                <col style="width:10%">
+                                <col style="width:20%">
                             </colgroup>
                             <thead>
                                 <tr>
-                                    <th>업체</th><th>년도</th><th>모델명</th><th>발주월</th>
-                                    <th>T/B</th><th>LOT</th><th>생산예정일</th>
+                                    <th>업체</th>
+                                    <th>년도</th>
+                                    <th>모델명</th>
+                                    <th>발주월</th>
+                                    <th>T/B</th>
+                                    <th>LOT</th>
+                                    <th>생산예정일</th>
                                 </tr>
                             </thead>
                             <tbody id="schedule-table-body-C"></tbody>
@@ -186,8 +217,11 @@
 
             </div>
             <div class="modal-footer">
-                <div class="common-box reset-btn" id="reset-btn" style="background-color: #8B0000 !important; border-color: #ff4444;"><i class="uil uil-trash-alt"></i> 초기화</div>
-                <div class="common-box" id="save-all-btn" style="background-color: var(--accent-blue) !important;"><i class="uil uil-save"></i> 저장하기</div>
+                <div class="common-box reset-btn" id="reset-btn"
+                    style="background-color: #8B0000 !important; border-color: #ff4444;"><i
+                        class="uil uil-trash-alt"></i> 초기화</div>
+                <div class="common-box" id="save-all-btn" style="background-color: var(--accent-blue) !important;"><i
+                        class="uil uil-save"></i> 저장하기</div>
             </div>
         </div>
     </div>
@@ -215,7 +249,8 @@
         <div class="modal-window small-modal" style="max-width: 350px; height: auto;">
             <button class="close-btn" id="close-export-modal-btn">&times;</button>
             <h3 class="modal-title">EXPORT AS PDF</h3>
-            <div class="modal-content choice-buttons" style="display:flex; flex-direction:column; gap:15px; margin-top:20px;">
+            <div class="modal-content choice-buttons"
+                style="display:flex; flex-direction:column; gap:15px; margin-top:20px;">
                 <div id="export-plan-btn" class="common-box clickable-box" style="justify-content:center;">
                     <i class="uil uil-clipboard-notes"></i> 생산계획서
                 </div>
@@ -239,9 +274,9 @@
             if (typeof setupLogoutButton === 'function') setupLogoutButton();
 
             if (userRole !== 'admin') {
-                if(regScheduleBtn) regScheduleBtn.style.display='none';
-                if(saveAllBtn) saveAllBtn.style.display='none';
-                if(resetBtn) resetBtn.style.display='none';
+                if (regScheduleBtn) regScheduleBtn.style.display = 'none';
+                if (saveAllBtn) saveAllBtn.style.display = 'none';
+                if (resetBtn) resetBtn.style.display = 'none';
             }
 
             setInterval(updateTime, 1000);
@@ -258,13 +293,13 @@
             backBtn.addEventListener('click', goBackView);
             homeBtn.addEventListener('click', () => window.location.href = 'index.html');
             forwardBtn.addEventListener('click', goForwardView);
-            if(regScheduleBtn) regScheduleBtn.addEventListener('click', openWeekSelectorDropup);
-            
-            weekSelectorDropup.addEventListener('click', (e) => { if(e.target === weekSelectorDropup) closeWeekSelectorDropup(); });
+            if (regScheduleBtn) regScheduleBtn.addEventListener('click', openWeekSelectorDropup);
+
+            weekSelectorDropup.addEventListener('click', (e) => { if (e.target === weekSelectorDropup) closeWeekSelectorDropup(); });
             weekSelectorGrid.addEventListener('click', handleWeekSelection);
 
-            if(saveAllBtn) saveAllBtn.addEventListener('click', saveSchedules);
-            if(resetBtn) resetBtn.addEventListener('click', resetSchedules);
+            if (saveAllBtn) saveAllBtn.addEventListener('click', saveSchedules);
+            if (resetBtn) resetBtn.addEventListener('click', resetSchedules);
             closeModalBtn.addEventListener('click', closeModal);
             modalOverlay.addEventListener('click', closeModal);
             modalWindow.addEventListener('click', e => e.stopPropagation());
@@ -272,7 +307,7 @@
             // [모달 이벤트 수정: 행 추가, 삭제 모드, 라인 가져오기]
             modalWindow.addEventListener('click', function (event) {
                 if (localStorage.getItem('ppms_user_role') === 'admin') {
-                    
+
                     // 1. 행 추가
                     if (event.target.closest('.add-row-btn')) {
                         const btn = event.target.closest('.add-row-btn');
@@ -294,26 +329,26 @@
                         const btn = event.target.closest('.import-line-btn');
                         const section = btn.closest('.line-schedule-section');
                         const optionsContainer = section.querySelector('.import-options-container');
-                        
+
                         // 다른 섹션의 열린 메뉴 닫기
                         document.querySelectorAll('.import-options-container').forEach(el => {
-                            if(el !== optionsContainer) el.classList.remove('active');
+                            if (el !== optionsContainer) el.classList.remove('active');
                         });
 
                         // 현재 섹션 메뉴 토글
-                        if(optionsContainer) optionsContainer.classList.toggle('active');
+                        if (optionsContainer) optionsContainer.classList.toggle('active');
                     }
 
                     // 4. 특정 라인 가져오기 선택 (B라인 등)
                     if (event.target.classList.contains('import-option-btn')) {
                         const sourceLine = event.target.dataset.source;
                         const targetLine = event.target.closest('.line-schedule-section').dataset.line;
-                        
+
                         copyScheduleFromLine(sourceLine, targetLine);
-                        
+
                         // 메뉴 닫기
                         const container = event.target.closest('.import-options-container');
-                        if(container) container.classList.remove('active');
+                        if (container) container.classList.remove('active');
                     }
 
                     // 5. 행 삭제 (삭제 모드일 때)
@@ -323,22 +358,22 @@
                     }
                 }
             });
-            
+
             // [모달 이벤트] 탭 전환
             const lineTabNav = document.querySelector('.line-tab-nav');
-            if(lineTabNav) {
+            if (lineTabNav) {
                 lineTabNav.addEventListener('click', (e) => {
-                    if(e.target.classList.contains('line-tab-btn')) {
+                    if (e.target.classList.contains('line-tab-btn')) {
                         // 버튼 활성화 처리
                         lineTabNav.querySelectorAll('.line-tab-btn').forEach(b => b.classList.remove('active'));
                         e.target.classList.add('active');
-                        
+
                         // 컨텐츠 표시 처리
                         const targetLine = e.target.dataset.lineTab;
                         const modalContent = document.querySelector('#schedule-modal .modal-content');
                         modalContent.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
                         document.getElementById(`tab-content-${targetLine}`).classList.add('active');
-                        
+
                         // 탭 전환 시 불러오기 메뉴 닫기
                         document.querySelectorAll('.import-options-container').forEach(el => el.classList.remove('active'));
                     }
@@ -347,21 +382,21 @@
 
             const validate = (e, reg, msg) => {
                 const val = e.target.value, sanitized = val.replace(reg, '');
-                if(val !== sanitized) { e.target.value = sanitized; showValidationMessage(e.target, msg); }
+                if (val !== sanitized) { e.target.value = sanitized; showValidationMessage(e.target, msg); }
             };
-            modalWindow.addEventListener('input', e => { if(e.target.dataset.field==='lot-modal') validate(e, /[^0-9/]/g, "숫자/' 만 가능"); });
+            modalWindow.addEventListener('input', e => { if (e.target.dataset.field === 'lot-modal') validate(e, /[^0-9/]/g, "숫자/' 만 가능"); });
             displayArea.addEventListener('input', e => {
-                if(e.target.dataset.field==='lot') validate(e, /[^0-9/]/g, "숫자/' 만 가능");
-                else if(e.target.dataset.field==='actualProd') validate(e, /[^0-9/]/g, "숫자만 가능");
+                if (e.target.dataset.field === 'lot') validate(e, /[^0-9/]/g, "숫자/' 만 가능");
+                else if (e.target.dataset.field === 'actualProd') validate(e, /[^0-9/]/g, "숫자만 가능");
             });
 
-            displayArea.addEventListener('click', function(e) {
-                if(e.target.closest('.period-btn')) {
+            displayArea.addEventListener('click', function (e) {
+                if (e.target.closest('.period-btn')) {
                     const d = e.target.closest('.period-btn').dataset;
-                    navigateToView(d.view, {year:parseInt(d.year), month:parseInt(d.month), weekNum:parseInt(d.week)});
+                    navigateToView(d.view, { year: parseInt(d.year), month: parseInt(d.month), weekNum: parseInt(d.week) });
                 }
-                if(e.target.closest('#open-export-modal-btn')) exportChoiceModal.classList.add('visible');
-                if(e.target.closest('#open-notes-modal-btn')) openNotesModal();
+                if (e.target.closest('#open-export-modal-btn')) exportChoiceModal.classList.add('visible');
+                if (e.target.closest('#open-notes-modal-btn')) openNotesModal();
             });
             displayArea.addEventListener('change', handleTableInputChange);
 
@@ -376,12 +411,12 @@
             // Notes
             const closeNotes = () => notesModal.classList.remove('visible');
             closeNotesModalBtn.addEventListener('click', closeNotes);
-            notesModal.addEventListener('click', e => { if(e.target===notesModal) closeNotes(); });
+            notesModal.addEventListener('click', e => { if (e.target === notesModal) closeNotes(); });
             notesModal.querySelector('.modal-window').addEventListener('click', e => e.stopPropagation());
             notesTabNav.addEventListener('click', e => {
-                if(e.target.classList.contains('tab-btn')) {
-                    notesTabNav.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
-                    notesContentContainer.querySelectorAll('.notes-tab-content').forEach(c=>c.classList.remove('active'));
+                if (e.target.classList.contains('tab-btn')) {
+                    notesTabNav.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                    notesContentContainer.querySelectorAll('.notes-tab-content').forEach(c => c.classList.remove('active'));
                     e.target.classList.add('active');
                     document.getElementById(`notes-content-${e.target.dataset.tab}`).classList.add('active');
                 }
@@ -423,15 +458,15 @@
         let viewHistory = [], forwardHistory = [], currentSelectedWeekInfo = {};
         let managerList = [], companyList = [];
 
-        
-        
+
+
         function isEditAllowed() {
             const r = localStorage.getItem('ppms_user_role');
-            if(r==='admin') return true;
-            if(r==='user') {
-                const d=new Date(), y=d.getFullYear(), m=d.getMonth()+1, w=getCurrentWeekNumber(d);
-                const v=currentView.data;
-                if(v.year===y && v.month===m && v.weekNum===w) return true;
+            if (r === 'admin') return true;
+            if (r === 'user') {
+                const d = new Date(), y = d.getFullYear(), m = d.getMonth() + 1, w = getCurrentWeekNumber(d);
+                const v = currentView.data;
+                if (v.year === y && v.month === m && v.weekNum === w) return true;
             }
             return false;
         }
@@ -439,10 +474,10 @@
         function showValidationMessage(target, msg) {
             const p = target.parentElement;
             let m = p.querySelector('.validation-message');
-            if(!m) { m = document.createElement('span'); m.className='validation-message'; p.appendChild(m); }
+            if (!m) { m = document.createElement('span'); m.className = 'validation-message'; p.appendChild(m); }
             m.textContent = msg; m.classList.add('visible');
-            if(m.dataset.tid) clearTimeout(m.dataset.tid);
-            m.dataset.tid = setTimeout(()=>m.classList.remove('visible'), 2000);
+            if (m.dataset.tid) clearTimeout(m.dataset.tid);
+            m.dataset.tid = setTimeout(() => m.classList.remove('visible'), 2000);
         }
 
         async function loadMasterData() {
@@ -452,18 +487,18 @@
                     fetch('http://127.0.0.1:5000/api/production/companies')
                 ]);
                 managerList = await m.json(); companyList = await c.json();
-            } catch(e) { console.error(e); }
+            } catch (e) { console.error(e); }
         }
 
         function saveSchedules() {
-            if(localStorage.getItem('ppms_user_role')!=='admin') return alert('권한 없음');
+            if (localStorage.getItem('ppms_user_role') !== 'admin') return alert('권한 없음');
             const scheds = [];
-            for(const l in lineControls) {
+            for (const l in lineControls) {
                 lineControls[l].tableBody.querySelectorAll('tr').forEach(r => {
                     const c = r.querySelector('[data-field="company-modal"]').value, m = r.querySelector('[data-field="model-modal"]').value, lt = r.querySelector('[data-field="lot-modal"]').value;
-                    if(c||m||lt) {
+                    if (c || m || lt) {
                         let yv = r.querySelector('[data-field="orderYear"]').value;
-                        if(yv.length===2) yv = '20'+yv;
+                        if (yv.length === 2) yv = '20' + yv;
                         scheds.push({
                             id: r.dataset.scheduleId ? parseInt(r.dataset.scheduleId) : null,
                             line: l, company: c, model: m,
@@ -477,22 +512,22 @@
                 });
             }
             fetch('http://127.0.0.1:5000/api/production/schedules', {
-                method:'POST', headers:{'Content-Type':'application/json'},
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ weekInfo: currentSelectedWeekInfo, schedules: scheds })
-            }).then(r=>r.json()).then(d=>{ if(d.message){alert(d.message);closeModal();renderContent();}else alert("Error"); });
+            }).then(r => r.json()).then(d => { if (d.message) { alert(d.message); closeModal(); renderContent(); } else alert("Error"); });
         }
 
         // [초기화 버튼: 현재 탭 내용만 비움]
         function resetSchedules() {
-            if(localStorage.getItem('ppms_user_role')!=='admin') return alert('권한 없음');
-            
+            if (localStorage.getItem('ppms_user_role') !== 'admin') return alert('권한 없음');
+
             const activeSection = document.querySelector('.line-schedule-section.active');
-            if(!activeSection) return;
-            
+            if (!activeSection) return;
+
             const line = activeSection.dataset.line;
-            
-            if(!confirm(`${line} 라인의 작성중인 내용을 초기화하시겠습니까?`)) return;
-            
+
+            if (!confirm(`${line} 라인의 작성중인 내용을 초기화하시겠습니까?`)) return;
+
             const tbody = activeSection.querySelector('tbody');
             tbody.innerHTML = '';
             addNewScheduleRow(tbody, line); // 빈 행 추가
@@ -501,68 +536,77 @@
         function openWeekSelectorDropup() {
             const y = currentView.data.year || new Date().getFullYear();
             const m = currentView.data.month ? currentView.data.month - 1 : new Date().getMonth();
-            const weeks = Array.from(getProductionWeeksInMonth(y,m)).sort((a,b)=>a-b);
+            const weeks = Array.from(getProductionWeeksInMonth(y, m)).sort((a, b) => a - b);
             weekSelectorGrid.innerHTML = '';
             weeks.forEach(w => {
                 const d = document.createElement('div'); d.className = 'week-box clickable-box';
-                d.textContent = `${m+1}월 ${w}주차`; d.dataset.year=y; d.dataset.month=m+1; d.dataset.week=w;
+                d.textContent = `${m + 1}월 ${w}주차`; d.dataset.year = y; d.dataset.month = m + 1; d.dataset.week = w;
                 weekSelectorGrid.appendChild(d);
             });
             weekSelectorDropup.classList.add('visible');
         }
         function closeWeekSelectorDropup() { weekSelectorDropup.classList.remove('visible'); }
         function handleWeekSelection(e) {
-            if(e.target.classList.contains('week-box')) {
-                const {year,month,week} = e.target.dataset;
-                closeWeekSelectorDropup(); openModal({year:parseInt(year), month:parseInt(month), weekNum:parseInt(week)});
+            if (e.target.classList.contains('week-box')) {
+                const { year, month, week } = e.target.dataset;
+                closeWeekSelectorDropup(); openModal({ year: parseInt(year), month: parseInt(month), weekNum: parseInt(week) });
             }
         }
 
         async function openModal(weekInfo) {
             currentSelectedWeekInfo = weekInfo;
             const role = localStorage.getItem('ppms_user_role');
-            modalTitle.textContent = `${weekInfo.month}월 ${weekInfo.weekNum}주차 생산 일정 ${role!=='admin'?'(읽기 전용)':''}`;
-            for(const l in lineControls) lineControls[l].tableBody.innerHTML='';
+            modalTitle.textContent = `${weekInfo.month}월 ${weekInfo.weekNum}주차 생산 일정 ${role !== 'admin' ? '(읽기 전용)' : ''}`;
+            for (const l in lineControls) lineControls[l].tableBody.innerHTML = '';
             await loadMasterData();
             const res = await fetch(`http://127.0.0.1:5000/api/production/schedules?year=${weekInfo.year}&month=${weekInfo.month}&weekNum=${weekInfo.weekNum}`);
             const data = await res.json();
-            if(data.length>0) data.forEach(d=>addNewScheduleRow(lineControls[d.line].tableBody, d.line, d));
-            for(const l in lineControls) if(lineControls[l].tableBody.rows.length===0) addNewScheduleRow(lineControls[l].tableBody, l);
+            if (data.length > 0) data.forEach(d => addNewScheduleRow(lineControls[d.line].tableBody, d.line, d));
+            for (const l in lineControls) if (lineControls[l].tableBody.rows.length === 0) addNewScheduleRow(lineControls[l].tableBody, l);
             modalOverlay.classList.add('visible');
         }
         function closeModal() { modalOverlay.classList.remove('visible'); }
 
         // [행 추가 함수]
-        function addNewScheduleRow(target, line, data={}, after=null) {
+        function addNewScheduleRow(target, line, data = {}, after = null) {
             const role = localStorage.getItem('ppms_user_role');
-            const ro = role!=='admin'?'disabled':'';
-            
+            const ro = role !== 'admin' ? 'disabled' : '';
+
             const row = after ? target.insertRow(after.rowIndex) : target.insertRow();
-            row.classList.add('animate-in'); 
-            
-            row.dataset.scheduleId = data.id||'';
-            const opts = (lst,v) => lst.map(i=>`<option value="${i.name}" ${v===i.name?'selected':''}>${i.name}</option>`).join('');
-            let mOpts = ''; for(let i=1; i<=12; i++) mOpts+=`<option value="${i}월분" ${(data.orderMonth||'').trim()===`${i}월분`?'selected':''}>${i}월분</option>`;
-            
+            row.classList.add('animate-in');
+
+            row.dataset.scheduleId = data.id || '';
+            const opts = (lst, v) => lst.map(i => `<option value="${i.name}" ${v === i.name ? 'selected' : ''}>${i.name}</option>`).join('');
+            let mOpts = ''; for (let i = 1; i <= 12; i++) mOpts += `<option value="${i}월분" ${(data.orderMonth || '').trim() === `${i}월분` ? 'selected' : ''}>${i}월분</option>`;
+
             const fullYear = data.orderYear || currentSelectedWeekInfo.year;
             const shortYear = String(fullYear).slice(-2);
 
             row.innerHTML = `
                 <td><select data-field="company-modal" class="form-select" ${ro}><option value="">-</option>${opts(companyList, data.company)}</select></td>
                 <td><input type="number" data-field="orderYear" class="form-input" value="${shortYear}" ${ro}></td>
-                <td><input type="text" data-field="model-modal" class="form-input" value="${data.model||''}" ${ro}></td>
+                <td><input type="text" data-field="model-modal" class="form-input" value="${data.model || ''}" ${ro}></td>
                 <td><select data-field="orderMonth" class="form-select" ${ro}><option value="">-</option>${mOpts}</select></td>
-                <td><select data-field="tb-modal" class="form-select" ${ro}><option value="Top" ${data.tb==='Top'?'selected':''}>Top</option><option value="Bot" ${data.tb==='Bot'?'selected':''}>Bot</option><option value="T/O" ${data.tb==='T/O'?'selected':''}>T/O</option><option value="B/O" ${data.tb==='B/O'?'selected':''}>B/O</option></select></td>
-                <td><input type="text" data-field="lot-modal" class="form-input" value="${data.lot||''}" ${ro}></td>
+                <td><select data-field="tb-modal" class="form-select" ${ro}><option value="Top" ${data.tb === 'Top' ? 'selected' : ''}>Top</option><option value="Bot" ${data.tb === 'Bot' ? 'selected' : ''}>Bot</option><option value="T/O" ${data.tb === 'T/O' ? 'selected' : ''}>T/O</option><option value="B/O" ${data.tb === 'B/O' ? 'selected' : ''}>B/O</option></select></td>
+                <td><input type="text" data-field="lot-modal" class="form-input" value="${data.lot || ''}" ${ro}></td>
                 <td style="display:flex;gap:5px;"><select class="start-date-select form-select" ${ro}></select>~<select class="end-date-select form-select" ${ro}></select></td>
             `;
             populateDateSelectors(currentSelectedWeekInfo, row);
-            
+
             const startSel = row.querySelector('.start-date-select');
             const endSel = row.querySelector('.end-date-select');
-            if(startSel) startSel.value = data.startDate||''; 
-            if(endSel) endSel.value = data.endDate||'';
-            
+            if (startSel) startSel.value = data.startDate || '';
+            if (endSel) endSel.value = data.endDate || '';
+
+            const modelInput = row.querySelector('[data-field="model-modal"]');
+            if (modelInput) {
+                modelInput.addEventListener('blur', function () {
+                    const companyInput = row.querySelector('[data-field="company-modal"]');
+                    // 전역에 선언된 handleModelInput 함수 호출
+                    handleModelInput(companyInput, this);
+                });
+            }
+
             return row;
         }
 
@@ -573,7 +617,7 @@
                 const tbody = row.closest('tbody');
                 const section = tbody.closest('.line-schedule-section');
                 const line = section.dataset.line;
-                
+
                 row.remove();
                 // 모두 삭제되었으면 빈 행 추가
                 if (tbody.rows.length === 0) {
@@ -581,16 +625,16 @@
                 }
             }, 300); // 애니메이션 시간보다 약간 짧게
         }
-        
+
         // [다른 라인에서 일정 가져오기]
         function copyScheduleFromLine(sourceLine, targetLine) {
             const sourceTbody = document.getElementById(`schedule-table-body-${sourceLine}`);
             const targetTbody = document.getElementById(`schedule-table-body-${targetLine}`);
-            
-            if(!sourceTbody || !targetTbody) return;
+
+            if (!sourceTbody || !targetTbody) return;
 
             const sourceRows = sourceTbody.querySelectorAll('tr');
-            if(sourceRows.length === 0) {
+            if (sourceRows.length === 0) {
                 alert(`${sourceLine} 라인에 복사할 데이터가 없습니다.`);
                 return;
             }
@@ -599,8 +643,8 @@
             sourceRows.forEach(row => {
                 const company = row.querySelector('[data-field="company-modal"]').value;
                 const model = row.querySelector('[data-field="model-modal"]').value;
-                
-                if(company || model) {
+
+                if (company || model) {
                     const data = {
                         company: company,
                         orderYear: row.querySelector('[data-field="orderYear"]').value,
@@ -617,39 +661,39 @@
         }
 
         function populateDateSelectors(info, row) {
-            if(!row || !info.year) return;
-            const days = getWeekdaysForWeek(info.year, info.month-1, info.weekNum);
-            const dNames = ['일','월','화','수','목','금','토'];
-            const s1=row.querySelector('.start-date-select'), s2=row.querySelector('.end-date-select');
-            s1.innerHTML=s2.innerHTML='';
-            days.forEach(d=>{
+            if (!row || !info.year) return;
+            const days = getWeekdaysForWeek(info.year, info.month - 1, info.weekNum);
+            const dNames = ['일', '월', '화', '수', '목', '금', '토'];
+            const s1 = row.querySelector('.start-date-select'), s2 = row.querySelector('.end-date-select');
+            s1.innerHTML = s2.innerHTML = '';
+            days.forEach(d => {
                 const txt = `${d.month}/${d.day}(${dNames[d.dayOfWeek]})`;
-                s1.add(new Option(txt,txt)); s2.add(new Option(txt,txt));
+                s1.add(new Option(txt, txt)); s2.add(new Option(txt, txt));
             });
         }
 
         function renderContent() {
-            const {mode, data} = currentView;
-            contentArea.className = (mode==='current_week'||mode==='schedule_view') ? 'content-area align-top' : 'content-area';
+            const { mode, data } = currentView;
+            contentArea.className = (mode === 'current_week' || mode === 'schedule_view') ? 'content-area align-top' : 'content-area';
             displayArea.style.marginTop = '5px';
-            if(mode==='current_week'||mode==='schedule_view') displayScheduleForWeek(data.year, data.month, data.weekNum);
-            else if(mode==='past_weeks') displayPastWeeks();
-            else if(mode==='past_months') displayPastMonths(data.year);
-            else if(mode==='past_years') displayPastYears();
-            else if(mode==='weeks_of_month') displayWeeksForMonth(data.year, data.month);
+            if (mode === 'current_week' || mode === 'schedule_view') displayScheduleForWeek(data.year, data.month, data.weekNum);
+            else if (mode === 'past_weeks') displayPastWeeks();
+            else if (mode === 'past_months') displayPastMonths(data.year);
+            else if (mode === 'past_years') displayPastYears();
+            else if (mode === 'weeks_of_month') displayWeeksForMonth(data.year, data.month);
         }
 
-        function navigateToView(m, d={}) {
-            if(currentView.mode!==m || JSON.stringify(currentView.data)!==JSON.stringify(d)) { viewHistory.push(currentView); forwardHistory=[]; }
-            currentView={mode:m, data:d}; renderContent();
+        function navigateToView(m, d = {}) {
+            if (currentView.mode !== m || JSON.stringify(currentView.data) !== JSON.stringify(d)) { viewHistory.push(currentView); forwardHistory = []; }
+            currentView = { mode: m, data: d }; renderContent();
         }
-        function goBackView() { if(viewHistory.length>0) { forwardHistory.push(currentView); currentView=viewHistory.pop(); renderContent(); } else history.back(); }
-        function goForwardView() { if(forwardHistory.length>0) { viewHistory.push(currentView); currentView=forwardHistory.pop(); renderContent(); } }
+        function goBackView() { if (viewHistory.length > 0) { forwardHistory.push(currentView); currentView = viewHistory.pop(); renderContent(); } else history.back(); }
+        function goForwardView() { if (forwardHistory.length > 0) { viewHistory.push(currentView); currentView = forwardHistory.pop(); renderContent(); } }
 
         function handleTableInputChange(e) {
-            if(!isEditAllowed()) return alert('권한 없음');
+            if (!isEditAllowed()) return alert('권한 없음');
             const row = e.target.closest('tr');
-            if(!row || !row.dataset.scheduleId) return;
+            if (!row || !row.dataset.scheduleId) return;
             const body = {
                 manager: row.querySelector('[data-field="manager"]').value,
                 company: row.querySelector('[data-field="company"]').value,
@@ -661,92 +705,92 @@
                 prodStart: row.querySelector('[data-field="prodStart"]').value,
                 prodEnd: row.querySelector('[data-field="prodEnd"]').value
             };
-            if(e.target.dataset.field==='lot'||e.target.dataset.field==='actualProd') updateLineProgress(row.dataset.line);
+            if (e.target.dataset.field === 'lot' || e.target.dataset.field === 'actualProd') updateLineProgress(row.dataset.line);
             fetch(`http://127.0.0.1:5000/api/production/schedules/${row.dataset.scheduleId}`, {
-                method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)
+                method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
             });
         }
 
         function displayCurrentWeekSchedule() {
             const d = new Date();
-            const y=d.getFullYear(), m=d.getMonth()+1, w=getCurrentWeekNumber(d);
-            currentView = {mode:'current_week', data:{year:y, month:m, weekNum:w}};
+            const y = d.getFullYear(), m = d.getMonth() + 1, w = getCurrentWeekNumber(d);
+            currentView = { mode: 'current_week', data: { year: y, month: m, weekNum: w } };
             displayScheduleForWeek(y, m, w);
         }
 
         async function displayScheduleForWeek(y, m, w) {
-            currentView = {mode:'schedule_view', data:{year:y, month:m, weekNum:w}};
+            currentView = { mode: 'schedule_view', data: { year: y, month: m, weekNum: w } };
             weekDisplay.innerHTML = `<i class="uil uil-calendar-alt"></i> ${y}년 ${m}월 ${w}주차`;
             await loadMasterData();
             try {
                 const res = await fetch(`http://127.0.0.1:5000/api/production/schedules?year=${y}&month=${m}&weekNum=${w}`);
                 const data = await res.json();
                 displayArea.innerHTML = createScheduleTableHTML(data);
-                if(data.length>0) populateDateSelectorsForProductionPage({year:y, month:m, weekNum:w}, data);
-                ['A','B','C'].forEach(l=>updateLineProgress(l));
-            } catch(e) { displayArea.innerHTML = '<p class="no-line-data-message">데이터 로딩 실패</p>'; }
+                if (data.length > 0) populateDateSelectorsForProductionPage({ year: y, month: m, weekNum: w }, data);
+                ['A', 'B', 'C'].forEach(l => updateLineProgress(l));
+            } catch (e) { displayArea.innerHTML = '<p class="no-line-data-message">데이터 로딩 실패</p>'; }
         }
 
         function updateLineProgress(line) {
             const sec = document.querySelector(`.line-schedule-section[data-line="${line}"]`);
-            if(!sec) return;
-            let tLot=0, tAct=0;
-            sec.querySelectorAll('tbody tr').forEach(r=>{
-                tLot += parseInt(r.querySelector('input[data-field="lot"]').value)||0;
-                tAct += parseInt(r.querySelector('input[data-field="actualProd"]').value)||0;
+            if (!sec) return;
+            let tLot = 0, tAct = 0;
+            sec.querySelectorAll('tbody tr').forEach(r => {
+                tLot += parseInt(r.querySelector('input[data-field="lot"]').value) || 0;
+                tAct += parseInt(r.querySelector('input[data-field="actualProd"]').value) || 0;
             });
-            const pct = tLot>0 ? Math.min((tAct/tLot)*100, 100) : 0;
+            const pct = tLot > 0 ? Math.min((tAct / tLot) * 100, 100) : 0;
             const bar = document.getElementById(`progress-bar-${line}`);
             const txt = document.getElementById(`progress-text-${line}`);
-            if(bar) bar.style.width=`${pct}%`;
-            if(txt) txt.textContent=`${Math.round(pct)}%`;
+            if (bar) bar.style.width = `${pct}%`;
+            if (txt) txt.textContent = `${Math.round(pct)}%`;
         }
 
         function displayPastWeeks() {
             const d = new Date(), w = getCurrentWeekNumber(d);
             let h = `<div class="period-selector-grid">`;
-            for(let i=1; i<=w; i++) h+=`<div class="period-btn clickable-box" data-view="schedule_view" data-year="${d.getFullYear()}" data-month="${d.getMonth()+1}" data-week="${i}">${d.getMonth()+1}월 ${i}주차</div>`;
+            for (let i = 1; i <= w; i++) h += `<div class="period-btn clickable-box" data-view="schedule_view" data-year="${d.getFullYear()}" data-month="${d.getMonth() + 1}" data-week="${i}">${d.getMonth() + 1}월 ${i}주차</div>`;
             displayArea.innerHTML = h + `</div>`;
         }
         function displayPastMonths(y) {
-            const d = new Date(), max = (y===d.getFullYear()) ? d.getMonth() : 11;
+            const d = new Date(), max = (y === d.getFullYear()) ? d.getMonth() : 11;
             let h = `<div class="period-selector-grid">`;
-            for(let i=0; i<=max; i++) h+=`<div class="period-btn clickable-box" data-view="weeks_of_month" data-year="${y}" data-month="${i+1}">${i+1}월</div>`;
+            for (let i = 0; i <= max; i++) h += `<div class="period-btn clickable-box" data-view="weeks_of_month" data-year="${y}" data-month="${i + 1}">${i + 1}월</div>`;
             displayArea.innerHTML = h + `</div>`;
         }
         function displayPastYears() {
             let h = `<div class="period-selector-grid">`;
-            for(let i=0; i<3; i++) { const y = new Date().getFullYear()-i; h+=`<div class="period-btn clickable-box" data-view="past_months" data-year="${y}">${y}년</div>`; }
+            for (let i = 0; i < 3; i++) { const y = new Date().getFullYear() - i; h += `<div class="period-btn clickable-box" data-view="past_months" data-year="${y}">${y}년</div>`; }
             displayArea.innerHTML = h + `</div>`;
         }
         function displayWeeksForMonth(y, m) {
-            const w = Array.from(getProductionWeeksInMonth(y, m-1)).sort((a,b)=>a-b);
+            const w = Array.from(getProductionWeeksInMonth(y, m - 1)).sort((a, b) => a - b);
             let h = `<div class="period-selector-grid">`;
-            w.forEach(k => h+=`<div class="period-btn clickable-box" data-view="schedule_view" data-year="${y}" data-month="${m}" data-week="${k}">${m}월 ${k}주차</div>`);
+            w.forEach(k => h += `<div class="period-btn clickable-box" data-view="schedule_view" data-year="${y}" data-month="${m}" data-week="${k}">${m}월 ${k}주차</div>`);
             displayArea.innerHTML = h + `</div>`;
         }
 
         async function openNotesModal() {
-            const {year, month, weekNum} = currentView.data;
+            const { year, month, weekNum } = currentView.data;
             try {
                 const res = await fetch(`http://127.0.0.1:5000/api/production/schedules?year=${year}&month=${month}&weekNum=${weekNum}`);
                 const data = await res.json();
-                const byLine = {A:[], B:[], C:[]};
-                data.forEach(s=>{ if(byLine[s.line]) byLine[s.line].push(s); });
-                
+                const byLine = { A: [], B: [], C: [] };
+                data.forEach(s => { if (byLine[s.line]) byLine[s.line].push(s); });
+
                 ['A', 'B', 'C'].forEach(line => {
                     const el = document.getElementById(`notes-content-${line}`);
-                    if(byLine[line].length > 0) {
+                    if (byLine[line].length > 0) {
                         el.innerHTML = byLine[line].map(s => {
                             // [수정됨] 저장된 노트에서 숨김 태그 분리
                             const rawNote = s.notes || '';
                             const isHidden = rawNote.includes('[HIDDEN]');
                             const cleanNote = rawNote.replace('[HIDDEN]', ''); // 텍스트 박스엔 태그 없이 표시
-                            
+
                             return `
                             <div class="note-item" data-schedule-id="${s.id}">
                                 <div class="note-header-row">
-                                    <h4>${s.company||'-'} / ${s.model||'-'} (LOT:${s.lot})</h4>
+                                    <h4>${s.company || '-'} / ${s.model || '-'} (LOT:${s.lot})</h4>
                                     <label class="note-toggle-label">
                                         <input type="checkbox" class="hide-icon-cb" ${isHidden ? 'checked' : ''}>
                                         아이콘 숨기기
@@ -762,51 +806,51 @@
         }
 
         async function handleNoteSave(e) {
-            if(!isEditAllowed()) return alert('권한 없음');
-            
+            if (!isEditAllowed()) return alert('권한 없음');
+
             // [수정됨] textarea 또는 checkbox 변경 시 모두 저장 트리거
             const target = e.target;
-            if(target.tagName !== 'TEXTAREA' && !target.classList.contains('hide-icon-cb')) return;
-            
+            if (target.tagName !== 'TEXTAREA' && !target.classList.contains('hide-icon-cb')) return;
+
             // 부모 요소(.note-item)를 찾아 ID와 값 추출
             const itemWrapper = target.closest('.note-item');
             const id = itemWrapper.dataset.scheduleId;
             const textarea = itemWrapper.querySelector('textarea');
             const checkbox = itemWrapper.querySelector('.hide-icon-cb');
-            
+
             let noteText = textarea.value;
-            
+
             // 체크박스가 켜져있으면 태그 붙임
             if (checkbox.checked) {
                 noteText = '[HIDDEN]' + noteText;
             }
-            
+
             try {
                 const res = await fetch(`http://127.0.0.1:5000/api/production/schedules/${id}/notes`, {
-                    method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({notes: noteText})
+                    method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ notes: noteText })
                 });
-                if(res.ok) {
+                if (res.ok) {
                     console.log('Note Saved');
                     // (선택사항) 메인 화면 즉시 갱신을 원하면 아래 줄 주석 해제
                     displayScheduleForWeek(currentView.data.year, currentView.data.month, currentView.data.weekNum);
                 }
-            } catch(e) { console.error(e); }
+            } catch (e) { console.error(e); }
         }
-        
+
         // [추가] 메인 화면 탭 전환 함수
         function switchMainTab(targetLine) {
             // 1. 모든 탭 컨텐츠 숨기기
             const allContents = document.querySelectorAll('#schedule-display-area .tab-content');
             allContents.forEach(el => el.classList.remove('active'));
-            
+
             // 2. 선택된 탭 컨텐츠 보이기
             const targetContent = document.getElementById(`main-content-${targetLine}`);
-            if(targetContent) targetContent.classList.add('active');
-            
+            if (targetContent) targetContent.classList.add('active');
+
             // 3. 탭 버튼 스타일 업데이트
             const allBtns = document.querySelectorAll('.main-view-tabs .line-tab-btn');
             allBtns.forEach(btn => {
-                if(btn.textContent.includes(targetLine + ' LINE')) {
+                if (btn.textContent.includes(targetLine + ' LINE')) {
                     btn.classList.add('active');
                 } else {
                     btn.classList.remove('active');
@@ -816,11 +860,11 @@
 
         // [수정됨] 메인 화면을 탭 구조로 생성하는 함수
         function createScheduleTableHTML(schedules) {
-            const byLine = {A:[], B:[], C:[]};
-            schedules.forEach(s => { if(byLine[s.line]) byLine[s.line].push(s); });
-            
+            const byLine = { A: [], B: [], C: [] };
+            schedules.forEach(s => { if (byLine[s.line]) byLine[s.line].push(s); });
+
             const ro = isEditAllowed() ? '' : 'disabled';
-            
+
             // 1. 상단 탭 네비게이션 생성
             let html = `
                 <nav class="line-tab-nav main-view-tabs" style="margin-bottom: 0; border-radius: 12px 12px 0 0;">
@@ -829,15 +873,15 @@
                     <button class="line-tab-btn" onclick="switchMainTab('C')">C LINE</button>
                 </nav>
             `;
-            
+
             // 2. 각 라인별 컨텐츠 생성
-            for(const line in byLine) {
+            for (const line in byLine) {
                 // 첫 번째 라인(A)만 보이게 설정
                 const isActive = line === 'A' ? 'active' : '';
-                
+
                 // 탭 컨텐츠 래퍼 시작
                 html += `<div id="main-content-${line}" class="tab-content ${isActive}" style="width:100%;">`;
-                
+
                 let header = `
                     <div class="line-header" style="border-bottom:none;">
                         <div class="line-title">
@@ -852,26 +896,26 @@
                             <button id="open-export-modal-btn" class="icon-btn" title="다운로드"><i class="uil uil-import"></i></button>
                         </div>` : ''}
                     </div>`;
-                
+
                 html += `<section class="line-schedule-section" data-line="${line}" style="border-top-left-radius: 0; border-top-right-radius: 0;">${header}`;
-                
-                if(byLine[line].length > 0) {
+
+                if (byLine[line].length > 0) {
                     const rows = byLine[line].map(s => {
                         const mOpts = managerList.map(m => `<option value="${m.name}" ${s.manager === m.name ? 'selected' : ''}>${m.name}</option>`).join('');
                         const cOpts = companyList.map(c => `<option value="${c.name}" ${s.company === c.name ? 'selected' : ''}>${c.name}</option>`).join('');
-                        
-                        let moOpts = ''; 
-                        for(let i = 1; i <= 12; i++) {
+
+                        let moOpts = '';
+                        for (let i = 1; i <= 12; i++) {
                             moOpts += `<option value="${i}월분" ${(s.orderMonth || '').trim() === `${i}월분` ? 'selected' : ''}>${i}월분</option>`;
                         }
-                        
+
                         const rawNote = s.notes || '';
                         const isHidden = rawNote.includes('[HIDDEN]');
                         const cleanNote = rawNote.replace('[HIDDEN]', '').trim();
                         const hasNote = cleanNote.length > 0;
-                        
-                        const noteIcon = (hasNote && !isHidden) 
-                            ? `<i class="uil uil-comment-alt-notes note-badge-icon" data-tooltip="${cleanNote.replace(/"/g, '&quot;')}"></i>` 
+
+                        const noteIcon = (hasNote && !isHidden)
+                            ? `<i class="uil uil-comment-alt-notes note-badge-icon" data-tooltip="${cleanNote.replace(/"/g, '&quot;')}"></i>`
                             : '';
 
                         return `<tr data-schedule-id="${s.id}" data-line="${line}">
@@ -892,7 +936,7 @@
                             <td style="color:var(--point-gold);">${s.startDate}~${s.endDate}</td>
                         </tr>`;
                     }).join('');
-                    
+
                     html += `<div class="table-container">
                         <table class="editable-table">
                             <colgroup>
@@ -917,17 +961,17 @@
         }
 
         function populateDateSelectorsForProductionPage(info, scheds) {
-            const days = getWeekdaysForWeek(info.year, info.month-1, info.weekNum);
-            const dNames = ['일','월','화','수','목','금','토'];
+            const days = getWeekdaysForWeek(info.year, info.month - 1, info.weekNum);
+            const dNames = ['일', '월', '화', '수', '목', '금', '토'];
             document.querySelectorAll('.prod-start-date, .prod-end-date').forEach(s => {
-                const row = s.closest('tr'); if(!row) return;
+                const row = s.closest('tr'); if (!row) return;
                 const id = parseInt(row.dataset.scheduleId);
-                const sc = scheds.find(i=>i.id===id);
+                const sc = scheds.find(i => i.id === id);
                 const val = s.classList.contains('prod-start-date') ? sc.actualStartDate : sc.actualEndDate;
                 s.innerHTML = '<option value="-">-</option>';
                 days.forEach(d => {
                     const txt = `${d.month}/${d.day}(${dNames[d.dayOfWeek]})`;
-                    s.add(new Option(txt, txt, false, txt===val));
+                    s.add(new Option(txt, txt, false, txt === val));
                 });
             });
         }
@@ -937,11 +981,11 @@
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
             const isPlan = reportType === 'plan';
-            
+
             let year, month, weekNum;
             if (!currentView.data || !currentView.data.year) {
-                const d = new Date(); year=d.getFullYear(); month=d.getMonth()+1; weekNum=getCurrentWeekNumber(d);
-            } else { year=currentView.data.year; month=currentView.data.month; weekNum=currentView.data.weekNum; }
+                const d = new Date(); year = d.getFullYear(); month = d.getMonth() + 1; weekNum = getCurrentWeekNumber(d);
+            } else { year = currentView.data.year; month = currentView.data.month; weekNum = currentView.data.weekNum; }
 
             let dbData;
             try {
@@ -956,21 +1000,21 @@
             doc.setFont('Paperlogy', 'normal');
             const title = isPlan ? `${year}년 ${month}월 ${weekNum}주차 생산계획서` : `${year}년 ${month}월 ${weekNum}주차 생산보고서`;
             const head = isPlan ? [['업체', '모델명', '주문월', 'T/B', 'LOT', '월', '화', '수', '목', '금']] : [['담당자', '업체', '모델명', '주문월', 'T/B', 'LOT', '실생산', '월', '화', '수', '목', '금']];
-            
+
             doc.setFontSize(20); doc.text(title, 14, 15);
             const dayColW = 8;
-            const colStyles = isPlan ? { 0:{cellWidth:25}, 1:{cellWidth:'auto'}, 2:{cellWidth:13}, 3:{cellWidth:17}, 4:{cellWidth:20}, 5:{cellWidth:dayColW}, 6:{cellWidth:dayColW}, 7:{cellWidth:dayColW}, 8:{cellWidth:dayColW}, 9:{cellWidth:dayColW} } : { 0:{cellWidth:20}, 1:{cellWidth:17}, 2:{cellWidth:'auto'}, 3:{cellWidth:13}, 4:{cellWidth:17}, 5:{cellWidth:20}, 6:{cellWidth:13}, 7:{cellWidth:dayColW}, 8:{cellWidth:dayColW}, 9:{cellWidth:dayColW}, 10:{cellWidth:dayColW}, 11:{cellWidth:dayColW} };
-            
-            const byLine = { A:[], B:[], C:[] };
-            dbData.forEach(i => { if(byLine[i.line]) byLine[i.line].push(i); });
-            const daysOrder = ['월','화','수','목','금'];
+            const colStyles = isPlan ? { 0: { cellWidth: 25 }, 1: { cellWidth: 'auto' }, 2: { cellWidth: 13 }, 3: { cellWidth: 17 }, 4: { cellWidth: 20 }, 5: { cellWidth: dayColW }, 6: { cellWidth: dayColW }, 7: { cellWidth: dayColW }, 8: { cellWidth: dayColW }, 9: { cellWidth: dayColW } } : { 0: { cellWidth: 20 }, 1: { cellWidth: 17 }, 2: { cellWidth: 'auto' }, 3: { cellWidth: 13 }, 4: { cellWidth: 17 }, 5: { cellWidth: 20 }, 6: { cellWidth: 13 }, 7: { cellWidth: dayColW }, 8: { cellWidth: dayColW }, 9: { cellWidth: dayColW }, 10: { cellWidth: dayColW }, 11: { cellWidth: dayColW } };
+
+            const byLine = { A: [], B: [], C: [] };
+            dbData.forEach(i => { if (byLine[i.line]) byLine[i.line].push(i); });
+            const daysOrder = ['월', '화', '수', '목', '금'];
             let lastY = 25;
 
-            ['A','B','C'].forEach(line => {
-                if(byLine[line].length > 0) {
-                    if(lastY > 250) { doc.addPage(); lastY=20; }
-                    doc.setFontSize(14); doc.setFont('Paperlogy', 'normal'); doc.text(`${line}라인`, 14, lastY+10);
-                    
+            ['A', 'B', 'C'].forEach(line => {
+                if (byLine[line].length > 0) {
+                    if (lastY > 250) { doc.addPage(); lastY = 20; }
+                    doc.setFontSize(14); doc.setFont('Paperlogy', 'normal'); doc.text(`${line}라인`, 14, lastY + 10);
+
                     const body = byLine[line].map(item => {
                         const getDay = (s) => (s && s.match(/\(([^)]+)\)/)) ? s.match(/\(([^)]+)\)/)[1] : null;
                         const start = isPlan ? getDay(item.startDate) : getDay(item.actualStartDate);
@@ -979,19 +1023,19 @@
                         const finalE = (sIdx > -1 && eIdx === -1) ? sIdx : eIdx;
                         const flags = daysOrder.map((d, i) => (sIdx > -1 && finalE > -1 && sIdx <= finalE && i >= sIdx && i <= finalE) ? 1 : 0);
 
-                        if(isPlan) return [item.company, item.model, item.orderMonth||'', item.tb||'Top', item.lot, ...flags];
-                        else return [item.manager||'', item.company, item.model, item.orderMonth||'', item.tb||'Top', item.lot, item.actualProd||'', ...flags];
+                        if (isPlan) return [item.company, item.model, item.orderMonth || '', item.tb || 'Top', item.lot, ...flags];
+                        else return [item.manager || '', item.company, item.model, item.orderMonth || '', item.tb || 'Top', item.lot, item.actualProd || '', ...flags];
                     });
 
                     doc.autoTable({
-                        head: head, body: body, startY: lastY+15, theme: 'grid',
-                        styles: { font:'Paperlogy', fontStyle:'normal', fontSize:9, lineWidth:0.1, lineColor:[150,150,150], halign:'center' },
-                        headStyles: { fontStyle:'normal', fillColor:[200,200,200], textColor:0 },
+                        head: head, body: body, startY: lastY + 15, theme: 'grid',
+                        styles: { font: 'Paperlogy', fontStyle: 'normal', fontSize: 9, lineWidth: 0.1, lineColor: [150, 150, 150], halign: 'center' },
+                        headStyles: { fontStyle: 'normal', fillColor: [200, 200, 200], textColor: 0 },
                         columnStyles: colStyles,
-                        didDrawCell: function(data) {
+                        didDrawCell: function (data) {
                             const startCol = isPlan ? 5 : 7;
-                            if(data.column.index >= startCol && data.cell.section === 'body') {
-                                if(data.cell.raw === 1) doc.setFillColor(255, 255, 0); else doc.setFillColor(255, 255, 255);
+                            if (data.column.index >= startCol && data.cell.section === 'body') {
+                                if (data.cell.raw === 1) doc.setFillColor(255, 255, 0); else doc.setFillColor(255, 255, 255);
                                 doc.rect(data.cell.x, data.cell.y, data.cell.width, data.cell.height, 'FD'); data.cell.text = [''];
                             }
                         }
@@ -999,23 +1043,70 @@
                     lastY = doc.autoTable.previous.finalY;
                 }
             });
-            doc.save(`${year}년-${month}월-${weekNum}주차_${isPlan?'생산계획서':'생산보고서'}.pdf`);
+            doc.save(`${year}년-${month}월-${weekNum}주차_${isPlan ? '생산계획서' : '생산보고서'}.pdf`);
         }
 
         function getWeekdaysForWeek(y, m, w) {
             const d = new Date(y, m, 1); d.setDate(d.getDate() - d.getDay() + (w - 1) * 7);
             const res = [];
-            for(let i=0; i<7; i++) { const cur = new Date(d); cur.setDate(d.getDate()+i); if(cur.getDay()>=1 && cur.getDay()<=5) res.push({ month: cur.getMonth()+1, day: cur.getDate(), dayOfWeek: cur.getDay() }); }
+            for (let i = 0; i < 7; i++) { const cur = new Date(d); cur.setDate(d.getDate() + i); if (cur.getDay() >= 1 && cur.getDay() <= 5) res.push({ month: cur.getMonth() + 1, day: cur.getDate(), dayOfWeek: cur.getDay() }); }
             return res;
         }
         function getProductionWeeksInMonth(y, m) {
-            const s = new Set(); const last = new Date(y, m+1, 0).getDate();
-            for(let i=1; i<=last; i++) { const d = new Date(y, m, i); if(d.getDay()>=1 && d.getDay()<=5) s.add(Math.ceil((i + new Date(y, m, 1).getDay()) / 7)); }
+            const s = new Set(); const last = new Date(y, m + 1, 0).getDate();
+            for (let i = 1; i <= last; i++) { const d = new Date(y, m, i); if (d.getDay() >= 1 && d.getDay() <= 5) s.add(Math.ceil((i + new Date(y, m, 1).getDay()) / 7)); }
             return s;
         }
         function getCurrentWeekNumber(d) { return Math.ceil((d.getDate() + new Date(d.getFullYear(), d.getMonth(), 1).getDay()) / 7); }
         function updateTime() {
-            const d = new Date(); document.getElementById('current-time').textContent = `${d.getFullYear()}년 ${(d.getMonth()+1).toString().padStart(2,'0')}월 ${d.getDate().toString().padStart(2,'0')}일 ${d.getHours().toString().padStart(2,'0')}시 ${d.getMinutes().toString().padStart(2,'0')}분`;
+            const d = new Date(); document.getElementById('current-time').textContent = `${d.getFullYear()}년 ${(d.getMonth() + 1).toString().padStart(2, '0')}월 ${d.getDate().toString().padStart(2, '0')}일 ${d.getHours().toString().padStart(2, '0')}시 ${d.getMinutes().toString().padStart(2, '0')}분`;
+        }
+        // [신규] 모델 자동 등록 핸들러 (오류 수정 버전)
+        async function handleModelInput(companyInput, modelInput) {
+            const companyName = companyInput.value.trim();
+            const modelName = modelInput.value.trim();
+
+            if (!companyName || !modelName) return;
+
+            try {
+                // 1. 확인 요청 (첫 번째 fetch)
+                const checkRes = await fetch('http://127.0.0.1:5000/api/production/models/check-and-create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ company: companyName, model: modelName, create: false })
+                });
+
+                const checkData = await checkRes.json();
+
+                // 2. 없으면 알림창 표시
+                if (checkData.status === 'missing_model' || checkData.status === 'missing_company') {
+                    const msg = checkData.status === 'missing_company'
+                        ? `'${companyName}' 업체와 '${modelName}' 모델이 신규입니다.\n관리 폴더를 새로 생성하시겠습니까?`
+                        : `'${modelName}'은(는) 신규 모델입니다.\n관리 폴더를 새로 생성하시겠습니까?`;
+
+                    if (confirm(msg)) {
+                        // 3. 생성 요청 (두 번째 fetch)
+                        // [중요] 아래 줄에 'const createRes =' 부분이 꼭 있어야 합니다!
+                        const createRes = await fetch('http://127.0.0.1:5000/api/production/models/check-and-create', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ company: companyName, model: modelName, create: true })
+                        });
+
+                        // 여기서 createRes 변수를 사용합니다.
+                        const createData = await createRes.json();
+
+                        if (createData.status === 'created') {
+                            alert("완료! 공정 지도에 새 폴더가 생성되었습니다.");
+                        } else if (createData.error) {
+                            alert("오류 발생: " + createData.error);
+                        }
+                    }
+                }
+            } catch (err) {
+                console.error("모델 확인 중 오류:", err);
+                alert("서버 통신 오류가 발생했습니다. (백엔드 서버 확인 필요)");
+            }
         }
     </script>
 
@@ -1027,25 +1118,25 @@
            ------------------------------------------------------------- */
         const globalTooltip = document.getElementById('global-tooltip');
 
-        document.addEventListener('mouseover', function(e) {
+        document.addEventListener('mouseover', function (e) {
             // 아이콘에 마우스가 올라갔을 때
             if (e.target.classList.contains('note-badge-icon')) {
                 const text = e.target.getAttribute('data-tooltip');
                 if (text) {
                     globalTooltip.textContent = text;
                     globalTooltip.style.display = 'block';
-                    
+
                     const rect = e.target.getBoundingClientRect();
-                    
+
                     // 아이콘의 바로 오른쪽 상단에 위치하도록 계산
                     // (스크롤 위치 포함)
-                    globalTooltip.style.top = (rect.top - 30) + 'px'; 
+                    globalTooltip.style.top = (rect.top - 30) + 'px';
                     globalTooltip.style.left = (rect.right + 10) + 'px';
                 }
             }
         });
 
-        document.addEventListener('mouseout', function(e) {
+        document.addEventListener('mouseout', function (e) {
             // 마우스가 떠나면 숨김
             if (e.target.classList.contains('note-badge-icon')) {
                 globalTooltip.style.display = 'none';
@@ -1053,4 +1144,5 @@
         });
     </script>
 </body>
+
 </html>

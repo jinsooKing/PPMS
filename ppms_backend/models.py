@@ -223,3 +223,44 @@ class AoiRecord(db.Model):
             'total_defect': self.total_defect,
             'good_qty': self.good_qty
         }
+        
+        # 8. [신규] 제품 모델 (업체 하위의 '모델 폴더' 역할)
+class ProductModel(db.Model):
+    __tablename__ = 'product_models'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False) # 모델명
+    company_id = db.Column(db.Integer, db.ForeignKey('companies.id'), nullable=False) # 어느 업체 소속인지 (FK)
+    created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
+
+    # 관계 설정 (선택사항: Company 삭제 시 모델도 같이 삭제되게 하려면 cascade 설정 필요)
+    # company = db.relationship('Company', backref=db.backref('models', lazy=True))
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'company_id': self.company_id,
+            'created_at': self.created_at
+        }
+
+# 9. [신규] 모델 데이터 (BOM, 좌표 등 실데이터 저장)
+class ModelData(db.Model):
+    __tablename__ = 'model_data'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    model_id = db.Column(db.Integer, db.ForeignKey('product_models.id'), nullable=False) # 어느 모델 소속인지
+    data_type = db.Column(db.String(20), nullable=False) # 예: 'BOM', 'COORDINATE'
+    content = db.Column(db.Text) # 실제 데이터 (JSON 문자열이나 텍스트)
+    file_name = db.Column(db.String(255)) # 업로드된 원본 파일명 (예: A모델_BOM.xlsx)
+    updated_at = db.Column(db.DateTime, default=db.func.current_timestamp(), onupdate=db.func.current_timestamp())
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'model_id': self.model_id,
+            'type': self.data_type,
+            'fileName': self.file_name,
+            'content': self.content, # 필요에 따라 빼고 리스트만 줄 수도 있음
+            'updated_at': self.updated_at
+        }

@@ -152,7 +152,7 @@
             color: rgba(255, 255, 255, 0.2); font-weight: normal;
         }
 
-        /* [신규] 생산 실적 테이블 스타일 */
+        /* [생산 실적 테이블 스타일] */
         .statistics-table th {
             background-color: #15151a; color: var(--point-gold);
             padding: 12px; font-size: 0.95rem;
@@ -172,8 +172,16 @@
         .stats-clickable-val:hover { color: #fff; text-decoration-color: #fff; }
         .stats-lot-val { color: #888; font-size: 0.85em; }
         
-        .stats-problem-yellow { color: #FFD700 !important; }
-        .stats-problem-red { color: var(--danger-red) !important; }
+        /* [수정] 상태별 강조 색상 변경 (기존 Gold와 확실히 구분) */
+        .stats-problem-yellow { color: #FF3D00 !important; } /* 부족: 강렬한 오렌지 레드 */
+        .stats-problem-red { color: #EA00FF !important; }    /* 불균형: 선명한 마젠타/보라 */
+
+        /* 모달 내 링크 스타일 */
+        #details-modal-content a {
+            color: var(--point-gold); text-decoration: underline; text-underline-offset: 3px;
+            transition: color 0.2s;
+        }
+        #details-modal-content a:hover { color: #fff; }
 
         /* 5. 뷰어 팝업 */
         #global-viewer {
@@ -481,6 +489,110 @@
                 } catch(e) { noMsg.innerHTML = '실패'; }
             });
 
+            // [수정된 함수] 생산 실적 테이블 렌더링 (2단 레이아웃 + 구분선 최적화)
+            function renderProdTable(data) {
+                if(!data || data.length===0) { 
+                    noMsg.style.display = 'block'; noMsg.innerHTML='데이터 없음'; 
+                    return; 
+                }
+                noMsg.style.display='none'; 
+                prodTableContainer.style.display = 'block'; 
+
+                // Colgroup: 25% 25% | 2px | 25% 25% (합계 ~100%)
+                let html = `
+                    <table class="statistics-table" style="width:100%; table-layout:fixed; border-collapse: separate; border-spacing: 0;">
+                        <colgroup>
+                            <col style="width: 25%;"> <col style="width: 25%;"> <col style="width: 2px;"> <col style="width: 25%;"> <col style="width: 25%;"> </colgroup>
+                        <thead>
+                            <tr>
+                                <th>모델명</th>
+                                <th>LOT / 실생산</th>
+                                <th style="padding:0; background:transparent; border:none;"></th> <th>모델명</th>
+                                <th>LOT / 실생산</th>
+                            </tr>
+                        </thead>
+                        <tbody>`;
+
+                for(let i=0; i<data.length; i+=2) {
+                    const item1 = data[i];
+                    const item2 = data[i+1];
+                    
+                    html += `<tr>`;
+                    html += createProdCells(item1);
+                    
+                    // 중앙 구분선 (Divider) - 은은한 색상 적용
+                    html += `<td style="padding:0; background:rgba(255, 235, 167, 0.6); border:none;"></td>`; 
+                    
+                    if (item2) {
+                        html += createProdCells(item2);
+                    } else {
+                        html += `<td></td><td></td>`; // 빈 셀
+                    }
+                    html += `</tr>`;
+                }
+                html += `</tbody></table>`;
+                
+                prodTableContainer.innerHTML = html;
+            }
+
+            // [신규 함수] 생산 실적 셀 생성기
+            function createProdCells(item) {
+                // 상태별 색상 클래스 (기존 로직 유지)
+                let statusClass = '';
+                if (item.status === 'shortage') statusClass = 'stats-problem-yellow';
+                else if (item.status === 'imbalance') statusClass = 'stats-problem-red';
+                
+                const lot = item.totalQuantity.toLocaleString();
+                const actual = item.actualProduction.toLocaleString();
+                
+                // 모델명 / [LOT / 실생산(클릭가능)]
+                return `
+                    <td style="color:#fff; font-weight:bold; text-align:center;">${item.model}</td>
+                    <td style="text-align:center;">
+                        <span class="stats-lot-val">${lot}</span>
+                        <span style="color:#666; margin:0 5px;">/</span>
+                        <span class="stats-clickable-val ${statusClass}" 
+                              data-model="${item.model}" 
+                              data-year="${item.orderYear}" 
+                              data-month="${item.orderMonth}">
+                            ${actual}
+                        </span>
+                    </td>
+                `;
+            }
+
+            // [생산실적 상세 모달] 클릭 리스너 수정
+            const modal = document.getElementById('details-modal');
+            const mContent = document.getElementById('details-modal-content');
+            const mTitle = document.getElementById('details-modal-title');
+            document.addEventListener('click', async(e)=>{
+                // .stats-details-btn 대신 .stats-clickable-val 사용
+                const target = e.target.closest('.stats-clickable-val');
+                if(target){
+                    const {model,year,month}=target.dataset;
+                    mTitle.textContent=`${model} 상세`; modal.classList.add('visible');
+                    try{
+                        const res=await fetch(`http://127.0.0.1:5000/api/statistics/model_details?model=${encodeURIComponent(model)}&year=${year}&month=${encodeURIComponent(month)}`);
+                        const d=await res.json();
+                        let html=`<table class="statistics-table" style="width:100%"><thead><tr><th>주차</th><th>라인</th><th>T/B</th><th>LOT</th><th>실적</th></tr></thead><tbody>`;
+                        d.forEach(r => {
+                            // [기능 복구] 주차 클릭 시 링크 이동
+                            const linkUrl = `production.html?year=${year}&month=${month}&week=${r.prod_week}`;
+                            html += `<tr>
+                                <td><a href="${linkUrl}">${r.prod_week}주</a></td>
+                                <td>${r.line}</td>
+                                <td>${r.tb}</td>
+                                <td>${r.lot}</td>
+                                <td>${r.actualProd}</td>
+                            </tr>`;
+                        });
+                        html+=`</tbody></table>`;
+                        mContent.innerHTML=html;
+                    }catch(err){mContent.innerHTML='오류';}
+                }
+            });
+            document.getElementById('close-details-modal-btn').onclick=()=>modal.classList.remove('visible');
+
             function renderAoi(data) {
                 if(!data || data.length === 0) { 
                     noMsg.style.display = 'block'; noMsg.innerHTML = '데이터 없음'; 
@@ -632,102 +744,6 @@
                     renderProdTable(data);
                 } catch(e) { noMsg.innerHTML = '실패'; }
             });
-
-            // [수정된 함수] 생산 실적 테이블 렌더링 (2단 레이아웃 + 열 병합)
-            function renderProdTable(data) {
-                if(!data || data.length===0) { 
-                    noMsg.style.display = 'block'; noMsg.innerHTML='데이터 없음'; 
-                    return; 
-                }
-                noMsg.style.display='none'; 
-                prodTableContainer.style.display = 'block'; 
-
-                let html = `
-                    <table class="statistics-table" style="width:100%; table-layout:fixed; border-collapse: separate; border-spacing: 0;">
-                        <colgroup>
-                            <col style="width: 22%;"> <col style="width: 22%;"> <col style="width: 1px;"> <col style="width: 10px;"> <col style="width: 22%;"> <col style="width: 22%;"> </colgroup>
-                        <thead>
-                            <tr>
-                                <th>모델명</th>
-                                <th>LOT / 실생산</th>
-                                <th style="padding:0; background:transparent; border:none;"></th>
-                                <th style="padding:0; background:transparent; border:none;"></th>
-                                <th>모델명</th>
-                                <th>LOT / 실생산</th>
-                            </tr>
-                        </thead>
-                        <tbody>`;
-
-                for(let i=0; i<data.length; i+=2) {
-                    const item1 = data[i];
-                    const item2 = data[i+1];
-                    
-                    html += `<tr>`;
-                    html += createProdCells(item1);
-                    
-                    // 중앙 구분선 및 여백
-                    html += `<td style="padding:0; background:rgba(255,255,255,0.1); border:none;"></td>`; 
-                    html += `<td style="padding:0; border:none;"></td>`; 
-                    
-                    if (item2) {
-                        html += createProdCells(item2);
-                    } else {
-                        html += `<td></td><td></td>`; // 빈 셀
-                    }
-                    html += `</tr>`;
-                }
-                html += `</tbody></table>`;
-                
-                prodTableContainer.innerHTML = html;
-            }
-
-            // [신규 함수] 생산 실적 셀 생성기
-            function createProdCells(item) {
-                // 상태별 색상 클래스 (기존 로직 유지)
-                let statusClass = '';
-                if (item.status === 'shortage') statusClass = 'stats-problem-yellow';
-                else if (item.status === 'imbalance') statusClass = 'stats-problem-red';
-                
-                const lot = item.totalQuantity.toLocaleString();
-                const actual = item.actualProduction.toLocaleString();
-                
-                // 모델명 / [LOT / 실생산(클릭가능)]
-                return `
-                    <td style="color:#fff; font-weight:bold; text-align:center;">${item.model}</td>
-                    <td style="text-align:center;">
-                        <span class="stats-lot-val">${lot}</span>
-                        <span style="color:#666; margin:0 5px;">/</span>
-                        <span class="stats-clickable-val ${statusClass}" 
-                              data-model="${item.model}" 
-                              data-year="${item.orderYear}" 
-                              data-month="${item.orderMonth}">
-                            ${actual}
-                        </span>
-                    </td>
-                `;
-            }
-
-            // [생산실적 상세 모달] 클릭 리스너 수정 (기존 버튼 -> 새로운 클릭 요소)
-            const modal = document.getElementById('details-modal');
-            const mContent = document.getElementById('details-modal-content');
-            const mTitle = document.getElementById('details-modal-title');
-            document.addEventListener('click', async(e)=>{
-                // .stats-details-btn 대신 .stats-clickable-val 사용
-                const target = e.target.closest('.stats-clickable-val');
-                if(target){
-                    const {model,year,month}=target.dataset;
-                    mTitle.textContent=`${model} 상세`; modal.classList.add('visible');
-                    try{
-                        const res=await fetch(`http://127.0.0.1:5000/api/statistics/model_details?model=${encodeURIComponent(model)}&year=${year}&month=${encodeURIComponent(month)}`);
-                        const d=await res.json();
-                        let html=`<table class="statistics-table" style="width:100%"><thead><tr><th>주차</th><th>라인</th><th>T/B</th><th>LOT</th><th>실적</th></tr></thead><tbody>`;
-                        d.forEach(r=>html+=`<tr><td>${r.prod_week}주</td><td>${r.line}</td><td>${r.tb}</td><td>${r.lot}</td><td>${r.actualProd}</td></tr>`);
-                        html+=`</tbody></table>`;
-                        mContent.innerHTML=html;
-                    }catch(err){mContent.innerHTML='오류';}
-                }
-            });
-            document.getElementById('close-details-modal-btn').onclick=()=>modal.classList.remove('visible');
 
             // 공통
             function updateTime(){
