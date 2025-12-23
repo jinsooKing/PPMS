@@ -1,5 +1,7 @@
 from extensions import db
 from flask_login import UserMixin
+from flask_sqlalchemy import SQLAlchemy
+from datetime import datetime
 
 # 1. 생산 계획 모델
 class ProductionSchedule(db.Model):
@@ -223,26 +225,35 @@ class AoiRecord(db.Model):
             'total_defect': self.total_defect,
             'good_qty': self.good_qty
         }
-        
-        # 8. [신규] 제품 모델 (업체 하위의 '모델 폴더' 역할)
+ # models.py (기존 파일에 아래 내용 추가/수정)
+
+# [신규 추가] 폴더 구조를 저장하는 테이블
+class ModelFolder(db.Model):
+    __tablename__ = 'model_folders'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    
+    # 어느 업체 소속인지 (최상위 루트 식별용)
+    company_id = db.Column(db.Integer, db.ForeignKey('companies.id'), nullable=False)
+    
+    # 내 부모 폴더가 누구인지 (자기 참조, Null이면 최상위)
+    parent_folder_id = db.Column(db.Integer, db.ForeignKey('model_folders.id'), nullable=True)
+    
+    # 관계 설정 (자식 폴더들)
+    sub_folders = db.relationship('ModelFolder', 
+                                  backref=db.backref('parent', remote_side=[id]),
+                                  cascade="all, delete-orphan")
+
+# [수정] ProductModel 테이블에 folder_id 추가
 class ProductModel(db.Model):
     __tablename__ = 'product_models'
-    
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False) # 모델명
-    company_id = db.Column(db.Integer, db.ForeignKey('companies.id'), nullable=False) # 어느 업체 소속인지 (FK)
-    created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
-
-    # 관계 설정 (선택사항: Company 삭제 시 모델도 같이 삭제되게 하려면 cascade 설정 필요)
-    # company = db.relationship('Company', backref=db.backref('models', lazy=True))
-
-    def to_dict(self):
-        return {
-            'id': self.id,
-            'name': self.name,
-            'company_id': self.company_id,
-            'created_at': self.created_at
-        }
+    name = db.Column(db.String(100), nullable=False)
+    company_id = db.Column(db.Integer, db.ForeignKey('companies.id'), nullable=False)
+    
+    # [신규 컬럼] 소속된 폴더 ID (Null이면 업체 최상위에 존재)
+    folder_id = db.Column(db.Integer, db.ForeignKey('model_folders.id'), nullable=True)       
+       
 
 # 9. [신규] 모델 데이터 (BOM, 좌표 등 실데이터 저장)
 class ModelData(db.Model):
