@@ -109,11 +109,19 @@ def get_directory_contents():
     try:
         company_id = request.args.get('company_id')
         folder_id = request.args.get('folder_id')
+        section = request.args.get('section', 'production') # 섹션 정보 추가 받아옴
         
         if not company_id: return jsonify({"error": "Company ID required"}), 400
         if folder_id in ['null', 'undefined', '']: folder_id = None
         
-        folders = ModelFolder.query.filter_by(company_id=company_id, parent_folder_id=folder_id).all()
+        # [수정] 해당 섹션(공정)에 속한 폴더만 필터링하여 가져옵니다.
+        folders = ModelFolder.query.filter_by(
+            company_id=company_id, 
+            parent_folder_id=folder_id,
+            section=section 
+        ).all()
+        
+        # 모델은 공통 데이터이므로 기존대로 유지하거나, 필요 시 섹션별 필터링을 추가할 수 있습니다.
         models = ProductModel.query.filter_by(company_id=company_id, folder_id=folder_id).all()
 
         return jsonify({
@@ -127,9 +135,16 @@ def create_folder():
     try:
         data = request.json
         pid = data.get('parent_folder_id')
+        section = data.get('section', 'production') # 어떤 탭에서 생성했는지 저장
         if pid in ['null', '', None]: pid = None
         
-        db.session.add(ModelFolder(name=data['name'], company_id=data['company_id'], parent_folder_id=pid))
+        # [수정] 생성 시 section 정보를 포함하여 저장합니다.
+        db.session.add(ModelFolder(
+            name=data['name'], 
+            company_id=data['company_id'], 
+            parent_folder_id=pid,
+            section=section
+        ))
         db.session.commit()
         return jsonify({"message": "Created"}), 201
     except Exception as e: return jsonify({"error": str(e)}), 500
@@ -204,6 +219,35 @@ def delete_manager(id):
         db.session.delete(m); db.session.commit()
         return jsonify({"message": "Deleted"})
     except: return jsonify({"error": "Error"}), 500
+    
+# [추가] 담당자 상세 정보 수정 API
+@bp.route('/managers/<int:manager_id>', methods=['PUT'])
+def update_manager(manager_id):
+    try:
+        manager = Manager.query.get_or_404(manager_id)
+        data = request.json
+
+        # 프론트엔드에서 보낸 데이터로 필드 업데이트
+        if 'position' in data:
+            manager.position = data.get('position')
+        if 'department' in data:
+            manager.department = data.get('department')
+        if 'roles' in data:
+            manager.roles = data.get('roles')
+        if 'contact' in data:
+            manager.contact = data.get('contact')
+        if 'email' in data:
+            manager.email = data.get('email')
+        
+        # 이름 수정이 필요한 경우 (Context Menu용)
+        if 'name' in data:
+            manager.name = data.get('name')
+
+        db.session.commit()
+        return jsonify({'success': True, 'message': '담당자 정보가 수정되었습니다.'})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500
 
 # --- 모델 관련 ---
 @bp.route('/models', methods=['POST'])

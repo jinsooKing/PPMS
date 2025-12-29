@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PPMS - 공정 기준정보 관리</title>
-    
+
     <link rel="stylesheet" href="common.css">
     <link href="https://hangeul.pstatic.net/hangeul_static/css/bmdohyeon.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
@@ -16,84 +16,866 @@
     <script src="logo.js"></script>
 
     <style>
-        /* [Global] */
-        * { font-weight: bold !important; box-sizing: border-box; }
-        body { overflow: hidden; background-color: #1a1b21; font-family: 'BMDOHYEON', sans-serif; display: flex; flex-direction: column; height: 100vh; }
-        .page-container { position: relative; display: flex; flex-direction: column; height: 100%; overflow: hidden; }
-        .content-area { flex: 1; padding: 0 !important; position: relative; overflow: hidden; background-color: #1a1b21; background-image: linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px); background-size: 20px 20px; }
+        .manager-fit-modal {
+            width: fit-content !important;
+            min-width: 400px;
+            /* 너무 좁아지지 않도록 최소폭 확보 */
+            max-width: 600px;
+            height: auto !important;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 30px;
+            background-color: #2a2b38;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
 
-        /* [Views] */
-        .view-section { position: absolute; top: 0; left: 0; width: 100%; height: 100%; padding: 40px; overflow-y: auto; display: none; }
-        #main-dashboard-view { display: block; }
+        /* 2. 모달 바디 정렬 */
+        .center-align-body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+
+        /* 3. [핵심 수정] 직급/부서 한 줄(Row) 배치 레이아웃 */
+        .input-row {
+            display: flex;
+            flex-direction: row;
+            /* 가로 배치 명시 */
+            gap: 15px;
+            /* 사이 간격 */
+            width: 100%;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        /* 4. [핵심 수정] 입력 그룹이 공간을 공평하게 나눠가지도록 설정 */
+        .input-row .input-group {
+            flex: 1;
+            /* 남은 공간을 1:1로 나눠가짐 */
+            width: auto;
+            /* 100% 강제 해제 */
+            min-width: 0;
+            /* Flex 자식 넘침 방지 */
+        }
+
+        /* 일반 입력 그룹 (한 줄에 하나 있는 경우) */
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 20px;
+            width: 100%;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--point-gold);
+            font-size: 0.9rem;
+            font-weight: normal;
+            /* 라벨은 너무 굵지 않게 */
+        }
+
+        /* 5. 입력창 및 드롭다운 스타일 */
+        #manager-info-modal .luxury-input {
+            background-color: #1f2029 !important;
+            color: #ffffff !important;
+            border: 1px solid rgba(255, 235, 167, 0.3);
+            text-align: center;
+            text-align-last: center;
+            width: 100%;
+            height: 40px;
+            /* 높이 고정으로 찌그러짐 방지 */
+            border-radius: 6px;
+            padding: 5px 10px;
+        }
+
+        #manager-info-modal .luxury-input:focus {
+            border-color: var(--point-gold);
+            outline: none;
+        }
+
+        /* 드롭다운 옵션 스타일 */
+        #manager-info-modal select.luxury-input option {
+            background-color: #2a2b38;
+            color: #ffffff;
+        }
+
+        /* 6. 역할 체크박스 그리드 */
+        .checkbox-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px 20px;
+            justify-items: start;
+            width: 100%;
+            /* 그리드 전체 너비 확보 */
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            box-sizing: border-box;
+            /* 패딩 포함 크기 계산 */
+        }
+
+        .check-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #ccc;
+            font-size: 0.85rem;
+            cursor: pointer;
+            white-space: nowrap;
+            /* 텍스트 줄바꿈 방지 */
+        }
+
+        /* 7. 푸터 버튼 */
+        .center-footer {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        /* [중요] 아이콘 깨짐 방지 (전역 bold 설정 무력화) */
+        i.uil {
+            font-weight: normal !important;
+        }
+
+        /* ============================================================
+   [최종 보정] 탭 메뉴 스타일: 계단 현상 및 투명도 해결
+   ============================================================ */
+        .section-tab-bar {
+            display: flex !important;
+            flex-direction: row !important;
+            justify-content: center !important;
+            align-items: center !important;
+            /* [핵심] 모든 요소를 세로 정중앙에 고정 */
+            background-color: #23242d !important;
+            /* 배경색을 명시하여 투명함 해결 */
+            border-bottom: 1px solid rgba(255, 235, 167, 0.2) !important;
+            padding: 0 20px !important;
+            gap: 15px !important;
+            height: 55px !important;
+            /* 높이를 55px로 강제 고정 */
+            z-index: 999 !important;
+            flex-shrink: 0 !important;
+            width: 100% !important;
+        }
+
+        .tab-item {
+            position: relative !important;
+            padding: 0 25px !important;
+            /* 투명도 해결: 밝은 글자색으로 변경하여 시인성 확보 */
+            color: rgba(255, 255, 255, 0.8) !important;
+            font-size: 1rem !important;
+            cursor: pointer !important;
+            display: flex !important;
+            align-items: center !important;
+            /* 아이콘과 텍스트 세로 정렬 */
+            justify-content: center !important;
+            gap: 8px !important;
+            height: 100% !important;
+            /* 부모 높이에 맞춤 */
+            white-space: nowrap !important;
+            /* 줄바꿈 방지 */
+            margin: 0 !important;
+            /* 계단 현상을 유발하는 외부 여백 제거 */
+            /* [주의] GSAP 애니메이션과 충돌할 수 있으므로 transition: all은 제거 권장 */
+            transition: color 0.3s ease !important;
+        }
+
+        .tab-item:hover {
+            color: #ffffff !important;
+        }
+
+        .tab-item.active {
+            color: var(--point-gold) !important;
+            font-weight: 800 !important;
+        }
+
+        .tab-item.active::after {
+            content: '' !important;
+            position: absolute !important;
+            bottom: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 3px !important;
+            background-color: var(--point-gold) !important;
+            border-radius: 3px 3px 0 0 !important;
+            box-shadow: 0 -2px 10px rgba(255, 235, 167, 0.5) !important;
+        }
+
+
+
+        /* [수정] 담당자 모달 (Fit & Center) */
+        .manager-fit-modal {
+            width: fit-content !important;
+            min-width: 400px;
+            max-width: 600px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 30px;
+            background-color: #2a2b38;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+        }
+
+        .center-align-body {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .input-row {
+            display: flex;
+            gap: 15px;
+            width: 100%;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .input-row .input-group {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .input-group {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        #manager-info-modal .luxury-input {
+            text-align: center;
+            text-align-last: center;
+        }
+
+        .checkbox-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            width: 100%;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .center-footer {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        /* 필요한 경우 body에만 굵기 적용 */
+        body {
+            font-weight: bold;
+        }
+
+        i {
+            font-weight: normal !important;
+        }
+
+        /* 아이콘은 굵기 해제 */
+
+        /* 필요한 경우 body에만 적용 */
+
+        body {
+            overflow: hidden;
+            background-color: #1a1b21;
+            font-family: 'BMDOHYEON', sans-serif;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        .page-container {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .content-area {
+            flex: 1;
+            padding: 0 !important;
+            position: relative;
+            overflow: hidden;
+            background-color: #1a1b21;
+            background-image: linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        .view-section {
+            width: 100%;
+            min-height: 100%;
+            /* 절대 위치를 제거하고 최소 높이만 지정 */
+            padding: 20px;
+            display: none;
+        }
+
+        #main-dashboard-view {
+            display: block;
+        }
 
         /* [Nav Bar] */
-        .folder-nav-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; padding-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); }
-        .nav-left-group { display: flex; align-items: center; gap: 15px; }
-        .breadcrumb { display: flex; align-items: center; gap: 10px; font-size: 1.2rem; color: #888; }
-        .breadcrumb-item { cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 5px; }
-        .breadcrumb-item:hover { color: #fff; }
-        .breadcrumb-item.active { color: var(--point-gold); cursor: default; }
-        .breadcrumb-separator { color: #555; font-size: 0.8rem; }
-        .nav-back-btn { width: 32px; height: 32px; border-radius: 8px; background: rgba(255,255,255,0.05); color: #ccc; border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; font-size: 1.1rem; cursor: pointer; transition: 0.2s; }
-        .nav-back-btn:hover { background: var(--accent-blue); color: #fff; transform: translateY(-2px); }
-        .folder-actions { display: flex; gap: 10px; }
-        .search-box { background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 5px 15px; color: #fff; font-family: 'BMDOHYEON'; width: 250px; transition: 0.2s; }
-        .search-box:focus { border-color: var(--point-gold); width: 300px; outline: none; }
+        .folder-nav-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .nav-left-group {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.2rem;
+            color: #888;
+        }
+
+        .breadcrumb-item {
+            cursor: pointer;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .breadcrumb-item:hover {
+            color: #fff;
+        }
+
+        .breadcrumb-item.active {
+            color: var(--point-gold);
+            cursor: default;
+        }
+
+        .breadcrumb-separator {
+            color: #555;
+            font-size: 0.8rem;
+        }
+
+        .nav-back-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            color: #ccc;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .nav-back-btn:hover {
+            background: var(--accent-blue);
+            color: #fff;
+            transform: translateY(-2px);
+        }
+
+        .folder-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .search-box {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            padding: 5px 15px;
+            color: #fff;
+            font-family: 'BMDOHYEON';
+            width: 250px;
+            transition: 0.2s;
+        }
+
+        .search-box:focus {
+            border-color: var(--point-gold);
+            width: 300px;
+            outline: none;
+        }
 
         /* [Input UI] */
-        .luxury-input-wrapper { display: flex; align-items: center; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 50px; padding: 5px 5px 5px 25px; width: 100%; max-width: 500px; margin: 0 0 40px 0; box-shadow: 0 10px 30px rgba(0,0,0,0.2); transition: all 0.3s; }
-        .luxury-input-wrapper:focus-within { background: rgba(255, 255, 255, 0.08); border-color: var(--point-gold); transform: translateY(-2px); }
-        .luxury-input { flex: 1; border: none; background: transparent; color: #fff; font-size: 1rem; font-family: 'BMDOHYEON'; outline: none; height: 40px; }
-        .luxury-add-btn { background: linear-gradient(135deg, #1a1b21, #2d2d2d); color: #ccc; border: 1px solid #444; border-radius: 50px; padding: 0 25px; height: 40px; font-family: 'BMDOHYEON'; font-size: 0.95rem; cursor: pointer; transition: all 0.3s ease; display: flex; align-items: center; gap: 8px; margin-left: 10px; }
-        .luxury-add-btn:hover { background: #000; color: var(--point-gold); border-color: var(--point-gold); transform: scale(1.05); }
+        .luxury-input-wrapper {
+            display: flex;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 50px;
+            padding: 5px 5px 5px 25px;
+            width: 100%;
+            max-width: 500px;
+            margin: 0 0 40px 0;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s;
+        }
+
+        .luxury-input-wrapper:focus-within {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: var(--point-gold);
+            transform: translateY(-2px);
+        }
+
+        .luxury-input {
+            flex: 1;
+            border: none;
+            background: transparent;
+            color: #fff;
+            font-size: 1rem;
+            font-family: 'BMDOHYEON';
+            outline: none;
+            height: 40px;
+        }
+
+        .luxury-add-btn {
+            background: linear-gradient(135deg, #1a1b21, #2d2d2d);
+            color: #ccc;
+            border: 1px solid #444;
+            border-radius: 50px;
+            padding: 0 25px;
+            height: 40px;
+            font-family: 'BMDOHYEON';
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-left: 10px;
+        }
+
+        .luxury-add-btn:hover {
+            background: #000;
+            color: var(--point-gold);
+            border-color: var(--point-gold);
+            transform: scale(1.05);
+        }
 
         /* [Folder/Grid] */
-        .grid-section-title { color: #888; border-bottom: 1px solid #444; padding-bottom: 5px; margin-bottom: 20px; font-size: 1rem; display: flex; align-items: center; gap: 8px; margin-top: 20px; }
-        .folder-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 25px; justify-items: center; align-items: start; }
-        .folder-item { display: flex; flex-direction: column; align-items: center; cursor: pointer; width: 120px; padding: 10px; border-radius: 6px; transition: background 0.2s; position: relative; }
-        .folder-item:hover { background-color: rgba(255, 255, 255, 0.08); }
-        .folder-item:active .folder-3d { transform: scale(0.95); }
-        
-        .folder-3d { position: relative; width: 90px; height: 65px; perspective: 600px; margin-bottom: 10px; }
-        .folder-back { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #d8a044; border-radius: 4px; border-top-right-radius: 4px; }
-        .folder-back::after { content: ''; position: absolute; bottom: 98%; left: 0; width: 35px; height: 8px; background: #d8a044; border-radius: 4px 4px 0 0; }
-        .paper { position: absolute; top: 5px; left: 5px; width: 80px; height: 55px; background: white; border-radius: 2px; transition: transform 0.3s; transform-origin: bottom; box-shadow: 0 1px 2px rgba(0,0,0,0.2); }
-        .folder-front { position: absolute; bottom: 0; left: 0; width: 100%; height: 55px; background: linear-gradient(to bottom, #fddb72, #f3c256); border-radius: 0 0 4px 4px; border-top-right-radius: 4px; transform-origin: bottom; transition: transform 0.3s; z-index: 10; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
-        .folder-front::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 1px; background: rgba(255,255,255,0.4); }
-        
-        .folder-item:hover .folder-front { transform: rotateX(-25deg); }
-        .folder-item:hover .paper { transform: translateY(-5px) scale(0.95); }
-        
-        .folder-name { color: #ddd; font-size: 0.85rem; text-align: center; line-height: 1.3; text-shadow: 0 1px 2px rgba(0,0,0,0.8); word-break: break-word; max-width: 100%; }
-        .folder-count { position: absolute; top: 0; right: 0; background: var(--danger-red); color: white; font-size: 0.7rem; padding: 2px 6px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
-        
+        .grid-section-title {
+            color: #888;
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+            margin-bottom: 20px;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 20px;
+        }
+
+        .folder-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            gap: 25px;
+            justify-items: center;
+            align-items: start;
+        }
+
+        .folder-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            width: 120px;
+            padding: 10px;
+            border-radius: 6px;
+            transition: background 0.2s;
+            position: relative;
+        }
+
+        .folder-item:hover {
+            background-color: rgba(255, 255, 255, 0.08);
+        }
+
+        .folder-item:active .folder-3d {
+            transform: scale(0.95);
+        }
+
+        .folder-3d {
+            position: relative;
+            width: 90px;
+            height: 65px;
+            perspective: 600px;
+            margin-bottom: 10px;
+        }
+
+        .folder-back {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #d8a044;
+            border-radius: 4px;
+            border-top-right-radius: 4px;
+        }
+
+        .folder-back::after {
+            content: '';
+            position: absolute;
+            bottom: 98%;
+            left: 0;
+            width: 35px;
+            height: 8px;
+            background: #d8a044;
+            border-radius: 4px 4px 0 0;
+        }
+
+        .paper {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            width: 80px;
+            height: 55px;
+            background: white;
+            border-radius: 2px;
+            transition: transform 0.3s;
+            transform-origin: bottom;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+        }
+
+        .folder-front {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 55px;
+            background: linear-gradient(to bottom, #fddb72, #f3c256);
+            border-radius: 0 0 4px 4px;
+            border-top-right-radius: 4px;
+            transform-origin: bottom;
+            transition: transform 0.3s;
+            z-index: 10;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .folder-front::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 1px;
+            background: rgba(255, 255, 255, 0.4);
+        }
+
+        .folder-item:hover .folder-front {
+            transform: rotateX(-25deg);
+        }
+
+        .folder-item:hover .paper {
+            transform: translateY(-5px) scale(0.95);
+        }
+
+        .folder-name {
+            color: #ddd;
+            font-size: 0.85rem;
+            text-align: center;
+            line-height: 1.3;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+            word-break: break-word;
+            max-width: 100%;
+        }
+
+        .folder-count {
+            position: absolute;
+            top: 0;
+            right: 0;
+            background: var(--danger-red);
+            color: white;
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+        }
+
         /* Model Icon */
-        .file-icon-wrapper { width: 80px; height: 90px; background: #eee; border-radius: 4px; position: relative; display: flex; align-items: center; justify-content: center; box-shadow: 3px 3px 5px rgba(0,0,0,0.3); margin-bottom: 10px; }
-        .file-icon-wrapper::after { content: ''; position: absolute; top: 0; right: 0; border-top: 20px solid #1a1b21; border-left: 20px solid transparent; width: 0; }
-        .file-type-icon { font-size: 2.5rem; color: #555; }
+        .file-icon-wrapper {
+            width: 80px;
+            height: 90px;
+            background: #eee;
+            border-radius: 4px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 3px 3px 5px rgba(0, 0, 0, 0.3);
+            margin-bottom: 10px;
+        }
+
+        .file-icon-wrapper::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            border-top: 20px solid #1a1b21;
+            border-left: 20px solid transparent;
+            width: 0;
+        }
+
+        .file-type-icon {
+            font-size: 2.5rem;
+            color: #555;
+        }
 
         /* [File Upload] */
-        .file-manage-container { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; max-width: 1000px; margin: 0 auto; }
-        .file-drop-zone { background: rgba(255,255,255,0.03); border: 2px dashed rgba(255,255,255,0.1); border-radius: 15px; padding: 40px; text-align: center; transition: 0.3s; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 300px; }
-        .file-drop-zone:hover { border-color: var(--point-gold); background: rgba(255,255,255,0.05); }
-        .zone-icon { font-size: 3rem; color: #666; margin-bottom: 15px; }
-        .zone-title { font-size: 1.2rem; color: #fff; margin-bottom: 5px; }
-        .zone-desc { color: #888; font-size: 0.9rem; margin-bottom: 20px; font-weight: normal !important; }
-        .action-btn { background: var(--accent-blue); color: white; border: none; padding: 10px 25px; border-radius: 6px; cursor: pointer; font-family: 'BMDOHYEON'; transition: 0.2s; }
-        .action-btn:hover { background: #1a3b8e; transform: scale(1.05); }
-        .current-file-info { margin-top: 20px; padding: 15px; background: rgba(0,0,0,0.3); border-radius: 8px; width: 100%; display: flex; justify-content: space-between; align-items: center; }
+        .file-manage-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .file-drop-zone {
+            background: rgba(255, 255, 255, 0.03);
+            border: 2px dashed rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            transition: 0.3s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 300px;
+        }
+
+        .file-drop-zone:hover {
+            border-color: var(--point-gold);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .zone-icon {
+            font-size: 3rem;
+            color: #666;
+            margin-bottom: 15px;
+        }
+
+        /* 브레드크럼 상세 스타일 */
+        .breadcrumb-item {
+            cursor: pointer;
+            transition: color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .breadcrumb-item:hover {
+            color: #fff;
+        }
+
+        .breadcrumb-item.active {
+            color: var(--point-gold);
+            font-weight: bold;
+            cursor: default;
+        }
+
+        .breadcrumb-separator {
+            margin: 0 8px;
+            color: #555;
+        }
+
+        .zone-title {
+            font-size: 1.2rem;
+            color: #fff;
+            margin-bottom: 5px;
+        }
+
+        .zone-desc {
+            color: #888;
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+            font-weight: normal !important;
+        }
+
+        .action-btn {
+            background: var(--accent-blue);
+            color: white;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: 'BMDOHYEON';
+            transition: 0.2s;
+        }
+
+        .action-btn:hover {
+            background: #1a3b8e;
+            transform: scale(1.05);
+        }
+
+        .current-file-info {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
 
         /* [Footer] */
-        .main-footer { height: 70px; background: rgba(31, 32, 41, 0.95); border-top: 1px solid rgba(255, 255, 255, 0.15); display: flex; justify-content: space-between; align-items: center; padding: 0 30px; z-index: 100; }
-        .footer-center { display: flex; gap: 20px; }
-        .footer-btn { width: 45px; height: 45px; border-radius: 12px; background: rgba(255, 255, 255, 0.05); color: #ccc; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; cursor: pointer; transition: 0.2s; }
-        .footer-btn:hover { background: var(--accent-blue); color: #fff; transform: translateY(-2px); }
+        .main-footer {
+            height: 70px;
+            background: rgba(31, 32, 41, 0.95);
+            border-top: 1px solid rgba(255, 255, 255, 0.15);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 30px;
+            z-index: 100;
+        }
+
+        .footer-center {
+            display: flex;
+            gap: 20px;
+        }
+
+        .footer-btn {
+            width: 45px;
+            height: 45px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            color: #ccc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .footer-btn:hover {
+            background: var(--accent-blue);
+            color: #fff;
+            transform: translateY(-2px);
+        }
 
         /* [Context Menu] */
-        #context-menu { position: absolute; z-index: 10000; width: 150px; background: #2b2c3b; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); display: none; overflow: hidden; }
-        .ctx-item { padding: 10px 15px; color: #ccc; font-size: 0.9rem; cursor: pointer; transition: 0.1s; display: flex; align-items: center; gap: 8px; }
-        .ctx-item:hover { background: var(--accent-blue); color: #fff; }
-        .ctx-divider { height: 1px; background: rgba(255,255,255,0.1); margin: 4px 0; }
+        #context-menu {
+            position: absolute;
+            z-index: 10000;
+            width: 150px;
+            background: #2b2c3b;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+            display: none;
+            overflow: hidden;
+        }
+
+        .ctx-item {
+            padding: 10px 15px;
+            color: #ccc;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: 0.1s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .ctx-item:hover {
+            background: var(--accent-blue);
+            color: #fff;
+        }
+
+        .ctx-divider {
+            height: 1px;
+            background: rgba(255, 255, 255, 0.1);
+            margin: 4px 0;
+        }
+
+        /* 대시보드 그리드 (통합 관리 탭 메인) */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+            padding: 20px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .dashboard-card {
+            background: linear-gradient(145deg, #2a2b38, #23242d);
+            border: 1px solid rgba(255, 235, 167, 0.1);
+            border-radius: 16px;
+            padding: 40px 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .dashboard-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: var(--point-gold);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .dashboard-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5);
+            border-color: rgba(255, 235, 167, 0.4);
+        }
+
+        .dashboard-card:hover::before {
+            opacity: 1;
+        }
+
+        .card-icon {
+            font-size: 3.5rem;
+            color: var(--point-gold);
+            margin-bottom: 20px;
+            text-shadow: 0 0 20px rgba(255, 235, 167, 0.2);
+        }
+
+        .card-title {
+            font-size: 1.4rem;
+            color: #fff;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        .card-desc {
+            font-size: 0.95rem;
+            color: #807f83;
+        }
     </style>
 </head>
 
@@ -101,54 +883,53 @@
     <div id="context-menu"></div>
 
     <div class="page-container">
+
         <header class="main-header">
             <div class="header-left"><a href="index.html" class="ppms-logo-placeholder"></a></div>
-            <div class="header-center"><div class="common-box">공정 기준정보 관리</div></div>
-            <div class="header-right"><div class="common-box time-display" id="current-time"></div></div>
+            <div class="header-center">
+                <div class="common-box">공정 기준정보 관리</div>
+            </div>
+            <div class="header-right">
+                <div class="common-box time-display" id="current-time"></div>
+            </div>
         </header>
+        <nav class="section-tab-bar">
+            <div class="tab-item active" onclick="switchTab('management')">
+                <i class="uil uil-setting"></i> <span>통합 관리</span>
+            </div>
+            <div class="tab-item" onclick="switchTab('production')">
+                <i class="uil uil-circuit"></i> <span>생산 공정</span>
+            </div>
+            <div class="tab-item" onclick="switchTab('aoi')">
+                <i class="uil uil-eye"></i> <span>검사 공정</span>
+            </div>
+            <div class="tab-item" onclick="switchTab('dip')">
+                <i class="uil uil-wrench"></i> <span>기능 공정</span>
+            </div>
+        </nav>
 
-        <main class="content-area">
-            <div id="main-dashboard-view" class="view-section">
-                <div class="icon-grid-container">
-                    <div class="grid-section-title"><i class="uil uil-layer-group"></i> 생산 (Production)</div>
-                    <div class="folder-grid">
-                        <div class="folder-item" onclick="navigateTo('company_manager', {section:'production'})">
-                            <div class="folder-3d"><div class="folder-back"></div><div class="paper"></div><div class="folder-front"></div></div>
-                            <div class="folder-name">업체/모델<br>통합 관리</div>
-                        </div>
-                        <div class="folder-item" onclick="navigateTo('manager_manager')">
-                            <div class="folder-3d"><div class="folder-back"></div><div class="paper"></div><div class="folder-front"></div></div>
-                            <div class="folder-name">담당자<br>관리</div>
-                        </div>
-                    </div>
-                    <div class="grid-section-title"><i class="uil uil-search-alt"></i> 검사 (Inspection)</div>
-                    <div class="folder-grid">
-                        <div class="folder-item" onclick="navigateTo('company_manager', {section:'inspection'})">
-                            <div class="folder-3d"><div class="folder-back"></div><div class="paper"></div><div class="folder-front"></div></div>
-                            <div class="folder-name">BOM / 좌표<br>데이터 관리</div>
-                        </div>
-                    </div>
-                    <div class="grid-section-title"><i class="uil uil-setting"></i> 기능 (Functions)</div>
-                    <div class="folder-grid">
-                        <div class="folder-item folder-gray" style="cursor:default;">
-                            <div class="folder-3d"><div class="folder-back"></div><div class="paper"></div><div class="folder-front"></div></div>
-                            <div class="folder-name">시스템<br>설정</div>
-                        </div>
-                    </div>
+        <main class="admin-content">
+            <div class="breadcrumb-area"
+                style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px; flex-shrink: 0;">
+                <div class="nav-controls" style="display: flex; gap: 5px;">
+                    <button class="nav-btn" onclick="goBackLevel()" title="뒤로가기"
+                        style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: #ccc; width: 32px; height: 32px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                        <i class="uil uil-arrow-left"></i>
+                    </button>
+                </div>
+                <div class="breadcrumb-list" id="breadcrumb-container"
+                    style="display: flex; align-items: center; font-size: 0.95rem; color: #888;">
                 </div>
             </div>
+            <div id="view-container" style="flex: 1; position: relative; overflow-y: auto;">
 
-            <div id="sub-detail-view" class="view-section">
-                <div class="folder-nav-bar">
-                    <div class="nav-left-group">
-                        <div class="breadcrumb" id="breadcrumb-container"></div>
-                        <button class="nav-back-btn" onclick="goBackLevel()" title="상위 폴더로"><i class="uil uil-arrow-up"></i></button>
-                    </div>
-                    <div class="folder-actions">
-                        <input type="text" class="search-box" id="folder-search" placeholder="검색..." onkeyup="filterFolderItems()">
-                    </div>
+                <div id="main-dashboard-view" class="view-section">
                 </div>
-                <div id="sub-view-content"></div>
+
+                <div id="sub-detail-view" class="view-section" style="display: none;">
+                    <div id="sub-view-content"></div>
+                </div>
+
             </div>
         </main>
 
@@ -162,118 +943,241 @@
             <div class="footer-right"></div>
         </footer>
     </div>
-
     <script>
+        /** * [PPMS Admin Process Map Script]
+         * - 보안 강화(XSS 방지), 경쟁 상태 해결, 에러 핸들링 추가됨
+         * - 모델 아이콘 변경: uil-file-alt -> uil-layer-group
+         */
+        /** * [PPMS Admin Script - Tab Layout Version] 
+             * 통합 관리 / 생산 / 검사 / 기능 4개 섹션 지원
+             */
+
         const state = {
             currentPath: [],
+            activeTab: 'management', // 기본값: 통합 관리
             viewMode: 'dashboard'
         };
+
+        let currentRequestId = 0;
         let contextMenu = null;
         let targetItemData = null;
 
         document.addEventListener('DOMContentLoaded', () => {
             contextMenu = document.getElementById('context-menu');
-            setupEvents(); 
-            setInterval(updateTime, 1000); updateTime();
-            gsap.from(".folder-item", { duration: 0.6, scale: 0.5, opacity: 0, stagger: 0.05, ease: "back.out(1.5)" });
+            setupEvents();
+            updateTime(); setInterval(updateTime, 1000);
+
+            // 초기화: 기본 탭 로드
+            switchTab('management');
+
+            // 애니메이션 초기화
+            gsap.from(".tab-item", { y: -20, opacity: 0, stagger: 0.1, duration: 0.5 });
         });
 
-        // ================= Navigation =================
+        // [신규 기능] 탭 전환
+        window.switchTab = function (tabName) {
+            state.activeTab = tabName;
+            state.currentPath = [];
+
+            // 1. 탭 스타일 업데이트
+            document.querySelectorAll('.tab-item').forEach(el => {
+                el.classList.remove('active');
+                if (el.getAttribute('onclick').includes(tabName)) el.classList.add('active');
+            });
+
+            // 2. 화면 렌더링 분기
+            updateBreadcrumb(); // (기존 함수 활용)
+
+            // 메인/서브 뷰 초기화 (겹침 방지)
+            document.getElementById('sub-detail-view').style.display = 'none';
+            document.getElementById('main-dashboard-view').style.display = 'block';
+
+            if (tabName === 'management') {
+                // 통합 관리 탭이면 대시보드 보여주기 (기존 대시보드 로직 유지하거나 복구)
+                // *주의: 기존 코드에 대시보드 HTML을 그리는 로직이 있다면 여기서 호출
+                document.getElementById('main-dashboard-view').innerHTML = `
+            <div class="dashboard-grid">
+                <div class="dashboard-card" onclick="navigateTo('company_manager', {section:'common'})">
+                    <div class="card-icon"><i class="uil uil-building"></i></div>
+                    <div class="card-title">업체 및 모델 통합 관리</div>
+                </div>
+                <div class="dashboard-card" onclick="navigateTo('manager_manager')">
+                    <div class="card-icon"><i class="uil uil-users-alt"></i></div>
+                    <div class="card-title">담당자 관리</div>
+                </div>
+            </div>`;
+            } else {
+                // 생산/검사/기능 탭이면 -> 해당 섹션 루트 폴더로 바로 이동
+                navigateTo('folder_view', { companyId: null, folderId: null, section: tabName, name: 'Root' });
+            }
+        };
+        function renderRootView() {
+            const mainView = document.getElementById('main-dashboard-view');
+            if (state.activeTab === 'management') {
+                mainView.innerHTML = `
+                    <div class="dashboard-grid">
+                        <div class="dashboard-card" onclick="navigateTo('company_manager', {section:'common'})">
+                            <div class="card-icon"><i class="uil uil-building"></i></div>
+                            <div class="card-title">업체 및 모델 통합 관리</div>
+                            <div class="card-desc">업체별 모델, BOM, 좌표 데이터 관리</div>
+                        </div>
+                        <div class="dashboard-card" onclick="navigateTo('manager_manager')">
+                            <div class="card-icon"><i class="uil uil-users-alt"></i></div>
+                            <div class="card-title">담당자 관리</div>
+                            <div class="card-desc">직원 인적사항 및 권한 설정</div>
+                        </div>
+                    </div>`;
+                if (typeof gsap !== 'undefined') {
+                    gsap.from(".dashboard-card", { duration: 0.6, y: 30, opacity: 0, stagger: 0.1, ease: "back.out(1.5)" });
+                }
+            }
+        }
+
+
+        // --- [Core 3] 네비게이션 처리 ---
         async function navigateTo(target, data = {}) {
             const mainView = document.getElementById('main-dashboard-view');
             const subView = document.getElementById('sub-detail-view');
             const content = document.getElementById('sub-view-content');
 
-            if (target === 'root') state.currentPath = [];
-            else {
-                if (target === 'company_manager') {
-                    // Root 진입 시: 섹션 정보 포함
-                    state.currentPath = [{ id: 'company_manager', name: '업체 목록', section: data.section }];
-                } else if (target === 'manager_manager') {
-                    state.currentPath = [{ id: target, name: '담당자 관리' }];
-                } else if (target === 'folder_view') {
-                    state.currentPath.push(data); // data contains { companyId, folderId, section... }
-                } else if (target === 'file_upload') {
-                    state.currentPath.push({ id: 'file_view', name: data.modelName });
-                }
-            }
-
-            // View Transition
+            // 경로 관리
             if (target === 'root') {
-                gsap.to(subView, { opacity: 0, duration: 0.3, onComplete: () => {
-                    subView.style.display = 'none'; mainView.style.display = 'block';
-                    gsap.fromTo(mainView, { opacity: 0, scale: 0.95 }, { opacity: 1, scale: 1, duration: 0.4 });
-                }});
+                state.currentPath = [];
+                switchTab(state.activeTab);
                 return;
             }
 
-            updateBreadcrumb();
-            content.innerHTML = '<div style="text-align:center; padding:50px; color:#666;"><i class="uil uil-spinner-alt uil-spin" style="font-size:2rem;"></i><br>Loading...</div>';
-            
-            if (mainView.style.display !== 'none') {
-                gsap.to(mainView, { opacity: 0, scale: 1.1, duration: 0.3, onComplete: () => {
-                    mainView.style.display = 'none'; subView.style.display = 'block';
-                    gsap.fromTo(subView, { opacity: 0 }, { opacity: 1, duration: 0.3 });
-                }});
+            // 경로 추가 로직
+            if (target === 'company_manager') {
+                state.currentPath = [{ id: 'company_manager', name: '업체 목록', section: data.section }];
+            } else if (target === 'manager_manager') {
+                state.currentPath = [{ id: target, name: '담당자 관리' }];
+            } else if (target === 'folder_view') {
+                // 탭별 루트 폴더 진입 시 처리
+                if (data.name === 'Root') {
+                    // 루트 진입은 경로에 쌓지 않고 바로 렌더링 호출만 함 (탭 전환 효과)
+                    // 단, '통합 관리'가 아닌 다른 탭은 여기가 시작점.
+                    // 여기서는 로직 단순화를 위해 루트 폴더 뷰를 subView에 렌더링.
+                } else {
+                    state.currentPath.push(data);
+                }
+            } else if (target === 'file_upload') {
+                state.currentPath.push({ id: 'file_view', name: data.modelName });
             }
 
-            // Router
+            updateBreadcrumb();
+
+            // 뷰 전환 (Main -> Sub)
+            if (mainView.style.display !== 'none') {
+                mainView.style.display = 'none';
+                subView.style.display = 'block';
+            }
+
+            // 로딩 표시
+            content.innerHTML = '<div style="text-align:center; padding:50px; color:#666;"><i class="uil uil-spinner-alt uil-spin" style="font-size:2rem;"></i></div>';
+
+            // 실제 렌더링 라우터
             if (target === 'company_manager') {
                 await renderCompanyFolderList(data.section);
             } else if (target === 'manager_manager') {
                 await renderManagerList();
             } else if (target === 'folder_view') {
-                await renderRecursiveFolderView(data);
+                // [수정] 탭이 'management'가 아닌 경우(생산/검사/기능)는 바로 폴더 뷰가 뜸
+                // 이 경우 companyId가 없으면 -> 업체 목록부터 보여줘야 함.
+                if (state.activeTab !== 'management' && !data.companyId) {
+                    await renderCompanyFolderList(state.activeTab);
+                } else {
+                    await renderRecursiveFolderView(data);
+                }
             } else if (target === 'file_upload') {
                 renderFileUploadUI(data.modelId, data.modelName);
             }
         }
 
+        // --- Breadcrumb 업데이트 ---
         function updateBreadcrumb() {
             const container = document.getElementById('breadcrumb-container');
-            let html = `<div class="breadcrumb-item" onclick="navigateTo('root')"><i class="uil uil-home"></i> Home</div>`;
+            if (!container) return; // 컨테이너가 없으면 실행 중단 (null 에러 방지)
+
+            const tabNames = {
+                'management': '통합 관리',
+                'production': '생산 공정',
+                'aoi': '검사 공정',
+                'dip': '기능 공정'
+            };
+
+            // 현재 활성화된 탭 이름을 홈으로 설정
+            let html = `<div class="breadcrumb-item" onclick="navigateTo('root')"><i class="uil uil-home"></i> ${tabNames[state.activeTab]}</div>`;
+
             state.currentPath.forEach((step, index) => {
+                const safeName = escapeHtml(step.name); // 여기서 escapeHtml을 호출함
                 html += `<div class="breadcrumb-separator"><i class="uil uil-angle-right"></i></div>`;
-                if (index === state.currentPath.length - 1) html += `<div class="breadcrumb-item active">${step.name}</div>`;
-                else html += `<div class="breadcrumb-item" onclick="handleBreadcrumbClick(${index})">${step.name}</div>`;
+                if (index === state.currentPath.length - 1) {
+                    html += `<div class="breadcrumb-item active">${safeName}</div>`;
+                } else {
+                    html += `<div class="breadcrumb-item" onclick="handleBreadcrumbClick(${index})">${safeName}</div>`;
+                }
             });
             container.innerHTML = html;
+        }
+        // [추가] 특수 문자를 안전하게 변환하는 함수
+        function escapeHtml(text) {
+            if (!text) return "";
+            return text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
         }
 
         function handleBreadcrumbClick(index) {
             const targetStep = state.currentPath[index];
-            state.currentPath = state.currentPath.slice(0, index);
-            
-            if (index === 0) navigateTo(targetStep.id, { section: targetStep.section });
-            else navigateTo('folder_view', targetStep);
+            state.currentPath = state.currentPath.slice(0, index); // 경로 자르기
+
+            if (index === 0 && targetStep.id === 'company_manager') {
+                navigateTo('company_manager', { section: targetStep.section });
+            } else {
+                // 탭 모드에 따라 분기
+                if (state.activeTab !== 'management' && index === -1) { // 루트
+                    renderCompanyFolderList(state.activeTab);
+                } else {
+                    navigateTo('folder_view', targetStep);
+                }
+            }
         }
 
-        function goBackLevel() {
-            if (state.currentPath.length <= 1) navigateTo('root');
-            else handleBreadcrumbClick(state.currentPath.length - 2);
-        }
+        // ... (기존 renderCompanyFolderList, renderManagerList, escapeHtml 등 함수들은 그대로 유지) ...
+        // 단, renderCompanyFolderList에서 폴더 클릭 시 section 정보를 state.activeTab에서 가져오거나 파라미터로 넘겨야 함.
+
+        // [수정] renderCompanyFolderList 함수 내부 onclick 부분
+        /*
+           onclick="enterCompany(this)" 
+           data-section="${section || state.activeTab}" 
+        */
 
         // ================= Rendering Logic =================
 
         async function renderCompanyFolderList(section) {
+            const requestId = ++currentRequestId;
+            const content = document.getElementById('sub-view-content');
+
             try {
                 const res = await fetch(`http://127.0.0.1:5000/api/production/companies`);
+                if (requestId !== currentRequestId) return;
                 if (!res.ok) throw new Error("Server Error");
                 const companies = await res.json();
-                const content = document.getElementById('sub-view-content');
-                let html = '';
-                
-                // [수정] 생산 섹션에서만 업체 추가 버튼 표시 (검사 섹션은 목록만)
-                if (section === 'production') {
+
+                if (state.activeTab === 'management') {
                     html += `
-                        <div class="luxury-input-wrapper">
-                            <input type="text" id="new-comp-name" class="luxury-input" placeholder="새 업체명 입력...">
-                            <button class="luxury-add-btn" onclick="addCompany()">
-                                <i class="uil uil-plus-circle"></i> 업체 추가
-                            </button>
-                        </div>`;
+    <div class="luxury-input-wrapper">
+        <input type="text" id="new-comp-name" class="luxury-input" placeholder="새 업체명 입력...">
+        <button class="luxury-add-btn" onclick="addCompany()">
+            <i class="uil uil-plus-circle"></i> 업체 추가
+        </button>
+    </div>`;
                 } else {
-                    html += `<div style="margin-bottom:20px; color:#888; font-size:0.9rem; text-align:center;"><i class="uil uil-info-circle"></i> 업체를 선택하여 검사 데이터를 관리하세요.</div>`;
+                    html += `<div style="margin-bottom:20px; color:#888; font-size:0.9rem; text-align:center;"><i class="uil uil-info-circle"></i> 업체를 선택하여 데이터를 관리하세요.</div>`;
                 }
 
                 if (companies.length === 0) {
@@ -281,130 +1185,272 @@
                 } else {
                     html += `<div class="folder-grid">`;
                     companies.forEach(comp => {
+                        const safeName = escapeHtml(comp.name);
                         html += `
-                            <div class="folder-item filter-target" onclick="enterCompany(${comp.id}, '${comp.name}', '${section}')" 
-                                 data-name="${comp.name}" data-id="${comp.id}" data-type="company" data-company-id="${comp.id}">
-                                <div class="folder-3d">
-                                    <div class="folder-back"></div><div class="paper"></div><div class="folder-front"></div>
-                                    <span class="folder-count">${comp.model_count || 0}</span>
-                                </div>
-                                <div class="folder-name">${comp.name}</div>
-                            </div>`;
+                        <div class="folder-item filter-target" onclick="enterCompany(this)" 
+                             data-name="${safeName}" data-id="${comp.id}" data-type="company" 
+                             data-company-id="${comp.id}" data-section="${section}">
+                            <div class="folder-3d">
+                                <div class="folder-back"></div><div class="paper"></div><div class="folder-front"></div>
+                                <span class="folder-count">${comp.model_count || 0}</span>
+                            </div>
+                            <div class="folder-name">${safeName}</div>
+                        </div>`;
                     });
                     html += `</div>`;
                 }
                 content.innerHTML = html;
                 gsap.from(".folder-item", { scale: 0.5, opacity: 0, stagger: 0.05, ease: "back.out(1.5)" });
-            } catch (e) { content.innerHTML = '<div style="text-align:center; padding:20px;">서버 연결 오류</div>'; }
+            } catch (e) {
+                if (requestId === currentRequestId) {
+                    content.innerHTML = `
+                    <div style="text-align:center; padding:20px; color:#ff6b6b;">
+                        <i class="uil uil-exclamation-triangle" style="font-size:2rem;"></i><br>
+                        데이터를 불러오지 못했습니다.<br>
+                        <button class="luxury-add-btn" style="margin-top:10px;" onclick="renderCompanyFolderList('${section}')">재시도</button>
+                    </div>`;
+                }
+            }
         }
 
-        window.enterCompany = (id, name, section) => {
-            // folderId: null -> 해당 섹션의 최상위 폴더 조회
-            navigateTo('folder_view', { companyId: id, folderId: null, name: name, section: section }); 
+        window.enterCompany = (el) => {
+            const id = el.dataset.id;
+            const name = el.dataset.name;
+            const section = el.dataset.section;
+            navigateTo('folder_view', { companyId: id, folderId: null, name: name, section: section });
         };
 
         async function renderRecursiveFolderView(data) {
             const { companyId, folderId, section } = data;
+            const queryFolder = folderId ? folderId : '';
+
+            const requestId = ++currentRequestId;
+            const content = document.getElementById('sub-view-content');
+
             try {
-                const queryFolder = folderId ? folderId : '';
                 const res = await fetch(`http://127.0.0.1:5000/api/production/directory?company_id=${companyId}&folder_id=${queryFolder}&section=${section}`);
+                if (requestId !== currentRequestId) return;
+                if (!res.ok) throw new Error("Failed to fetch");
                 const result = await res.json();
-                const content = document.getElementById('sub-view-content');
                 let html = '';
 
                 if (result.folders.length === 0 && result.models.length === 0) {
                     html += `<div style="text-align:center; color:#666; margin-top:50px;">비어 있음</div>`;
                 } else {
                     html += `<div class="folder-grid">`;
-                    
-                    // 폴더
+
+                    // 폴더 렌더링
                     result.folders.forEach(folder => {
+                        const safeName = escapeHtml(folder.name);
                         html += `
-                            <div class="folder-item filter-target" onclick="enterSubFolder(${companyId}, ${folder.id}, '${folder.name}', '${section}')"
-                                 data-name="${folder.name}" data-id="${folder.id}" data-type="folder" data-company-id="${companyId}" data-section="${section}">
-                                <div class="folder-3d">
-                                    <div class="folder-back"></div><div class="paper"></div><div class="folder-front"></div>
-                                </div>
-                                <div class="folder-name">${folder.name}</div>
-                            </div>`;
+                        <div class="folder-item filter-target" onclick="enterSubFolder(this)"
+                             data-name="${safeName}" data-id="${folder.id}" data-type="folder" 
+                             data-company-id="${companyId}" data-section="${section}">
+                            <div class="folder-3d">
+                                <div class="folder-back"></div><div class="paper"></div><div class="folder-front"></div>
+                            </div>
+                            <div class="folder-name">${safeName}</div>
+                        </div>`;
                     });
 
-                    // 모델
+                    // 모델 렌더링 (아이콘 변경됨: uil-layer-group)
                     result.models.forEach(model => {
+                        const safeName = escapeHtml(model.name);
                         html += `
-                            <div class="folder-item filter-target" onclick="navigateTo('file_upload', {modelId:${model.id}, modelName:'${model.name}'})" 
-                                 data-name="${model.name}" data-id="${model.id}" data-type="model" data-company-id="${companyId}" data-section="${section}">
-                                <div class="file-icon-wrapper"><i class="uil uil-file-alt file-type-icon"></i></div>
-                                <div class="folder-name">${model.name}</div>
-                            </div>`;
+                        <div class="folder-item filter-target" onclick="enterModel(this)" 
+                             data-name="${safeName}" data-id="${model.id}" data-type="model" 
+                             data-company-id="${companyId}" data-section="${section}">
+                            <div class="file-icon-wrapper"><i class="uil uil-layer-group file-type-icon"></i></div>
+                            <div class="folder-name">${safeName}</div>
+                        </div>`;
                     });
                     html += `</div>`;
                 }
                 content.innerHTML = html;
                 gsap.from(".folder-item", { y: 20, opacity: 0, stagger: 0.05 });
-            } catch (e) { console.error(e); }
+            } catch (e) {
+                if (requestId === currentRequestId) {
+                    content.innerHTML = `
+                    <div style="text-align:center; padding:20px; color:#ff6b6b;">
+                        <i class="uil uil-wifi-slash" style="font-size:2rem;"></i><br>
+                        서버 연결 오류<br>
+                        <button class="luxury-add-btn" style="margin-top:10px;" onclick="navigateTo('folder_view', {companyId:${companyId}, folderId:${folderId || 'null'}, section:'${section}'})">재시도</button>
+                    </div>`;
+                }
+            }
         }
 
-        window.enterSubFolder = (compId, folderId, name, section) => {
+        window.enterSubFolder = (el) => {
+            const compId = el.dataset.companyId;
+            const folderId = el.dataset.id;
+            const name = el.dataset.name;
+            const section = el.dataset.section;
             navigateTo('folder_view', { companyId: compId, folderId: folderId, name: name, section: section });
+        };
+
+        window.enterModel = (el) => {
+            const modelId = el.dataset.id;
+            const modelName = el.dataset.name;
+            navigateTo('file_upload', { modelId: modelId, modelName: modelName });
         };
 
         function renderFileUploadUI(modelId, modelName) {
             const content = document.getElementById('sub-view-content');
+            const safeModelName = escapeHtml(modelName);
             content.innerHTML = `
-                <div class="file-manage-container">
-                    <div class="file-drop-zone" id="zone-bom">
-                        <i class="uil uil-list-ul zone-icon"></i><div class="zone-title">BOM 파일</div>
-                        <div class="zone-desc">엑셀(.xlsx) 또는 CSV 파일을 등록하세요.</div>
-                        <input type="file" id="file-bom" hidden onchange="handleFileSelect(this, 'bom', ${modelId})">
-                        <button class="action-btn" onclick="document.getElementById('file-bom').click()">파일 선택</button>
-                        <div class="current-file-info" id="info-bom">로딩 중...</div>
-                    </div>
-                    <div class="file-drop-zone" id="zone-coord">
-                        <i class="uil uil-crosshair zone-icon"></i><div class="zone-title">좌표 데이터</div>
-                        <div class="zone-desc">마운터 좌표 데이터를 등록하세요.</div>
-                        <input type="file" id="file-coord" hidden onchange="handleFileSelect(this, 'coord', ${modelId})">
-                        <button class="action-btn" onclick="document.getElementById('file-coord').click()">파일 선택</button>
-                        <div class="current-file-info" id="info-coord">로딩 중...</div>
-                    </div>
-                </div>`;
+            <div style="text-align:center; margin-bottom:20px; font-size:1.2rem; color:var(--point-gold);">${safeModelName} 데이터 관리</div>
+            <div class="file-manage-container">
+                <div class="file-drop-zone" id="zone-bom">
+                    <i class="uil uil-list-ul zone-icon"></i><div class="zone-title">BOM 파일</div>
+                    <div class="zone-desc">엑셀(.xlsx) 또는 CSV 파일을 등록하세요.</div>
+                    <input type="file" id="file-bom" hidden onchange="handleFileSelect(this, 'bom', ${modelId})">
+                    <button class="action-btn" onclick="document.getElementById('file-bom').click()">파일 선택</button>
+                    <div class="current-file-info" id="info-bom">로딩 중...</div>
+                </div>
+                <div class="file-drop-zone" id="zone-coord">
+                    <i class="uil uil-crosshair zone-icon"></i><div class="zone-title">좌표 데이터</div>
+                    <div class="zone-desc">마운터 좌표 데이터를 등록하세요.</div>
+                    <input type="file" id="file-coord" hidden onchange="handleFileSelect(this, 'coord', ${modelId})">
+                    <button class="action-btn" onclick="document.getElementById('file-coord').click()">파일 선택</button>
+                    <div class="current-file-info" id="info-coord">로딩 중...</div>
+                </div>
+            </div>`;
             loadFileInfo(modelId, 'BOM'); loadFileInfo(modelId, 'COORDINATE');
         }
 
+
         async function renderManagerList() {
             const content = document.getElementById('sub-view-content');
+            if (!content) return; // 컨테이너 확인 안전장치
+
             try {
                 const res = await fetch(`http://127.0.0.1:5000/api/production/managers`);
+                if (!res.ok) throw new Error("API 응답 오류");
+
                 const items = await res.json();
+
                 let html = `
-                    <div class="luxury-input-wrapper">
-                        <input type="text" id="new-mgr-name" class="luxury-input" placeholder="새 담당자명 입력...">
-                        <button class="luxury-add-btn" onclick="addManager()">
-                            <i class="uil uil-user-plus"></i> 담당자 추가
-                        </button>
-                    </div>
-                    <div class="folder-grid">`;
+            <div class="luxury-input-wrapper" style="display:flex; gap:10px; margin-bottom:30px; max-width:600px;">
+                <input type="text" id="new-mgr-name" class="luxury-input" placeholder="새 담당자명..." style="flex:1; background:rgba(0,0,0,0.2); border:1px solid #444; color:#fff; border-radius:30px; padding:0 20px;">
+                <button class="luxury-add-btn" onclick="addManager()" style="background:var(--point-gold); border:none; border-radius:30px; padding:10px 25px; color:#102770; font-weight:bold; cursor:pointer;">추가</button>
+            </div>
+            <div class="folder-grid">`;
+
                 items.forEach(item => {
+                    const safeName = typeof escapeHtml === 'function' ? escapeHtml(item.name) : item.name;
+                    const dept = item.department || "";
+
+                    // 부서별 그라데이션 결정 로직
+                    let gradient = 'linear-gradient(135deg, #636e72, #2d3436)'; // 기본 회색
+                    if (dept === '생산') gradient = 'linear-gradient(135deg, #6a89cc, #4a69bd)';
+                    else if (dept === '품질') gradient = 'linear-gradient(135deg, #00e676, #00c853)';
+                    else if (dept === '관리') gradient = 'linear-gradient(135deg, #a29bfe, #6c5ce7)';
+
                     html += `
-                        <div class="folder-item filter-target" data-name="${item.name}" onclick="deleteManager(${item.id})">
-                            <i class="uil uil-times-circle" style="color:#ff4444; position:absolute; top:0; right:0; font-size:1.2rem; z-index:10;"></i>
-                            <div class="folder-3d">
-                                <div class="folder-back" style="background:#4a69bd;"></div><div class="paper"></div><div class="folder-front" style="background:linear-gradient(#6a89cc, #4a69bd);"></div>
-                            </div>
-                            <div class="folder-name">${item.name}</div>
-                        </div>`;
+                <div class="folder-item filter-target" onclick="openManagerInfoModal(${item.id})" data-id="${item.id}" data-name="${safeName}" data-type="manager">
+                    <div class="file-icon-wrapper" style="background: ${gradient}; border-radius: 50%; width: 75px; height: 75px; display: flex; align-items: center; justify-content: center; margin-bottom: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
+                        <i class="uil uil-user" style="font-size: 2.8rem; color: #fff;"></i>
+                    </div>
+                    <div class="folder-name">${safeName}</div>
+                    <div style="font-size: 0.7rem; color: #888; margin-top: -5px;">${dept || '-'}</div>
+                </div>`;
                 });
-                html += `</div>`; content.innerHTML = html;
-            } catch (e) { }
+
+                html += `</div>`;
+                content.innerHTML = html;
+                if (typeof gsap !== 'undefined') {
+                    gsap.from(".folder-item", { scale: 0.8, opacity: 0, stagger: 0.05, ease: "back.out(1.7)" });
+                }
+            } catch (e) {
+                console.error("Manager List Load Error:", e);
+                content.innerHTML = `<div style="text-align:center; padding:50px; color:var(--danger-red);">데이터를 불러오지 못했습니다. DB 컬럼 설정을 확인하세요.</div>`;
+            }
         }
 
+        // 2. 부서별 역할 옵션 동적 업데이트
+        function updateRoleOptions(selectedRoles = "") {
+            const dept = document.getElementById('mgr-dept').value;
+            const container = document.getElementById('mgr-role-container');
+            const roleData = {
+                '생산': ['SMT', 'DIP'],
+                '품질': ['육안검사', '비전검사', '기능검사', '불량수리'],
+                '관리': ['생산관리', '품질관리', '경영관리']
+            };
+
+            const selectedArray = selectedRoles.split(',').map(r => r.trim());
+
+            if (roleData[dept]) {
+                container.innerHTML = roleData[dept].map(role => `
+                <label class="check-item">
+                    <input type="checkbox" name="mgr-role" value="${role}" ${selectedArray.includes(role) ? 'checked' : ''}> ${role}
+                </label>
+            `).join('');
+            } else {
+                container.innerHTML = '<span style="color:#666; font-size:0.8rem;">부서를 먼저 선택하세요.</span>';
+            }
+        }
+
+        // 3. 모달 열기 및 데이터 로드
+        async function openManagerInfoModal(id) {
+            try {
+                const res = await fetch(`http://127.0.0.1:5000/api/production/managers`);
+                const managers = await res.json();
+                const mgr = managers.find(m => m.id === id);
+                if (!mgr) return;
+                document.getElementById('mgr-email').value = mgr.email || ""; // 이메일 로드 추가
+                document.getElementById('mgr-edit-id').value = id;
+                // 상단 제목은 고정하고, 아래에 담당자 이름을 표시
+                document.getElementById('modal-mgr-name-display').textContent = `${mgr.name} 님`;
+
+                document.getElementById('mgr-position').value = mgr.position || "";
+                document.getElementById('mgr-dept').value = mgr.department || "";
+                document.getElementById('mgr-contact').value = mgr.contact || "";
+
+                updateRoleOptions(mgr.roles || "");
+
+                document.getElementById('manager-info-modal').classList.add('visible');
+            } catch (e) { console.error(e); }
+        }
+
+        function closeMgrModal() { document.getElementById('manager-info-modal').classList.remove('visible'); }
+
+        // 4. 데이터 저장 (PUT)
+        async function saveManagerInfo() {
+            const id = document.getElementById('mgr-edit-id').value;
+            const position = document.getElementById('mgr-position').value;
+            const department = document.getElementById('mgr-dept').value;
+            const contact = document.getElementById('mgr-contact').value;
+            const email = document.getElementById('mgr-email').value;
+
+            const roleElements = document.querySelectorAll('input[name="mgr-role"]:checked');
+            const roles = Array.from(roleElements).map(el => el.value).join(', ');
+
+            try {
+                const res = await fetch(`http://127.0.0.1:5000/api/production/managers/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ position, department, roles, contact })
+                });
+
+                if (res.ok) {
+                    alert("저장되었습니다.");
+                    closeMgrModal();
+                    renderManagerList();
+                } else {
+                    alert("저장 실패");
+                }
+            } catch (e) { alert("서버 통신 오류"); }
+        }
         // ================= Action Functions =================
         async function addCompany() {
             const v = document.getElementById('new-comp-name').value;
             if (!v) return;
-            await fetch(`http://127.0.0.1:5000/api/production/companies`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: v }) });
-            renderCompanyFolderList('production');
+            try {
+                await fetch(`http://127.0.0.1:5000/api/production/companies`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: v }) });
+                renderCompanyFolderList('common');
+            } catch (e) { alert('추가 실패'); }
         }
+
         async function addManager() {
             const v = document.getElementById('new-mgr-name').value;
             if (!v) return;
@@ -417,6 +1463,7 @@
                 renderManagerList();
             }
         }
+
         async function handleFileSelect(input, typeCode, modelId) {
             const file = input.files[0]; if (!file) return;
             const fd = new FormData(); fd.append('file', file); fd.append('type', typeCode === 'bom' ? 'BOM' : 'COORDINATE');
@@ -425,6 +1472,7 @@
                 if (res.ok) { alert('업로드 완료'); loadFileInfo(modelId, typeCode === 'bom' ? 'BOM' : 'COORDINATE'); } else alert('실패');
             } catch (e) { alert('에러'); }
         }
+
         async function loadFileInfo(modelId, type) {
             const typeCode = type === 'BOM' ? 'bom' : 'coord';
             const infoDiv = document.getElementById(`info-${typeCode}`);
@@ -432,11 +1480,33 @@
                 const res = await fetch(`http://127.0.0.1:5000/api/production/models/${modelId}/data?type=${type}`);
                 const data = await res.json();
                 if (data.length > 0) {
-                    infoDiv.innerHTML = `<div style="font-size:0.8rem; color:#fff;"><i class="uil uil-check-circle" style="color:#00e676;"></i> ${data[0].fileName}</div>
-                    <a href="http://127.0.0.1:5000/api/production/download/${data[0].content}" class="small-btn" style="background:rgba(255,255,255,0.1); color:#ccc; text-decoration:none; display:flex; align-items:center;"><i class="uil uil-download-alt"></i></a>`;
+                    const safeFileName = escapeHtml(data[0].fileName);
+                    infoDiv.innerHTML = `<div style="font-size:0.8rem; color:#fff;"><i class="uil uil-check-circle" style="color:#00e676;"></i> ${safeFileName}</div>
+                <a href="http://127.0.0.1:5000/api/production/download/${data[0].content}" class="small-btn" style="background:rgba(255,255,255,0.1); color:#ccc; text-decoration:none; display:flex; align-items:center;"><i class="uil uil-download-alt"></i></a>`;
                 } else infoDiv.innerHTML = `<span style="color:#666; font-size:0.8rem;">파일 없음</span>`;
-            } catch (e) { }
+            } catch (e) {
+                infoDiv.innerHTML = `<span style="color:#ff6b6b; font-size:0.8rem;">Error</span>`;
+            }
         }
+
+        function formatContact(el) {
+            let val = el.value.replace(/[^0-9]/g, ''); // 숫자만 남기기
+            let result = '';
+
+            if (val.length < 4) {
+                result = val;
+            } else if (val.length < 7) {
+                result = val.substr(0, 3) + '-' + val.substr(3);
+            } else if (val.length < 11) {
+                result = val.substr(0, 3) + '-' + val.substr(3, 3) + '-' + val.substr(6);
+            } else {
+                result = val.substr(0, 3) + '-' + val.substr(3, 4) + '-' + val.substr(7);
+            }
+            el.value = result;
+        }
+        document.addEventListener('input', (e) => {
+            if (e.target.id === 'mgr-contact') formatContact(e.target);
+        });
 
         // ================= Context Menu Logic =================
         document.addEventListener('contextmenu', (e) => {
@@ -452,33 +1522,30 @@
                 targetItemData = null;
                 if (state.currentPath.length > 0) showContextMenu(e.pageX, e.pageY, 'bg');
             } else {
-                if(contextMenu) contextMenu.style.display = 'none';
+                if (contextMenu) contextMenu.style.display = 'none';
             }
         });
 
-        document.addEventListener('click', () => { if(contextMenu) contextMenu.style.display = 'none'; });
+        document.addEventListener('click', () => { if (contextMenu) contextMenu.style.display = 'none'; });
 
-        // [수정] 우클릭 메뉴 조건 엄격화
         function showContextMenu(x, y, mode) {
             let html = '';
             const lastPath = state.currentPath[state.currentPath.length - 1];
 
             if (mode === 'item') {
-                html = `<div class="ctx-item" onclick="handleCtxOpen()"><i class="uil uil-folder-open"></i> 열기</div>
-                        <div class="ctx-item" onclick="handleCtxRename()"><i class="uil uil-pen"></i> 이름 변경</div>
-                        <div class="ctx-divider"></div>
-                        <div class="ctx-item" style="color:#ff4444;" onclick="handleCtxDelete()"><i class="uil uil-trash-alt"></i> 삭제</div>`;
+                // 담당자인 경우 '열기' 대신 '정보 수정'으로 표시 가능
+                const openLabel = targetItemData.type === 'manager' ? '정보 수정' : '열기';
+                html = `<div class="ctx-item" onclick="handleCtxOpen()"><i class="uil uil-pen"></i> ${openLabel}</div>
+            <div class="ctx-divider"></div>
+            <div class="ctx-item" style="color:#ff4444;" onclick="handleCtxDelete()"><i class="uil uil-trash-alt"></i> 삭제</div>`;
             } else if (mode === 'bg') {
-                
-                // [조건] 회사(Company) 내부에 있을 때만(companyId가 있을 때만) 폴더/모델 추가 가능
                 if (lastPath.companyId) {
                     html = `
-                        <div class="ctx-item" onclick="handleCtxAdd('folder')"><i class="uil uil-folder-plus"></i> 새 폴더</div>
-                        <div class="ctx-item" onclick="handleCtxAdd('model')"><i class="uil uil-file-plus-alt"></i> 새 모델</div>
-                    `;
-                } 
-                // [조건] 최상위(Root)이면서 Production 섹션일 때만 업체 추가 가능
-                else if (lastPath.id === 'company_manager' && lastPath.section === 'production') {
+                    <div class="ctx-item" onclick="handleCtxAdd('folder')"><i class="uil uil-folder-plus"></i> 새 폴더</div>
+                    <div class="ctx-item" onclick="handleCtxAdd('model')"><i class="uil uil-file-plus-alt"></i> 새 모델</div>
+                `;
+                }
+                else if (state.activeTab === 'management' && lastPath.id === 'company_manager') {
                     html = `<div class="ctx-item" onclick="handleCtxAdd('company')"><i class="uil uil-building"></i> 새 업체</div>`;
                 }
             }
@@ -491,10 +1558,10 @@
             }
         }
 
-        window.handleCtxOpen = function() {
+        window.handleCtxOpen = function () {
             if (!targetItemData) return;
             const sec = targetItemData.section || 'production';
-            
+
             if (targetItemData.type === 'company') {
                 navigateTo('folder_view', { companyId: targetItemData.id, folderId: null, name: targetItemData.name, section: sec });
             } else if (targetItemData.type === 'folder') {
@@ -504,11 +1571,11 @@
             }
         };
 
-        window.handleCtxRename = async function() {
+        window.handleCtxRename = async function () {
             if (!targetItemData) return;
             const newName = prompt('새 이름을 입력하세요:', targetItemData.name);
             if (!newName || newName === targetItemData.name) return;
-            
+
             let endpoint = '';
             if (targetItemData.type === 'company') endpoint = 'companies';
             else if (targetItemData.type === 'folder') endpoint = 'folders';
@@ -522,10 +1589,10 @@
             } catch (e) { alert('오류 발생'); }
         };
 
-        window.handleCtxDelete = async function() {
+        window.handleCtxDelete = async function () {
             if (!targetItemData) return;
             if (!confirm(`'${targetItemData.name}'을(를) 삭제하시겠습니까?`)) return;
-            
+
             let endpoint = '';
             if (targetItemData.type === 'company') endpoint = 'companies';
             else if (targetItemData.type === 'folder') endpoint = 'folders';
@@ -537,53 +1604,58 @@
             } catch (e) { alert('오류 발생'); }
         };
 
-        window.handleCtxAdd = async function(addType) {
-            const currentStep = state.currentPath[state.currentPath.length - 1];
-            
-            if (addType === 'company') {
-                const name = prompt('새 업체명:');
-                if(name) {
-                    await fetch(`http://127.0.0.1:5000/api/production/companies`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name }) });
-                    refreshCurrentView();
-                }
-                return;
-            }
-
+        window.handleCtxAdd = async function (addType) {
             const name = prompt(`새 ${addType === 'folder' ? '폴더' : '모델'} 이름:`);
             if (!name) return;
+            const last = state.currentPath[state.currentPath.length - 1];
 
-            const companyId = currentStep.companyId;
-            const folderId = currentStep.folderId;
-            const section = currentStep.section; 
+            // 현재 활성화된 탭 정보를 섹션으로 사용합니다.
+            const currentSection = state.activeTab;
 
-            let url = '';
-            let body = {};
+            let url = addType === 'folder' ? `http://127.0.0.1:5000/api/production/folders` : `http://127.0.0.1:5000/api/production/models`;
+            let body = {
+                name: name,
+                company_id: last.companyId,
+                section: currentSection // 탭별 커스터마이징을 위해 현재 섹션 전송
+            };
 
-            if (addType === 'folder') {
-                url = `http://127.0.0.1:5000/api/production/folders`;
-                body = { name: name, company_id: companyId, parent_folder_id: folderId, section: section };
-            } else {
-                url = `http://127.0.0.1:5000/api/production/models`;
-                body = { name: name, company_id: companyId, folder_id: folderId };
-            }
+            if (addType === 'folder') body.parent_folder_id = last.folderId;
+            else body.folder_id = last.folderId;
 
             try {
-                await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-                refreshCurrentView();
-            } catch(e) { alert('생성 오류'); }
+                await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                renderRecursiveFolderView(last); // 화면 갱신
+            } catch (e) { alert('생성 오류'); }
         };
 
         function refreshCurrentView() {
+            // 현재 경로의 마지막 정보(지금 보고 있는 화면 정보)를 가져옴
             const lastPath = state.currentPath[state.currentPath.length - 1];
-            if (lastPath.id === 'company_manager') navigateTo('company_manager', { section: lastPath.section });
-            else if (lastPath.id === 'manager_manager') navigateTo('manager_manager');
-            else navigateTo('folder_view', lastPath);
+
+            if (!lastPath) return; // 경로가 없으면(홈 화면 등) 아무것도 안 함
+
+            // 각 상황에 맞춰서 '이동'이 아닌 '그리기' 함수만 직접 호출
+            if (lastPath.id === 'company_manager') {
+                renderCompanyFolderList(lastPath.section);
+            }
+            else if (lastPath.id === 'manager_manager') {
+                renderManagerList();
+            }
+            else {
+                // [핵심 수정] navigateTo('folder_view', ...) 대신 렌더링 함수 직접 호출
+                // 이렇게 하면 state.currentPath에 경로가 쌓이지 않고 화면만 갱신됩니다.
+                renderRecursiveFolderView(lastPath);
+            }
         }
 
-        window.filterFolderItems = function() {
+        window.filterFolderItems = function () {
             const text = document.getElementById('folder-search').value.toLowerCase();
             document.querySelectorAll('.filter-target').forEach(item => {
-                const name = item.getAttribute('data-name').toLowerCase();
+                const name = item.dataset.name.toLowerCase();
                 item.style.display = name.includes(text) ? 'flex' : 'none';
             });
         };
@@ -599,5 +1671,62 @@
             document.getElementById('current-time').textContent = now.toLocaleString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
         }
     </script>
+    <div id="manager-info-modal" class="modal-overlay">
+        <div class="modal-window manager-fit-modal">
+            <div class="modal-header">
+                <h3>담당자 정보</h3>
+                <button class="close-btn" onclick="closeMgrModal()">&times;</button>
+            </div>
+            <div class="modal-body center-align-body">
+                <input type="hidden" id="mgr-edit-id">
+                <h4 id="modal-mgr-name-display" style="color:#fff; margin-bottom:20px; font-weight:normal;"></h4>
+
+                <div class="input-row">
+                    <div class="input-group">
+                        <label>직급</label>
+                        <select id="mgr-position" class="luxury-input">
+                            <option value="">선택</option>
+                            <option value="사원">사원</option>
+                            <option value="주임">주임</option>
+                            <option value="대리">대리</option>
+                            <option value="과장">과장</option>
+                            <option value="차장">차장</option>
+                            <option value="부장">부장</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>부서</label>
+                        <select id="mgr-dept" class="luxury-input" onchange="updateRoleOptions()">
+                            <option value="">선택</option>
+                            <option value="생산">생산</option>
+                            <option value="품질">품질</option>
+                            <option value="관리">관리</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="input-group" style="width:100%">
+                    <label>역할 (중복 선택)</label>
+                    <div id="mgr-role-container" class="checkbox-grid">
+                        <span style="color:#666; font-size:0.8rem;">부서를 먼저 선택하세요.</span>
+                    </div>
+                </div>
+
+                <div class="input-group" style="width:100%">
+                    <label>연락처</label>
+                    <input type="text" id="mgr-contact" class="luxury-input" placeholder="010-0000-0000">
+                </div>
+                <div class="input-group" style="width:100%">
+                    <label>이메일</label>
+                    <input type="email" id="mgr-email" class="luxury-input" placeholder="example@email.com">
+                </div>
+            </div>
+            <div class="modal-footer center-footer">
+                <button class="action-btn cancel" onclick="closeMgrModal()">취소</button>
+                <button class="action-btn save" onclick="saveManagerInfo()">저장하기</button>
+            </div>
+        </div>
+    </div>
 </body>
+
 </html>

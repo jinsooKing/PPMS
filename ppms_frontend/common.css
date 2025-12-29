@@ -583,3 +583,12 @@ table.editable-table {
     text-overflow: ellipsis;
     white-space: nowrap;
 }
+
+/* 뷰 컨테이너 조정 */
+.admin-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 20px 40px;
+    overflow: hidden;
+}

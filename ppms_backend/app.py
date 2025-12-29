@@ -23,8 +23,17 @@ def create_app():
     CORS(app, supports_credentials=True) 
 
     app.config['SECRET_KEY'] = 'a-very-secret-and-random-key-12345' 
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://ppms_user:ptelcorp@168.107.6.145/ppms_db'
+    # URI 뒤에 SSL 비활성화 옵션을 추가하여 프로토콜 위반 에러 방지
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://ppms_user:ptelcorp@168.107.6.145/ppms_db?ssl_disabled=True'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+    # 연결 유지를 위한 핵심 옵션 추가
+    app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+        'pool_recycle': 280,   # 280초마다 연결을 자동으로 갱신 (서버가 끊기 전에 먼저 갱신)
+        'pool_pre_ping': True,  # 데이터를 요청하기 직전에 연결이 살아있는지 체크 (가장 중요)
+        'pool_size': 10,        # 기본 연결 수
+        'max_overflow': 20      # 필요 시 추가로 만들 연결 수
+    }
 
     # ▼ [수정] 3. 'extensions.py'의 도구들을 Flask 앱과 '연결(초기화)'합니다.
     db.init_app(app)
