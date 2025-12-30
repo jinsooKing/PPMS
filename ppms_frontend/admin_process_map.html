@@ -1373,48 +1373,43 @@
                 } else {
                     html += `<div class="folder-grid">`;
 
-                    // 1. 폴더 렌더링 (클릭 시 선택/이름확장, 더블 클릭 시 진입)
+                    // 1. 폴더 렌더링 (한 번 클릭 시 즉시 진입)
                     result.folders.forEach(folder => {
-                        const safeName = escapeHtml(folder.name); //
+                        const safeName = escapeHtml(folder.name);
                         html += `
-                <div class="folder-item filter-target" 
-                     onclick="selectItem(this)" 
-                     ondblclick="handleItemDblClick(this)"
-                     data-name="${safeName}" data-id="${folder.id}" data-type="folder" 
-                     data-company-id="${companyId}" data-section="${section}">
-                    <div class="folder-3d">
-                        <div class="folder-back"></div><div class="paper"></div><div class="folder-front"></div>
-                    </div>
-                    <div class="folder-name">${safeName}</div>
-                </div>`;
+            <div class="folder-item filter-target" 
+                 onclick="enterSubFolder(this)" 
+                 data-name="${safeName}" data-id="${folder.id}" data-type="folder" 
+                 data-company-id="${companyId}" data-section="${section}">
+                <div class="folder-3d">
+                    <div class="folder-back"></div><div class="paper"></div><div class="folder-front"></div>
+                </div>
+                <div class="folder-name">${safeName}</div>
+            </div>`;
                     });
 
-                    // 2. 모델 및 일반 파일 렌더링 (확장자에 따른 아이콘 구분)
+                    // 2. 모델 및 일반 파일 렌더링 (한 번 클릭: 선택, 더블 클릭: 실행)
                     result.models.forEach(model => {
                         const safeName = escapeHtml(model.name);
-                        // 파일명에 '.'이 포함되어 있으면 일반 파일, 없으면 제품 모델로 간주
                         const isFile = safeName.includes('.');
                         const itemType = isFile ? 'general_file' : 'model';
-
-                        // 확장자에 따른 아이콘 클래스 결정 (getFileIcon 함수 활용)
                         const iconClass = isFile ? getFileIcon(safeName) : 'uil-layer-group';
 
                         html += `
-                <div class="folder-item filter-target" 
-                     onclick="selectItem(this)" 
-                     ondblclick="handleItemDblClick(this)"
-                     data-name="${safeName}" data-id="${model.id}" data-type="${itemType}" 
-                     data-company-id="${companyId}" data-section="${section}">
-                    <div class="file-icon-wrapper">
-                        <i class="uil ${iconClass} file-type-icon"></i>
-                    </div>
-                    <div class="folder-name">${safeName}</div>
-                </div>`;
+            <div class="folder-item filter-target" 
+                 onclick="selectItem(this)" 
+                 ondblclick="handleItemDblClick(this)"
+                 data-name="${safeName}" data-id="${model.id}" data-type="${itemType}" 
+                 data-company-id="${companyId}" data-section="${section}">
+                <div class="file-icon-wrapper">
+                    <i class="uil ${iconClass} file-type-icon"></i>
+                </div>
+                <div class="folder-name">${safeName}</div>
+            </div>`;
                     });
 
-                    html += `</div>`; // .folder-grid 닫기
+                    html += `</div>`;
                 }
-
                 content.innerHTML = html;
 
                 // GSAP 애니메이션 효과 적용
