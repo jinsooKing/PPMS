@@ -188,11 +188,12 @@ class ProductModel(db.Model):
     __tablename__ = 'product_models'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
+    section = db.Column(db.String(20), nullable=False, default='production')
     company_id = db.Column(db.Integer, db.ForeignKey('companies.id'), nullable=False)
     folder_id = db.Column(db.Integer, db.ForeignKey('model_folders.id'), nullable=True)
 
     def to_dict(self):
-        return {'id': self.id, 'name': self.name, 'company_id': self.company_id, 'folder_id': self.folder_id}
+        return {'id': self.id, 'name': self.name,'section': self.section, 'company_id': self.company_id, 'folder_id': self.folder_id}
 
 # 10. 모델 데이터 모델
 class ModelData(db.Model):

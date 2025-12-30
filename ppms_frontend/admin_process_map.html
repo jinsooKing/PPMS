@@ -508,6 +508,24 @@
             position: relative;
         }
 
+        .folder-item.selected {
+            background-color: rgba(255, 235, 167, 0.15) !important;
+            outline: 1px solid var(--point-gold);
+        }
+
+        /* 선택된 항목의 파일명은 전체 표시 */
+        .folder-item.selected .folder-name {
+            white-space: normal;
+            overflow: visible;
+            word-break: break-all;
+            position: relative;
+            z-index: 100;
+            background: rgba(42, 43, 56, 0.95);
+            /* 주변 항목을 가려도 글자가 잘 보이게 배경 추가 */
+            border-radius: 4px;
+            padding: 5px;
+        }
+
         .folder-item:hover {
             background-color: rgba(255, 255, 255, 0.08);
         }
@@ -598,8 +616,14 @@
             text-align: center;
             line-height: 1.3;
             text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
-            word-break: break-word;
-            max-width: 100%;
+
+            /* 기본적으로 한 줄로 제한하고 넘치면 ... 표시 */
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            width: 100%;
+            padding: 0 5px;
+            transition: all 0.2s;
         }
 
         .folder-count {
@@ -910,15 +934,18 @@
 
         <main class="admin-content">
             <div class="breadcrumb-area"
-                style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px; flex-shrink: 0;">
-                <div class="nav-controls" style="display: flex; gap: 5px;">
-                    <button class="nav-btn" onclick="goBackLevel()" title="뒤로가기"
-                        style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: #ccc; width: 32px; height: 32px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center;">
-                        <i class="uil uil-arrow-left"></i>
-                    </button>
+                style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-shrink: 0; padding-right: 10px;">
+
+                <div style="display: flex; align-items: center; gap: 15px; flex: 1; min-width: 0;">
+                    <div class="breadcrumb-list" id="breadcrumb-container"
+                        style="display: flex; align-items: center; font-size: 0.95rem; color: #888; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                    </div>
                 </div>
-                <div class="breadcrumb-list" id="breadcrumb-container"
-                    style="display: flex; align-items: center; font-size: 0.95rem; color: #888;">
+
+                <div class="search-wrapper" style="margin-left: 20px;">
+                    <input type="text" class="search-box" id="folder-search" placeholder="항목 검색..."
+                        onkeyup="filterFolderItems()"
+                        style="background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; padding: 5px 15px; color: #fff; font-family: 'BMDOHYEON'; width: 200px;">
                 </div>
             </div>
             <div id="view-container" style="flex: 1; position: relative; overflow-y: auto;">
@@ -955,7 +982,13 @@
         const state = {
             currentPath: [],
             activeTab: 'management', // 기본값: 통합 관리
-            viewMode: 'dashboard'
+            viewMode: 'dashboard',
+            clipboard: {
+                action: null, // 'copy' 또는 'cut'
+                type: null,   // 'model'
+                id: null,
+                name: null
+            }
         };
 
         let currentRequestId = 0;
@@ -1130,6 +1163,16 @@
                 .replace(/"/g, "&quot;")
                 .replace(/'/g, "&#039;");
         }
+        // [추가] 뒤로가기 버튼 클릭 시 한 단계 위 디렉토리로 이동
+        window.goBackLevel = function () {
+            if (state.currentPath.length > 0) {
+                // 현재 경로의 마지막 인덱스 바로 앞 단계로 이동
+                handleBreadcrumbClick(state.currentPath.length - 2);
+            } else {
+                // 최상위 루트인 경우 대시보드로 복귀
+                navigateTo('root');
+            }
+        };
 
         function handleBreadcrumbClick(index) {
             const targetStep = state.currentPath[index];
@@ -1158,6 +1201,7 @@
 
         // ================= Rendering Logic =================
 
+        /* [수정] admin_process_map.html 파일의 1,000라인 부근 */
         async function renderCompanyFolderList(section) {
             const requestId = ++currentRequestId;
             const content = document.getElementById('sub-view-content');
@@ -1168,17 +1212,23 @@
                 if (!res.ok) throw new Error("Server Error");
                 const companies = await res.json();
 
+                // [핵심 수정] html 변수를 빈 문자열로 초기화합니다.
+                let html = '';
+
                 if (state.activeTab === 'management') {
                     html += `
-    <div class="luxury-input-wrapper">
-        <input type="text" id="new-comp-name" class="luxury-input" placeholder="새 업체명 입력...">
-        <button class="luxury-add-btn" onclick="addCompany()">
-            <i class="uil uil-plus-circle"></i> 업체 추가
-        </button>
-    </div>`;
+            <div class="luxury-input-wrapper">
+                <input type="text" id="new-comp-name" class="luxury-input" placeholder="새 업체명 입력...">
+                <button class="luxury-add-btn" onclick="addCompany()">
+                    <i class="uil uil-plus-circle"></i> 업체 추가
+                </button>
+            </div>`;
                 } else {
-                    html += `<div style="margin-bottom:20px; color:#888; font-size:0.9rem; text-align:center;"><i class="uil uil-info-circle"></i> 업체를 선택하여 데이터를 관리하세요.</div>`;
+                    // [문구 삭제] 안내 문구를 빈 문자열로 대체하여 제거했습니다.
+                    html += `<div style="margin-bottom:20px;"></div>`;
                 }
+
+                // ... 이하 동일 ...
 
                 if (companies.length === 0) {
                     html += `<div style="text-align:center; color:#666; margin-top:50px;">등록된 업체가 없습니다.</div>`;
@@ -1220,17 +1270,101 @@
             navigateTo('folder_view', { companyId: id, folderId: null, name: name, section: section });
         };
 
+        function getFileIcon(fileName) {
+            const ext = fileName.split('.').pop().toLowerCase();
+            if (['pdf', 'doc', 'docx', 'txt', 'xlsx', 'xls'].includes(ext)) return 'uil-file-alt'; // 문서
+            if (['mp4', 'avi', 'mov'].includes(ext)) return 'uil-camera-video'; // 동영상
+            if (['jpg', 'jpeg', 'png', 'gif'].includes(ext)) return 'uil-image'; // 이미지
+            return 'uil-file'; // 기본 파일
+        }
+        /* [추가] 일반 파일 업로드 처리 함수 */
+        window.handleGeneralUpload = async function (input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            // [제한] 50MB 크기 제한 (50 * 1024 * 1024 bytes)
+            const maxSize = 50 * 1024 * 1024;
+            if (file.size > maxSize) {
+                alert("파일 크기가 너무 큽니다. 최대 50MB까지 업로드 가능합니다.");
+                input.value = "";
+                return;
+            }
+
+            const last = state.currentPath[state.currentPath.length - 1];
+            const fd = new FormData();
+            fd.append('file', file);
+            fd.append('folder_id', last.folderId || '');
+            fd.append('company_id', last.companyId);
+            fd.append('section', state.activeTab);
+
+            try {
+                const res = await fetch(`http://127.0.0.1:5000/api/production/files/upload`, {
+                    method: 'POST',
+                    body: fd
+                });
+                if (res.ok) {
+                    alert("업로드 완료!");
+                    refreshCurrentView();
+                } else {
+                    alert("업로드 실패");
+                }
+            } catch (e) {
+                alert("서버 연결 오류");
+            }
+        };
+        /* [추가] 항목 선택 처리 (단일 클릭) */
+        window.selectItem = function (el) {
+            // 기존 선택된 다른 항목들 해제
+            document.querySelectorAll('.folder-item.selected').forEach(item => {
+                if (item !== el) item.classList.remove('selected');
+            });
+            // 현재 항목 토글
+            el.classList.toggle('selected');
+
+            // 바탕화면 클릭 이벤트와 충돌 방지
+            if (event) event.stopPropagation();
+        };
+
+        /* [추가] 항목 실행 처리 (더블 클릭) */
+        window.handleItemDblClick = function (el) {
+            const { id, name, type, companyId, section } = el.dataset;
+
+            if (type === 'model') {
+                // 제품 모델: BOM/좌표 관리 화면으로 이동
+                navigateTo('file_upload', { modelId: id, modelName: name });
+            } else if (type === 'general_file') {
+                // 일반 파일: BOM 등록 창 없이 바로 다운로드 실행
+                const downloadUrl = `http://127.0.0.1:5000/api/production/download/gen_${state.activeTab}_${name}`;
+                window.location.href = downloadUrl;
+            } else if (type === 'folder') {
+                enterSubFolder(el);
+            } else if (type === 'company') {
+                enterCompany(el);
+            }
+        };
+
+        // 바탕화면 클릭 시 선택 해제 처리
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.folder-item')) {
+                document.querySelectorAll('.folder-item.selected').forEach(item => item.classList.remove('selected'));
+            }
+        });
+
+        /* [수정 반영] 디렉토리 및 파일 목록 렌더링 함수 */
         async function renderRecursiveFolderView(data) {
             const { companyId, folderId, section } = data;
             const queryFolder = folderId ? folderId : '';
 
-            const requestId = ++currentRequestId;
+            const requestId = ++currentRequestId; //
             const content = document.getElementById('sub-view-content');
 
             try {
+                // 백엔드 API 호출
                 const res = await fetch(`http://127.0.0.1:5000/api/production/directory?company_id=${companyId}&folder_id=${queryFolder}&section=${section}`);
-                if (requestId !== currentRequestId) return;
+
+                if (requestId !== currentRequestId) return; // 경쟁 상태 방지
                 if (!res.ok) throw new Error("Failed to fetch");
+
                 const result = await res.json();
                 let html = '';
 
@@ -1239,46 +1373,82 @@
                 } else {
                     html += `<div class="folder-grid">`;
 
-                    // 폴더 렌더링
+                    // 1. 폴더 렌더링 (클릭 시 선택/이름확장, 더블 클릭 시 진입)
                     result.folders.forEach(folder => {
-                        const safeName = escapeHtml(folder.name);
+                        const safeName = escapeHtml(folder.name); //
                         html += `
-                        <div class="folder-item filter-target" onclick="enterSubFolder(this)"
-                             data-name="${safeName}" data-id="${folder.id}" data-type="folder" 
-                             data-company-id="${companyId}" data-section="${section}">
-                            <div class="folder-3d">
-                                <div class="folder-back"></div><div class="paper"></div><div class="folder-front"></div>
-                            </div>
-                            <div class="folder-name">${safeName}</div>
-                        </div>`;
+                <div class="folder-item filter-target" 
+                     onclick="selectItem(this)" 
+                     ondblclick="handleItemDblClick(this)"
+                     data-name="${safeName}" data-id="${folder.id}" data-type="folder" 
+                     data-company-id="${companyId}" data-section="${section}">
+                    <div class="folder-3d">
+                        <div class="folder-back"></div><div class="paper"></div><div class="folder-front"></div>
+                    </div>
+                    <div class="folder-name">${safeName}</div>
+                </div>`;
                     });
 
-                    // 모델 렌더링 (아이콘 변경됨: uil-layer-group)
+                    // 2. 모델 및 일반 파일 렌더링 (확장자에 따른 아이콘 구분)
                     result.models.forEach(model => {
                         const safeName = escapeHtml(model.name);
+                        // 파일명에 '.'이 포함되어 있으면 일반 파일, 없으면 제품 모델로 간주
+                        const isFile = safeName.includes('.');
+                        const itemType = isFile ? 'general_file' : 'model';
+
+                        // 확장자에 따른 아이콘 클래스 결정 (getFileIcon 함수 활용)
+                        const iconClass = isFile ? getFileIcon(safeName) : 'uil-layer-group';
+
                         html += `
-                        <div class="folder-item filter-target" onclick="enterModel(this)" 
-                             data-name="${safeName}" data-id="${model.id}" data-type="model" 
-                             data-company-id="${companyId}" data-section="${section}">
-                            <div class="file-icon-wrapper"><i class="uil uil-layer-group file-type-icon"></i></div>
-                            <div class="folder-name">${safeName}</div>
-                        </div>`;
+                <div class="folder-item filter-target" 
+                     onclick="selectItem(this)" 
+                     ondblclick="handleItemDblClick(this)"
+                     data-name="${safeName}" data-id="${model.id}" data-type="${itemType}" 
+                     data-company-id="${companyId}" data-section="${section}">
+                    <div class="file-icon-wrapper">
+                        <i class="uil ${iconClass} file-type-icon"></i>
+                    </div>
+                    <div class="folder-name">${safeName}</div>
+                </div>`;
                     });
-                    html += `</div>`;
+
+                    html += `</div>`; // .folder-grid 닫기
                 }
+
                 content.innerHTML = html;
-                gsap.from(".folder-item", { y: 20, opacity: 0, stagger: 0.05 });
+
+                // GSAP 애니메이션 효과 적용
+                if (typeof gsap !== 'undefined') {
+                    gsap.from(".folder-item", { y: 20, opacity: 0, stagger: 0.05 });
+                }
+
             } catch (e) {
+                console.error("View Render Error:", e);
                 if (requestId === currentRequestId) {
                     content.innerHTML = `
-                    <div style="text-align:center; padding:20px; color:#ff6b6b;">
-                        <i class="uil uil-wifi-slash" style="font-size:2rem;"></i><br>
-                        서버 연결 오류<br>
-                        <button class="luxury-add-btn" style="margin-top:10px;" onclick="navigateTo('folder_view', {companyId:${companyId}, folderId:${folderId || 'null'}, section:'${section}'})">재시도</button>
-                    </div>`;
+                <div style="text-align:center; padding:20px; color:#ff6b6b;">
+                    <i class="uil uil-wifi-slash" style="font-size:2rem;"></i><br>
+                    서버 연결 오류<br>
+                    <button class="luxury-add-btn" style="margin-top:10px;" onclick="navigateTo('folder_view', {companyId:${companyId}, folderId:${folderId || 'null'}, section:'${section}'})">재시도</button>
+                </div>`;
                 }
             }
         }
+
+        /* [추가/수정] 클릭 시 모델 뷰 진입 또는 파일 다운로드 분기 */
+        window.handleItemClick = function (el) {
+            const { id, name, type, companyId } = el.dataset;
+
+            if (type === 'model') {
+                // 제품 모델: 기존처럼 BOM/좌표 등록 화면으로 이동
+                navigateTo('file_upload', { modelId: id, modelName: name });
+            } else {
+                // 일반 파일: BOM/좌표 등록 없이 바로 다운로드 실행
+                // 파일 업로드 시 저장된 실제 파일명을 서버 API를 통해 호출 (예시 규칙 적용)
+                const downloadUrl = `http://127.0.0.1:5000/api/production/download/gen_${state.activeTab}_${name}`;
+                window.location.href = downloadUrl;
+            }
+        };
 
         window.enterSubFolder = (el) => {
             const compId = el.dataset.companyId;
@@ -1533,17 +1703,42 @@
             const lastPath = state.currentPath[state.currentPath.length - 1];
 
             if (mode === 'item') {
-                // 담당자인 경우 '열기' 대신 '정보 수정'으로 표시 가능
-                const openLabel = targetItemData.type === 'manager' ? '정보 수정' : '열기';
-                html = `<div class="ctx-item" onclick="handleCtxOpen()"><i class="uil uil-pen"></i> ${openLabel}</div>
-            <div class="ctx-divider"></div>
-            <div class="ctx-item" style="color:#ff4444;" onclick="handleCtxDelete()"><i class="uil uil-trash-alt"></i> 삭제</div>`;
+                const isModel = targetItemData.type === 'model';
+                const isManager = targetItemData.type === 'manager';
+                // 업체, 폴더, 모델인 경우에만 이름 변경 메뉴 표시
+                const canRename = ['company', 'folder', 'model'].includes(targetItemData.type);
+                const openLabel = isManager ? '정보 수정' : '열기';
+
+                html = `<div class="ctx-item" onclick="handleCtxOpen()"><i class="uil uil-pen"></i> ${openLabel}</div>`;
+
+                // [수정] 이름 변경 메뉴 추가
+                if (canRename) {
+                    html += `<div class="ctx-item" onclick="handleCtxRename()"><i class="uil uil-edit"></i> 이름 변경</div>`;
+                }
+
+                if (isModel) {
+                    html += `
+                <div class="ctx-item" onclick="handleCtxCopy()"><i class="uil uil-copy"></i> 복사</div>
+                <div class="ctx-item" onclick="handleCtxCut()"><i class="uil uil-scissors-line"></i> 잘라내기</div>`;
+                }
+
+                html += `<div class="ctx-divider"></div>
+                <div class="ctx-item" style="color:#ff4444;" onclick="handleCtxDelete()"><i class="uil uil-trash-alt"></i> 삭제</div>`;
+
             } else if (mode === 'bg') {
-                if (lastPath.companyId) {
+                if (lastPath && lastPath.companyId) {
                     html = `
-                    <div class="ctx-item" onclick="handleCtxAdd('folder')"><i class="uil uil-folder-plus"></i> 새 폴더</div>
-                    <div class="ctx-item" onclick="handleCtxAdd('model')"><i class="uil uil-file-plus-alt"></i> 새 모델</div>
-                `;
+            <div class="ctx-item" onclick="handleCtxAdd('folder')"><i class="uil uil-folder-plus"></i> 새 폴더</div>
+            <div class="ctx-item" onclick="handleCtxAdd('model')"><i class="uil uil-file-plus-alt"></i> 새 모델</div>
+            <div class="ctx-item" onclick="document.getElementById('general-upload-input').click()">
+                <i class="uil uil-upload"></i> 파일 업로드 (MAX 50MB)
+            </div>
+            <input type="file" id="general-upload-input" style="display:none" onchange="handleGeneralUpload(this)">`;
+
+                    if (state.clipboard.id) {
+                        html += `<div class="ctx-divider"></div>
+                         <div class="ctx-item" onclick="handleCtxPaste()"><i class="uil uil-clipboard-notes"></i> 붙여넣기 (${state.clipboard.name})</div>`;
+                    }
                 }
                 else if (state.activeTab === 'management' && lastPath.id === 'company_manager') {
                     html = `<div class="ctx-item" onclick="handleCtxAdd('company')"><i class="uil uil-building"></i> 새 업체</div>`;
@@ -1600,7 +1795,17 @@
 
             try {
                 const res = await fetch(`http://127.0.0.1:5000/api/production/${endpoint}/${targetItemData.id}`, { method: 'DELETE' });
-                if (res.ok) refreshCurrentView(); else alert('삭제 실패');
+
+                if (res.ok) {
+                    // [추가] 삭제된 항목이 클립보드에 있다면 클립보드 초기화
+                    if (state.clipboard.id === targetItemData.id) {
+                        state.clipboard = { action: null, type: null, id: null, name: null };
+                        console.log("클립보드에 있던 항목이 삭제되어 클립보드가 초기화되었습니다.");
+                    }
+                    refreshCurrentView();
+                } else {
+                    alert('삭제 실패');
+                }
             } catch (e) { alert('오류 발생'); }
         };
 
@@ -1631,6 +1836,60 @@
                 renderRecursiveFolderView(last); // 화면 갱신
             } catch (e) { alert('생성 오류'); }
         };
+        // [추가] 복사/잘라내기/붙여넣기 로직
+        window.handleCtxCopy = function () {
+            state.clipboard = { action: 'copy', type: 'model', id: targetItemData.id, name: targetItemData.name };
+            alert(`'${targetItemData.name}' 모델을 복사했습니다.`);
+        };
+
+        window.handleCtxCut = function () {
+            state.clipboard = { action: 'cut', type: 'model', id: targetItemData.id, name: targetItemData.name };
+            alert(`'${targetItemData.name}' 모델을 잘라냈습니다.`);
+        };
+
+        window.handleCtxPaste = async function () {
+            // 1. 클립보드가 비어있는지 먼저 확인
+            if (!state.clipboard.id) {
+                alert("붙여넣을 항목이 없습니다. 원본 파일이 삭제되었을 수 있습니다.");
+                return;
+            }
+
+            const last = state.currentPath[state.currentPath.length - 1];
+            const targetFolderId = last.folderId;
+
+            const body = {
+                action: state.clipboard.action === 'copy' ? 'copy' : 'move',
+                model_id: state.clipboard.id,
+                target_folder_id: targetFolderId
+            };
+
+            try {
+                const res = await fetch(`http://127.0.0.1:5000/api/production/models/transfer`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+
+                if (res.ok) {
+                    alert('작업이 완료되었습니다.');
+                    if (state.clipboard.action === 'cut') {
+                        state.clipboard = { action: null, type: null, id: null, name: null };
+                    }
+                    refreshCurrentView();
+                } else {
+                    // [보정] 서버 에러 발생 시 처리
+                    const errData = await res.json();
+                    if (res.status === 404) {
+                        alert("원본 파일을 찾을 수 없습니다. 이미 삭제되었거나 이동된 파일입니다.");
+                        state.clipboard = { action: null, type: null, id: null, name: null }; // 클립보드 강제 초기화
+                    } else {
+                        alert(`실패: ${errData.error || '알 수 없는 오류'}`);
+                    }
+                }
+            } catch (e) {
+                alert('서버 통신 오류');
+            }
+        };
 
         function refreshCurrentView() {
             // 현재 경로의 마지막 정보(지금 보고 있는 화면 정보)를 가져옴
@@ -1652,13 +1911,63 @@
             }
         }
 
+        // [수정] 탭 전체 대상 전역 검색 기능
+        let searchTimer;
         window.filterFolderItems = function () {
-            const text = document.getElementById('folder-search').value.toLowerCase();
-            document.querySelectorAll('.filter-target').forEach(item => {
-                const name = item.dataset.name.toLowerCase();
-                item.style.display = name.includes(text) ? 'flex' : 'none';
-            });
+            clearTimeout(searchTimer);
+            const query = document.getElementById('folder-search').value.trim();
+
+            // 검색어가 없으면 현재 폴더 뷰로 복구
+            if (query.length === 0) {
+                refreshCurrentView();
+                return;
+            }
+
+            // 성능을 위해 타이핑 멈춤 감지 후 검색 (300ms)
+            searchTimer = setTimeout(async () => {
+                const content = document.getElementById('sub-view-content');
+                content.innerHTML = '<div style="text-align:center; padding:50px; color:#666;"><i class="uil uil-search uil-spin" style="font-size:2rem;"></i><br>탭 전체 검색 중...</div>';
+
+                try {
+                    const res = await fetch(`http://127.0.0.1:5000/api/production/search?section=${state.activeTab}&query=${encodeURIComponent(query)}`);
+                    const result = await res.json();
+
+                    // 검색 결과 렌더링 (기존 렌더링 로직 재활용)
+                    renderSearchResults(result, query);
+                } catch (e) {
+                    content.innerHTML = '<div style="text-align:center; color:#ff4444;">검색 중 오류가 발생했습니다.</div>';
+                }
+            }, 300);
         };
+
+        // [추가] 검색 결과 전용 렌더링 함수
+        function renderSearchResults(result, query) {
+            const content = document.getElementById('sub-view-content');
+            let html = `<div style="margin-bottom:20px; color:var(--point-gold); font-size:0.9rem;"><i class="uil uil-search"></i> '${query}' 검색 결과</div>`;
+
+            if (result.folders.length === 0 && result.models.length === 0) {
+                html += `<div style="text-align:center; color:#666; margin-top:50px;">검색 결과가 없습니다.</div>`;
+            } else {
+                html += `<div class="folder-grid">`;
+                result.folders.forEach(f => {
+                    html += `
+            <div class="folder-item" onclick="enterSubFolder(this)" data-id="${f.id}" data-name="${f.name}" data-type="folder" data-company-id="${f.company_id}" data-section="${f.section}">
+                <div class="folder-3d"><div class="folder-back"></div><div class="paper"></div><div class="folder-front"></div></div>
+                <div class="folder-name">${escapeHtml(f.name)}</div>
+            </div>`;
+                });
+                result.models.forEach(m => {
+                    html += `
+            <div class="folder-item" onclick="enterModel(this)" data-id="${m.id}" data-name="${m.name}" data-type="model" data-company-id="${m.company_id}">
+                <div class="file-icon-wrapper"><i class="uil uil-layer-group file-type-icon"></i></div>
+                <div class="folder-name">${escapeHtml(m.name)}</div>
+            </div>`;
+                });
+                html += `</div>`;
+            }
+            content.innerHTML = html;
+            gsap.from(".folder-item", { scale: 0.8, opacity: 0, stagger: 0.05 });
+        }
 
         function setupEvents() {
             document.getElementById('back-btn').addEventListener('click', () => { if (state.currentPath.length > 0) goBackLevel(); else history.back(); });

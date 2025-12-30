@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify, send_from_directory
 from models import db, ProductionSchedule, Manager, Company, ProductModel, ModelData, ModelFolder
 import os
 from werkzeug.utils import secure_filename
+from flask import current_app
 
 bp = Blueprint('production', __name__, url_prefix='/api/production')
 
@@ -109,20 +110,24 @@ def get_directory_contents():
     try:
         company_id = request.args.get('company_id')
         folder_id = request.args.get('folder_id')
-        section = request.args.get('section', 'production') # 섹션 정보 추가 받아옴
+        section = request.args.get('section', 'production')
         
         if not company_id: return jsonify({"error": "Company ID required"}), 400
         if folder_id in ['null', 'undefined', '']: folder_id = None
         
-        # [수정] 해당 섹션(공정)에 속한 폴더만 필터링하여 가져옵니다.
+        # 폴더 필터링
         folders = ModelFolder.query.filter_by(
             company_id=company_id, 
             parent_folder_id=folder_id,
             section=section 
         ).all()
         
-        # 모델은 공통 데이터이므로 기존대로 유지하거나, 필요 시 섹션별 필터링을 추가할 수 있습니다.
-        models = ProductModel.query.filter_by(company_id=company_id, folder_id=folder_id).all()
+        # [수정] 모델(파일)도 요청된 섹션에 해당하는 것만 가져오도록 필터링 추가
+        models = ProductModel.query.filter_by(
+            company_id=company_id, 
+            folder_id=folder_id,
+            section=section
+        ).all()
 
         return jsonify({
             "folders": [{"id": f.id, "name": f.name, "type": "folder"} for f in folders],
@@ -163,6 +168,53 @@ def manage_folder(id):
         db.session.commit()
         return jsonify({"message": "Success"})
     except Exception as e: return jsonify({"error": str(e)}), 500
+    
+    # [추가] 모델 이동 및 복사 API
+@bp.route('/models/transfer', methods=['POST'])
+def transfer_model():
+    try:
+        data = request.json
+        action = data.get('action') # 'copy' 또는 'move'
+        model_id = data.get('model_id')
+        target_folder_id = data.get('target_folder_id')
+        
+        if target_folder_id in ['null', '', None]: target_folder_id = None
+        
+        source_model = db.session.get(ProductModel, model_id)
+        if not source_model: return jsonify({"error": "Model not found"}), 404
+
+        if action == 'move':
+            # 잘라내기/이동: 폴더 ID만 변경
+            source_model.folder_id = target_folder_id
+            db.session.commit()
+            return jsonify({"message": "Moved successfully"})
+
+        elif action == 'copy':
+            # 복사: 새로운 모델 객체 생성 및 데이터 복제
+            new_model = ProductModel(
+                name=f"{source_model.name}_복사본",
+                company_id=source_model.company_id,
+                folder_id=target_folder_id
+            )
+            db.session.add(new_model)
+            db.session.flush() # ID 생성을 위해 flush
+            
+            # 기존 모델의 데이터(BOM/좌표)도 함께 복사
+            original_data = ModelData.query.filter_by(model_id=model_id).all()
+            for d in original_data:
+                db.session.add(ModelData(
+                    model_id=new_model.id,
+                    data_type=d.data_type,
+                    content=d.content,
+                    file_name=d.file_name
+                ))
+            
+            db.session.commit()
+            return jsonify({"message": "Copied successfully"})
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
 
 
 # ==============================================================================
@@ -255,9 +307,16 @@ def create_model():
     try:
         data = request.json
         fid = data.get('folder_id')
+        section = data.get('section', 'production') # 섹션 정보 가져오기
         if fid in ['null', '', None]: fid = None
         
-        db.session.add(ProductModel(name=data['name'], company_id=data['company_id'], folder_id=fid))
+        # [수정] 생성 시 section 정보 포함
+        db.session.add(ProductModel(
+            name=data['name'], 
+            company_id=data['company_id'], 
+            folder_id=fid,
+            section=section
+        ))
         db.session.commit()
         return jsonify({"message": "Created"}), 201
     except Exception as e: return jsonify({"error": str(e)}), 500
@@ -347,3 +406,74 @@ def handle_model_data(model_id):
 @bp.route('/download/<path:filename>', methods=['GET'])
 def download(filename):
     return send_from_directory(UPLOAD_FOLDER, filename, as_attachment=True)
+
+# [추가] 섹션별 전역 검색 API
+@bp.route('/search', methods=['GET'])
+def search_global():
+    section = request.args.get('section', 'production')
+    query = request.args.get('query', '')
+    
+    if not query:
+        return jsonify({"folders": [], "models": []})
+
+    # 1. 해당 섹션에 속한 폴더 검색
+    folders = ModelFolder.query.filter(
+        ModelFolder.section == section,
+        ModelFolder.name.ilike(f'%{query}%')
+    ).all()
+    
+    # 2. 해당 섹션 폴더들에 포함된 모델 검색
+    # (참고: ProductModel은 folder_id를 통해 ModelFolder와 연결됨)
+    section_folders = ModelFolder.query.filter_by(section=section).all()
+    section_folder_ids = [f.id for f in section_folders]
+    
+    models = ProductModel.query.filter(
+        ProductModel.folder_id.in_(section_folder_ids),
+        ProductModel.name.ilike(f'%{query}%')
+    ).all()
+    
+    return jsonify({
+        "folders": [{"id": f.id, "name": f.name, "type": "folder", "company_id": f.company_id, "section": f.section} for f in folders],
+        "models": [{"id": m.id, "name": m.name, "type": "model", "company_id": m.company_id} for m in models]
+    })
+    
+    # [추가] 서버 용량 보호를 위한 업로드 크기 제한 (50MB)
+# Flask 설정에 추가: app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024
+
+@bp.route('/files/upload', methods=['POST'])
+def upload_general_file():
+    try:
+        if 'file' not in request.files: return jsonify({"error": "No file"}), 400
+        file = request.files['file']
+        
+        # [백엔드 검증] 파일 크기 체크
+        file.seek(0, os.SEEK_END)
+        size = file.tell()
+        file.seek(0)
+        if size > 50 * 1024 * 1024:
+            return jsonify({"error": "File too large (Max 50MB)"}), 413
+
+        folder_id = request.form.get('folder_id')
+        company_id = request.form.get('company_id')
+        section = request.form.get('section')
+
+        filename = secure_filename(file.filename)
+        # 실제 저장은 'uploads' 폴더에 진행
+        save_path = os.path.join(UPLOAD_FOLDER, f"gen_{section}_{filename}")
+        file.save(save_path)
+        
+        section = request.form.get('section', 'production')
+
+        # DB에 모델 형태로 등록하여 화면에 표시 (type을 'file'로 구분 가능)
+        new_file = ProductModel(
+            name=filename,
+            company_id=company_id,
+            folder_id=folder_id if folder_id else None,
+            section=section # 섹션 저장
+        )
+        db.session.add(new_file)
+        db.session.commit()
+
+        return jsonify({"message": "Success"}), 201
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
