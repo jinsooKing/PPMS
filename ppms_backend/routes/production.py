@@ -131,8 +131,8 @@ def get_directory_contents():
 
         return jsonify({
             "folders": [{"id": f.id, "name": f.name, "type": "folder"} for f in folders],
-            "models": [{"id": m.id, "name": m.name, "type": "model"} for m in models]
-        })
+            "models": [m.to_dict() for m in models] # [수정] 모든 정보를 dict로 반환
+            })
     except Exception as e: return jsonify({"error": str(e)}), 500
 
 @bp.route('/folders', methods=['POST'])
@@ -257,7 +257,20 @@ def company_item(id):
 @bp.route('/managers', methods=['GET', 'POST'])
 def manage_managers():
     if request.method == 'GET':
-        return jsonify([m.to_dict() for m in Manager.query.all()])
+        # 직급별 가중치 설정 (낮을수록 상단 배치)
+        rank_order = {"부장": 1, "차장": 2, "과장": 3, "대리": 4, "주임": 5, "사원": 6}
+        # 부서별 가중치 설정
+        dept_order = {"관리": 1, "생산": 2, "품질": 3}
+        
+        managers = Manager.query.all()
+        
+        # 정렬: 1순위 부서, 2순위 직급
+        sorted_managers = sorted(managers, key=lambda m: (
+            dept_order.get(m.department, 99),
+            rank_order.get(m.position, 99)
+        ))
+        
+        return jsonify([m.to_dict() for m in sorted_managers])
     try:
         db.session.add(Manager(name=request.json['name']))
         db.session.commit()
@@ -469,8 +482,9 @@ def upload_general_file():
             name=filename,
             company_id=company_id,
             folder_id=folder_id if folder_id else None,
-            section=section # 섹션 저장
-        )
+            section=section, # 섹션 저장
+            type='file'
+    )
         db.session.add(new_file)
         db.session.commit()
 

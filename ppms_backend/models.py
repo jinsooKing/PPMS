@@ -184,16 +184,25 @@ class ModelFolder(db.Model):
         }
 
 # 9. 제품 모델 (수정: to_dict 구현)
+# [수정] ProductModel 클래스 (type 필드 추가 및 to_dict 업데이트)
 class ProductModel(db.Model):
     __tablename__ = 'product_models'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
+    type = db.Column(db.String(20), nullable=False, default='model') # [추가] 'model' 또는 'file'
     section = db.Column(db.String(20), nullable=False, default='production')
     company_id = db.Column(db.Integer, db.ForeignKey('companies.id'), nullable=False)
     folder_id = db.Column(db.Integer, db.ForeignKey('model_folders.id'), nullable=True)
 
     def to_dict(self):
-        return {'id': self.id, 'name': self.name,'section': self.section, 'company_id': self.company_id, 'folder_id': self.folder_id}
+        return {
+            'id': self.id, 
+            'name': self.name, 
+            'type': self.type, # [추가]
+            'section': self.section, 
+            'company_id': self.company_id, 
+            'folder_id': self.folder_id
+        }
 
 # 10. 모델 데이터 모델
 class ModelData(db.Model):

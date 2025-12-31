@@ -104,31 +104,58 @@
             color: #ffffff;
         }
 
-        /* 6. 역할 체크박스 그리드 */
-        .checkbox-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px 20px;
-            justify-items: start;
-            width: 100%;
-            /* 그리드 전체 너비 확보 */
-            padding: 15px;
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 8px;
-            box-sizing: border-box;
-            /* 패딩 포함 크기 계산 */
-        }
-
         .check-item {
             display: flex;
+            /* [핵심 1] Flex 자식 요소들을 수직 중앙 정렬 */
             align-items: center;
-            gap: 8px;
-            color: #ccc;
-            font-size: 0.85rem;
+            gap: 10px;
+            color: #bbb;
+            font-size: 0.9rem;
             cursor: pointer;
-            white-space: nowrap;
-            /* 텍스트 줄바꿈 방지 */
+            transition: all 0.2s;
+            user-select: none;
+            /* [핵심 2] 텍스트의 줄 높이를 1로 고정하여 텍스트 상자 자체의 여백 제거 */
+            line-height: 1;
         }
+
+        .check-item:hover {
+            color: var(--point-gold);
+        }
+
+        /* 기본 체크박스 숨기기 */
+        .check-item input[type="checkbox"] {
+            appearance: none;
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            border: 1.5px solid rgba(255, 235, 167, 0.3);
+            border-radius: 3px;
+            background: #1f2029;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            margin: 0;
+            /* 불필요한 마진 완전 제거 */
+            flex-shrink: 0;
+            /* 텍스트에 밀려 찌그러짐 방지 */
+
+            /* [핵심 3] 폰트(BMDOHYEON) 특성상 텍스트가 살짝 내려앉아 보일 수 있으므로 
+       미세한 픽셀 단위 조정을 위해 transform 사용 (필요시 0.5px 단위로 미세조정) */
+            transform: translateY(3px);
+        }
+
+        .check-item input[type="checkbox"]:checked {
+            background: var(--point-gold);
+            border-color: var(--point-gold);
+            box-shadow: 0 0 8px rgba(255, 235, 167, 0.4);
+        }
+
+        /* [중요] 기존에 남아있을 수 있는 가상 요소(V자 표시 등) 완전 제거 */
+        .check-item input[type="checkbox"]::after,
+        .check-item input[type="checkbox"]::before {
+            display: none !important;
+        }
+
 
         /* 7. 푸터 버튼 */
         .center-footer {
@@ -139,9 +166,55 @@
             margin-top: 10px;
         }
 
+        /* [추가] 직급별 배지 스타일 */
+        .rank-badge {
+            position: absolute;
+            top: -5px;
+            right: 15px;
+            background: var(--point-gold);
+            color: #1a1b21;
+            font-size: 0.65rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 800;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+            z-index: 20;
+        }
+
+        /* 부장/차장 등 높은 직급은 테두리 강조 */
+        .high-rank-border {
+            outline: 2px solid var(--point-gold);
+            outline-offset: 3px;
+        }
+
+        /* [추가] 부서 섹션 헤더 */
+        .dept-header {
+            grid-column: 1 / -1;
+            /* 그리드 전체 너비 차지 */
+            width: 100%;
+            color: var(--point-gold);
+            font-size: 0.9rem;
+            padding: 10px 0;
+            margin-top: 20px;
+            border-bottom: 1px solid rgba(255, 235, 167, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
         /* [중요] 아이콘 깨짐 방지 (전역 bold 설정 무력화) */
         i.uil {
             font-weight: normal !important;
+        }
+
+        .manager-circle-wrapper::after {
+            display: none !important;
+        }
+
+        /* 담당자 아이콘 전용 호버 효과 (원하는 경우 추가) */
+        .folder-item[data-type="manager"]:hover .manager-circle-wrapper {
+            transform: scale(1.1);
+            box-shadow: 0 0 20px var(--point-gold);
         }
 
         /* ============================================================
@@ -259,11 +332,14 @@
 
         .checkbox-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px 20px;
             width: 100%;
-            padding: 15px;
-            background: rgba(0, 0, 0, 0.2);
+            padding: 18px;
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px solid rgba(255, 235, 167, 0.1);
+            border-radius: 10px;
+            box-sizing: border-box;
         }
 
         .center-footer {
@@ -1327,19 +1403,14 @@
 
         /* [추가] 항목 실행 처리 (더블 클릭) */
         window.handleItemDblClick = function (el) {
-            const { id, name, type, companyId, section } = el.dataset;
-
+            const { id, name, type } = el.dataset;
             if (type === 'model') {
-                // 제품 모델: BOM/좌표 관리 화면으로 이동
+                // 제품 모델은 BOM/좌표 관리 화면으로 이동
                 navigateTo('file_upload', { modelId: id, modelName: name });
-            } else if (type === 'general_file') {
-                // 일반 파일: BOM 등록 창 없이 바로 다운로드 실행
+            } else if (type === 'file') {
+                // 업로드된 파일은 즉시 다운로드
                 const downloadUrl = `http://127.0.0.1:5000/api/production/download/gen_${state.activeTab}_${name}`;
                 window.location.href = downloadUrl;
-            } else if (type === 'folder') {
-                enterSubFolder(el);
-            } else if (type === 'company') {
-                enterCompany(el);
             }
         };
 
@@ -1354,15 +1425,12 @@
         async function renderRecursiveFolderView(data) {
             const { companyId, folderId, section } = data;
             const queryFolder = folderId ? folderId : '';
-
-            const requestId = ++currentRequestId; //
+            const requestId = ++currentRequestId;
             const content = document.getElementById('sub-view-content');
 
             try {
-                // 백엔드 API 호출
                 const res = await fetch(`http://127.0.0.1:5000/api/production/directory?company_id=${companyId}&folder_id=${queryFolder}&section=${section}`);
-
-                if (requestId !== currentRequestId) return; // 경쟁 상태 방지
+                if (requestId !== currentRequestId) return;
                 if (!res.ok) throw new Error("Failed to fetch");
 
                 const result = await res.json();
@@ -1373,49 +1441,36 @@
                 } else {
                     html += `<div class="folder-grid">`;
 
-                    // 1. 폴더 렌더링 (한 번 클릭 시 즉시 진입)
+                    // 1. 폴더: 한 번 클릭 시 즉시 진입
                     result.folders.forEach(folder => {
                         const safeName = escapeHtml(folder.name);
                         html += `
-            <div class="folder-item filter-target" 
-                 onclick="enterSubFolder(this)" 
-                 data-name="${safeName}" data-id="${folder.id}" data-type="folder" 
-                 data-company-id="${companyId}" data-section="${section}">
-                <div class="folder-3d">
-                    <div class="folder-back"></div><div class="paper"></div><div class="folder-front"></div>
-                </div>
-                <div class="folder-name">${safeName}</div>
-            </div>`;
+                <div class="folder-item filter-target" onclick="enterSubFolder(this)" 
+                     data-name="${safeName}" data-id="${folder.id}" data-type="folder" 
+                     data-company-id="${companyId}" data-section="${section}">
+                    <div class="folder-3d"><div class="folder-back"></div><div class="paper"></div><div class="folder-front"></div></div>
+                    <div class="folder-name">${safeName}</div>
+                </div>`;
                     });
 
-                    // 2. 모델 및 일반 파일 렌더링 (한 번 클릭: 선택, 더블 클릭: 실행)
+                    // 2. 모델 및 파일: 클릭 시 선택, 더블 클릭 시 실행
                     result.models.forEach(model => {
                         const safeName = escapeHtml(model.name);
-                        const isFile = safeName.includes('.');
-                        const itemType = isFile ? 'general_file' : 'model';
-                        const iconClass = isFile ? getFileIcon(safeName) : 'uil-layer-group';
+                        const itemType = model.type; // [수정] DB에서 받은 타입을 직접 사용
+                        const iconClass = (itemType === 'file') ? getFileIcon(safeName) : 'uil-layer-group';
 
                         html += `
-            <div class="folder-item filter-target" 
-                 onclick="selectItem(this)" 
-                 ondblclick="handleItemDblClick(this)"
-                 data-name="${safeName}" data-id="${model.id}" data-type="${itemType}" 
-                 data-company-id="${companyId}" data-section="${section}">
-                <div class="file-icon-wrapper">
-                    <i class="uil ${iconClass} file-type-icon"></i>
-                </div>
-                <div class="folder-name">${safeName}</div>
-            </div>`;
+                <div class="folder-item filter-target" onclick="selectItem(this)" ondblclick="handleItemDblClick(this)"
+                     data-name="${safeName}" data-id="${model.id}" data-type="${itemType}" 
+                     data-company-id="${companyId}" data-section="${section}">
+                    <div class="file-icon-wrapper"><i class="uil ${iconClass} file-type-icon"></i></div>
+                    <div class="folder-name">${safeName}</div>
+                </div>`;
                     });
-
-                    html += `</div>`;
+                    html += `</div>`; // [수정] 위치 고침
                 }
                 content.innerHTML = html;
-
-                // GSAP 애니메이션 효과 적용
-                if (typeof gsap !== 'undefined') {
-                    gsap.from(".folder-item", { y: 20, opacity: 0, stagger: 0.05 });
-                }
+                gsap.from(".folder-item", { y: 20, opacity: 0, stagger: 0.05 });
 
             } catch (e) {
                 console.error("View Render Error:", e);
@@ -1486,50 +1541,51 @@
 
         async function renderManagerList() {
             const content = document.getElementById('sub-view-content');
-            if (!content) return; // 컨테이너 확인 안전장치
-
             try {
                 const res = await fetch(`http://127.0.0.1:5000/api/production/managers`);
-                if (!res.ok) throw new Error("API 응답 오류");
-
                 const items = await res.json();
 
-                let html = `
-            <div class="luxury-input-wrapper" style="display:flex; gap:10px; margin-bottom:30px; max-width:600px;">
-                <input type="text" id="new-mgr-name" class="luxury-input" placeholder="새 담당자명..." style="flex:1; background:rgba(0,0,0,0.2); border:1px solid #444; color:#fff; border-radius:30px; padding:0 20px;">
-                <button class="luxury-add-btn" onclick="addManager()" style="background:var(--point-gold); border:none; border-radius:30px; padding:10px 25px; color:#102770; font-weight:bold; cursor:pointer;">추가</button>
-            </div>
-            <div class="folder-grid">`;
+                let html = `<div class="luxury-input-wrapper">...</div><div class="folder-grid">`;
+                let lastDept = "";
 
                 items.forEach(item => {
-                    const safeName = typeof escapeHtml === 'function' ? escapeHtml(item.name) : item.name;
-                    const dept = item.department || "";
+                    const dept = item.department || "기타";
+                    const rank = item.position || "사원";
+                    const safeName = escapeHtml(item.name);
 
-                    // 부서별 그라데이션 결정 로직
-                    let gradient = 'linear-gradient(135deg, #636e72, #2d3436)'; // 기본 회색
+                    // [군집화] 부서가 바뀌면 헤더 추가
+                    if (dept !== lastDept) {
+                        html += `<div class="dept-header"><i class="uil uil-label"></i> ${dept} 부서</div>`;
+                        lastDept = dept;
+                    }
+
+                    // 부서별 색상 동일 로직 적용
+                    let gradient = 'linear-gradient(135deg, #636e72, #2d3436)';
                     if (dept === '생산') gradient = 'linear-gradient(135deg, #6a89cc, #4a69bd)';
                     else if (dept === '품질') gradient = 'linear-gradient(135deg, #00e676, #00c853)';
                     else if (dept === '관리') gradient = 'linear-gradient(135deg, #a29bfe, #6c5ce7)';
 
+                    // 최고 관리자(부장, 차장) 클래스 분기
+                    const isHighRank = (rank === '부장' || rank === '차장');
+                    const borderClass = isHighRank ? 'high-rank-border' : '';
+
                     html += `
-                <div class="folder-item filter-target" onclick="openManagerInfoModal(${item.id})" data-id="${item.id}" data-name="${safeName}" data-type="manager">
-                    <div class="file-icon-wrapper" style="background: ${gradient}; border-radius: 50%; width: 75px; height: 75px; display: flex; align-items: center; justify-content: center; margin-bottom: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
-                        <i class="uil uil-user" style="font-size: 2.8rem; color: #fff;"></i>
-                    </div>
-                    <div class="folder-name">${safeName}</div>
-                    <div style="font-size: 0.7rem; color: #888; margin-top: -5px;">${dept || '-'}</div>
-                </div>`;
+            <div class="folder-item filter-target" onclick="openManagerInfoModal(${item.id})" data-type="manager">
+                ${isHighRank ? `<div class="rank-badge"><i class="uil uil-star"></i> ${rank}</div>` : ''}
+                <div class="file-icon-wrapper manager-circle-wrapper ${borderClass}" 
+                     style="background: ${gradient}; border-radius: 50%; width: 75px; height: 75px; 
+                            display: flex; align-items: center; justify-content: center; margin-bottom: 12px; 
+                            box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
+                    <i class="uil uil-user" style="font-size: 2.8rem; color: #fff;"></i>
+                </div>
+                <div class="folder-name">${safeName} ${!isHighRank ? `<span style="font-size:0.7rem; color:#888;">${rank}</span>` : ''}</div>
+            </div>`;
                 });
 
                 html += `</div>`;
                 content.innerHTML = html;
-                if (typeof gsap !== 'undefined') {
-                    gsap.from(".folder-item", { scale: 0.8, opacity: 0, stagger: 0.05, ease: "back.out(1.7)" });
-                }
-            } catch (e) {
-                console.error("Manager List Load Error:", e);
-                content.innerHTML = `<div style="text-align:center; padding:50px; color:var(--danger-red);">데이터를 불러오지 못했습니다. DB 컬럼 설정을 확인하세요.</div>`;
-            }
+                gsap.from(".folder-item, .dept-header", { opacity: 0, y: 10, stagger: 0.03 });
+            } catch (e) { console.error(e); }
         }
 
         // 2. 부서별 역할 옵션 동적 업데이트
@@ -1555,26 +1611,28 @@
             }
         }
 
-        // 3. 모달 열기 및 데이터 로드
+        /* [수정] openManagerInfoModal 함수 (에러 해결 및 이름 로드) */
         async function openManagerInfoModal(id) {
             try {
                 const res = await fetch(`http://127.0.0.1:5000/api/production/managers`);
                 const managers = await res.json();
-                const mgr = managers.find(m => m.id === id);
+                const mgr = managers.find(m => m.id == id); // == 사용으로 형변환 허용
                 if (!mgr) return;
-                document.getElementById('mgr-email').value = mgr.email || ""; // 이메일 로드 추가
+
                 document.getElementById('mgr-edit-id').value = id;
-                // 상단 제목은 고정하고, 아래에 담당자 이름을 표시
-                document.getElementById('modal-mgr-name-display').textContent = `${mgr.name} 님`;
+
+                // [수정 포인트] 에러가 났던 modal-mgr-name-display 대신 mgr-name input 사용
+                const nameInput = document.getElementById('mgr-name');
+                if (nameInput) nameInput.value = mgr.name;
 
                 document.getElementById('mgr-position').value = mgr.position || "";
                 document.getElementById('mgr-dept').value = mgr.department || "";
                 document.getElementById('mgr-contact').value = mgr.contact || "";
+                document.getElementById('mgr-email').value = mgr.email || "";
 
                 updateRoleOptions(mgr.roles || "");
-
                 document.getElementById('manager-info-modal').classList.add('visible');
-            } catch (e) { console.error(e); }
+            } catch (e) { console.error("Modal Open Error:", e); }
         }
 
         function closeMgrModal() { document.getElementById('manager-info-modal').classList.remove('visible'); }
@@ -1582,6 +1640,7 @@
         // 4. 데이터 저장 (PUT)
         async function saveManagerInfo() {
             const id = document.getElementById('mgr-edit-id').value;
+            const name = document.getElementById('mgr-name').value; // 이름값 가져오기
             const position = document.getElementById('mgr-position').value;
             const department = document.getElementById('mgr-dept').value;
             const contact = document.getElementById('mgr-contact').value;
@@ -1594,13 +1653,13 @@
                 const res = await fetch(`http://127.0.0.1:5000/api/production/managers/${id}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ position, department, roles, contact })
+                    body: JSON.stringify({ name, position, department, roles, contact, email })
                 });
 
                 if (res.ok) {
-                    alert("저장되었습니다.");
+                    alert("정보가 수정되었습니다.");
                     closeMgrModal();
-                    renderManagerList();
+                    renderManagerList(); // 목록 새로고침
                 } else {
                     alert("저장 실패");
                 }
@@ -1752,7 +1811,10 @@
             if (!targetItemData) return;
             const sec = targetItemData.section || 'production';
 
-            if (targetItemData.type === 'company') {
+            if (targetItemData.type === 'manager') {
+                // [추가] 담당자 타입인 경우 정보 수정 모달을 엽니다.
+                openManagerInfoModal(targetItemData.id);
+            } else if (targetItemData.type === 'company') {
                 navigateTo('folder_view', { companyId: targetItemData.id, folderId: null, name: targetItemData.name, section: sec });
             } else if (targetItemData.type === 'folder') {
                 navigateTo('folder_view', { companyId: targetItemData.companyId, folderId: targetItemData.id, name: targetItemData.name, section: sec });
@@ -1983,8 +2045,11 @@
             </div>
             <div class="modal-body center-align-body">
                 <input type="hidden" id="mgr-edit-id">
-                <h4 id="modal-mgr-name-display" style="color:#fff; margin-bottom:20px; font-weight:normal;"></h4>
 
+                <div class="input-group" style="width:100%">
+                    <label>성명</label>
+                    <input type="text" id="mgr-name" class="luxury-input" placeholder="성명을 입력하세요">
+                </div>
                 <div class="input-row">
                     <div class="input-group">
                         <label>직급</label>
