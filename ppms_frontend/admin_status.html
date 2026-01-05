@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PPMS - 작업 현황</title>
+    <link rel="stylesheet" href="common.css">
+    <link href="https://hangeul.pstatic.net/hangeul_static/css/bmdohyeon.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://unicons.iconscout.com/release/v2.1.9/css/unicons.css">
+    <link href="https://fonts.googleapis.com/css?family=Poppins:400,600,800" rel="stylesheet">
+    <script src="auth.js"></script> </head>
+<body>
+    <div class="page-container">
+        <header class="main-header">
+            <div class="header-left">
+                <div class="header-logo-wrapper" onclick="location.href='index.html'">
+                    <i class="uil uil-circuit" style="font-size:2rem; color:var(--point-gold);"></i>
+                </div>
+            </div>
+            <div class="header-center">
+                <div class="common-box">작업 현황 모니터링</div>
+            </div>
+            <div class="header-right">
+                <div class="common-box time-display" id="current-time"></div>
+            </div>
+        </header>
+
+        <main class="content-area" style="flex-direction:column; align-items:center; justify-content:center;">
+            
+            <div style="text-align:center; padding: 40px; background: rgba(255,255,255,0.03); border-radius: 16px; border: 1px solid rgba(255,235,167,0.1);">
+                <i class="uil uil-clipboard-notes" style="font-size: 4rem; color: var(--point-gold); margin-bottom: 20px; display:block;"></i>
+                <h2 style="color:#fff; margin-bottom: 10px; font-family:'BMDOHYEON';">실시간 작업 현황</h2>
+                <p style="color:#888; font-size: 1rem;">현재 각 공정별 작업 진행률과 이슈 사항을<br>한눈에 파악할 수 있는 대시보드를 준비 중입니다.</p>
+                
+                <div style="margin-top: 30px; display:flex; gap:15px; justify-content:center;">
+                    <div class="common-box">생산 공정: <span style="color:var(--success-green); margin-left:5px;">정상</span></div>
+                    <div class="common-box">AOI 공정: <span style="color:var(--danger-red); margin-left:5px;">점검</span></div>
+                </div>
+            </div>
+
+        </main>
+
+        <footer class="main-footer">
+            <div class="footer-left"></div>
+            <div class="footer-center">
+                <div class="footer-btn" id="back-to-hub"><i class="uil uil-arrow-left"></i></div>
+                <div class="footer-btn" onclick="location.href='index.html'"><i class="uil uil-home"></i></div>
+            </div>
+            <div class="footer-right"></div>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // 시간 업데이트
+            function updateTime(){
+                const n = new Date();
+                document.getElementById('current-time').textContent = n.toLocaleString('ko-KR',{
+                    year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit'
+                });
+            }
+            setInterval(updateTime, 1000); updateTime();
+
+            // 뒤로가기: 통합 관리 페이지로 이동
+            document.getElementById('back-to-hub').addEventListener('click', () => {
+                location.href = 'admin_process_map.html';
+            });
+            
+            // 페이드인
+            setTimeout(() => document.body.style.opacity = '1', 50);
+        });
+    </script>
+</body>
+</html>

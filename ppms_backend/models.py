@@ -166,16 +166,22 @@ class AoiRecord(db.Model):
             'total_defect': self.total_defect, 'good_qty': self.good_qty
         }
 
-# 8. 폴더 모델 (수정: section 추가 및 to_dict 구현)
+# [models.py] ModelFolder와 ProductModel의 company_id를 nullable=True로 변경
+
+# 8. 폴더 모델
 class ModelFolder(db.Model):
     __tablename__ = 'model_folders'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
-    section = db.Column(db.String(20), nullable=False, default='production') # [추가] production 또는 aoi 구분
-    company_id = db.Column(db.Integer, db.ForeignKey('companies.id'), nullable=False)
+    section = db.Column(db.String(20), nullable=False, default='production')
+    company_id = db.Column(db.Integer, db.ForeignKey('companies.id'), nullable=True) 
     parent_folder_id = db.Column(db.Integer, db.ForeignKey('model_folders.id'), nullable=True)
     
+    # 하위 폴더 연쇄 삭제 설정 (기존)
     sub_folders = db.relationship('ModelFolder', backref=db.backref('parent', remote_side=[id]), cascade="all, delete-orphan")
+
+    # [핵심 수정] 폴더 삭제 시 내부에 있는 모델/파일도 함께 삭제되도록 설정
+    items = db.relationship('ProductModel', backref='folder', cascade='all, delete-orphan', lazy=True)
 
     def to_dict(self):
         return {
@@ -183,25 +189,20 @@ class ModelFolder(db.Model):
             'company_id': self.company_id, 'parent_folder_id': self.parent_folder_id
         }
 
-# 9. 제품 모델 (수정: to_dict 구현)
-# [수정] ProductModel 클래스 (type 필드 추가 및 to_dict 업데이트)
+# 9. 제품 모델 (파일 포함)
 class ProductModel(db.Model):
     __tablename__ = 'product_models'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
-    type = db.Column(db.String(20), nullable=False, default='model') # [추가] 'model' 또는 'file'
+    type = db.Column(db.String(20), nullable=False, default='model')
     section = db.Column(db.String(20), nullable=False, default='production')
-    company_id = db.Column(db.Integer, db.ForeignKey('companies.id'), nullable=False)
+    company_id = db.Column(db.Integer, db.ForeignKey('companies.id'), nullable=True)
     folder_id = db.Column(db.Integer, db.ForeignKey('model_folders.id'), nullable=True)
 
     def to_dict(self):
         return {
-            'id': self.id, 
-            'name': self.name, 
-            'type': self.type, # [추가]
-            'section': self.section, 
-            'company_id': self.company_id, 
-            'folder_id': self.folder_id
+            'id': self.id, 'name': self.name, 'type': self.type, 
+            'section': self.section, 'company_id': self.company_id, 'folder_id': self.folder_id
         }
 
 # 10. 모델 데이터 모델

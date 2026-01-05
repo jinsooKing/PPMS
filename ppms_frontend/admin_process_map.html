@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PPMS - 공정 기준정보 관리</title>
+    <title>PPMS - 공정 데이터 관리</title>
 
     <link rel="stylesheet" href="common.css">
     <link href="https://hangeul.pstatic.net/hangeul_static/css/bmdohyeon.css" rel="stylesheet">
@@ -16,6 +16,79 @@
     <script src="logo.js"></script>
 
     <style>
+        /* [추가] 통계 분석 서브 뷰 전용 스타일 */
+        .analysis-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.03);
+            padding: 10px 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            margin-bottom: 15px;
+            flex-shrink: 0;
+        }
+
+        .stat-tab-group {
+            display: flex;
+            gap: 5px;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 3px;
+            border-radius: 8px;
+        }
+
+        .stat-tab-btn {
+            padding: 6px 15px;
+            color: #888;
+            border-radius: 6px;
+            font-family: 'BMDOHYEON';
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .stat-tab-btn.active {
+            background: var(--point-gold);
+            color: #1a1b21;
+        }
+
+        .statistics-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        .statistics-table th {
+            background: #15151a;
+            color: var(--point-gold);
+            padding: 12px;
+            border-bottom: 2px solid var(--point-gold);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .statistics-table td {
+            padding: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            text-align: center;
+            color: #fff;
+        }
+
+        .stats-clickable-val {
+            color: var(--point-gold);
+            text-decoration: underline;
+            cursor: pointer;
+        }
+
+        .stats-problem-yellow {
+            color: #FF3D00 !important;
+        }
+
+        .stats-problem-red {
+            color: #EA00FF !important;
+        }
+
         .manager-fit-modal {
             width: fit-content !important;
             min-width: 400px;
@@ -104,6 +177,8 @@
             color: #ffffff;
         }
 
+
+
         .check-item {
             display: flex;
             /* [핵심 1] Flex 자식 요소들을 수직 중앙 정렬 */
@@ -157,16 +232,46 @@
         }
 
 
-        /* 7. 푸터 버튼 */
         .center-footer {
             width: 100%;
             display: flex;
             justify-content: center;
             gap: 15px;
-            margin-top: 10px;
+            margin-top: 20px;
         }
 
-        /* [추가] 직급별 배지 스타일 */
+
+
+        /* 부장/차장 등 높은 직급은 테두리 강조 */
+        .high-rank-border {
+            outline: 2px solid var(--point-gold);
+            outline-offset: 3px;
+        }
+
+        .selection-marquee {
+            position: absolute;
+            border: 1px solid #0078d7;
+            background-color: rgba(0, 120, 215, 0.1);
+            z-index: 9999;
+            pointer-events: none;
+        }
+
+        /* [추가] 부서별 구분 헤더 스타일 */
+        .dept-header {
+            grid-column: 1 / -1;
+            width: 100%;
+            color: var(--point-gold);
+            font-size: 0.9rem;
+            padding: 15px 0 10px 0;
+            margin-top: 20px;
+            border-bottom: 1px solid rgba(255, 235, 167, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: bold;
+        }
+
+        /* [추가] 최고 직급자 관리자 뱃지 스타일 */
         .rank-badge {
             position: absolute;
             top: -5px;
@@ -177,29 +282,8 @@
             padding: 2px 6px;
             border-radius: 4px;
             font-weight: 800;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
             z-index: 20;
-        }
-
-        /* 부장/차장 등 높은 직급은 테두리 강조 */
-        .high-rank-border {
-            outline: 2px solid var(--point-gold);
-            outline-offset: 3px;
-        }
-
-        /* [추가] 부서 섹션 헤더 */
-        .dept-header {
-            grid-column: 1 / -1;
-            /* 그리드 전체 너비 차지 */
-            width: 100%;
-            color: var(--point-gold);
-            font-size: 0.9rem;
-            padding: 10px 0;
-            margin-top: 20px;
-            border-bottom: 1px solid rgba(255, 235, 167, 0.2);
-            display: flex;
-            align-items: center;
-            gap: 10px;
         }
 
         /* [중요] 아이콘 깨짐 방지 (전역 bold 설정 무력화) */
@@ -394,16 +478,74 @@
             background-size: 20px 20px;
         }
 
+        /* [추가] 뷰 섹션 높이 보정 (세로 스크롤 방지) */
         .view-section {
             width: 100%;
-            min-height: 100%;
-            /* 절대 위치를 제거하고 최소 높이만 지정 */
+            min-height: auto !important;
+            /* 100% 강제 해제 */
             padding: 20px;
             display: none;
         }
 
+        /* [수정] 애니메이션 안정성을 위한 그리드 설정 */
+        .dashboard-grid {
+            display: grid !important;
+            grid-template-columns: repeat(2, 1fr) !important;
+            grid-template-rows: repeat(2, 1fr) !important;
+            gap: clamp(10px, 2vh, 25px) !important;
+            padding: clamp(10px, 2vh, 30px) !important;
+            width: 100% !important;
+            height: 100% !important;
+            max-width: 1400px !important;
+            margin: 0 auto !important;
+            box-sizing: border-box !important;
+            /* [추가] 애니메이션 도중 자식 요소가 영역 밖으로 나갈 때 스크롤바 방지 */
+            overflow: hidden !important;
+            /* [추가] 하드웨어 가속 활용 */
+            backface-visibility: hidden;
+        }
+
+        .dashboard-card,
+        .dept-column,
+        .folder-item {
+            opacity: 0;
+            will-change: transform, opacity;
+        }
+
+        /* 기존 스타일 중 애니메이션을 방해하는 !important 속성 제거 또는 수정 */
+        .dashboard-card {
+            /* 기존의 opacity: 1 !important; 를 삭제하거나 아래와 같이 수정하세요 */
+            background: linear-gradient(145deg, #2a2b38, #23242d) !important;
+            border: 1px solid rgba(255, 235, 167, 0.15) !important;
+            border-radius: clamp(10px, 1.5vh, 20px) !important;
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: center !important;
+            align-items: center !important;
+            height: 100% !important;
+            min-height: 0 !important;
+        }
+
+        /* 카드 내부 요소 크기도 비율에 맞게 조절 */
+        .card-icon {
+            font-size: clamp(2.5rem, 5vh, 4.5rem) !important;
+            margin-bottom: 1vh !important;
+        }
+
+        .card-title {
+            font-size: clamp(1rem, 2vh, 1.3rem) !important;
+            margin-bottom: 0.5vh !important;
+        }
+
+        .card-desc {
+            font-size: clamp(0.75rem, 1.3vh, 0.9rem) !important;
+            max-width: 80%;
+        }
+
+        /* 부모 컨테이너 강제 설정 (스크롤 방지) */
         #main-dashboard-view {
-            display: block;
+            height: 100% !important;
+            overflow: hidden !important;
         }
 
         /* [Nav Bar] */
@@ -584,9 +726,16 @@
             position: relative;
         }
 
+
+
         .folder-item.selected {
-            background-color: rgba(255, 235, 167, 0.15) !important;
-            outline: 1px solid var(--point-gold);
+            /* 첨부하신 사진의 파란색 강조 효과 반영 */
+            background-color: rgba(0, 120, 215, 0.3) !important;
+            outline: 1px solid rgba(0, 120, 215, 0.6) !important;
+            border-radius: 2px;
+            box-shadow: none !important;
+            transform: none !important;
+            /* 위로 뜨는 효과 제거 (탐색기 스타일) */
         }
 
         /* 선택된 항목의 파일명은 전체 표시 */
@@ -815,19 +964,110 @@
         }
 
         .action-btn {
-            background: var(--accent-blue);
-            color: white;
-            border: none;
-            padding: 10px 25px;
-            border-radius: 6px;
+            font-family: 'BMDOHYEON', sans-serif;
+            padding: 10px 30px;
+            border-radius: 50px;
+            font-size: 0.95rem;
             cursor: pointer;
-            font-family: 'BMDOHYEON';
-            transition: 0.2s;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 120px;
+            justify-content: center;
         }
 
         .action-btn:hover {
             background: #1a3b8e;
             transform: scale(1.05);
+        }
+
+        /* [수정] 모달 헤더: 제목과 X버튼의 완벽한 수평 정렬 */
+        .modal-header {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            /* [핵심] Y축 중앙 정렬 */
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 235, 167, 0.2);
+        }
+
+        .modal-header h3 {
+            color: var(--point-gold);
+            /* 제목 색상을 금색으로 변경 */
+            margin: 0;
+            /* 불필요한 마진 제거 */
+            font-size: 1.3rem;
+            text-shadow: 0 0 10px rgba(255, 235, 167, 0.3);
+        }
+
+        .close-btn {
+            background: transparent;
+            border: none;
+            color: #888;
+            font-size: 1.8rem;
+            cursor: pointer;
+            line-height: 1;
+            transition: color 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .close-btn:hover {
+            color: var(--point-gold);
+        }
+
+        /* [수정] 하단 버튼: 테마에 맞는 고급스러운 디자인 */
+        .center-footer {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .action-btn {
+            font-family: 'BMDOHYEON', sans-serif;
+            padding: 10px 30px;
+            border-radius: 50px;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 120px;
+            justify-content: center;
+        }
+
+        /* 취소 버튼: 어두운 배경 + 금색 테두리 */
+        .action-btn.cancel {
+            background: rgba(255, 255, 255, 0.05);
+            color: #ccc;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .action-btn.cancel:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border-color: #fff;
+        }
+
+        /* 저장 버튼: 금색 그라데이션 + 어두운 글자 */
+        .action-btn.save {
+            background: linear-gradient(135deg, #f3c256, #d8a044);
+            color: #1a1b21;
+            border: none;
+            box-shadow: 0 4px 15px rgba(216, 160, 68, 0.3);
+        }
+
+        .action-btn.save:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(216, 160, 68, 0.5);
+            filter: brightness(1.1);
         }
 
         .current-file-info {
@@ -913,27 +1153,21 @@
             margin: 4px 0;
         }
 
-        /* 대시보드 그리드 (통합 관리 탭 메인) */
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 30px;
-            padding: 20px;
-            max-width: 1000px;
-            margin: 0 auto;
+
+        /* 카드 호버 시 투명도 변화 방지 */
+        .dashboard-card:hover {
+            transform: translateY(-10px) !important;
+            border-color: var(--point-gold) !important;
+            box-shadow: 0 15px 40px rgba(255, 235, 167, 0.2) !important;
+            background: linear-gradient(145deg, #323344, #2a2b38) !important;
         }
 
-        .dashboard-card {
-            background: linear-gradient(145deg, #2a2b38, #23242d);
-            border: 1px solid rgba(255, 235, 167, 0.1);
-            border-radius: 16px;
-            padding: 40px 30px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-            position: relative;
-            overflow: hidden;
+        /* 뷰 섹션 컨테이너 보정 */
+        #main-dashboard-view {
+            width: 100% !important;
+            display: block;
+            /* switchTab에서 제어 */
+            opacity: 1 !important;
         }
 
         .dashboard-card::before {
@@ -948,33 +1182,21 @@
             transition: opacity 0.3s;
         }
 
-        .dashboard-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5);
-            border-color: rgba(255, 235, 167, 0.4);
-        }
 
         .dashboard-card:hover::before {
             opacity: 1;
         }
 
-        .card-icon {
-            font-size: 3.5rem;
-            color: var(--point-gold);
-            margin-bottom: 20px;
-            text-shadow: 0 0 20px rgba(255, 235, 167, 0.2);
+        .folder-item.dragging {
+            opacity: 0.4 !important;
         }
 
-        .card-title {
-            font-size: 1.4rem;
-            color: #fff;
-            margin-bottom: 10px;
-            font-weight: bold;
-        }
-
-        .card-desc {
-            font-size: 0.95rem;
-            color: #807f83;
+        /* [추가] 드래그 오버 시 폴더 스타일 */
+        .folder-item.drag-over {
+            background-color: rgba(255, 235, 167, 0.2) !important;
+            outline: 2px dashed var(--point-gold) !important;
+            transform: scale(1.05);
+            transition: all 0.2s ease;
         }
     </style>
 </head>
@@ -987,7 +1209,7 @@
         <header class="main-header">
             <div class="header-left"><a href="index.html" class="ppms-logo-placeholder"></a></div>
             <div class="header-center">
-                <div class="common-box">공정 기준정보 관리</div>
+                <div class="common-box">공정 데이터 관리</div>
             </div>
             <div class="header-right">
                 <div class="common-box time-display" id="current-time"></div>
@@ -1057,14 +1279,9 @@
 
         const state = {
             currentPath: [],
-            activeTab: 'management', // 기본값: 통합 관리
-            viewMode: 'dashboard',
-            clipboard: {
-                action: null, // 'copy' 또는 'cut'
-                type: null,   // 'model'
-                id: null,
-                name: null
-            }
+            activeTab: 'management',
+            selectedIds: new Set(), // 다중 선택된 ID 저장용 [추가]
+            clipboard: { action: null, type: null, id: null, name: null }
         };
 
         let currentRequestId = 0;
@@ -1072,6 +1289,21 @@
         let targetItemData = null;
 
         document.addEventListener('DOMContentLoaded', () => {
+            // [추가] admin.html에서 가져온 보안 로직
+            const userRole = localStorage.getItem('ppms_user_role');
+            if (!userRole) {
+                alert('로그인이 필요합니다.');
+                window.location.href = 'login.html';
+                return;
+            }
+            if (userRole !== 'admin') {
+                alert('접근 권한이 없습니다.');
+                window.location.href = 'index.html';
+                return;
+            }
+
+            // [추가] 초기 페이드인 효과 (admin.html 스타일)
+            setTimeout(() => { document.body.style.opacity = '1'; }, 50);
             contextMenu = document.getElementById('context-menu');
             setupEvents();
             updateTime(); setInterval(updateTime, 1000);
@@ -1082,125 +1314,174 @@
             // 애니메이션 초기화
             gsap.from(".tab-item", { y: -20, opacity: 0, stagger: 0.1, duration: 0.5 });
         });
-
-        // [신규 기능] 탭 전환
+        /* [전체 교체] 탭 동작 분리: 통합관리는 업체목록, 나머지는 자유 폴더 뷰 */
         window.switchTab = function (tabName) {
-            state.activeTab = tabName;
-            state.currentPath = [];
+            if (tabName === 'statistics') { location.href = 'statistics.html'; return; }
+            if (tabName === 'status') { location.href = 'admin_status.html'; return; }
 
-            // 1. 탭 스타일 업데이트
+            state.activeTab = tabName;
+            state.currentPath = []; // 경로 초기화
+
+            document.getElementById('sub-view-content').innerHTML = '';
             document.querySelectorAll('.tab-item').forEach(el => {
                 el.classList.remove('active');
-                if (el.getAttribute('onclick').includes(tabName)) el.classList.add('active');
+                const onclickAttr = el.getAttribute('onclick');
+                if (onclickAttr && onclickAttr.includes(tabName)) el.classList.add('active');
             });
 
-            // 2. 화면 렌더링 분기
-            updateBreadcrumb(); // (기존 함수 활용)
+            updateBreadcrumb();
 
-            // 메인/서브 뷰 초기화 (겹침 방지)
-            document.getElementById('sub-detail-view').style.display = 'none';
-            document.getElementById('main-dashboard-view').style.display = 'block';
-
+            // [핵심] 탭 성격에 따른 뷰 전환 분기
             if (tabName === 'management') {
-                // 통합 관리 탭이면 대시보드 보여주기 (기존 대시보드 로직 유지하거나 복구)
-                // *주의: 기존 코드에 대시보드 HTML을 그리는 로직이 있다면 여기서 호출
-                document.getElementById('main-dashboard-view').innerHTML = `
-            <div class="dashboard-grid">
-                <div class="dashboard-card" onclick="navigateTo('company_manager', {section:'common'})">
-                    <div class="card-icon"><i class="uil uil-building"></i></div>
-                    <div class="card-title">업체 및 모델 통합 관리</div>
-                </div>
-                <div class="dashboard-card" onclick="navigateTo('manager_manager')">
-                    <div class="card-icon"><i class="uil uil-users-alt"></i></div>
-                    <div class="card-title">담당자 관리</div>
-                </div>
-            </div>`;
+                // 1. 통합 관리: 카드 대시보드 -> 업체 목록으로 이어지는 기존 흐름
+                document.getElementById('sub-detail-view').style.display = 'none';
+                document.getElementById('main-dashboard-view').style.display = 'block';
+                renderRootView();
             } else {
-                // 생산/검사/기능 탭이면 -> 해당 섹션 루트 폴더로 바로 이동
-                navigateTo('folder_view', { companyId: null, folderId: null, section: tabName, name: 'Root' });
+                // 2. 생산/검사/기능: 바로 자유 폴더 뷰 진입 (루트)
+                document.getElementById('main-dashboard-view').style.display = 'none';
+                document.getElementById('sub-detail-view').style.display = 'block';
+                // companyId 없이 섹션 정보만 가지고 루트 조회
+                renderRecursiveFolderView({ section: tabName, folderId: null, companyId: null });
             }
         };
+
+        /* [전체 교체] renderRootView: 투명도 및 깜빡임 해결 */
         function renderRootView() {
             const mainView = document.getElementById('main-dashboard-view');
             if (state.activeTab === 'management') {
                 mainView.innerHTML = `
-                    <div class="dashboard-grid">
-                        <div class="dashboard-card" onclick="navigateTo('company_manager', {section:'common'})">
-                            <div class="card-icon"><i class="uil uil-building"></i></div>
-                            <div class="card-title">업체 및 모델 통합 관리</div>
-                            <div class="card-desc">업체별 모델, BOM, 좌표 데이터 관리</div>
-                        </div>
-                        <div class="dashboard-card" onclick="navigateTo('manager_manager')">
-                            <div class="card-icon"><i class="uil uil-users-alt"></i></div>
-                            <div class="card-title">담당자 관리</div>
-                            <div class="card-desc">직원 인적사항 및 권한 설정</div>
-                        </div>
-                    </div>`;
+            <div class="dashboard-grid">
+                <div class="dashboard-card" onclick="navigateTo('company_manager', {section:'common'})">
+                    <div class="card-icon"><i class="uil uil-building"></i></div>
+                    <div class="card-title">업체 및 모델 통합 관리</div>
+                    <div class="card-desc">업체별 모델, BOM, 좌표 데이터 관리</div>
+                </div>
+                <div class="dashboard-card" onclick="navigateTo('manager_manager')">
+                    <div class="card-icon"><i class="uil uil-users-alt"></i></div>
+                    <div class="card-title">담당자 관리</div>
+                    <div class="card-desc">직원 인사 정보 및 역할 설정</div>
+                </div>
+                <div class="dashboard-card" onclick="location.href='statistics.html'">
+                    <div class="card-icon"><i class="uil uil-analytics"></i></div>
+                    <div class="card-title">통계 분석</div>
+                    <div class="card-desc">생산 실적 및 AOI 데이터 분석</div>
+                </div>
+                <div class="dashboard-card" onclick="location.href='admin_status.html'">
+                    <div class="card-icon"><i class="uil uil-clipboard-notes"></i></div>
+                    <div class="card-title">작업 현황</div>
+                    <div class="card-desc">공정별 실시간 작업 상태 현황</div>
+                </div>
+            </div>`;
+
                 if (typeof gsap !== 'undefined') {
-                    gsap.from(".dashboard-card", { duration: 0.6, y: 30, opacity: 0, stagger: 0.1, ease: "back.out(1.5)" });
+                    gsap.killTweensOf(".dashboard-card");
+                    // [수정] fromTo 사용: 0 -> 1 강제 변환
+                    gsap.fromTo(".dashboard-card",
+                        { opacity: 0, y: 20, scale: 0.95 },
+                        {
+                            duration: 0.6,
+                            opacity: 1,
+                            y: 0,
+                            scale: 1,
+                            stagger: 0.08,
+                            ease: "power2.out",
+                            clearProps: "transform" // opacity는 유지하고 위치 값만 초기화
+                        }
+                    );
                 }
             }
         }
-
-
-        // --- [Core 3] 네비게이션 처리 ---
+        /* [수정] 외부 페이지로 완전히 분리된 뷰 호출 로직 제거 */
         async function navigateTo(target, data = {}) {
             const mainView = document.getElementById('main-dashboard-view');
             const subView = document.getElementById('sub-detail-view');
-            const content = document.getElementById('sub-view-content');
 
-            // 경로 관리
             if (target === 'root') {
                 state.currentPath = [];
                 switchTab(state.activeTab);
                 return;
             }
 
-            // 경로 추가 로직
-            if (target === 'company_manager') {
-                state.currentPath = [{ id: 'company_manager', name: '업체 목록', section: data.section }];
-            } else if (target === 'manager_manager') {
-                state.currentPath = [{ id: target, name: '담당자 관리' }];
-            } else if (target === 'folder_view') {
-                // 탭별 루트 폴더 진입 시 처리
-                if (data.name === 'Root') {
-                    // 루트 진입은 경로에 쌓지 않고 바로 렌더링 호출만 함 (탭 전환 효과)
-                    // 단, '통합 관리'가 아닌 다른 탭은 여기가 시작점.
-                    // 여기서는 로직 단순화를 위해 루트 폴더 뷰를 subView에 렌더링.
-                } else {
-                    state.currentPath.push(data);
-                }
-            } else if (target === 'file_upload') {
-                state.currentPath.push({ id: 'file_view', name: data.modelName });
-            }
+            // 경로 데이터 설정
+            if (target === 'company_manager') state.currentPath = [{ id: 'company_manager', name: '업체 목록' }];
+            else if (target === 'manager_manager') state.currentPath = [{ id: target, name: '담당자 관리' }];
+            else if (target === 'folder_view') state.currentPath.push(data);
+            else if (target === 'file_upload') state.currentPath.push({ id: 'file_view', name: data.modelName });
 
             updateBreadcrumb();
+            mainView.style.display = 'none';
+            subView.style.display = 'block';
 
-            // 뷰 전환 (Main -> Sub)
-            if (mainView.style.display !== 'none') {
-                mainView.style.display = 'none';
-                subView.style.display = 'block';
-            }
+            // 실제 렌더링 함수 호출 (분리된 파일은 링크로 가므로 여기서는 제외)
+            if (target === 'company_manager') await renderCompanyFolderList(data.section || 'common');
+            else if (target === 'manager_manager') await renderManagerList();
+            else if (target === 'folder_view') await renderRecursiveFolderView(data);
+            else if (target === 'file_upload') renderFileUploadUI(data.modelId, data.modelName);
+        }
+        /* [전체 교체] 통계 분석 UI 및 조회 기능 통합 */
+        function renderStatisticsUI() {
+            const content = document.getElementById('sub-view-content');
+            content.innerHTML = `
+        <div class="analysis-toolbar">
+            <div class="stat-tab-group">
+                <div class="stat-tab-btn active" id="btn-stat-prod">생산 실적</div>
+                <div class="stat-tab-btn" id="btn-stat-aoi">AOI 분석</div>
+            </div>
+            <div style="display:flex; gap:10px; align-items:center;">
+                <input type="number" id="stat-year" class="luxury-input" style="width:80px;" value="${new Date().getFullYear()}">
+                <select id="stat-month" class="luxury-input" style="width:100px;">
+                    ${Array.from({ length: 12 }, (_, i) => `<option value="${i + 1}월분">${i + 1}월</option>`).join('')}
+                </select>
+                <button class="luxury-add-btn" onclick="fetchProdStatistics()">조회</button>
+            </div>
+        </div>
+        <div id="stat-result-container" style="background:rgba(0,0,0,0.2); border-radius:10px; padding:20px; min-height:400px; overflow:auto;">
+            <div style="text-align:center; color:#666; padding-top:150px;">조건을 선택하고 조회를 눌러주세요.</div>
+        </div>`;
+        }
 
-            // 로딩 표시
-            content.innerHTML = '<div style="text-align:center; padding:50px; color:#666;"><i class="uil uil-spinner-alt uil-spin" style="font-size:2rem;"></i></div>';
+        /* [추가] 실제 생산 실적 데이터를 가져오는 함수 (statistics.html 로직 이식) */
+        async function fetchProdStatistics() {
+            const yy = document.getElementById('stat-year').value;
+            const mm = document.getElementById('stat-month').value;
+            const container = document.getElementById('stat-result-container');
 
-            // 실제 렌더링 라우터
-            if (target === 'company_manager') {
-                await renderCompanyFolderList(data.section);
-            } else if (target === 'manager_manager') {
-                await renderManagerList();
-            } else if (target === 'folder_view') {
-                // [수정] 탭이 'management'가 아닌 경우(생산/검사/기능)는 바로 폴더 뷰가 뜸
-                // 이 경우 companyId가 없으면 -> 업체 목록부터 보여줘야 함.
-                if (state.activeTab !== 'management' && !data.companyId) {
-                    await renderCompanyFolderList(state.activeTab);
-                } else {
-                    await renderRecursiveFolderView(data);
+            container.innerHTML = '<div style="text-align:center; padding-top:150px; color:var(--point-gold);">데이터 조회 중...</div>';
+
+            try {
+                const res = await fetch(`http://127.0.0.1:5000/api/statistics/order_month_summary?order_month=${mm}&year=${yy}`);
+                const data = await res.json();
+
+                if (!data || data.length === 0) {
+                    container.innerHTML = '<div style="text-align:center; padding-top:150px; color:#666;">데이터가 없습니다.</div>';
+                    return;
                 }
-            } else if (target === 'file_upload') {
-                renderFileUploadUI(data.modelId, data.modelName);
-            }
+
+                // 2단 레이아웃 테이블 생성 (statistics.html의 로직 활용)
+                let html = `<table class="statistics-table"><thead><tr><th>모델명</th><th>LOT/실적</th><th></th><th>모델명</th><th>LOT/실적</th></tr></thead><tbody>`;
+                for (let i = 0; i < data.length; i += 2) {
+                    html += `<tr>${createStatCell(data[i])} <td style="width:2px; background:rgba(255,235,167,0.2); padding:0;"></td> ${data[i + 1] ? createStatCell(data[i + 1]) : '<td></td><td></td>'}</tr>`;
+                }
+                html += `</tbody></table>`;
+                container.innerHTML = html;
+            } catch (e) { container.innerHTML = '조회 실패'; }
+        }
+
+        function createStatCell(item) {
+            let colorClass = item.status === 'shortage' ? 'stats-problem-yellow' : (item.status === 'imbalance' ? 'stats-problem-red' : '');
+            return `<td>${item.model}</td><td><span style="color:#666; font-size:0.8rem;">${item.totalQuantity}</span> / <span class="stats-clickable-val ${colorClass}">${item.actualProduction}</span></td>`;
+        }
+
+        /* [추가] 작업 현황 통합 UI (구조 예시) */
+        function renderStatusUI() {
+            const content = document.getElementById('sub-view-content');
+            content.innerHTML = `
+        <div style="padding:40px; text-align:center;">
+            <i class="uil uil-construction" style="font-size:4rem; color:var(--point-gold);"></i>
+            <h2 style="color:#fff; margin-top:20px;">작업 현황 모니터링</h2>
+            <p style="color:#888;">실시간 공정별 작업 데이터를 준비 중입니다.</p>
+        </div>`;
         }
 
         // --- Breadcrumb 업데이트 ---
@@ -1265,80 +1546,61 @@
                 }
             }
         }
-
-        // ... (기존 renderCompanyFolderList, renderManagerList, escapeHtml 등 함수들은 그대로 유지) ...
-        // 단, renderCompanyFolderList에서 폴더 클릭 시 section 정보를 state.activeTab에서 가져오거나 파라미터로 넘겨야 함.
-
-        // [수정] renderCompanyFolderList 함수 내부 onclick 부분
-        /*
-           onclick="enterCompany(this)" 
-           data-section="${section || state.activeTab}" 
-        */
-
-        // ================= Rendering Logic =================
-
-        /* [수정] admin_process_map.html 파일의 1,000라인 부근 */
+        /* [전체 교체] 업체 목록 렌더링: 잔상 제거 및 애니메이션 적용 */
         async function renderCompanyFolderList(section) {
             const requestId = ++currentRequestId;
             const content = document.getElementById('sub-view-content');
 
+            // [핵심] API 요청 전에 화면을 먼저 비움 (이전 화면 잔상 제거)
+            content.innerHTML = '';
+
             try {
-                const res = await fetch(`http://127.0.0.1:5000/api/production/companies`);
+                const res = await fetch(`http://127.0.0.1:5000/api/production/companies?section=${section}`);
                 if (requestId !== currentRequestId) return;
                 if (!res.ok) throw new Error("Server Error");
                 const companies = await res.json();
 
-                // [핵심 수정] html 변수를 빈 문자열로 초기화합니다.
-                let html = '';
-
-                if (state.activeTab === 'management') {
-                    html += `
-            <div class="luxury-input-wrapper">
-                <input type="text" id="new-comp-name" class="luxury-input" placeholder="새 업체명 입력...">
-                <button class="luxury-add-btn" onclick="addCompany()">
-                    <i class="uil uil-plus-circle"></i> 업체 추가
-                </button>
-            </div>`;
-                } else {
-                    // [문구 삭제] 안내 문구를 빈 문자열로 대체하여 제거했습니다.
-                    html += `<div style="margin-bottom:20px;"></div>`;
-                }
-
-                // ... 이하 동일 ...
+                let html = `<div style="margin-bottom:20px;"></div>`;
 
                 if (companies.length === 0) {
-                    html += `<div style="text-align:center; color:#666; margin-top:50px;">등록된 업체가 없습니다.</div>`;
+                    html += `
+            <div style="text-align:center; color:#666; margin-top:80px;">
+                <i class="uil uil-info-circle" style="font-size:3rem; display:block; margin-bottom:15px; opacity:0.3;"></i>
+                등록된 업체가 없습니다.<br>
+                배경 영역을 <strong style="color:var(--point-gold);">우클릭</strong>하여 새 업체를 추가하세요.
+            </div>`;
                 } else {
                     html += `<div class="folder-grid">`;
                     companies.forEach(comp => {
                         const safeName = escapeHtml(comp.name);
                         html += `
-                        <div class="folder-item filter-target" onclick="enterCompany(this)" 
-                             data-name="${safeName}" data-id="${comp.id}" data-type="company" 
-                             data-company-id="${comp.id}" data-section="${section}">
-                            <div class="folder-3d">
-                                <div class="folder-back"></div><div class="paper"></div><div class="folder-front"></div>
-                                <span class="folder-count">${comp.model_count || 0}</span>
-                            </div>
-                            <div class="folder-name">${safeName}</div>
-                        </div>`;
+                <div class="folder-item filter-target" onclick="enterCompany(this)" 
+                     data-name="${safeName}" data-id="${comp.id}" data-type="company" 
+                     data-company-id="${comp.id}" data-section="${section}">
+                    <div class="folder-3d">
+                        <div class="folder-back"></div><div class="paper"></div><div class="folder-front"></div>
+                        <span class="folder-count">${comp.model_count || 0}</span>
+                    </div>
+                    <div class="folder-name">${safeName}</div>
+                </div>`;
                     });
                     html += `</div>`;
                 }
                 content.innerHTML = html;
-                gsap.from(".folder-item", { scale: 0.5, opacity: 0, stagger: 0.05, ease: "back.out(1.5)" });
+
+                if (typeof gsap !== 'undefined') {
+                    gsap.killTweensOf(".folder-item");
+                    gsap.fromTo(".folder-item",
+                        { opacity: 0, scale: 0.5, y: 10 },
+                        { duration: 0.5, opacity: 1, scale: 1, y: 0, stagger: 0.05, ease: "back.out(1.5)", clearProps: "transform" }
+                    );
+                }
             } catch (e) {
                 if (requestId === currentRequestId) {
-                    content.innerHTML = `
-                    <div style="text-align:center; padding:20px; color:#ff6b6b;">
-                        <i class="uil uil-exclamation-triangle" style="font-size:2rem;"></i><br>
-                        데이터를 불러오지 못했습니다.<br>
-                        <button class="luxury-add-btn" style="margin-top:10px;" onclick="renderCompanyFolderList('${section}')">재시도</button>
-                    </div>`;
+                    content.innerHTML = `<div style="text-align:center; padding:50px; color:#ff6b6b;">데이터 로드 실패</div>`;
                 }
             }
         }
-
         window.enterCompany = (el) => {
             const id = el.dataset.id;
             const name = el.dataset.name;
@@ -1353,12 +1615,11 @@
             if (['jpg', 'jpeg', 'png', 'gif'].includes(ext)) return 'uil-image'; // 이미지
             return 'uil-file'; // 기본 파일
         }
-        /* [추가] 일반 파일 업로드 처리 함수 */
+        /* [수정] handleGeneralUpload: 루트 경로(undefined) 예외 처리 */
         window.handleGeneralUpload = async function (input) {
             const file = input.files[0];
             if (!file) return;
 
-            // [제한] 50MB 크기 제한 (50 * 1024 * 1024 bytes)
             const maxSize = 50 * 1024 * 1024;
             if (file.size > maxSize) {
                 alert("파일 크기가 너무 큽니다. 최대 50MB까지 업로드 가능합니다.");
@@ -1366,11 +1627,15 @@
                 return;
             }
 
-            const last = state.currentPath[state.currentPath.length - 1];
+            // [수정] 현재 경로가 없는(루트) 경우 안전하게 처리
+            const last = state.currentPath.length > 0 ? state.currentPath[state.currentPath.length - 1] : null;
+            const folderId = last ? last.folderId : '';
+            const companyId = last ? last.companyId : '';
+
             const fd = new FormData();
             fd.append('file', file);
-            fd.append('folder_id', last.folderId || '');
-            fd.append('company_id', last.companyId);
+            fd.append('folder_id', folderId);
+            fd.append('company_id', companyId);
             fd.append('section', state.activeTab);
 
             try {
@@ -1387,17 +1652,28 @@
             } catch (e) {
                 alert("서버 연결 오류");
             }
+            // 입력창 초기화 (같은 파일 연속 업로드 가능하게)
+            input.value = '';
         };
-        /* [추가] 항목 선택 처리 (단일 클릭) */
-        window.selectItem = function (el) {
-            // 기존 선택된 다른 항목들 해제
-            document.querySelectorAll('.folder-item.selected').forEach(item => {
-                if (item !== el) item.classList.remove('selected');
-            });
-            // 현재 항목 토글
-            el.classList.toggle('selected');
+        window.selectItem = function (el, event) {
+            const id = el.dataset.id;
 
-            // 바탕화면 클릭 이벤트와 충돌 방지
+            if (event && event.ctrlKey) {
+                // Ctrl 키 누른 채 클릭: 다중 선택 토글
+                if (state.selectedIds.has(id)) {
+                    state.selectedIds.delete(id);
+                    el.classList.remove('selected');
+                } else {
+                    state.selectedIds.add(id);
+                    el.classList.add('selected');
+                }
+            } else {
+                // 일반 클릭: 단일 선택
+                document.querySelectorAll('.folder-item.selected').forEach(item => item.classList.remove('selected'));
+                state.selectedIds.clear();
+                state.selectedIds.add(id);
+                el.classList.add('selected');
+            }
             if (event) event.stopPropagation();
         };
 
@@ -1413,22 +1689,18 @@
                 window.location.href = downloadUrl;
             }
         };
-
-        // 바탕화면 클릭 시 선택 해제 처리
-        document.addEventListener('click', (e) => {
-            if (!e.target.closest('.folder-item')) {
-                document.querySelectorAll('.folder-item.selected').forEach(item => item.classList.remove('selected'));
-            }
-        });
-
-        /* [수정 반영] 디렉토리 및 파일 목록 렌더링 함수 */
+        /* [전체 교체] 폴더/모델 목록 렌더링: 누락된 HTML 속성 및 내부 UI 복구 */
         async function renderRecursiveFolderView(data) {
             const { companyId, folderId, section } = data;
             const queryFolder = folderId ? folderId : '';
             const requestId = ++currentRequestId;
             const content = document.getElementById('sub-view-content');
 
+            // [핵심] 데이터 로딩 전 화면 초기화
+            content.innerHTML = '';
+
             try {
+                // API 호출
                 const res = await fetch(`http://127.0.0.1:5000/api/production/directory?company_id=${companyId}&folder_id=${queryFolder}&section=${section}`);
                 if (requestId !== currentRequestId) return;
                 if (!res.ok) throw new Error("Failed to fetch");
@@ -1441,49 +1713,161 @@
                 } else {
                     html += `<div class="folder-grid">`;
 
-                    // 1. 폴더: 한 번 클릭 시 즉시 진입
+                    // 1. 폴더 렌더링 (누락된 속성 및 디자인 복구)
                     result.folders.forEach(folder => {
                         const safeName = escapeHtml(folder.name);
                         html += `
                 <div class="folder-item filter-target" onclick="enterSubFolder(this)" 
-                     data-name="${safeName}" data-id="${folder.id}" data-type="folder" 
-                     data-company-id="${companyId}" data-section="${section}">
-                    <div class="folder-3d"><div class="folder-back"></div><div class="paper"></div><div class="folder-front"></div></div>
+                     draggable="true" 
+                     ondragstart="handleDragStart(event)" 
+                     ondragend="handleDragEnd(event)" 
+                     ondragover="handleDragOver(event)" 
+                     ondragleave="handleDragLeave(event)" 
+                     ondrop="handleDrop(event)"
+                     data-name="${safeName}" 
+                     data-id="${folder.id}" 
+                     data-type="folder" 
+                     data-company-id="${companyId}" 
+                     data-section="${section}">
+                    <div class="folder-3d">
+                        <div class="folder-back"></div>
+                        <div class="paper"></div>
+                        <div class="folder-front"></div>
+                    </div>
                     <div class="folder-name">${safeName}</div>
                 </div>`;
                     });
 
-                    // 2. 모델 및 파일: 클릭 시 선택, 더블 클릭 시 실행
+                    // 2. 모델/파일 렌더링 (누락된 속성 및 디자인 복구)
                     result.models.forEach(model => {
                         const safeName = escapeHtml(model.name);
-                        const itemType = model.type; // [수정] DB에서 받은 타입을 직접 사용
+                        const itemType = model.type;
+                        // 파일 확장자에 맞는 아이콘 가져오기
                         const iconClass = (itemType === 'file') ? getFileIcon(safeName) : 'uil-layer-group';
 
                         html += `
-                <div class="folder-item filter-target" onclick="selectItem(this)" ondblclick="handleItemDblClick(this)"
-                     data-name="${safeName}" data-id="${model.id}" data-type="${itemType}" 
-                     data-company-id="${companyId}" data-section="${section}">
-                    <div class="file-icon-wrapper"><i class="uil ${iconClass} file-type-icon"></i></div>
+                <div class="folder-item filter-target" onclick="selectItem(this, event)" ondblclick="handleItemDblClick(this)"
+                     draggable="true" 
+                     ondragstart="handleDragStart(event)"
+                     ondragend="handleDragEnd(event)"
+                     data-name="${safeName}" 
+                     data-id="${model.id}" 
+                     data-type="${itemType}" 
+                     data-company-id="${companyId}" 
+                     data-section="${section}">
+                    <div class="file-icon-wrapper">
+                        <i class="uil ${iconClass} file-type-icon"></i>
+                    </div>
                     <div class="folder-name">${safeName}</div>
                 </div>`;
                     });
-                    html += `</div>`; // [수정] 위치 고침
+                    html += `</div>`;
                 }
                 content.innerHTML = html;
-                gsap.from(".folder-item", { y: 20, opacity: 0, stagger: 0.05 });
 
+                // 애니메이션 효과 적용
+                if (typeof gsap !== 'undefined') {
+                    gsap.fromTo(".folder-item",
+                        { opacity: 0, y: 20 },
+                        { opacity: 1, y: 0, stagger: 0.05, ease: "power2.out", clearProps: "transform" }
+                    );
+                }
             } catch (e) {
-                console.error("View Render Error:", e);
                 if (requestId === currentRequestId) {
-                    content.innerHTML = `
-                <div style="text-align:center; padding:20px; color:#ff6b6b;">
-                    <i class="uil uil-wifi-slash" style="font-size:2rem;"></i><br>
-                    서버 연결 오류<br>
-                    <button class="luxury-add-btn" style="margin-top:10px;" onclick="navigateTo('folder_view', {companyId:${companyId}, folderId:${folderId || 'null'}, section:'${section}'})">재시도</button>
-                </div>`;
+                    content.innerHTML = `<div style="text-align:center; padding:20px; color:#ff6b6b;">로드 실패</div>`;
                 }
             }
         }
+        /* [신규 추가] Drag & Drop 핸들러 로직 */
+        window.handleDragEnd = function (e) {
+            document.querySelectorAll('.folder-item').forEach(el => {
+                el.classList.remove('dragging');
+                el.style.opacity = '';
+            });
+        };
+
+        window.handleDragStart = function (e) {
+            const item = e.currentTarget;
+            const itemId = item.dataset.id;
+
+            // 만약 선택되지 않은 아이템을 드래그 시작하면, 기존 선택을 다 풀고 얘만 선택
+            if (!state.selectedIds.has(itemId)) {
+                document.querySelectorAll('.folder-item.selected').forEach(i => i.classList.remove('selected'));
+                state.selectedIds.clear();
+                state.selectedIds.add(itemId);
+                item.classList.add('selected');
+            }
+
+            const dragData = {
+                ids: Array.from(state.selectedIds), // 다중 ID 리스트
+                type: item.dataset.type,
+                count: state.selectedIds.size
+            };
+
+            e.dataTransfer.setData("text/plain", JSON.stringify(dragData));
+            e.dataTransfer.effectAllowed = "move";
+
+            // 드래그 중인 원본 아이템들 반투명 처리 (지연 실행)
+            setTimeout(() => {
+                document.querySelectorAll('.folder-item.selected').forEach(i => i.classList.add('dragging'));
+            }, 0);
+        };
+        // 폴더 위로 드래그 중일 때 (Drop 허용)
+        window.handleDragOver = function (e) {
+            e.preventDefault(); // 필수: 브라우저 기본 동작 방지
+            const folder = e.currentTarget;
+            if (folder.dataset.type === 'folder') {
+                folder.classList.add('drag-over'); // 폴더 강조 표시
+                e.dataTransfer.dropEffect = "move";
+            }
+        };
+
+        // 폴더 영역을 벗어날 때
+        window.handleDragLeave = function (e) {
+            e.currentTarget.classList.remove('drag-over');
+        };
+
+        window.handleDrop = async function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const targetFolder = e.currentTarget;
+            targetFolder.classList.remove('drag-over');
+
+            const dataRaw = e.dataTransfer.getData("text/plain");
+            if (!dataRaw) return;
+
+            const dragData = JSON.parse(dataRaw);
+            const targetFolderId = targetFolder.dataset.id;
+
+            if (dragData.type === 'folder') return;
+
+            // [중요] 확인창에서 취소 시, 아무것도 하지 않고 함수 종료 (새로고침 금지)
+            if (!confirm(`${dragData.count}개의 항목을 '${targetFolder.dataset.name}' 폴더로 이동하시겠습니까?`)) {
+                return;
+            }
+
+            try {
+                const res = await fetch(`http://127.0.0.1:5000/api/production/models/transfer`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'move',
+                        model_ids: dragData.ids,
+                        target_folder_id: targetFolderId
+                    })
+                });
+
+                if (res.ok) {
+                    state.selectedIds.clear(); // 성공 시에만 선택 초기화
+                    refreshCurrentView();      // 성공 시에만 목록 갱신
+                } else {
+                    alert("이동 처리 중 오류가 발생했습니다.");
+                }
+            } catch (err) {
+                alert("서버 통신 오류");
+            }
+        };
 
         /* [추가/수정] 클릭 시 모델 뷰 진입 또는 파일 다운로드 분기 */
         window.handleItemClick = function (el) {
@@ -1538,63 +1922,101 @@
             loadFileInfo(modelId, 'BOM'); loadFileInfo(modelId, 'COORDINATE');
         }
 
-
+        /* [전체 교체] 담당자 목록 렌더링: 잔상 제거 */
         async function renderManagerList() {
             const content = document.getElementById('sub-view-content');
+            if (!content) return;
+
+            // [핵심] API 호출 전 컨텐츠 비우기
+            content.innerHTML = '';
+
             try {
                 const res = await fetch(`http://127.0.0.1:5000/api/production/managers`);
+                if (!res.ok) throw new Error("API 응답 오류");
                 const items = await res.json();
 
-                let html = `<div class="luxury-input-wrapper">...</div><div class="folder-grid">`;
-                let lastDept = "";
-
+                const groups = {};
                 items.forEach(item => {
                     const dept = item.department || "기타";
-                    const rank = item.position || "사원";
-                    const safeName = escapeHtml(item.name);
-
-                    // [군집화] 부서가 바뀌면 헤더 추가
-                    if (dept !== lastDept) {
-                        html += `<div class="dept-header"><i class="uil uil-label"></i> ${dept} 부서</div>`;
-                        lastDept = dept;
-                    }
-
-                    // 부서별 색상 동일 로직 적용
-                    let gradient = 'linear-gradient(135deg, #636e72, #2d3436)';
-                    if (dept === '생산') gradient = 'linear-gradient(135deg, #6a89cc, #4a69bd)';
-                    else if (dept === '품질') gradient = 'linear-gradient(135deg, #00e676, #00c853)';
-                    else if (dept === '관리') gradient = 'linear-gradient(135deg, #a29bfe, #6c5ce7)';
-
-                    // 최고 관리자(부장, 차장) 클래스 분기
-                    const isHighRank = (rank === '부장' || rank === '차장');
-                    const borderClass = isHighRank ? 'high-rank-border' : '';
-
-                    html += `
-            <div class="folder-item filter-target" onclick="openManagerInfoModal(${item.id})" data-type="manager">
-                ${isHighRank ? `<div class="rank-badge"><i class="uil uil-star"></i> ${rank}</div>` : ''}
-                <div class="file-icon-wrapper manager-circle-wrapper ${borderClass}" 
-                     style="background: ${gradient}; border-radius: 50%; width: 75px; height: 75px; 
-                            display: flex; align-items: center; justify-content: center; margin-bottom: 12px; 
-                            box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
-                    <i class="uil uil-user" style="font-size: 2.8rem; color: #fff;"></i>
-                </div>
-                <div class="folder-name">${safeName} ${!isHighRank ? `<span style="font-size:0.7rem; color:#888;">${rank}</span>` : ''}</div>
-            </div>`;
+                    if (!groups[dept]) groups[dept] = [];
+                    groups[dept].push(item);
                 });
 
+                let html = `<div class="dept-columns-container" style="display: flex; gap: 20px; align-items: flex-start; padding: 10px 0; width: 100%; overflow-x: auto; overflow-y: hidden;">`;
+                const deptOrder = ["생산", "품질", "기능", "관리"];
+
+                deptOrder.forEach(dept => {
+                    const managers = groups[dept] || [];
+                    html += `
+            <div class="dept-column" style="flex: 1; min-width: 220px; background: rgba(255,255,255,0.03); border-radius: 16px; padding: 15px; border: 1px solid rgba(255,235,167,0.1); box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+                <div class="dept-header" style="width: 100%; margin-bottom: 15px; border-bottom: 2px solid var(--point-gold); padding-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 8px; color: var(--point-gold); font-weight: bold; font-size: 0.95rem;">
+                    <i class="uil uil-label"></i> ${dept} 부서
+                </div>
+                <div class="dept-manager-list" style="display: flex; flex-direction: column; gap: 10px;">`;
+
+                    if (managers.length === 0) {
+                        html += `<div style="text-align:center; color:#555; font-size:0.8rem; padding:20px;">인원 없음</div>`;
+                    } else {
+                        managers.forEach((item, index) => {
+                            const rank = item.position || "사원";
+                            const safeName = escapeHtml(item.name);
+                            const isDeptTop = (index === 0);
+                            let gradient = (dept === '생산') ? 'linear-gradient(135deg, #6a89cc, #4a69bd)' :
+                                (dept === '품질') ? 'linear-gradient(135deg, #00e676, #00c853)' :
+                                    (dept === '기능') ? 'linear-gradient(135deg, #f0932b, #edae49)' :
+                                        (dept === '관리') ? 'linear-gradient(135deg, #a29bfe, #6c5ce7)' : 'linear-gradient(135deg, #636e72, #2d3436)';
+                            const borderStyle = isDeptTop ? 'outline: 2px solid var(--point-gold); outline-offset: 2px;' : '';
+
+                            html += `
+                    <div class="folder-item filter-target" onclick="openManagerModal(${item.id})" 
+                         data-id="${item.id}" data-name="${safeName}" data-type="manager" 
+                         style="width: 100%; display: flex; flex-direction: row; gap: 12px; padding: 10px; background: rgba(255,255,255,0.02); border-radius: 8px; justify-content: flex-start; align-items: center; transition: all 0.2s;">
+                        <div style="position: relative; flex-shrink: 0;">
+                            ${isDeptTop ? `<div class="rank-badge" style="position: absolute; top: -5px; right: -5px; background: var(--point-gold); color: #1a1b21; font-size: 0.55rem; padding: 1px 4px; border-radius: 3px; font-weight: 800; z-index: 10;"><i class="uil uil-star"></i></div>` : ''}
+                            <div class="file-icon-wrapper manager-circle-wrapper" 
+                                 style="background: ${gradient}; border-radius: 50%; width: 40px; height: 40px; 
+                                        display: flex; align-items: center; justify-content: center; margin-bottom: 0; 
+                                        box-shadow: 0 2px 8px rgba(0,0,0,0.3); ${borderStyle}">
+                                <i class="uil uil-user" style="font-size: 1.4rem; color: #fff;"></i>
+                            </div>
+                        </div>
+                        <div style="text-align: left; overflow: hidden; flex: 1;">
+                            <div class="folder-name" style="text-align: left; font-size: 0.9rem; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; color: #fff; text-shadow: none;">${safeName}</div>
+                            <div style="font-size: 0.7rem; color: #aaa;">${rank}</div>
+                        </div>
+                    </div>`;
+                        });
+                    }
+                    html += `</div></div>`;
+                });
                 html += `</div>`;
                 content.innerHTML = html;
-                gsap.from(".folder-item, .dept-header", { opacity: 0, y: 10, stagger: 0.03 });
-            } catch (e) { console.error(e); }
+
+                if (typeof gsap !== 'undefined') {
+                    gsap.fromTo(".dept-column",
+                        { opacity: 0, y: 15 },
+                        { duration: 0.5, opacity: 1, y: 0, stagger: 0.1, ease: "power2.out", clearProps: "transform" }
+                    );
+                    gsap.fromTo(".dept-column .folder-item",
+                        { opacity: 0 },
+                        { duration: 0.4, opacity: 1, delay: 0.1, stagger: 0.05, clearProps: "transform" }
+                    );
+                }
+            } catch (e) {
+                content.innerHTML = `<div style="text-align:center; padding:50px; color:#ff4444;">데이터 로드 오류</div>`;
+            }
         }
 
-        // 2. 부서별 역할 옵션 동적 업데이트
+        /* [전체 교체] 부서별 역할 데이터 정의 */
         function updateRoleOptions(selectedRoles = "") {
             const dept = document.getElementById('mgr-dept').value;
             const container = document.getElementById('mgr-role-container');
+
+            // [순서 수정] 생산 -> 품질 -> 기능 -> 관리
             const roleData = {
                 '생산': ['SMT', 'DIP'],
                 '품질': ['육안검사', '비전검사', '기능검사', '불량수리'],
+                '기능': ['IMG/MAC', '기능검사', '출하검사'],
                 '관리': ['생산관리', '품질관리', '경영관리']
             };
 
@@ -1602,45 +2024,172 @@
 
             if (roleData[dept]) {
                 container.innerHTML = roleData[dept].map(role => `
-                <label class="check-item">
-                    <input type="checkbox" name="mgr-role" value="${role}" ${selectedArray.includes(role) ? 'checked' : ''}> ${role}
-                </label>
-            `).join('');
+            <label class="check-item">
+                <input type="checkbox" name="mgr-role" value="${role}" ${selectedArray.includes(role) ? 'checked' : ''}> ${role}
+            </label>
+        `).join('');
             } else {
                 container.innerHTML = '<span style="color:#666; font-size:0.8rem;">부서를 먼저 선택하세요.</span>';
             }
         }
 
-        /* [수정] openManagerInfoModal 함수 (에러 해결 및 이름 로드) */
-        async function openManagerInfoModal(id) {
-            try {
-                const res = await fetch(`http://127.0.0.1:5000/api/production/managers`);
-                const managers = await res.json();
-                const mgr = managers.find(m => m.id == id); // == 사용으로 형변환 허용
-                if (!mgr) return;
+        /* [전체 교체] 담당자 모달 열기 (추가/수정 통합) */
+        async function openManagerModal(id = null) {
+            const modal = document.getElementById('manager-info-modal');
+            const title = modal.querySelector('.modal-header h3');
+            const nameInput = document.getElementById('mgr-name');
+            const idInput = document.getElementById('mgr-edit-id');
 
-                document.getElementById('mgr-edit-id').value = id;
+            // 초기화
+            idInput.value = id || "";
+            nameInput.value = "";
+            document.getElementById('mgr-position').value = "";
+            document.getElementById('mgr-dept').value = "";
+            document.getElementById('mgr-contact').value = "";
+            document.getElementById('mgr-email').value = "";
+            updateRoleOptions(""); // 역할 선택박스 초기화
 
-                // [수정 포인트] 에러가 났던 modal-mgr-name-display 대신 mgr-name input 사용
-                const nameInput = document.getElementById('mgr-name');
-                if (nameInput) nameInput.value = mgr.name;
+            if (id) {
+                // [수정 모드] 데이터 로드
+                title.textContent = "담당자 정보 수정";
+                try {
+                    const res = await fetch(`http://127.0.0.1:5000/api/production/managers`);
+                    const managers = await res.json();
+                    const mgr = managers.find(m => m.id == id);
+                    if (!mgr) return;
 
-                document.getElementById('mgr-position').value = mgr.position || "";
-                document.getElementById('mgr-dept').value = mgr.department || "";
-                document.getElementById('mgr-contact').value = mgr.contact || "";
-                document.getElementById('mgr-email').value = mgr.email || "";
+                    nameInput.value = mgr.name;
+                    document.getElementById('mgr-position').value = mgr.position || "";
+                    document.getElementById('mgr-dept').value = mgr.department || "";
+                    document.getElementById('mgr-contact').value = mgr.contact || "";
+                    document.getElementById('mgr-email').value = mgr.email || "";
+                    updateRoleOptions(mgr.roles || "");
+                } catch (e) { console.error("Load Error:", e); }
+            } else {
+                // [추가 모드]
+                title.textContent = "새 담당자 등록";
+            }
 
-                updateRoleOptions(mgr.roles || "");
-                document.getElementById('manager-info-modal').classList.add('visible');
-            } catch (e) { console.error("Modal Open Error:", e); }
+            modal.classList.add('visible');
+        }
+        let isMarqueeDrawing = false;
+        let marqueeStart = { x: 0, y: 0 };
+        let marqueeEl = null;
+
+        document.addEventListener('mousedown', function (e) {
+            if (e.button !== 0 || e.target.closest('.folder-item') || e.target.closest('.modal-window')) return;
+            if (!e.target.closest('#view-container')) return;
+
+            isMarqueeDrawing = true;
+            marqueeStart = { x: e.pageX, y: e.pageY };
+
+            // [윈도우 방식] 새로운 드래그 시작 시 기존 선택을 모두 해제 (Persistence의 시작)
+            state.selectedIds.clear();
+            document.querySelectorAll('.folder-item.selected').forEach(el => el.classList.remove('selected'));
+
+            marqueeEl = document.createElement('div');
+            marqueeEl.className = 'selection-marquee';
+            document.body.appendChild(marqueeEl);
+        });
+
+        // [Persisted Logic] 마우스가 움직일 때만 실시간으로 class를 붙임
+        document.addEventListener('mousemove', function (e) {
+            if (!isMarqueeDrawing || !marqueeEl) return;
+            updateMarqueeBox(e.pageX, e.pageY);
+
+            const boxRect = marqueeEl.getBoundingClientRect();
+            const items = document.querySelectorAll('.folder-item');
+
+            items.forEach(item => {
+                const itemRect = item.getBoundingClientRect();
+                const id = item.dataset.id;
+
+                const isIntersecting = !(
+                    boxRect.right < itemRect.left ||
+                    boxRect.left > itemRect.right ||
+                    boxRect.bottom < itemRect.top ||
+                    boxRect.top > itemRect.bottom
+                );
+
+                if (isIntersecting) {
+                    state.selectedIds.add(id);
+                    item.classList.add('selected'); // 하이라이트 적용
+                } else {
+                    state.selectedIds.delete(id);
+                    item.classList.remove('selected'); // 범위 벗어나면 제거
+                }
+            });
+        });
+
+        // 마우스 이동
+        document.addEventListener('mousemove', function (e) {
+            if (!isMarqueeDrawing || !marqueeEl) return;
+            updateMarqueeBox(e.pageX, e.pageY);
+            checkMarqueeCollision(); // 실시간 선택 반영
+        });
+
+        // 마우스 업
+        document.addEventListener('mouseup', function (e) {
+            if (isMarqueeDrawing) {
+                isMarqueeDrawing = false;
+                if (marqueeEl) {
+                    marqueeEl.remove();
+                    marqueeEl = null;
+                }
+            }
+        });
+
+        function updateMarqueeBox(currentX, currentY) {
+            const width = Math.abs(currentX - marqueeStart.x);
+            const height = Math.abs(currentY - marqueeStart.y);
+            const left = Math.min(currentX, marqueeStart.x);
+            const top = Math.min(currentY, marqueeStart.y);
+
+            marqueeEl.style.width = `${width}px`;
+            marqueeEl.style.height = `${height}px`;
+            marqueeEl.style.left = `${left}px`;
+            marqueeEl.style.top = `${top}px`;
+        }
+
+        // 충돌 감지 및 선택 처리
+        function checkMarqueeCollision() {
+            if (!marqueeEl) return;
+            const boxRect = marqueeEl.getBoundingClientRect();
+            const items = document.querySelectorAll('.folder-item');
+
+            items.forEach(item => {
+                const itemRect = item.getBoundingClientRect();
+                const id = item.dataset.id;
+
+                // 교차 여부 확인
+                const isIntersecting = !(
+                    boxRect.right < itemRect.left ||
+                    boxRect.left > itemRect.right ||
+                    boxRect.bottom < itemRect.top ||
+                    boxRect.top > itemRect.bottom
+                );
+
+                if (isIntersecting) {
+                    if (!state.selectedIds.has(id)) {
+                        state.selectedIds.add(id);
+                        item.classList.add('selected');
+                    }
+                } else {
+                    // 박스 밖으로 나가면 선택 해제 (윈도우 탐색기 방식)
+                    if (state.selectedIds.has(id)) {
+                        state.selectedIds.delete(id);
+                        item.classList.remove('selected');
+                    }
+                }
+            });
         }
 
         function closeMgrModal() { document.getElementById('manager-info-modal').classList.remove('visible'); }
 
-        // 4. 데이터 저장 (PUT)
+        /* [전체 교체] 담당자 정보 저장 (추가/수정 통합) */
         async function saveManagerInfo() {
             const id = document.getElementById('mgr-edit-id').value;
-            const name = document.getElementById('mgr-name').value; // 이름값 가져오기
+            const name = document.getElementById('mgr-name').value.trim();
             const position = document.getElementById('mgr-position').value;
             const department = document.getElementById('mgr-dept').value;
             const contact = document.getElementById('mgr-contact').value;
@@ -1649,19 +2198,31 @@
             const roleElements = document.querySelectorAll('input[name="mgr-role"]:checked');
             const roles = Array.from(roleElements).map(el => el.value).join(', ');
 
+            if (!name) {
+                alert("성명을 입력해 주세요.");
+                return;
+            }
+
+            // ID 유무에 따라 POST(추가) 또는 PUT(수정) 결정
+            const method = id ? 'PUT' : 'POST';
+            const url = id
+                ? `http://127.0.0.1:5000/api/production/managers/${id}`
+                : `http://127.0.0.1:5000/api/production/managers`;
+
             try {
-                const res = await fetch(`http://127.0.0.1:5000/api/production/managers/${id}`, {
-                    method: 'PUT',
+                const res = await fetch(url, {
+                    method: method,
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ name, position, department, roles, contact, email })
                 });
 
                 if (res.ok) {
-                    alert("정보가 수정되었습니다.");
+                    alert(id ? "정보가 수정되었습니다." : "새 담당자가 등록되었습니다.");
                     closeMgrModal();
-                    renderManagerList(); // 목록 새로고침
+                    renderManagerList();
                 } else {
-                    alert("저장 실패");
+                    const err = await res.json();
+                    alert(`실패: ${err.error || '알 수 없는 오류'}`);
                 }
             } catch (e) { alert("서버 통신 오류"); }
         }
@@ -1675,17 +2236,22 @@
             } catch (e) { alert('추가 실패'); }
         }
 
-        async function addManager() {
-            const v = document.getElementById('new-mgr-name').value;
-            if (!v) return;
-            await fetch(`http://127.0.0.1:5000/api/production/managers`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: v }) });
-            renderManagerList();
-        }
-        async function deleteManager(id) {
-            if (confirm('삭제?')) {
-                await fetch(`http://127.0.0.1:5000/api/production/managers/${id}`, { method: 'DELETE' });
-                renderManagerList();
-            }
+        /* [전체 교체] 중복 정의 금지 - 매개변수 name을 받는 버전 하나만 사용 */
+        async function addManager(name) {
+            if (!name) return;
+            try {
+                const res = await fetch(`http://127.0.0.1:5000/api/production/managers`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: name })
+                });
+                if (res.ok) {
+                    renderManagerList();
+                } else {
+                    const err = await res.json();
+                    alert(`추가 실패: ${err.error || '알 수 없는 오류'}`);
+                }
+            } catch (e) { alert("서버 통신 오류"); }
         }
 
         async function handleFileSelect(input, typeCode, modelId) {
@@ -1732,70 +2298,77 @@
             if (e.target.id === 'mgr-contact') formatContact(e.target);
         });
 
-        // ================= Context Menu Logic =================
+        /* [전체 교체] 우클릭 이벤트 리스너: 감지 범위를 view-container로 확장 */
         document.addEventListener('contextmenu', (e) => {
             e.preventDefault();
+
+            // 1. 개별 아이템(폴더, 모델, 담당자 등) 위에서 우클릭했는지 확인
             const folderItem = e.target.closest('.folder-item');
-            const bgArea = e.target.closest('.view-section');
+
+            // 2. [수정] 감지 범위를 .view-section에서 #view-container로 확장
+            const viewArea = e.target.closest('#view-container');
 
             if (folderItem) {
+                // 아이템 우클릭 모드
                 const { id, name, type, companyId, section } = folderItem.dataset;
                 targetItemData = { id, name, type, companyId, section };
                 showContextMenu(e.pageX, e.pageY, 'item');
-            } else if (bgArea) {
+            } else if (viewArea) {
+                // [수정] 배경 우클릭 모드: view-container 내부 어디서든 발동
                 targetItemData = null;
-                if (state.currentPath.length > 0) showContextMenu(e.pageX, e.pageY, 'bg');
+                // 메뉴 표시 여부는 showContextMenu 내부의 html 생성 로직에 따라 결정됨
+                showContextMenu(e.pageX, e.pageY, 'bg');
             } else {
+                // 영역 밖 클릭 시 메뉴 숨김
                 if (contextMenu) contextMenu.style.display = 'none';
             }
         });
 
         document.addEventListener('click', () => { if (contextMenu) contextMenu.style.display = 'none'; });
-
+        /* [전체 교체] 컨텍스트 메뉴: 자유 탭 루트 지원 */
         function showContextMenu(x, y, mode) {
             let html = '';
-            const lastPath = state.currentPath[state.currentPath.length - 1];
+            const lastPath = state.currentPath.length > 0 ? state.currentPath[state.currentPath.length - 1] : null;
+            const isFreeTabRoot = state.activeTab !== 'management' && state.currentPath.length === 0;
 
             if (mode === 'item') {
-                const isModel = targetItemData.type === 'model';
                 const isManager = targetItemData.type === 'manager';
-                // 업체, 폴더, 모델인 경우에만 이름 변경 메뉴 표시
-                const canRename = ['company', 'folder', 'model'].includes(targetItemData.type);
+                const isModel = targetItemData.type === 'model';
+                const canRename = ['company', 'folder', 'model', 'file'].includes(targetItemData.type); // file 추가
                 const openLabel = isManager ? '정보 수정' : '열기';
 
                 html = `<div class="ctx-item" onclick="handleCtxOpen()"><i class="uil uil-pen"></i> ${openLabel}</div>`;
+                if (canRename) html += `<div class="ctx-item" onclick="handleCtxRename()"><i class="uil uil-edit"></i> 이름 변경</div>`;
 
-                // [수정] 이름 변경 메뉴 추가
-                if (canRename) {
-                    html += `<div class="ctx-item" onclick="handleCtxRename()"><i class="uil uil-edit"></i> 이름 변경</div>`;
+                if (isModel || targetItemData.type === 'file') {
+                    html += `<div class="ctx-item" onclick="handleCtxCopy()"><i class="uil uil-copy"></i> 복사</div>
+                     <div class="ctx-item" onclick="handleCtxCut()"><i class="uil uil-scissors-line"></i> 잘라내기</div>`;
                 }
-
-                if (isModel) {
-                    html += `
-                <div class="ctx-item" onclick="handleCtxCopy()"><i class="uil uil-copy"></i> 복사</div>
-                <div class="ctx-item" onclick="handleCtxCut()"><i class="uil uil-scissors-line"></i> 잘라내기</div>`;
-                }
-
-                html += `<div class="ctx-divider"></div>
-                <div class="ctx-item" style="color:#ff4444;" onclick="handleCtxDelete()"><i class="uil uil-trash-alt"></i> 삭제</div>`;
+                html += `<div class="ctx-divider"></div><div class="ctx-item" style="color:#ff4444;" onclick="handleCtxDelete()"><i class="uil uil-trash-alt"></i> 삭제</div>`;
 
             } else if (mode === 'bg') {
-                if (lastPath && lastPath.companyId) {
+                // 1. 통합 관리 탭의 업체 목록 화면
+                if (state.activeTab === 'management' && lastPath && lastPath.id === 'company_manager') {
+                    html = `<div class="ctx-item" onclick="handleCtxAdd('company')"><i class="uil uil-building"></i> 새 업체 추가</div>`;
+                }
+                // 2. 통합 관리 - 담당자 관리 화면
+                else if (state.activeTab === 'management' && lastPath && lastPath.id === 'manager_manager') {
+                    html = `<div class="ctx-item" onclick="handleCtxAdd('manager')"><i class="uil uil-user-plus"></i> 새 담당자 추가</div>`;
+                }
+                // 3. [수정] 일반 폴더 내부 또는 자유 탭의 루트 화면 (업체 ID 없어도 됨)
+                else if ((lastPath && lastPath.folderId !== undefined) || isFreeTabRoot) {
                     html = `
-            <div class="ctx-item" onclick="handleCtxAdd('folder')"><i class="uil uil-folder-plus"></i> 새 폴더</div>
-            <div class="ctx-item" onclick="handleCtxAdd('model')"><i class="uil uil-file-plus-alt"></i> 새 모델</div>
-            <div class="ctx-item" onclick="document.getElementById('general-upload-input').click()">
-                <i class="uil uil-upload"></i> 파일 업로드 (MAX 50MB)
-            </div>
-            <input type="file" id="general-upload-input" style="display:none" onchange="handleGeneralUpload(this)">`;
+                <div class="ctx-item" onclick="handleCtxAdd('folder')"><i class="uil uil-folder-plus"></i> 새 폴더 추가</div>
+                <div class="ctx-item" onclick="handleCtxAdd('model')"><i class="uil uil-file-plus-alt"></i> 새 모델/파일 추가</div>
+                <div class="ctx-item" onclick="document.getElementById('general-upload-input').click()">
+                    <i class="uil uil-upload"></i> 파일 업로드 (MAX 50MB)
+                </div>
+                <input type="file" id="general-upload-input" style="display:none" onchange="handleGeneralUpload(this)">`;
 
                     if (state.clipboard.id) {
                         html += `<div class="ctx-divider"></div>
                          <div class="ctx-item" onclick="handleCtxPaste()"><i class="uil uil-clipboard-notes"></i> 붙여넣기 (${state.clipboard.name})</div>`;
                     }
-                }
-                else if (state.activeTab === 'management' && lastPath.id === 'company_manager') {
-                    html = `<div class="ctx-item" onclick="handleCtxAdd('company')"><i class="uil uil-building"></i> 새 업체</div>`;
                 }
             }
 
@@ -1804,16 +2377,77 @@
                 contextMenu.style.display = 'block';
                 contextMenu.style.left = `${x}px`;
                 contextMenu.style.top = `${y}px`;
+            } else if (contextMenu) {
+                contextMenu.style.display = 'none';
             }
         }
 
+        window.handleCtxAdd = async function (addType) {
+            if (addType === 'manager') {
+                openManagerModal();
+                return;
+            }
+
+            const labelMap = { 'folder': '폴더', 'model': '모델', 'company': '업체' };
+            const label = labelMap[addType] || '항목';
+            const name = prompt(`새 ${label} 이름을 입력하세요:`);
+            if (!name) return;
+
+            // 현재 경로 확인
+            const last = state.currentPath.length > 0 ? state.currentPath[state.currentPath.length - 1] : null;
+
+            // [핵심 수정] 현재 경로에 지정된 섹션이 있다면 그것을 사용 ('common' 등), 없으면 탭 이름 사용
+            const currentSection = (last && last.section) ? last.section : state.activeTab;
+
+            const companyId = last ? last.companyId : null;
+            const folderId = last ? last.folderId : null;
+
+            let url = '';
+            let body = { name: name, section: currentSection }; // 수정된 섹션 사용
+
+            if (addType === 'company') {
+                url = `http://127.0.0.1:5000/api/production/companies`;
+            } else if (addType === 'folder') {
+                url = `http://127.0.0.1:5000/api/production/folders`;
+                body.company_id = companyId;
+                body.parent_folder_id = folderId;
+            } else if (addType === 'model') {
+                url = `http://127.0.0.1:5000/api/production/models`;
+                body.company_id = companyId;
+                body.folder_id = folderId;
+            }
+
+            try {
+                const res = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+
+                if (res.ok) {
+                    // 성공 시 새로고침
+                    if (addType === 'company') {
+                        renderCompanyFolderList(currentSection);
+                    } else {
+                        refreshCurrentView();
+                    }
+                } else {
+                    const err = await res.json();
+                    alert(`생성 실패: ${err.error || '알 수 없는 오류'}`);
+                }
+            } catch (e) {
+                alert('서버와 통신 중 오류가 발생했습니다.');
+            }
+        };
+
+        /* [전체 교체] 컨텍스트 메뉴에서 열기/수정 액션 실행 */
         window.handleCtxOpen = function () {
             if (!targetItemData) return;
             const sec = targetItemData.section || 'production';
 
             if (targetItemData.type === 'manager') {
-                // [추가] 담당자 타입인 경우 정보 수정 모달을 엽니다.
-                openManagerInfoModal(targetItemData.id);
+                // 기존 openManagerInfoModal 대신 통합된 openManagerModal 호출
+                openManagerModal(targetItemData.id);
             } else if (targetItemData.type === 'company') {
                 navigateTo('folder_view', { companyId: targetItemData.id, folderId: null, name: targetItemData.name, section: sec });
             } else if (targetItemData.type === 'folder') {
@@ -1841,6 +2475,34 @@
             } catch (e) { alert('오류 발생'); }
         };
 
+        /* [수정] refreshCurrentView: 루트 경로에서도 새로고침 동작하도록 수정 */
+        function refreshCurrentView() {
+            const lastPath = state.currentPath.length > 0 ? state.currentPath[state.currentPath.length - 1] : null;
+
+            if (lastPath) {
+                // 기존: 하위 폴더나 특정 화면에 들어가 있는 경우
+                if (lastPath.id === 'company_manager') {
+                    renderCompanyFolderList(lastPath.section);
+                }
+                else if (lastPath.id === 'manager_manager') {
+                    renderManagerList();
+                }
+                else {
+                    renderRecursiveFolderView(lastPath);
+                }
+            } else {
+                // [추가] 경로가 없는 루트 화면인 경우 (생산/검사/기능 탭의 최상위)
+                if (state.activeTab !== 'management') {
+                    // 현재 탭의 루트 폴더 다시 렌더링
+                    renderRecursiveFolderView({ section: state.activeTab, folderId: null, companyId: null });
+                } else {
+                    // 통합 관리 탭 루트는 대시보드이므로 필요시 초기화 (일반적으로는 불필요)
+                    // renderRootView(); 
+                }
+            }
+        }
+
+        /* [수정] handleCtxDelete: 삭제 완료 알림 추가 및 새로고침 보장 */
         window.handleCtxDelete = async function () {
             if (!targetItemData) return;
             if (!confirm(`'${targetItemData.name}'을(를) 삭제하시겠습니까?`)) return;
@@ -1854,45 +2516,18 @@
                 const res = await fetch(`http://127.0.0.1:5000/api/production/${endpoint}/${targetItemData.id}`, { method: 'DELETE' });
 
                 if (res.ok) {
-                    // [추가] 삭제된 항목이 클립보드에 있다면 클립보드 초기화
+                    // 클립보드 정리
                     if (state.clipboard.id === targetItemData.id) {
                         state.clipboard = { action: null, type: null, id: null, name: null };
-                        console.log("클립보드에 있던 항목이 삭제되어 클립보드가 초기화되었습니다.");
                     }
-                    refreshCurrentView();
+                    alert('삭제되었습니다.'); // [추가] 삭제 완료 알림
+                    refreshCurrentView();     // [확인] 위에서 수정한 함수가 호출됨
                 } else {
                     alert('삭제 실패');
                 }
             } catch (e) { alert('오류 발생'); }
         };
 
-        window.handleCtxAdd = async function (addType) {
-            const name = prompt(`새 ${addType === 'folder' ? '폴더' : '모델'} 이름:`);
-            if (!name) return;
-            const last = state.currentPath[state.currentPath.length - 1];
-
-            // 현재 활성화된 탭 정보를 섹션으로 사용합니다.
-            const currentSection = state.activeTab;
-
-            let url = addType === 'folder' ? `http://127.0.0.1:5000/api/production/folders` : `http://127.0.0.1:5000/api/production/models`;
-            let body = {
-                name: name,
-                company_id: last.companyId,
-                section: currentSection // 탭별 커스터마이징을 위해 현재 섹션 전송
-            };
-
-            if (addType === 'folder') body.parent_folder_id = last.folderId;
-            else body.folder_id = last.folderId;
-
-            try {
-                await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(body)
-                });
-                renderRecursiveFolderView(last); // 화면 갱신
-            } catch (e) { alert('생성 오류'); }
-        };
         // [추가] 복사/잘라내기/붙여넣기 로직
         window.handleCtxCopy = function () {
             state.clipboard = { action: 'copy', type: 'model', id: targetItemData.id, name: targetItemData.name };
@@ -1948,25 +2583,7 @@
             }
         };
 
-        function refreshCurrentView() {
-            // 현재 경로의 마지막 정보(지금 보고 있는 화면 정보)를 가져옴
-            const lastPath = state.currentPath[state.currentPath.length - 1];
 
-            if (!lastPath) return; // 경로가 없으면(홈 화면 등) 아무것도 안 함
-
-            // 각 상황에 맞춰서 '이동'이 아닌 '그리기' 함수만 직접 호출
-            if (lastPath.id === 'company_manager') {
-                renderCompanyFolderList(lastPath.section);
-            }
-            else if (lastPath.id === 'manager_manager') {
-                renderManagerList();
-            }
-            else {
-                // [핵심 수정] navigateTo('folder_view', ...) 대신 렌더링 함수 직접 호출
-                // 이렇게 하면 state.currentPath에 경로가 쌓이지 않고 화면만 갱신됩니다.
-                renderRecursiveFolderView(lastPath);
-            }
-        }
 
         // [수정] 탭 전체 대상 전역 검색 기능
         let searchTimer;
@@ -2069,6 +2686,7 @@
                             <option value="">선택</option>
                             <option value="생산">생산</option>
                             <option value="품질">품질</option>
+                            <option value="기능">기능</option>
                             <option value="관리">관리</option>
                         </select>
                     </div>
@@ -2089,13 +2707,16 @@
                     <label>이메일</label>
                     <input type="email" id="mgr-email" class="luxury-input" placeholder="example@email.com">
                 </div>
-            </div>
-            <div class="modal-footer center-footer">
-                <button class="action-btn cancel" onclick="closeMgrModal()">취소</button>
-                <button class="action-btn save" onclick="saveManagerInfo()">저장하기</button>
+                <div class="modal-footer center-footer">
+                    <button class="action-btn cancel" onclick="closeMgrModal()">
+                        <i class="uil uil-times"></i> 취소
+                    </button>
+                    <button class="action-btn save" onclick="saveManagerInfo()">
+                        <i class="uil uil-check"></i> 저장하기
+                    </button>
+                </div>
             </div>
         </div>
-    </div>
 </body>
 
 </html>

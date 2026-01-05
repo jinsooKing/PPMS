@@ -3,6 +3,7 @@ from models import db, ProductionSchedule, Manager, Company, ProductModel, Model
 import os
 from werkzeug.utils import secure_filename
 from flask import current_app
+import re
 
 bp = Blueprint('production', __name__, url_prefix='/api/production')
 
@@ -13,6 +14,10 @@ if not os.path.exists(UPLOAD_FOLDER):
 # ==============================================================================
 # [1] 생산 일정 (Schedule) 관리 API (기존 기능 복구)
 # ==============================================================================
+
+def normalize_name(name):
+    if not name: return ""
+    return re.sub(r'[^a-zA-Z0-9가-힣]', '', name).upper()
 
 @bp.route('/schedules', methods=['GET'])
 def get_schedules():
@@ -30,6 +35,7 @@ def get_schedules():
         return jsonify([s.to_dict() for s in schedules_from_db])
     except Exception as e: return jsonify({"error": str(e)}), 500
 
+# [전체 교체] models.py 변경 사항(LOT -> Batch/Total)을 반영한 저장 로직
 @bp.route('/schedules', methods=['POST'])
 def save_schedules():
     try:
@@ -37,7 +43,9 @@ def save_schedules():
         week_info = data['weekInfo']
         schedules = data['schedules']
 
-        # 해당 주차의 기존 데이터 삭제 (덮어쓰기)
+        # 1. 해당 주차의 기존 데이터 삭제 (덮어쓰기 방식)
+        # 주의: 이렇게 하면 기존의 Notes(비고)가 삭제될 수 있으므로, 
+        # 실제 운영 시에는 기존 데이터를 조회하여 Notes를 백업하거나 Update 방식을 권장합니다.
         ProductionSchedule.query.filter_by(
             prod_year=week_info['year'],
             prod_month=week_info['month'],
@@ -45,6 +53,28 @@ def save_schedules():
         ).delete()
 
         for s in schedules:
+            # [핵심 수정] 프론트엔드의 문자열 LOT("100/200" 또는 "100")을 정수형 Batch/Total로 변환
+            lot_str = str(s.get('lot', '')).strip()
+            batch_qty = 0
+            total_qty = 0
+            
+            if '/' in lot_str:
+                parts = lot_str.split('/')
+                try:
+                    batch_qty = int(parts[0])
+                    # 뒤에 숫자가 있을 때만 파싱
+                    if len(parts) > 1 and parts[1].strip():
+                        total_qty = int(parts[1])
+                except ValueError:
+                    pass # 숫자가 아닌 경우 0으로 처리
+            elif lot_str:
+                try:
+                    # "/"가 없으면 입력값을 Batch로, Total은 동일하게(또는 0) 처리
+                    batch_qty = int(lot_str)
+                    total_qty = batch_qty 
+                except ValueError:
+                    pass
+
             new_schedule = ProductionSchedule(
                 prod_year=week_info['year'],
                 prod_month=week_info['month'],
@@ -55,12 +85,13 @@ def save_schedules():
                 order_year=s.get('orderYear'),
                 order_month=s.get('orderMonth'),
                 tb=s.get('tb'),
-                lot=s.get('lot'),
+                # [수정] lot 컬럼 제거 -> batch_quantity, total_quantity 매핑
+                batch_quantity=batch_qty,
+                total_quantity=total_qty,
                 manager=s.get('manager'),
                 start_date=s.get('startDate'),
                 end_date=s.get('endDate'),
-                actual_prod=s.get('actualProd', 0), # 실생산
-                # 노트 등 추가 필드 필요 시 모델에 맞춰 추가
+                actual_prod=s.get('actualProd', 0)
             )
             db.session.add(new_schedule)
         
@@ -68,6 +99,8 @@ def save_schedules():
         return jsonify({"message": "저장되었습니다."}), 201
     except Exception as e: 
         db.session.rollback()
+        # 디버깅을 위해 에러 로그 출력
+        print(f"Error saving schedules: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
 @bp.route('/schedules/<int:id>', methods=['PUT'])
@@ -105,54 +138,7 @@ def update_schedule_note(id):
 # [2] 통합 디렉토리(폴더) 관리 API (공정 지도용)
 # ==============================================================================
 
-@bp.route('/directory', methods=['GET'])
-def get_directory_contents():
-    try:
-        company_id = request.args.get('company_id')
-        folder_id = request.args.get('folder_id')
-        section = request.args.get('section', 'production')
-        
-        if not company_id: return jsonify({"error": "Company ID required"}), 400
-        if folder_id in ['null', 'undefined', '']: folder_id = None
-        
-        # 폴더 필터링
-        folders = ModelFolder.query.filter_by(
-            company_id=company_id, 
-            parent_folder_id=folder_id,
-            section=section 
-        ).all()
-        
-        # [수정] 모델(파일)도 요청된 섹션에 해당하는 것만 가져오도록 필터링 추가
-        models = ProductModel.query.filter_by(
-            company_id=company_id, 
-            folder_id=folder_id,
-            section=section
-        ).all()
 
-        return jsonify({
-            "folders": [{"id": f.id, "name": f.name, "type": "folder"} for f in folders],
-            "models": [m.to_dict() for m in models] # [수정] 모든 정보를 dict로 반환
-            })
-    except Exception as e: return jsonify({"error": str(e)}), 500
-
-@bp.route('/folders', methods=['POST'])
-def create_folder():
-    try:
-        data = request.json
-        pid = data.get('parent_folder_id')
-        section = data.get('section', 'production') # 어떤 탭에서 생성했는지 저장
-        if pid in ['null', '', None]: pid = None
-        
-        # [수정] 생성 시 section 정보를 포함하여 저장합니다.
-        db.session.add(ModelFolder(
-            name=data['name'], 
-            company_id=data['company_id'], 
-            parent_folder_id=pid,
-            section=section
-        ))
-        db.session.commit()
-        return jsonify({"message": "Created"}), 201
-    except Exception as e: return jsonify({"error": str(e)}), 500
 
 @bp.route('/folders/<int:id>', methods=['PUT', 'DELETE'])
 def manage_folder(id):
@@ -175,42 +161,57 @@ def transfer_model():
     try:
         data = request.json
         action = data.get('action') # 'copy' 또는 'move'
-        model_id = data.get('model_id')
         target_folder_id = data.get('target_folder_id')
         
-        if target_folder_id in ['null', '', None]: target_folder_id = None
-        
-        source_model = db.session.get(ProductModel, model_id)
-        if not source_model: return jsonify({"error": "Model not found"}), 404
+        # 1. 단일 ID와 리스트 형태 모두 호환되도록 처리
+        model_ids = data.get('model_ids', [])
+        if not model_ids and data.get('model_id'):
+            model_ids = [data.get('model_id')]
+            
+        if not model_ids:
+            return jsonify({"error": "선택된 항목이 없습니다."}), 400
+
+        if target_folder_id in ['null', '', None, 'root']: 
+            target_folder_id = None
 
         if action == 'move':
-            # 잘라내기/이동: 폴더 ID만 변경
-            source_model.folder_id = target_folder_id
+            # [이동/잘라내기] 원본을 지우는 게 아니라 folder_id만 한꺼번에 변경합니다.
+            ProductModel.query.filter(ProductModel.id.in_(model_ids)).update(
+                {ProductModel.folder_id: target_folder_id}, 
+                synchronize_session=False
+            )
             db.session.commit()
-            return jsonify({"message": "Moved successfully"})
+            return jsonify({"message": f"{len(model_ids)}개 항목 이동 완료"})
 
         elif action == 'copy':
-            # 복사: 새로운 모델 객체 생성 및 데이터 복제
-            new_model = ProductModel(
-                name=f"{source_model.name}_복사본",
-                company_id=source_model.company_id,
-                folder_id=target_folder_id
-            )
-            db.session.add(new_model)
-            db.session.flush() # ID 생성을 위해 flush
-            
-            # 기존 모델의 데이터(BOM/좌표)도 함께 복사
-            original_data = ModelData.query.filter_by(model_id=model_id).all()
-            for d in original_data:
-                db.session.add(ModelData(
-                    model_id=new_model.id,
-                    data_type=d.data_type,
-                    content=d.content,
-                    file_name=d.file_name
-                ))
+            # [복사] 원본은 두고 새로운 데이터를 생성합니다.
+            for mid in model_ids:
+                source = db.session.get(ProductModel, mid)
+                if not source: continue
+                
+                # 모델 복제
+                new_model = ProductModel(
+                    name=f"{source.name}_복사본",
+                    company_id=source.company_id,
+                    folder_id=target_folder_id,
+                    section=source.section,
+                    type=source.type
+                )
+                db.session.add(new_model)
+                db.session.flush() # 신규 ID 할당을 위해 수행
+                
+                # 내부 데이터(BOM 등) 복제
+                original_data = ModelData.query.filter_by(model_id=mid).all()
+                for d in original_data:
+                    db.session.add(ModelData(
+                        model_id=new_model.id,
+                        data_type=d.data_type,
+                        content=d.content,
+                        file_name=d.file_name
+                    ))
             
             db.session.commit()
-            return jsonify({"message": "Copied successfully"})
+            return jsonify({"message": f"{len(model_ids)}개 항목 복사 완료"})
 
     except Exception as e:
         db.session.rollback()
@@ -220,16 +221,28 @@ def transfer_model():
 # ==============================================================================
 # [3] 기준 정보 (업체/모델/담당자) API
 # ==============================================================================
-
+# [전체 교체] production.py: 섹션별 모델 개수를 정확히 집계하는 로직
 @bp.route('/companies', methods=['GET', 'POST'])
 def manage_companies():
     try:
         if request.method == 'GET':
+            # [수정] 쿼리 파라미터로 섹션 정보를 받음 (기본값 'common')
+            section = request.args.get('section', 'common')
+            
             comps = Company.query.order_by(Company.name).all()
             res = []
             for c in comps:
-                cnt = ProductModel.query.filter_by(company_id=c.id).count()
-                res.append({"id": c.id, "name": c.name, "model_count": cnt})
+                # [핵심 수정] 해당 업체 ID와 요청된 섹션이 일치하는 모델만 카운트
+                cnt = ProductModel.query.filter_by(
+                    company_id=c.id, 
+                    section=section
+                ).count()
+                
+                res.append({
+                    "id": c.id, 
+                    "name": c.name, 
+                    "model_count": cnt
+                })
             return jsonify(res)
         
         elif request.method == 'POST':
@@ -240,7 +253,7 @@ def manage_companies():
             db.session.commit()
             return jsonify({"message": "Created", "id": c.id}), 201
     except Exception as e: return jsonify({"error": str(e)}), 500
-
+    
 @bp.route('/companies/<int:id>', methods=['PUT', 'DELETE'])
 def company_item(id):
     try:
@@ -254,28 +267,50 @@ def company_item(id):
         return jsonify({"message": "Success"})
     except Exception as e: return jsonify({"error": str(e)}), 500
 
+# [전체 교체] 부서 순서(생산-품질-기능-관리)가 반영된 담당자 관리 API
 @bp.route('/managers', methods=['GET', 'POST'])
 def manage_managers():
     if request.method == 'GET':
-        # 직급별 가중치 설정 (낮을수록 상단 배치)
-        rank_order = {"부장": 1, "차장": 2, "과장": 3, "대리": 4, "주임": 5, "사원": 6}
-        # 부서별 가중치 설정
-        dept_order = {"관리": 1, "생산": 2, "품질": 3}
-        
-        managers = Manager.query.all()
-        
-        # 정렬: 1순위 부서, 2순위 직급
-        sorted_managers = sorted(managers, key=lambda m: (
-            dept_order.get(m.department, 99),
-            rank_order.get(m.position, 99)
-        ))
-        
-        return jsonify([m.to_dict() for m in sorted_managers])
-    try:
-        db.session.add(Manager(name=request.json['name']))
-        db.session.commit()
-        return jsonify({"message": "Created"}), 201
-    except Exception as e: return jsonify({"error": str(e)}), 500
+        try:
+            # 1. 정렬 기준 설정: 생산(1) > 품질(2) > 기능(3) > 관리(4)
+            dept_order = {"생산": 1, "품질": 2, "기능": 3, "관리": 4}
+            # 직급 순서: 부장(1) > 차장(2) > 과장(3) > 대리(4) > 주임(5) > 사원(6)
+            rank_order = {"부장": 1, "차장": 2, "과장": 3, "대리": 4, "주임": 5, "사원": 6}
+            
+            managers = Manager.query.all()
+            
+            # 2. 부서 순서 우선 정렬 후, 부서 내에서 직급순으로 정렬
+            sorted_managers = sorted(managers, key=lambda m: (
+                dept_order.get(m.department, 99),
+                rank_order.get(m.position, 99)
+            ))
+            
+            return jsonify([m.to_dict() for m in sorted_managers])
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    elif request.method == 'POST':
+        try:
+            data = request.json
+            name = data.get('name')
+            if not name:
+                return jsonify({"error": "이름을 입력하세요."}), 400
+            
+            # 모달에서 전달받은 상세 정보 추가 저장
+            new_manager = Manager(
+                name=name,
+                position=data.get('position'),
+                department=data.get('department'),
+                roles=data.get('roles'),
+                contact=data.get('contact'),
+                email=data.get('email')
+            )
+            db.session.add(new_manager)
+            db.session.commit()
+            return jsonify({"message": "Created", "id": new_manager.id}), 201
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({"error": str(e)}), 500
 
 @bp.route('/managers/<int:id>', methods=['DELETE'])
 def delete_manager(id):
@@ -350,7 +385,7 @@ def manage_model(id):
         return jsonify({"message": "Success"})
     except Exception as e: return jsonify({"error": str(e)}), 500
 
-# [중요] production.html 호환용: 모델 존재 확인 및 자동 생성
+# [전체 교체] 정규화 비교가 적용된 모델 체크 함수
 @bp.route('/models/check-and-create', methods=['POST'])
 def check_and_create_model():
     try:
@@ -358,32 +393,50 @@ def check_and_create_model():
         c_name = data.get('company', '').strip()
         m_name = data.get('model', '').strip()
         do_create = data.get('create', False)
+        folder_id = data.get('folder_id') 
+        section = data.get('section', 'common') 
 
-        if not c_name or not m_name: return jsonify({"error": "Invalid data"}), 400
+        if not c_name or not m_name: 
+            return jsonify({"error": "Invalid data"}), 400
 
-        # 업체 확인
         comp = Company.query.filter_by(name=c_name).first()
         if not comp:
-            if not do_create: return jsonify({"status": "missing_company"})
-            # 업체 생성
-            comp = Company(name=c_name)
-            db.session.add(comp)
-            db.session.commit()
+            return jsonify({"status": "missing_company"}), 200
 
-        # 모델 확인
-        model = ProductModel.query.filter_by(company_id=comp.id, name=m_name).first()
-        if not model:
-            if not do_create: return jsonify({"status": "missing_model"})
-            # 모델 생성 (기본적으로 최상위 루트에 생성)
-            model = ProductModel(name=m_name, company_id=comp.id, folder_id=None)
-            db.session.add(model)
-            db.session.commit()
-            return jsonify({"status": "created", "model_id": model.id})
+        # [핵심 수정] 1. 해당 업체의 모든 모델을 가져옴
+        existing_models = ProductModel.query.filter_by(company_id=comp.id, section=section).all()
         
-        return jsonify({"status": "exists", "model_id": model.id})
+        # 2. 입력받은 모델명을 정규화함
+        input_norm = normalize_name(m_name)
+        
+        # 3. 기존 모델 중 정규화된 이름이 일치하는 것이 있는지 탐색
+        found_model = None
+        for em in existing_models:
+            if normalize_name(em.name) == input_norm:
+                found_model = em
+                break
+        
+        # 일치하는 모델이 없는 경우
+        if not found_model:
+            if not do_create: 
+                return jsonify({"status": "missing_model", "company_id": comp.id})
+            
+            new_model = ProductModel(
+                name=m_name, 
+                company_id=comp.id, 
+                folder_id=folder_id if folder_id else None,
+                section=section 
+            )
+            db.session.add(new_model)
+            db.session.commit()
+            return jsonify({"status": "created", "model_id": new_model.id})
+        
+        # 일치하는 모델이 이미 있는 경우 (정규화된 이름 기준)
+        return jsonify({"status": "exists", "model_id": found_model.id})
 
-    except Exception as e: return jsonify({"error": str(e)}), 500
-
+    except Exception as e: 
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
 
 # ==============================================================================
 # [4] 파일 데이터 (BOM/좌표)
@@ -449,9 +502,71 @@ def search_global():
         "folders": [{"id": f.id, "name": f.name, "type": "folder", "company_id": f.company_id, "section": f.section} for f in folders],
         "models": [{"id": m.id, "name": m.name, "type": "model", "company_id": m.company_id} for m in models]
     })
-    
-    # [추가] 서버 용량 보호를 위한 업로드 크기 제한 (50MB)
-# Flask 설정에 추가: app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024
+
+# [production.py] 디렉토리 조회 및 생성 로직 전면 수정
+
+@bp.route('/directory', methods=['GET'])
+def get_directory_contents():
+    try:
+        company_id = request.args.get('company_id')
+        folder_id = request.args.get('folder_id')
+        section = request.args.get('section', 'production')
+        
+        if folder_id in ['null', 'undefined', '', 'root']: folder_id = None
+        if company_id in ['null', 'undefined', '']: company_id = None
+
+        # [핵심 수정] 
+        # common 섹션: 기존처럼 company_id 필수
+        # 그 외 섹션: company_id가 없어도(None) 해당 섹션의 루트 폴더 조회 가능
+        query_filter = {
+            'section': section,
+            'parent_folder_id': folder_id
+        }
+        if company_id: # 업체 내부를 조회하는 경우
+            query_filter['company_id'] = company_id
+        elif section != 'common': # 자유 탭의 루트인 경우 (업체 필터 제거)
+            query_filter['company_id'] = None
+
+        folders = ModelFolder.query.filter_by(**query_filter).all()
+        
+        # 모델/파일 조회도 동일한 로직 적용
+        model_filter = {
+            'section': section,
+            'folder_id': folder_id
+        }
+        if company_id:
+            model_filter['company_id'] = company_id
+        elif section != 'common':
+            model_filter['company_id'] = None
+
+        models = ProductModel.query.filter_by(**model_filter).all()
+
+        return jsonify({
+            "folders": [{"id": f.id, "name": f.name, "type": "folder"} for f in folders],
+            "models": [m.to_dict() for m in models]
+        })
+    except Exception as e: return jsonify({"error": str(e)}), 500
+
+@bp.route('/folders', methods=['POST'])
+def create_folder():
+    try:
+        data = request.json
+        pid = data.get('parent_folder_id')
+        section = data.get('section', 'production')
+        comp_id = data.get('company_id') # 없을 수 있음
+
+        if pid in ['null', '', None]: pid = None
+        if comp_id in ['null', '', None]: comp_id = None
+        
+        db.session.add(ModelFolder(
+            name=data['name'], 
+            company_id=comp_id, # None 허용
+            parent_folder_id=pid,
+            section=section
+        ))
+        db.session.commit()
+        return jsonify({"message": "Created"}), 201
+    except Exception as e: return jsonify({"error": str(e)}), 500
 
 @bp.route('/files/upload', methods=['POST'])
 def upload_general_file():
@@ -459,35 +574,31 @@ def upload_general_file():
         if 'file' not in request.files: return jsonify({"error": "No file"}), 400
         file = request.files['file']
         
-        # [백엔드 검증] 파일 크기 체크
         file.seek(0, os.SEEK_END)
         size = file.tell()
         file.seek(0)
-        if size > 50 * 1024 * 1024:
-            return jsonify({"error": "File too large (Max 50MB)"}), 413
+        if size > 50 * 1024 * 1024: return jsonify({"error": "File too large"}), 413
 
         folder_id = request.form.get('folder_id')
         company_id = request.form.get('company_id')
-        section = request.form.get('section')
+        section = request.form.get('section', 'production')
+
+        if folder_id in ['null', 'undefined', '']: folder_id = None
+        if company_id in ['null', 'undefined', '']: company_id = None
 
         filename = secure_filename(file.filename)
-        # 실제 저장은 'uploads' 폴더에 진행
         save_path = os.path.join(UPLOAD_FOLDER, f"gen_{section}_{filename}")
         file.save(save_path)
         
-        section = request.form.get('section', 'production')
-
-        # DB에 모델 형태로 등록하여 화면에 표시 (type을 'file'로 구분 가능)
         new_file = ProductModel(
             name=filename,
-            company_id=company_id,
-            folder_id=folder_id if folder_id else None,
-            section=section, # 섹션 저장
+            company_id=company_id, # None 허용
+            folder_id=folder_id,
+            section=section,
             type='file'
-    )
+        )
         db.session.add(new_file)
         db.session.commit()
 
         return jsonify({"message": "Success"}), 201
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    except Exception as e: return jsonify({"error": str(e)}), 500
