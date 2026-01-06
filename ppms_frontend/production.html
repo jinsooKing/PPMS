@@ -274,50 +274,39 @@
             </div>
         </div>
     </div>
-
     <div class="modal-overlay" id="new-model-reg-modal">
-        <div class="modal-window small-modal" style="max-width: 500px; width: 90vw; height: auto; max-height: 90vh;">
+        <div class="modal-window">
             <button class="close-btn" onclick="closeNewModelModal()">&times;</button>
-            <h3 class="modal-title">신규 모델 등록 위치 선택</h3>
-            <div class="modal-content"
-                style="padding: 20px; overflow: hidden; display: flex; flex-direction: column; gap: 15px;">
-                <p style="color: #bbb; font-size: 0.85rem; text-align: center;">
-                    '<span id="target-model-name" style="color: var(--point-gold); font-weight: bold;"></span>' 저장 위치 지정
-                </p>
+            <h3 class="modal-title">저장 위치 선택</h3>
+            <div class="modal-content">
+                <div id="modal-breadcrumb"></div>
 
-                <div id="modal-breadcrumb"
-                    style="display: flex; align-items: center; gap: 5px; font-size: 0.8rem; color: #888; padding: 8px; background: rgba(255,255,255,0.02); border-radius: 5px;">
-                </div>
-
-                <div id="folder-selector-list"
-                    style="flex: 1; background: rgba(0,0,0,0.3); border-radius: 8px; border: 1px solid rgba(255,235,167,0.1); overflow-y: auto; min-height: 200px;">
-                </div>
-
-                <div id="new-folder-input-area"
-                    style="display: none; gap: 8px; padding: 10px; background: rgba(255,235,167,0.05); border-radius: 8px; border: 1px dashed var(--point-gold);">
-                    <input type="text" id="new-folder-name" class="compact-input" style="flex: 1; text-align: left;"
-                        placeholder="새 폴더 이름 입력">
-                    <button class="text-btn" style="background: var(--point-gold); color: var(--accent-blue);"
-                        onclick="createNewFolderInModal()">생성</button>
-                    <button class="text-btn" onclick="toggleNewFolderInput(false)">취소</button>
-                </div>
-
-                <div style="display: flex; flex-direction: column; gap: 10px;">
-                    <button class="text-btn"
-                        style="width: 100%; border-color: var(--point-gold); color: var(--point-gold);"
-                        onclick="toggleNewFolderInput(true)">
-                        <i class="uil uil-folder-plus"></i> 현재 위치에 새 폴더 만들기
-                    </button>
-                    <div style="display: flex; gap: 10px;">
-                        <button class="common-box" style="flex: 1; background: #444; border: none;"
-                            onclick="closeNewModelModal()">취소</button>
-                        <button class="common-box" style="flex: 2; background: var(--accent-blue); border: none;"
-                            id="confirm-model-reg-btn">이 위치에 등록</button>
-                    </div>
+                <div id="folder-selector-list"></div>
+                <div class="modal-footer-btns">
+                    <button class="common-box" style="background: #444; border: none;"
+                        onclick="closeNewModelModal()">취소</button>
+                    <button class="common-box" id="confirm-model-reg-btn"
+                        style="background: var(--accent-blue); border: none;">이 위치에 등록</button>
                 </div>
             </div>
         </div>
     </div>
+    <div id="folder-pop-modal" class="pop-modal-overlay">
+        <div class="pop-modal-window">
+            <div class="pop-modal-header">
+                <i class="uil uil-folder-plus"></i>
+                <span>새 폴더 만들기</span>
+            </div>
+            <div class="pop-modal-body">
+                <input type="text" id="pop-new-folder-name" placeholder="폴더 이름을 입력하세요..." autocomplete="off">
+            </div>
+            <div class="pop-modal-footer">
+                <button class="pop-btn-cancel" onclick="closeFolderPopModal()">취소</button>
+                <button class="pop-btn-confirm" onclick="submitNewFolderPop()">생성하기</button>
+            </div>
+        </div>
+    </div>
+
     <datalist id="model-suggestions-list"></datalist>
 
     <script>
@@ -1023,7 +1012,10 @@
 
                 if (byLine[line].length > 0) {
                     const rows = byLine[line].map(s => {
-                        const mOpts = managerList.map(m => `<option value="${m.name}" ${s.manager === m.name ? 'selected' : ''}>${m.name}</option>`).join('');
+                        const mOpts = managerList
+                            .filter(m => m.department === '생산')
+                            .map(m => `<option value="${m.name}" ${s.manager === m.name ? 'selected' : ''}>${m.name}</option>`)
+                            .join('');
                         const cOpts = companyList.map(c => `<option value="${c.name}" ${s.company === c.name ? 'selected' : ''}>${c.name}</option>`).join('');
 
                         let moOpts = '';
@@ -1236,12 +1228,6 @@
             document.getElementById('custom-alert-modal').classList.remove('visible');
         }
 
-        // 3. 모달 내 폴더 생성 토글 및 실행
-        function toggleNewFolderInput(show) {
-            document.getElementById('new-folder-input-area').style.display = show ? 'flex' : 'none';
-            if (show) document.getElementById('new-folder-name').focus();
-        }
-
         async function createNewFolderInModal() {
             const name = document.getElementById('new-folder-name').value.trim();
             if (!name) return showAppAlert("폴더 이름을 입력하세요.", "error");
@@ -1271,20 +1257,87 @@
             } catch (e) { showAppAlert("서버 통신 오류", "error"); }
         }
 
-        // 4. 모달 열기 및 폴더 리스트 렌더링
+        /* [최종 통합] 신규 모델 등록 모달 로직 (더블클릭 & 우클릭 메뉴) */
+
+        // 1. 모달 전용 컨텍스트 메뉴 객체 생성
+        if (!document.getElementById('modal-ctx-menu')) {
+            const ctx = document.createElement('div');
+            ctx.id = 'modal-ctx-menu';
+            ctx.innerHTML = `<div class="modal-ctx-item" onclick="toggleNewFolderInput(true)"><i class="uil uil-folder-plus"></i> 새 폴더 추가</div>`;
+            document.body.appendChild(ctx);
+            document.addEventListener('click', () => ctx.style.display = 'none');
+        }
+        // 1. 기존 토글 함수를 모달 열기 함수로 대체
+        function toggleNewFolderInput(show) {
+            if (show) {
+                const modal = document.getElementById('folder-pop-modal');
+                const input = document.getElementById('pop-new-folder-name');
+                modal.classList.add('active');
+                input.value = '';
+                input.focus();
+            } else {
+                closeFolderPopModal();
+            }
+        }
+
+        // 2. 모달 닫기
+        function closeFolderPopModal() {
+            document.getElementById('folder-pop-modal').classList.remove('active');
+        }
+
+        // 3. 실제 생성 실행 (기존 createNewFolderInModal 로직 활용)
+        async function submitNewFolderPop() {
+            const name = document.getElementById('pop-new-folder-name').value.trim();
+            if (!name) {
+                showAppAlert("폴더 이름을 입력하세요.", "error");
+                return;
+            }
+
+            const parentId = modalCurrentPath.length > 0 ? modalCurrentPath[modalCurrentPath.length - 1].id : null;
+
+            try {
+                const res = await fetch(`http://127.0.0.1:5000/api/production/folders`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: name,
+                        company_id: pendingModelData.company_id,
+                        parent_folder_id: parentId,
+                        section: 'common'
+                    })
+                });
+
+                if (res.ok) {
+                    closeFolderPopModal(); // 성공 시 모달 닫기
+                    // 부모 모달(리스트) 새로고침
+                    openNewModelModal(pendingModelData.model, pendingModelData.company_id, parentId);
+                } else {
+                    showAppAlert("폴더 생성 실패", "error");
+                }
+            } catch (e) {
+                showAppAlert("서버 통신 오류", "error");
+            }
+        }
+
+        // 엔터키 지원
+        document.getElementById('pop-new-folder-name').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') submitNewFolderPop();
+        });
+
+        // 2. 모달 열기 및 렌더링 함수 개편
         async function openNewModelModal(modelName, companyId, folderId = null) {
-            document.getElementById('target-model-name').textContent = modelName;
+            // 불필요한 문구 제거 로직 포함
             const listContainer = document.getElementById('folder-selector-list');
             const breadcrumbContainer = document.getElementById('modal-breadcrumb');
 
-            listContainer.innerHTML = '<div style="text-align:center; padding:50px; color:#666;"><i class="uil uil-spinner uil-spin" style="font-size:1.5rem;"></i></div>';
+            listContainer.innerHTML = '<div style="text-align:center; padding:100px; color:#666;"><i class="uil uil-spinner uil-spin" style="font-size:1.5rem;"></i></div>';
 
             try {
                 const url = `http://127.0.0.1:5000/api/production/directory?company_id=${companyId}&folder_id=${folderId || ''}&section=common`;
                 const res = await fetch(url);
                 const data = await res.json();
 
-                // 브레드크럼 업데이트
+                // 브레드크럼 (디렉토리 박스) 업데이트
                 let bcHtml = `<span style="cursor:pointer; color: ${!folderId ? 'var(--point-gold)' : '#888'}" onclick="navigateInModal(null)">Root</span>`;
                 modalCurrentPath.forEach((step, idx) => {
                     bcHtml += ` <i class="uil uil-angle-right" style="font-size:0.7rem;"></i> <span style="cursor:pointer; color: ${idx === modalCurrentPath.length - 1 ? 'var(--point-gold)' : '#888'}" onclick="navigateInModal('${step.id}', ${idx})">${step.name}</span>`;
@@ -1292,21 +1345,80 @@
                 breadcrumbContainer.innerHTML = bcHtml;
 
                 let html = '';
-                if (folderId) {
-                    html += `<div style="padding: 12px 15px; border-bottom: 1px solid rgba(255,255,255,0.05); cursor:pointer; color:#888; font-size:0.85rem;" onclick="navigateInModalBack()"><i class="uil uil-corner-up-left" style="margin-right:8px;"></i> ... 상위 폴더로</div>`;
-                }
-
-                html += `<label class="check-item" style="padding: 12px 15px; border-bottom: 1px solid rgba(255,235,167,0.15); cursor:pointer; background: rgba(255,235,167,0.05); display:flex; align-items:center;"><input type="radio" name="target-folder" value="${folderId || 'root'}" checked><i class="uil uil-check-circle" style="margin: 0 10px; color:var(--point-gold); font-size:1.1rem;"></i><span style="color:#fff;">(현재 위치에 등록)</span></label>`;
-
                 if (data.folders && data.folders.length > 0) {
                     data.folders.forEach(f => {
-                        html += `<div class="modal-folder-row" style="display:flex; align-items:center; border-bottom: 1px solid rgba(255,255,255,0.03);"><label class="check-item" style="flex:1; padding: 12px 15px; cursor:pointer; display:flex; align-items:center;"><input type="radio" name="target-folder" value="${f.id}"><i class="uil uil-folder" style="margin: 0 10px; color:#fddb72; font-size:1.1rem;"></i><span>${f.name}</span></label><div style="padding: 10px 20px; color:var(--point-gold); cursor:pointer;" onclick="navigateInModal('${f.id}', null, '${f.name}')"><i class="uil uil-arrow-right"></i></div></div>`;
+                        // 싱글 클릭(선택), 더블 클릭(진입) 로직 부여
+                        html += `
+                    <div class="modal-folder-card" 
+                         onclick="selectModalFolder(this)" 
+                         ondblclick="navigateInModal('${f.id}', null, '${f.name}')" 
+                         data-id="${f.id}">
+                        <input type="radio" name="target-folder" value="${f.id}">
+                        <i class="uil uil-folder modal-card-icon"></i>
+                        <span class="modal-card-name">${f.name}</span>
+                    </div>
+                `;
                     });
+                } else {
+                    html = `<div style="grid-column: 1/-1; text-align:center; padding:100px; color:#555; font-size:0.9rem;">폴더가 없습니다. 우클릭하여 새 폴더를 생성하세요.</div>`;
                 }
+
                 listContainer.innerHTML = html;
+
+                // 리스트 영역 우클릭 메뉴 연결
+                listContainer.oncontextmenu = (e) => {
+                    e.preventDefault();
+                    const ctx = document.getElementById('modal-ctx-menu');
+                    ctx.style.display = 'block';
+                    ctx.style.left = e.pageX + 'px';
+                    ctx.style.top = e.pageY + 'px';
+                };
+
                 document.getElementById('new-model-reg-modal').classList.add('visible');
-            } catch (e) { listContainer.innerHTML = '<div style="text-align:center; padding:30px; color:#ff4444;">오류가 발생했습니다.</div>'; }
+            } catch (e) {
+                listContainer.innerHTML = '<div style="text-align:center; padding:50px; color:#ff4444;">데이터 로드 실패</div>';
+            }
         }
+
+        // 3. 폴더 선택 (체크 표시) 핸들러
+        window.selectModalFolder = function (el) {
+            document.querySelectorAll('.modal-folder-card').forEach(c => c.classList.remove('selected'));
+            el.classList.add('selected');
+            const radio = el.querySelector('input');
+            if (radio) radio.checked = true;
+        };
+
+        // 4. 등록 버튼 로직 수정
+        document.getElementById('confirm-model-reg-btn').onclick = async () => {
+            if (!pendingModelData) return;
+
+            // 선택된 폴더 확인, 없으면 현재 디렉토리(Root 포함) 위치 사용
+            const selectedRadio = document.querySelector('input[name="target-folder"]:checked');
+            const folderId = selectedRadio ? selectedRadio.value : (modalCurrentPath.length > 0 ? modalCurrentPath[modalCurrentPath.length - 1].id : null);
+
+            try {
+                const createRes = await fetch('http://127.0.0.1:5000/api/production/models/check-and-create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        company: pendingModelData.company,
+                        model: pendingModelData.model,
+                        create: true,
+                        folder_id: folderId,
+                        section: 'common'
+                    })
+                });
+
+                if (createRes.ok) {
+                    const successName = pendingModelData.model;
+                    closeNewModelModal();
+                    showAppAlert(`'${successName}' 모델이 지정된 위치에 등록되었습니다.`);
+                }
+            } catch (err) {
+                showAppAlert("등록 오류 발생", "error");
+            }
+        };
+
 
         // 5. 탐색 및 등록 실행
         function navigateInModal(folderId, index = null, folderName = null) {
@@ -1327,42 +1439,7 @@
             pendingModelData = null; modalCurrentPath = [];
         }
 
-        /* [수정] production.html 최하단: 순서 보정으로 Null 에러 해결 */
-        document.getElementById('confirm-model-reg-btn').onclick = async () => {
-            if (!pendingModelData) return;
 
-            const selectedVal = document.querySelector('input[name="target-folder"]:checked').value;
-            const folderId = (selectedVal === 'root') ? null : selectedVal;
-
-            try {
-                const createRes = await fetch('http://127.0.0.1:5000/api/production/models/check-and-create', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        company: pendingModelData.company,
-                        model: pendingModelData.model,
-                        create: true,
-                        folder_id: folderId,
-                        section: 'common' // 통합 관리 섹션으로 통일
-                    })
-                });
-
-                const result = await createRes.json();
-                if (!createRes.ok) throw new Error(result.error || "Server Error");
-
-                if (result.status === 'created') {
-                    // [핵심] 모달을 닫기 전에 알림에 쓸 이름을 미리 변수에 저장합니다.
-                    const successModelName = pendingModelData.model;
-
-                    closeNewModelModal(); // 여기서 pendingModelData가 null이 됩니다.
-
-                    // 미리 저장해둔 이름을 사용하여 알림을 띄웁니다.
-                    showAppAlert(`'${successModelName}' 모델이 통합 관리 섹션에 등록되었습니다.`);
-                }
-            } catch (err) {
-                showAppAlert("등록 중 오류가 발생했습니다: " + err.message, "error");
-            }
-        };
     </script>
 
     <div id="global-tooltip"></div>

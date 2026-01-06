@@ -160,47 +160,45 @@ def manage_folder(id):
 def transfer_model():
     try:
         data = request.json
-        action = data.get('action') # 'copy' 또는 'move'
+        action = data.get('action')
         target_folder_id = data.get('target_folder_id')
+        # [추가] 대상 업체 ID 수신
+        target_company_id = data.get('target_company_id')
         
-        # 1. 단일 ID와 리스트 형태 모두 호환되도록 처리
         model_ids = data.get('model_ids', [])
         if not model_ids and data.get('model_id'):
             model_ids = [data.get('model_id')]
-            
-        if not model_ids:
-            return jsonify({"error": "선택된 항목이 없습니다."}), 400
 
-        if target_folder_id in ['null', '', None, 'root']: 
-            target_folder_id = None
+        if target_folder_id in ['null', '', None, 'root']: target_folder_id = None
+        if target_company_id in ['null', '', None]: target_company_id = None
 
         if action == 'move':
-            # [이동/잘라내기] 원본을 지우는 게 아니라 folder_id만 한꺼번에 변경합니다.
+            # [이동] 폴더 위치와 함께 업체 ID도 현재 위치의 업체로 변경합니다.
             ProductModel.query.filter(ProductModel.id.in_(model_ids)).update(
-                {ProductModel.folder_id: target_folder_id}, 
+                {
+                    ProductModel.folder_id: target_folder_id,
+                    ProductModel.company_id: target_company_id # [추가]
+                }, 
                 synchronize_session=False
             )
             db.session.commit()
-            return jsonify({"message": f"{len(model_ids)}개 항목 이동 완료"})
+            return jsonify({"message": "이동 완료"})
 
         elif action == 'copy':
-            # [복사] 원본은 두고 새로운 데이터를 생성합니다.
             for mid in model_ids:
                 source = db.session.get(ProductModel, mid)
                 if not source: continue
                 
-                # 모델 복제
                 new_model = ProductModel(
                     name=f"{source.name}_복사본",
-                    company_id=source.company_id,
+                    company_id=target_company_id, # [수정] 원본이 아닌 '대상 업체 ID' 사용
                     folder_id=target_folder_id,
                     section=source.section,
                     type=source.type
                 )
                 db.session.add(new_model)
-                db.session.flush() # 신규 ID 할당을 위해 수행
+                db.session.flush()
                 
-                # 내부 데이터(BOM 등) 복제
                 original_data = ModelData.query.filter_by(model_id=mid).all()
                 for d in original_data:
                     db.session.add(ModelData(
@@ -211,12 +209,10 @@ def transfer_model():
                     ))
             
             db.session.commit()
-            return jsonify({"message": f"{len(model_ids)}개 항목 복사 완료"})
-
+            return jsonify({"message": "복사 완료"})
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
-
 
 # ==============================================================================
 # [3] 기준 정보 (업체/모델/담당자) API
@@ -319,6 +315,31 @@ def delete_manager(id):
         db.session.delete(m); db.session.commit()
         return jsonify({"message": "Deleted"})
     except: return jsonify({"error": "Error"}), 500
+
+# [추가] production.py: 일괄 삭제 API
+@bp.route('/bulk-delete', methods=['POST'])
+def bulk_delete():
+    try:
+        data = request.json
+        model_ids = data.get('model_ids', [])
+        folder_ids = data.get('folder_ids', [])
+
+        if not model_ids and not folder_ids:
+            return jsonify({"error": "삭제할 항목이 선택되지 않았습니다."}), 400
+
+        # 1. 모델(파일) 일괄 삭제
+        if model_ids:
+            ProductModel.query.filter(ProductModel.id.in_(model_ids)).delete(synchronize_session=False)
+        
+        # 2. 폴더 일괄 삭제 (하위 항목은 cascade에 의해 자동 삭제됨)
+        if folder_ids:
+            ModelFolder.query.filter(ModelFolder.id.in_(folder_ids)).delete(synchronize_session=False)
+
+        db.session.commit()
+        return jsonify({"message": f"총 {len(model_ids) + len(folder_ids)}개의 항목이 삭제되었습니다."})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
     
 # [추가] 담당자 상세 정보 수정 API
 @bp.route('/managers/<int:manager_id>', methods=['PUT'])
@@ -568,12 +589,14 @@ def create_folder():
         return jsonify({"message": "Created"}), 201
     except Exception as e: return jsonify({"error": str(e)}), 500
 
+# [수정] production.py: 한글 파일명 지원 및 업로드 로직 개선
 @bp.route('/files/upload', methods=['POST'])
 def upload_general_file():
     try:
         if 'file' not in request.files: return jsonify({"error": "No file"}), 400
         file = request.files['file']
         
+        # 1. 파일 크기 체크
         file.seek(0, os.SEEK_END)
         size = file.tell()
         file.seek(0)
@@ -583,16 +606,28 @@ def upload_general_file():
         company_id = request.form.get('company_id')
         section = request.form.get('section', 'production')
 
-        if folder_id in ['null', 'undefined', '']: folder_id = None
-        if company_id in ['null', 'undefined', '']: company_id = None
+        # 2. ID 값 안전하게 변환 ("null", "undefined", 공백 문자열 처리)
+        if folder_id in ['null', 'undefined', '', 'NaN']: folder_id = None
+        if company_id in ['null', 'undefined', '', 'NaN']: company_id = None
 
-        filename = secure_filename(file.filename)
-        save_path = os.path.join(UPLOAD_FOLDER, f"gen_{section}_{filename}")
+        # 3. [핵심] 한글 파일명 보존 로직
+        # secure_filename은 한글을 지워버리므로, os.path.basename으로 경로만 정리
+        original_filename = os.path.basename(file.filename)
+        
+        # 파일명 충돌 방지를 위해 앞에 난수나 타임스탬프 등을 붙일 수도 있으나,
+        # 여기서는 원본 유지를 위해 그대로 사용하되 안전하게 저장
+        safe_filename = original_filename.replace(" ", "_") # 공백만 언더바로 치환
+        
+        # 저장 경로 생성 (중복 방지를 위해 section 접두어 사용)
+        save_name = f"gen_{section}_{safe_filename}"
+        save_path = os.path.join(UPLOAD_FOLDER, save_name)
+        
         file.save(save_path)
         
+        # 4. DB 저장
         new_file = ProductModel(
-            name=filename,
-            company_id=company_id, # None 허용
+            name=safe_filename, # 원본 파일명 (화면 표시용)
+            company_id=company_id,
             folder_id=folder_id,
             section=section,
             type='file'
@@ -601,4 +636,8 @@ def upload_general_file():
         db.session.commit()
 
         return jsonify({"message": "Success"}), 201
-    except Exception as e: return jsonify({"error": str(e)}), 500
+    except Exception as e:
+        db.session.rollback() 
+        # 디버깅을 위해 에러 내용 출력
+        print(f"Upload Error: {str(e)}") 
+        return jsonify({"error": str(e)}), 500

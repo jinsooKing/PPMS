@@ -404,3 +404,216 @@ table.editable-table select:focus {
     border-color: var(--point-gold); 
     outline: none; 
 }
+
+/* ==========================================================================
+   [최종 개편] 신규 모델 등록 모달 - 초정밀 그리드 & 공간 최적화 스타일
+   ========================================================================== */
+
+/* 1. 모달 윈도우: 쾌적한 너비 확보 및 불필요한 패딩 제거 */
+#new-model-reg-modal .modal-window {
+    width: 1100px !important; 
+    max-width: 95vw !important;
+    height: auto !important;
+    max-height: 80vh !important;
+    border-radius: 16px !important;
+}
+
+#new-model-reg-modal .modal-content {
+    padding: 15px 25px !important;
+    gap: 12px !important;
+}
+
+/* 2. 폴더 그리드: 세로 늘어짐 방지 및 컴팩트 정렬 */
+#folder-selector-list {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)) !important; /* 폴더 크기 축소 */
+    align-content: start !important; /* [핵심] 아이템이 위로 밀착되어 세로 늘어짐 방지 */
+    gap: 10px !important;
+    padding: 15px !important;
+    background: rgba(0, 0, 0, 0.25) !important;
+    border-radius: 10px !important;
+    min-height: 350px !important;
+    max-height: 450px !important;
+    overflow-y: auto !important;
+    position: relative;
+}
+
+/* 3. 폴더 카드 디자인: 윈도우 탐색기 스타일 */
+.modal-folder-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 12px 5px !important;
+    height: fit-content !important; /* [핵심] 내용물 높이에 딱 맞춤 */
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid transparent;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.modal-folder-card:hover {
+    background: rgba(255, 235, 167, 0.05);
+}
+
+.modal-folder-card input[type="radio"] {
+    display: none; /* 실제 라디오 버튼은 숨김 */
+}
+
+/* [핵심] 선택 시 우측 상단 체크 표시 (공정 데이터 관리 페이지 스타일) */
+.modal-folder-card.selected {
+    background: rgba(212, 175, 55, 0.12) !important;
+    border: 1px solid var(--point-gold) !important;
+}
+
+.modal-folder-card.selected::after {
+    content: '✔';
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 18px;
+    height: 18px;
+    background: var(--point-gold);
+    color: #1a1b21;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: bold;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+    z-index: 5;
+}
+
+.modal-card-icon {
+    font-size: 2.2rem !important; /* 아이콘 크기 최적화 */
+    color: #fddb72;
+    margin-bottom: 6px;
+}
+
+.modal-card-name {
+    font-size: 0.8rem !important;
+    color: #ddd;
+    text-align: center;
+    width: 90%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* 4. 새 폴더 입력 영역: 조화로운 너비 제한 */
+#new-folder-input-area {
+    width: 100%;
+    max-width: 500px !important; /* [핵심] 너무 넓지 않게 제한 */
+    margin: 5px auto !important; /* 중앙 정렬 */
+    padding: 10px 15px !important;
+    background: rgba(212, 175, 55, 0.08) !important;
+    border: 1px dashed var(--point-gold) !important;
+    border-radius: 10px !important;
+    display: none;
+    flex-direction: row;
+    gap: 10px;
+}
+
+#new-folder-name {
+    flex: 1;
+    height: 38px !important;
+    background: #000 !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 6px !important;
+    color: #fff !important;
+    padding: 0 12px !important;
+}
+
+/* 5. 하단 버튼: 조화로운 너비 및 정렬 */
+#new-model-reg-modal .modal-footer-btns {
+    display: flex;
+    justify-content: center; /* [핵심] 버튼들을 중앙으로 모음 */
+    gap: 15px;
+    margin-top: 10px;
+}
+
+#new-model-reg-modal .common-box {
+    width: 160px !important; /* [핵심] 너무 길지 않은 조화로운 너비 */
+    flex: none !important;
+    height: 45px !important;
+    font-size: 1rem !important;
+}
+
+#confirm-model-reg-btn {
+    width: 220px !important; /* 등록 버튼은 조금 더 넓게 강조 */
+}
+
+/* 6. 모달 전용 우클릭 메뉴 */
+#modal-ctx-menu {
+    position: fixed;
+    z-index: 10000;
+    background: #2a2b38;
+    border: 1px solid var(--point-gold);
+    border-radius: 8px;
+    padding: 5px 0;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    display: none;
+}
+
+.modal-ctx-item {
+    padding: 10px 20px;
+    color: #fff;
+    font-size: 0.9rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.modal-ctx-item:hover {
+    background: var(--point-gold);
+    color: #1a1b21;
+}
+
+/* 새 폴더 팝업 전용 오버레이 (기존 모달보다 z-index 높게 설정) */
+.pop-modal-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.4); /* 배경은 살짝만 어둡게 */
+    backdrop-filter: blur(2px);
+    display: none; justify-content: center; align-items: center;
+    z-index: 20000; /* 최상위 레이어 */
+}
+
+/* 팝업 창 본체 */
+.pop-modal-window {
+    background: #2a2b38; /* 기존 테마 유지 */
+    border: 2px solid var(--point-gold);
+    border-radius: 20px;
+    width: 320px; padding: 20px;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.5);
+    text-align: center;
+    
+    /* "뿅" 애니메이션 초기 상태 */
+    transform: scale(0.5); opacity: 0;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* 활성화 시 효과 */
+.pop-modal-overlay.active { display: flex; }
+.pop-modal-overlay.active .pop-modal-window { transform: scale(1); opacity: 1; }
+
+.pop-modal-header { color: var(--point-gold); margin-bottom: 15px; font-family: 'BMJUA'; font-size: 1.2rem; }
+.pop-modal-header i { font-size: 1.5rem; display: block; margin-bottom: 5px; }
+
+.pop-modal-body input {
+    width: 100%; padding: 12px; border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.1); background: #15151a;
+    color: #fff; text-align: center; outline: none; margin-bottom: 15px;
+}
+.pop-modal-body input:focus { border-color: var(--point-gold); }
+
+.pop-modal-footer { display: flex; gap: 10px; }
+.pop-modal-footer button {
+    flex: 1; padding: 10px; border: none; border-radius: 10px;
+    font-family: 'BMJUA'; cursor: pointer; font-weight: bold;
+}
+.pop-btn-confirm { background: var(--point-gold); color: var(--accent-blue); }
+.pop-btn-cancel { background: #444; color: #ccc; }

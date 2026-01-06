@@ -89,21 +89,6 @@
             color: #EA00FF !important;
         }
 
-        .manager-fit-modal {
-            width: fit-content !important;
-            min-width: 400px;
-            /* 너무 좁아지지 않도록 최소폭 확보 */
-            max-width: 600px;
-            height: auto !important;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 30px;
-            background-color: #2a2b38;
-            border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-        }
-
         /* 2. 모달 바디 정렬 */
         .center-align-body {
             display: flex;
@@ -250,10 +235,24 @@
 
         .selection-marquee {
             position: absolute;
-            border: 1px solid #0078d7;
-            background-color: rgba(0, 120, 215, 0.1);
+            /* 파란색 -> 금색 계열로 변경 */
+            border: 1px solid rgba(216, 160, 68, 0.6);
+            background-color: rgba(216, 160, 68, 0.1);
+
+            box-shadow: 0 0 10px rgba(216, 160, 68, 0.1);
             z-index: 9999;
             pointer-events: none;
+            border-radius: 4px;
+        }
+
+        /* 4. [추가] 드래그 중인 아이템 (반투명 상태) 보정 */
+        .folder-item.dragging {
+            opacity: 0.6 !important;
+            /* 약간 더 잘 보이게 조정 */
+            filter: grayscale(0.5);
+            /* 드래그 중임을 명확히 하기 위해 채도 살짝 낮춤 */
+            transform: scale(0.95) !important;
+            /* 살짝 작아지는 효과 */
         }
 
         /* [추가] 부서별 구분 헤더 스타일 */
@@ -388,14 +387,6 @@
             align-items: center;
         }
 
-        .input-row {
-            display: flex;
-            gap: 15px;
-            width: 100%;
-            justify-content: center;
-            margin-bottom: 20px;
-        }
-
         .input-row .input-group {
             flex: 1;
             min-width: 0;
@@ -512,18 +503,94 @@
             will-change: transform, opacity;
         }
 
-        /* 기존 스타일 중 애니메이션을 방해하는 !important 속성 제거 또는 수정 */
+        /* [수정] 대시보드 카드: 현대적이고 차분한 디자인으로 변경 */
         .dashboard-card {
-            /* 기존의 opacity: 1 !important; 를 삭제하거나 아래와 같이 수정하세요 */
-            background: linear-gradient(145deg, #2a2b38, #23242d) !important;
-            border: 1px solid rgba(255, 235, 167, 0.15) !important;
-            border-radius: clamp(10px, 1.5vh, 20px) !important;
+            background: rgba(42, 43, 56, 0.6) !important;
+            /* 조금 더 투명한 느낌 */
+            backdrop-filter: blur(10px);
+            /* 배경 흐림 효과 강화 */
+            border: 1px solid rgba(255, 235, 167, 0.1) !important;
+            border-radius: clamp(15px, 2vh, 25px) !important;
             display: flex !important;
             flex-direction: column !important;
             justify-content: center !important;
             align-items: center !important;
             height: 100% !important;
-            min-height: 0 !important;
+            position: relative;
+            overflow: hidden;
+            /* 차분한 애니메이션을 위한 트랜지션 설정 */
+            transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+            cursor: pointer;
+        }
+
+        /* [기존 금색 바 제거 및 새로운 하이라이트 효과] */
+        .dashboard-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            /* 내부에서 은은하게 퍼지는 빛 효과 */
+            background: radial-gradient(circle at top left, rgba(255, 235, 167, 0.08), transparent 70%);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        /* [수정] 호버 애니메이션: 살짝 떠오르며 금색 테두리와 글로우 효과 */
+        .dashboard-card:hover {
+            transform: translateY(-8px) scale(1.02) !important;
+            /* 차분하게 위로 뜸 */
+            background: rgba(42, 43, 56, 0.8) !important;
+            border-color: rgba(255, 235, 167, 0.4) !important;
+            /* 테두리 강조 */
+            /* 고급스러운 이중 그림자 효과 */
+            box-shadow:
+                0 15px 35px rgba(0, 0, 0, 0.4),
+                0 0 20px rgba(255, 235, 167, 0.1) !important;
+        }
+
+        .dashboard-card:hover::before {
+            opacity: 1;
+        }
+
+        /* 카드 내부 아이콘 및 텍스트 호버 효과 */
+        .dashboard-card:hover .card-icon {
+            color: var(--point-gold) !important;
+            transform: scale(1.1);
+            transition: all 0.4s ease;
+        }
+
+        .dashboard-card:hover .card-title {
+            color: #fff !important;
+            text-shadow: 0 0 10px rgba(255, 235, 167, 0.3);
+        }
+
+        /* [추가] 카드 클릭 시 피드백 효과 (고급스러운 상호작용) */
+        .dashboard-card:active {
+            /* 1. 눌리는 느낌 (물리적 압력) */
+            transform: translateY(-4px) scale(0.97) !important;
+
+            /* 2. 순간적으로 밝아지는 광채 효과 */
+            background: rgba(255, 235, 167, 0.15) !important;
+            border-color: var(--point-gold) !important;
+
+            /* 3. 테두리 글로우 강화 */
+            box-shadow:
+                0 5px 15px rgba(0, 0, 0, 0.3),
+                0 0 30px rgba(255, 235, 167, 0.2) !important;
+
+            /* 빠른 응답을 위해 트랜지션 시간 단축 */
+            transition: all 0.1s ease !important;
+        }
+
+        /* 클릭 후 다음 화면으로 넘어갈 때의 부드러운 잔상 효과 */
+        .dashboard-card.clicking {
+            pointer-events: none;
+            filter: brightness(1.2);
+            transform: scale(1.05);
+            opacity: 0.8;
+            transition: all 0.3s ease;
         }
 
         /* 카드 내부 요소 크기도 비율에 맞게 조절 */
@@ -715,40 +782,113 @@
         }
 
         .folder-item {
+            position: relative;
             display: flex;
             flex-direction: column;
             align-items: center;
             cursor: pointer;
-            width: 120px;
+
+            /* [수정] 이름을 더 많이 보여주기 위해 너비 확장 (약 150px) */
+            width: 150px;
             padding: 10px;
             border-radius: 6px;
-            transition: background 0.2s;
-            position: relative;
+            border: 1px solid transparent;
+            box-sizing: border-box;
+
+            /* [수정] 해제 시 발생하는 모든 애니메이션 제거 */
+            transition: none !important;
+            animation: none !important;
         }
 
+        .folder-item .folder-name {
+            width: 100%;
+            font-size: 0.85rem;
+            color: #ddd;
+            text-align: center;
+            margin-top: 8px;
 
+            /* [수정] 평소에도 한 줄로 최대한 표시되도록 설정 */
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            display: block;
+
+            /* 애니메이션 제거 */
+            transition: none !important;
+        }
 
         .folder-item.selected {
-            /* 첨부하신 사진의 파란색 강조 효과 반영 */
-            background-color: rgba(0, 120, 215, 0.3) !important;
-            outline: 1px solid rgba(0, 120, 215, 0.6) !important;
-            border-radius: 2px;
-            box-shadow: none !important;
-            transform: none !important;
-            /* 위로 뜨는 효과 제거 (탐색기 스타일) */
+            background: rgba(216, 160, 68, 0.12) !important;
+            border: 1px solid rgba(216, 160, 68, 0.5) !important;
+            z-index: 100;
+            overflow: visible !important;
+
+            /* [수정] 선택 시 위치 이동 애니메이션 제거 */
+            transform: translateY(-2px) !important;
+            transition: none !important;
         }
 
-        /* 선택된 항목의 파일명은 전체 표시 */
         .folder-item.selected .folder-name {
-            white-space: normal;
-            overflow: visible;
-            word-break: break-all;
-            position: relative;
-            z-index: 100;
-            background: rgba(42, 43, 56, 0.95);
-            /* 주변 항목을 가려도 글자가 잘 보이게 배경 추가 */
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+
+            width: max-content;
+            max-width: 160px;
+            /* 선택 시 박스 최대 너비 */
+            min-width: 100%;
+
+            padding: 6px 8px;
+            background: #1a1b21;
+            border: 1px solid var(--point-gold);
             border-radius: 4px;
-            padding: 5px;
+            color: var(--point-gold);
+
+            /* 선택 시 줄바꿈 허용 */
+            white-space: normal !important;
+            overflow: visible !important;
+            word-break: break-all;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+            margin-top: 5px;
+            z-index: 101;
+
+            /* [수정] 등장 시 모든 애니메이션 제거 */
+            transition: none !important;
+            animation: none !important;
+        }
+
+        .folder-item.selected::after {
+            content: '✔';
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            width: 18px;
+            height: 18px;
+            background: var(--point-gold);
+            color: #1a1b21;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: bold;
+            z-index: 102;
+
+            /* [수정] 요란함을 없애기 위해 배지 팝업 애니메이션도 제거 */
+            animation: none !important;
+        }
+
+        @keyframes popIn {
+            0% {
+                transform: scale(0);
+                opacity: 0;
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
         }
 
         .folder-item:hover {
@@ -1153,38 +1293,12 @@
             margin: 4px 0;
         }
 
-
-        /* 카드 호버 시 투명도 변화 방지 */
-        .dashboard-card:hover {
-            transform: translateY(-10px) !important;
-            border-color: var(--point-gold) !important;
-            box-shadow: 0 15px 40px rgba(255, 235, 167, 0.2) !important;
-            background: linear-gradient(145deg, #323344, #2a2b38) !important;
-        }
-
         /* 뷰 섹션 컨테이너 보정 */
         #main-dashboard-view {
             width: 100% !important;
             display: block;
             /* switchTab에서 제어 */
             opacity: 1 !important;
-        }
-
-        .dashboard-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 5px;
-            background: var(--point-gold);
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-
-
-        .dashboard-card:hover::before {
-            opacity: 1;
         }
 
         .folder-item.dragging {
@@ -1615,7 +1729,6 @@
             if (['jpg', 'jpeg', 'png', 'gif'].includes(ext)) return 'uil-image'; // 이미지
             return 'uil-file'; // 기본 파일
         }
-        /* [수정] handleGeneralUpload: 루트 경로(undefined) 예외 처리 */
         window.handleGeneralUpload = async function (input) {
             const file = input.files[0];
             if (!file) return;
@@ -1627,16 +1740,21 @@
                 return;
             }
 
-            // [수정] 현재 경로가 없는(루트) 경우 안전하게 처리
+            // 현재 경로 확인
             const last = state.currentPath.length > 0 ? state.currentPath[state.currentPath.length - 1] : null;
-            const folderId = last ? last.folderId : '';
-            const companyId = last ? last.companyId : '';
+
+            // [핵심] 값이 'null' 문자열이거나 undefined인 경우 명확하게 빈 문자열로 처리
+            let folderId = last ? last.folderId : '';
+            let companyId = last ? last.companyId : '';
+
+            if (folderId === 'null' || folderId === null || folderId === undefined) folderId = '';
+            if (companyId === 'null' || companyId === null || companyId === undefined) companyId = '';
 
             const fd = new FormData();
             fd.append('file', file);
             fd.append('folder_id', folderId);
             fd.append('company_id', companyId);
-            fd.append('section', state.activeTab);
+            fd.append('section', state.activeTab); // 현재 탭 정보 전송 (production, aoi, dip)
 
             try {
                 const res = await fetch(`http://127.0.0.1:5000/api/production/files/upload`, {
@@ -1647,34 +1765,14 @@
                     alert("업로드 완료!");
                     refreshCurrentView();
                 } else {
-                    alert("업로드 실패");
+                    const err = await res.json(); // 에러 메시지 확인
+                    alert(`업로드 실패: ${err.error || '알 수 없는 오류'}`);
                 }
             } catch (e) {
                 alert("서버 연결 오류");
             }
-            // 입력창 초기화 (같은 파일 연속 업로드 가능하게)
+            // 입력창 초기화
             input.value = '';
-        };
-        window.selectItem = function (el, event) {
-            const id = el.dataset.id;
-
-            if (event && event.ctrlKey) {
-                // Ctrl 키 누른 채 클릭: 다중 선택 토글
-                if (state.selectedIds.has(id)) {
-                    state.selectedIds.delete(id);
-                    el.classList.remove('selected');
-                } else {
-                    state.selectedIds.add(id);
-                    el.classList.add('selected');
-                }
-            } else {
-                // 일반 클릭: 단일 선택
-                document.querySelectorAll('.folder-item.selected').forEach(item => item.classList.remove('selected'));
-                state.selectedIds.clear();
-                state.selectedIds.add(id);
-                el.classList.add('selected');
-            }
-            if (event) event.stopPropagation();
         };
 
         /* [추가] 항목 실행 처리 (더블 클릭) */
@@ -1782,36 +1880,10 @@
         window.handleDragEnd = function (e) {
             document.querySelectorAll('.folder-item').forEach(el => {
                 el.classList.remove('dragging');
-                el.style.opacity = '';
+                el.style.opacity = '1';
             });
         };
 
-        window.handleDragStart = function (e) {
-            const item = e.currentTarget;
-            const itemId = item.dataset.id;
-
-            // 만약 선택되지 않은 아이템을 드래그 시작하면, 기존 선택을 다 풀고 얘만 선택
-            if (!state.selectedIds.has(itemId)) {
-                document.querySelectorAll('.folder-item.selected').forEach(i => i.classList.remove('selected'));
-                state.selectedIds.clear();
-                state.selectedIds.add(itemId);
-                item.classList.add('selected');
-            }
-
-            const dragData = {
-                ids: Array.from(state.selectedIds), // 다중 ID 리스트
-                type: item.dataset.type,
-                count: state.selectedIds.size
-            };
-
-            e.dataTransfer.setData("text/plain", JSON.stringify(dragData));
-            e.dataTransfer.effectAllowed = "move";
-
-            // 드래그 중인 원본 아이템들 반투명 처리 (지연 실행)
-            setTimeout(() => {
-                document.querySelectorAll('.folder-item.selected').forEach(i => i.classList.add('dragging'));
-            }, 0);
-        };
         // 폴더 위로 드래그 중일 때 (Drop 허용)
         window.handleDragOver = function (e) {
             e.preventDefault(); // 필수: 브라우저 기본 동작 방지
@@ -1825,48 +1897,6 @@
         // 폴더 영역을 벗어날 때
         window.handleDragLeave = function (e) {
             e.currentTarget.classList.remove('drag-over');
-        };
-
-        window.handleDrop = async function (e) {
-            e.preventDefault();
-            e.stopPropagation();
-
-            const targetFolder = e.currentTarget;
-            targetFolder.classList.remove('drag-over');
-
-            const dataRaw = e.dataTransfer.getData("text/plain");
-            if (!dataRaw) return;
-
-            const dragData = JSON.parse(dataRaw);
-            const targetFolderId = targetFolder.dataset.id;
-
-            if (dragData.type === 'folder') return;
-
-            // [중요] 확인창에서 취소 시, 아무것도 하지 않고 함수 종료 (새로고침 금지)
-            if (!confirm(`${dragData.count}개의 항목을 '${targetFolder.dataset.name}' 폴더로 이동하시겠습니까?`)) {
-                return;
-            }
-
-            try {
-                const res = await fetch(`http://127.0.0.1:5000/api/production/models/transfer`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        action: 'move',
-                        model_ids: dragData.ids,
-                        target_folder_id: targetFolderId
-                    })
-                });
-
-                if (res.ok) {
-                    state.selectedIds.clear(); // 성공 시에만 선택 초기화
-                    refreshCurrentView();      // 성공 시에만 목록 갱신
-                } else {
-                    alert("이동 처리 중 오류가 발생했습니다.");
-                }
-            } catch (err) {
-                alert("서버 통신 오류");
-            }
         };
 
         /* [추가/수정] 클릭 시 모델 뷰 진입 또는 파일 다운로드 분기 */
@@ -2072,72 +2102,22 @@
 
             modal.classList.add('visible');
         }
-        let isMarqueeDrawing = false;
-        let marqueeStart = { x: 0, y: 0 };
-        let marqueeEl = null;
 
-        document.addEventListener('mousedown', function (e) {
-            if (e.button !== 0 || e.target.closest('.folder-item') || e.target.closest('.modal-window')) return;
-            if (!e.target.closest('#view-container')) return;
+        // 4. 단일 선택 (클릭) 기능 보강
+        window.selectItem = function (el, event) {
+            if (event) event.stopPropagation();
+            const id = el.dataset.id;
 
-            isMarqueeDrawing = true;
-            marqueeStart = { x: e.pageX, y: e.pageY };
+            // 이미 선택된 그룹을 클릭한 경우 해제하지 않음 (드래그 준비 상태 유지)
+            if (state.selectedIds.has(id) && state.selectedIds.size > 1) return;
 
-            // [윈도우 방식] 새로운 드래그 시작 시 기존 선택을 모두 해제 (Persistence의 시작)
+            // 일반 단일 클릭 시: 기존 선택 모두 해제 후 현재 항목만 선택
+            document.querySelectorAll('.folder-item.selected').forEach(i => i.classList.remove('selected'));
             state.selectedIds.clear();
-            document.querySelectorAll('.folder-item.selected').forEach(el => el.classList.remove('selected'));
+            state.selectedIds.add(id);
+            el.classList.add('selected');
+        };
 
-            marqueeEl = document.createElement('div');
-            marqueeEl.className = 'selection-marquee';
-            document.body.appendChild(marqueeEl);
-        });
-
-        // [Persisted Logic] 마우스가 움직일 때만 실시간으로 class를 붙임
-        document.addEventListener('mousemove', function (e) {
-            if (!isMarqueeDrawing || !marqueeEl) return;
-            updateMarqueeBox(e.pageX, e.pageY);
-
-            const boxRect = marqueeEl.getBoundingClientRect();
-            const items = document.querySelectorAll('.folder-item');
-
-            items.forEach(item => {
-                const itemRect = item.getBoundingClientRect();
-                const id = item.dataset.id;
-
-                const isIntersecting = !(
-                    boxRect.right < itemRect.left ||
-                    boxRect.left > itemRect.right ||
-                    boxRect.bottom < itemRect.top ||
-                    boxRect.top > itemRect.bottom
-                );
-
-                if (isIntersecting) {
-                    state.selectedIds.add(id);
-                    item.classList.add('selected'); // 하이라이트 적용
-                } else {
-                    state.selectedIds.delete(id);
-                    item.classList.remove('selected'); // 범위 벗어나면 제거
-                }
-            });
-        });
-
-        // 마우스 이동
-        document.addEventListener('mousemove', function (e) {
-            if (!isMarqueeDrawing || !marqueeEl) return;
-            updateMarqueeBox(e.pageX, e.pageY);
-            checkMarqueeCollision(); // 실시간 선택 반영
-        });
-
-        // 마우스 업
-        document.addEventListener('mouseup', function (e) {
-            if (isMarqueeDrawing) {
-                isMarqueeDrawing = false;
-                if (marqueeEl) {
-                    marqueeEl.remove();
-                    marqueeEl = null;
-                }
-            }
-        });
 
         function updateMarqueeBox(currentX, currentY) {
             const width = Math.abs(currentX - marqueeStart.x);
@@ -2355,19 +2335,21 @@
                 else if (state.activeTab === 'management' && lastPath && lastPath.id === 'manager_manager') {
                     html = `<div class="ctx-item" onclick="handleCtxAdd('manager')"><i class="uil uil-user-plus"></i> 새 담당자 추가</div>`;
                 }
-                // 3. [수정] 일반 폴더 내부 또는 자유 탭의 루트 화면 (업체 ID 없어도 됨)
                 else if ((lastPath && lastPath.folderId !== undefined) || isFreeTabRoot) {
                     html = `
-                <div class="ctx-item" onclick="handleCtxAdd('folder')"><i class="uil uil-folder-plus"></i> 새 폴더 추가</div>
-                <div class="ctx-item" onclick="handleCtxAdd('model')"><i class="uil uil-file-plus-alt"></i> 새 모델/파일 추가</div>
-                <div class="ctx-item" onclick="document.getElementById('general-upload-input').click()">
-                    <i class="uil uil-upload"></i> 파일 업로드 (MAX 50MB)
-                </div>
-                <input type="file" id="general-upload-input" style="display:none" onchange="handleGeneralUpload(this)">`;
+        <div class="ctx-item" onclick="handleCtxAdd('folder')"><i class="uil uil-folder-plus"></i> 새 폴더 추가</div>
+        <div class="ctx-item" onclick="handleCtxAdd('model')"><i class="uil uil-file-plus-alt"></i> 새 모델/파일 추가</div>
+        <div class="ctx-item" onclick="document.getElementById('general-upload-input').click()">
+            <i class="uil uil-upload"></i> 파일 업로드 (MAX 50MB)
+        </div>
+        <input type="file" id="general-upload-input" style="display:none" onchange="handleGeneralUpload(this)">`;
 
-                    if (state.clipboard.id) {
+                    // [핵심 수정] 단일 id가 아닌 ids 리스트에 내용이 있는지 확인
+                    if (state.clipboard.ids && state.clipboard.ids.length > 0) {
                         html += `<div class="ctx-divider"></div>
-                         <div class="ctx-item" onclick="handleCtxPaste()"><i class="uil uil-clipboard-notes"></i> 붙여넣기 (${state.clipboard.name})</div>`;
+                 <div class="ctx-item" onclick="handleCtxPaste()">
+                    <i class="uil uil-clipboard-notes"></i> 붙여넣기 (${state.clipboard.count}개)
+                 </div>`;
                     }
                 }
             }
@@ -2502,57 +2484,120 @@
             }
         }
 
-        /* [수정] handleCtxDelete: 삭제 완료 알림 추가 및 새로고침 보장 */
+        /* [전체 교체] handleCtxDelete: 다중 선택된 항목 일괄 삭제 */
         window.handleCtxDelete = async function () {
-            if (!targetItemData) return;
-            if (!confirm(`'${targetItemData.name}'을(를) 삭제하시겠습니까?`)) return;
+            // 1. 우클릭한 대상이 선택 그룹에 없다면 해당 대상만 선택 처리
+            if (targetItemData && !state.selectedIds.has(targetItemData.id)) {
+                const el = document.querySelector(`[data-id="${targetItemData.id}"]`);
+                if (el) selectItem(el);
+            }
 
-            let endpoint = '';
-            if (targetItemData.type === 'company') endpoint = 'companies';
-            else if (targetItemData.type === 'folder') endpoint = 'folders';
-            else if (targetItemData.type === 'model') endpoint = 'models';
+            // 2. 현재 선택된 모든 요소 수집
+            const selectedElements = document.querySelectorAll('.folder-item.selected');
+            if (selectedElements.length === 0) return;
+
+            // 3. 확인 메시지 (개수 표시)
+            if (!confirm(`${selectedElements.length}개의 항목을 정말 삭제하시겠습니까?\n폴더의 경우 하위 내용이 모두 사라집니다.`)) return;
+
+            // 4. ID 분류 (폴더 vs 모델/파일)
+            const modelIds = [];
+            const folderIds = [];
+
+            selectedElements.forEach(item => {
+                const id = item.dataset.id;
+                const type = item.dataset.type;
+                if (type === 'folder' || type === 'company') {
+                    // 업체의 경우 테이블이 다르므로 별도 처리가 필요할 수 있으나 
+                    // 현재 구조상 'company'도 폴더처럼 처리되도록 유도 (필요시 분기)
+                    folderIds.push(id);
+                } else {
+                    modelIds.push(id);
+                }
+            });
 
             try {
-                const res = await fetch(`http://127.0.0.1:5000/api/production/${endpoint}/${targetItemData.id}`, { method: 'DELETE' });
+                const res = await fetch(`http://127.0.0.1:5000/api/production/bulk-delete`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        model_ids: modelIds,
+                        folder_ids: folderIds
+                    })
+                });
 
                 if (res.ok) {
-                    // 클립보드 정리
-                    if (state.clipboard.id === targetItemData.id) {
-                        state.clipboard = { action: null, type: null, id: null, name: null };
-                    }
-                    alert('삭제되었습니다.'); // [추가] 삭제 완료 알림
-                    refreshCurrentView();     // [확인] 위에서 수정한 함수가 호출됨
+                    alert('삭제가 완료되었습니다.');
+                    state.selectedIds.clear(); // 선택 목록 초기화
+                    refreshCurrentView();      // 화면 갱신
                 } else {
-                    alert('삭제 실패');
+                    const errData = await res.json();
+                    alert(`삭제 실패: ${errData.error || '알 수 없는 오류'}`);
                 }
-            } catch (e) { alert('오류 발생'); }
+            } catch (e) {
+                alert('서버와 통신 중 오류가 발생했습니다.');
+            }
         };
 
-        // [추가] 복사/잘라내기/붙여넣기 로직
+        /* ============================================================
+           [수정] 다중 항목 복사 / 잘라내기 / 붙여넣기 로직
+           ============================================================ */
+
+        // 1. 다중 복사: 선택된 모든 ID를 클립보드에 저장
         window.handleCtxCopy = function () {
-            state.clipboard = { action: 'copy', type: 'model', id: targetItemData.id, name: targetItemData.name };
-            alert(`'${targetItemData.name}' 모델을 복사했습니다.`);
+            // 만약 우클릭한 대상이 선택 그룹에 없다면 해당 대상만 선택 처리
+            if (targetItemData && !state.selectedIds.has(targetItemData.id)) {
+                selectItem(document.querySelector(`[data-id="${targetItemData.id}"]`));
+            }
+
+            const ids = Array.from(state.selectedIds);
+            if (ids.length === 0) return;
+
+            state.clipboard = {
+                action: 'copy',
+                type: 'model',
+                ids: ids, // [수정] 단일 id가 아닌 ids 리스트 저장
+                count: ids.length
+            };
+
+            alert(`${ids.length}개의 항목을 복사했습니다.`);
         };
 
+        // 2. 다중 잘라내기: 선택된 모든 ID를 클립보드에 저장
         window.handleCtxCut = function () {
-            state.clipboard = { action: 'cut', type: 'model', id: targetItemData.id, name: targetItemData.name };
-            alert(`'${targetItemData.name}' 모델을 잘라냈습니다.`);
+            if (targetItemData && !state.selectedIds.has(targetItemData.id)) {
+                selectItem(document.querySelector(`[data-id="${targetItemData.id}"]`));
+            }
+
+            const ids = Array.from(state.selectedIds);
+            if (ids.length === 0) return;
+
+            state.clipboard = {
+                action: 'cut',
+                type: 'model',
+                ids: ids,
+                count: ids.length
+            };
+
+            alert(`${ids.length}개의 항목을 잘라냈습니다.`);
         };
 
+        /* [수정] handleCtxPaste: 대상 업체 ID를 포함하여 전송 */
         window.handleCtxPaste = async function () {
-            // 1. 클립보드가 비어있는지 먼저 확인
-            if (!state.clipboard.id) {
-                alert("붙여넣을 항목이 없습니다. 원본 파일이 삭제되었을 수 있습니다.");
+            if (!state.clipboard.ids || state.clipboard.ids.length === 0) {
+                alert("붙여넣을 항목이 없습니다.");
                 return;
             }
 
-            const last = state.currentPath[state.currentPath.length - 1];
-            const targetFolderId = last.folderId;
+            // 현재 경로에서 업체 ID와 폴더 ID 추출
+            const last = state.currentPath.length > 0 ? state.currentPath[state.currentPath.length - 1] : null;
+            const targetFolderId = last ? last.folderId : null;
+            const targetCompanyId = last ? last.companyId : null; // [추가] 현재 업체의 ID
 
             const body = {
                 action: state.clipboard.action === 'copy' ? 'copy' : 'move',
-                model_id: state.clipboard.id,
-                target_folder_id: targetFolderId
+                model_ids: state.clipboard.ids,
+                target_folder_id: targetFolderId,
+                target_company_id: targetCompanyId // [추가] 서버로 전달
             };
 
             try {
@@ -2563,27 +2608,174 @@
                 });
 
                 if (res.ok) {
-                    alert('작업이 완료되었습니다.');
+                    alert("붙여넣기 완료");
                     if (state.clipboard.action === 'cut') {
-                        state.clipboard = { action: null, type: null, id: null, name: null };
+                        state.clipboard = { action: null, type: null, ids: [], count: 0 };
                     }
                     refreshCurrentView();
                 } else {
-                    // [보정] 서버 에러 발생 시 처리
-                    const errData = await res.json();
-                    if (res.status === 404) {
-                        alert("원본 파일을 찾을 수 없습니다. 이미 삭제되었거나 이동된 파일입니다.");
-                        state.clipboard = { action: null, type: null, id: null, name: null }; // 클립보드 강제 초기화
-                    } else {
-                        alert(`실패: ${errData.error || '알 수 없는 오류'}`);
-                    }
+                    alert("붙여넣기 실패");
                 }
-            } catch (e) {
-                alert('서버 통신 오류');
-            }
+            } catch (e) { alert("서버 오류"); }
         };
 
+        /* [보조] 우클릭 메뉴 표시 시 붙여넣기 텍스트 가독성 개선 */
+        // showContextMenu 함수 내부의 붙여넣기 메뉴 부분을 아래와 같이 수정하면 좋습니다.
+        // html += `<div class="ctx-item" onclick="handleCtxPaste()"><i class="uil uil-clipboard-notes"></i> 붙여넣기 (${state.clipboard.count}개)</div>`;
 
+        /* ============================================================
+           [수정] 드래그 박스 잔상 방지 및 이중 방어 로직
+           ============================================================ */
+        let isMarqueeDrawing = false;
+        let marqueeStart = { x: 0, y: 0 };
+        let marqueeEl = null;
+
+        // 공통 박스 제거 함수: 변수와 상관없이 DOM에 남은 모든 잔상을 제거합니다.
+        function clearStrayMarquees() {
+            isMarqueeDrawing = false;
+            // 1. 변수를 통한 제거
+            if (marqueeEl) {
+                marqueeEl.remove();
+                marqueeEl = null;
+            }
+            // 2. 클래스명을 통한 강제 제거 (변수 연결이 끊긴 잔상 해결)
+            document.querySelectorAll('.selection-marquee').forEach(el => el.remove());
+        }
+
+        // 1. 마우스 다운: 시작 시 기존 잔상부터 청소합니다.
+        document.addEventListener('mousedown', function (e) {
+            if (e.button !== 0 || e.target.closest('.folder-item') || e.target.closest('.modal-window')) return;
+            if (!e.target.closest('#view-container')) return;
+
+            // [추가] 새로운 드래그 시작 전 혹시 모를 잔상 완전 제거
+            clearStrayMarquees();
+
+            isMarqueeDrawing = true;
+            marqueeStart = { x: e.pageX, y: e.pageY };
+
+            state.selectedIds.clear();
+            document.querySelectorAll('.folder-item.selected').forEach(el => el.classList.remove('selected'));
+
+            marqueeEl = document.createElement('div');
+            marqueeEl.className = 'selection-marquee';
+            document.body.appendChild(marqueeEl);
+        });
+
+        // 2. 마우스 이동: 실시간 좌표 업데이트 및 선택 처리
+        document.addEventListener('mousemove', function (e) {
+            if (!isMarqueeDrawing || !marqueeEl) return;
+
+            const width = Math.abs(e.pageX - marqueeStart.x);
+            const height = Math.abs(e.pageY - marqueeStart.y);
+            const left = Math.min(e.pageX, marqueeStart.x);
+            const top = Math.min(e.pageY, marqueeStart.y);
+
+            marqueeEl.style.width = `${width}px`;
+            marqueeEl.style.height = `${height}px`;
+            marqueeEl.style.left = `${left}px`;
+            marqueeEl.style.top = `${top}px`;
+
+            const boxRect = marqueeEl.getBoundingClientRect();
+            const items = document.querySelectorAll('.folder-item');
+
+            items.forEach(item => {
+                const itemRect = item.getBoundingClientRect();
+                const id = item.dataset.id;
+                const isIntersecting = !(
+                    boxRect.right < itemRect.left || boxRect.left > itemRect.right ||
+                    boxRect.bottom < itemRect.top || boxRect.top > itemRect.bottom
+                );
+
+                if (isIntersecting) {
+                    state.selectedIds.add(id);
+                    item.classList.add('selected');
+                } else {
+                    state.selectedIds.delete(id);
+                    item.classList.remove('selected');
+                }
+            });
+        });
+
+        // 3. 마우스 업: 안전한 제거 함수를 호출합니다.
+        document.addEventListener('mouseup', function (e) {
+            if (isMarqueeDrawing) {
+                clearStrayMarquees();
+            }
+        });
+
+        // [추가] 예외 방어: 브라우저 창을 벗어나거나 포커스를 잃으면 무조건 제거합니다.
+        window.addEventListener('blur', clearStrayMarquees);
+        document.addEventListener('mouseleave', function (e) {
+            if (e.target === document) clearStrayMarquees();
+        });
+
+        // 4. 드래그 시작: 선택된 모든 항목 정보를 묶음 (다중 이동 지원)
+        window.handleDragStart = function (e) {
+            const item = e.currentTarget;
+            const itemId = item.dataset.id;
+
+            // 이미 선택된 항목을 잡고 드래그하면 선택 그룹 전체를 대상으로 함
+            if (!state.selectedIds.has(itemId)) {
+                // 선택되지 않은 항목을 잡으면 기존 선택 풀고 해당 항목만 선택
+                document.querySelectorAll('.folder-item.selected').forEach(i => i.classList.remove('selected'));
+                state.selectedIds.clear();
+                state.selectedIds.add(itemId);
+                item.classList.add('selected');
+            }
+
+            const dragData = {
+                ids: Array.from(state.selectedIds), // 선택된 모든 파일 ID 전송
+                type: item.dataset.type,
+                count: state.selectedIds.size
+            };
+
+            e.dataTransfer.setData("text/plain", JSON.stringify(dragData));
+            e.dataTransfer.effectAllowed = "move";
+
+            // 드래그 중 시각 효과
+            setTimeout(() => {
+                document.querySelectorAll('.folder-item.selected').forEach(i => i.classList.add('dragging'));
+            }, 0);
+        };
+
+        // 5. 드롭 처리: 폴더 내 이동 및 빈 공간 드롭 방지 (빈 화면 버그 해결)
+        window.handleDrop = async function (e) {
+            e.preventDefault();
+            e.stopPropagation(); // 이벤트가 빈 배경으로 전파되지 않도록 차단
+
+            const targetFolder = e.currentTarget;
+            targetFolder.classList.remove('drag-over');
+
+            const dataRaw = e.dataTransfer.getData("text/plain");
+            if (!dataRaw) return;
+
+            const dragData = JSON.parse(dataRaw);
+            const targetFolderId = targetFolder.dataset.id;
+
+            if (dragData.type === 'folder') return;
+
+            // 확인창 취소 시 아무 동작도 하지 않음 (새로고침 방지)
+            if (!confirm(`${dragData.count}개의 항목을 '${targetFolder.dataset.name}' 폴더로 이동하시겠습니까?`)) return;
+
+            try {
+                const res = await fetch(`http://127.0.0.1:5000/api/production/models/transfer`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'move',
+                        model_ids: dragData.ids,
+                        target_folder_id: targetFolderId
+                    })
+                });
+
+                if (res.ok) {
+                    state.selectedIds.clear();
+                    refreshCurrentView();
+                } else {
+                    alert("이동 실패");
+                }
+            } catch (err) { alert("서버 통신 오류"); }
+        };
 
         // [수정] 탭 전체 대상 전역 검색 기능
         let searchTimer;
@@ -2648,6 +2840,8 @@
             document.getElementById('home-btn').addEventListener('click', () => location.href = 'index.html');
             document.getElementById('forward-btn').addEventListener('click', () => history.forward());
         }
+        window.addEventListener("dragover", e => e.preventDefault(), false);
+        window.addEventListener("drop", e => e.preventDefault(), false);
 
         function updateTime() {
             const now = new Date();
