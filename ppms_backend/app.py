@@ -55,5 +55,6 @@ def create_app():
 
 # --- '엔진 시동 버튼' ---
 if __name__ == '__main__':
+    # debug=True를 주면 어느 단계에서 멈추는지 더 자세한 로그가 찍힙니다.
     app = create_app()
-    app.run(debug=True, port=5000)
+    app.run(host='127.0.0.1', port=5000, debug=True)

@@ -66,12 +66,13 @@
     </div>
 
     <div class="modal-overlay" id="week-selector-dropup">
-        <div class="modal-window small-modal" style="width:auto; max-width:500px; height:auto; max-height:80vh;">
+        <div class="modal-window" style="width: 90%; max-width: 900px; height: auto; max-height: 85vh;">
             <button class="close-btn" id="close-week-modal-btn" onclick="closeWeekSelectorDropup()">&times;</button>
-            <h3 class="modal-title">주차 선택</h3>
-            <div class="modal-content">
+            <h3 class="modal-title" style="font-size: 1.8rem; margin-bottom: 30px;">주차 선택</h3>
+            <div class="modal-content" style="padding: 20px;">
                 <div class="grid-container" id="week-selector-grid"
-                    style="grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));"></div>
+                    style="grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 25px;">
+                </div>
             </div>
         </div>
     </div>
@@ -99,8 +100,6 @@
                                     <button class="import-option-btn" data-source="B">B라인</button>
                                     <button class="import-option-btn" data-source="C">C라인</button>
                                 </div>
-                                <button class="text-btn add-row-btn" title="행 추가">행 추가</button>
-                                <button class="text-btn toggle-delete-btn" title="삭제 모드">행 삭제</button>
                             </div>
                         </div>
                     </div>
@@ -306,7 +305,22 @@
             </div>
         </div>
     </div>
-
+    <div id="schedule-context-menu">
+        <div class="ctx-item" id="ctx-copy-row">
+            <i class="uil uil-copy"></i> 데이터 복사
+        </div>
+        <div class="ctx-item" id="ctx-paste-row">
+            <i class="uil uil-import"></i> 데이터 붙여넣기
+        </div>
+        <div class="ctx-divider"></div>
+        <div class="ctx-item" id="ctx-insert-row">
+            <i class="uil uil-plus-circle"></i> 행 추가
+        </div>
+        <div class="ctx-divider"></div>
+        <div class="ctx-item" id="ctx-delete-row" style="color: #ff6b6b;">
+            <i class="uil uil-trash-alt"></i> 행 삭제
+        </div>
+    </div>
     <datalist id="model-suggestions-list"></datalist>
 
     <script>
@@ -616,13 +630,41 @@
         function openWeekSelectorDropup() {
             const y = currentView.data.year || new Date().getFullYear();
             const m = currentView.data.month ? currentView.data.month - 1 : new Date().getMonth();
+
+            // 오늘 날짜 정보 기준 계산
+            const today = new Date();
+            const todayYear = today.getFullYear();
+            const todayMonth = today.getMonth() + 1;
+            const todayWeek = getCurrentWeekNumber(today);
+
             const weeks = Array.from(getProductionWeeksInMonth(y, m)).sort((a, b) => a - b);
             weekSelectorGrid.innerHTML = '';
+
             weeks.forEach(w => {
-                const d = document.createElement('div'); d.className = 'week-box clickable-box';
-                d.textContent = `${m + 1}월 ${w}주차`; d.dataset.year = y; d.dataset.month = m + 1; d.dataset.week = w;
-                weekSelectorGrid.appendChild(d);
+                const card = document.createElement('div');
+                card.className = 'week-selection-card';
+
+                // 1. 현재 선택(탐색) 중인 주차 표시
+                if (currentView.data.weekNum === w) card.classList.add('active');
+
+                // 2. [요청] 실제 오늘이 포함된 주차에 체크 표시 클래스 부여
+                if (y === todayYear && (m + 1) === todayMonth && w === todayWeek) {
+                    card.classList.add('is-today-week');
+                }
+
+                // 폰트는 CSS에서 Bold 처리됨
+                card.innerHTML = `<span class="week-title">${w}주차</span>`;
+
+                card.onclick = () => {
+                    closeWeekSelectorDropup();
+                    openModal({ year: y, month: m + 1, weekNum: w });
+                };
+
+                weekSelectorGrid.appendChild(card);
             });
+
+            // 그리드 자동 배치
+            weekSelectorGrid.style.gridTemplateColumns = weeks.length <= 4 ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)';
             weekSelectorDropup.classList.add('visible');
         }
         function closeWeekSelectorDropup() { weekSelectorDropup.classList.remove('visible'); }
@@ -669,7 +711,10 @@
                 <td><select data-field="orderMonth" class="form-select" ${ro}><option value="">-</option>${mOpts}</select></td>
                 <td><select data-field="tb-modal" class="form-select" ${ro}><option value="Top" ${data.tb === 'Top' ? 'selected' : ''}>Top</option><option value="Bot" ${data.tb === 'Bot' ? 'selected' : ''}>Bot</option><option value="T/O" ${data.tb === 'T/O' ? 'selected' : ''}>T/O</option><option value="B/O" ${data.tb === 'B/O' ? 'selected' : ''}>B/O</option></select></td>
                 <td><input type="text" data-field="lot-modal" class="form-input" value="${data.lot || ''}" ${ro}></td>
-                <td style="display:flex;gap:5px;"><select class="start-date-select form-select" ${ro}></select>~<select class="end-date-select form-select" ${ro}></select></td>
+                <td style="display:flex; gap:5px; align-items:center; justify-content:center;">
+                    <select class="start-date-select form-select" ${ro}></select>
+                    <span style="color:#fff;">~</span>
+                    <select class="end-date-select form-select" ${ro}></select></td>
             `;
             populateDateSelectors(currentSelectedWeekInfo, row);
 
@@ -695,6 +740,7 @@
 
             return row;
         }
+
         /* [신규 추가] 업체별 기존 모델 목록을 가져와 자동완성 리스트 생성 */
         async function updateModelSuggestions(companyName) {
             const datalist = document.getElementById('model-suggestions-list');
@@ -1267,25 +1313,29 @@
             document.body.appendChild(ctx);
             document.addEventListener('click', () => ctx.style.display = 'none');
         }
-        // 1. 기존 토글 함수를 모달 열기 함수로 대체
+        // 새 폴더 입력 모달 토글 (수정 버전)
         function toggleNewFolderInput(show) {
+            const modal = document.getElementById('folder-pop-modal');
+            const input = document.getElementById('pop-new-folder-name');
+
             if (show) {
-                const modal = document.getElementById('folder-pop-modal');
-                const input = document.getElementById('pop-new-folder-name');
                 modal.classList.add('active');
                 input.value = '';
-                input.focus();
+                // 애니메이션이 완전히 끝날 즈음 포커스를 주어 부드러움 유지
+                setTimeout(() => {
+                    input.focus();
+                }, 150);
             } else {
-                closeFolderPopModal();
+                modal.classList.remove('active');
             }
         }
 
-        // 2. 모달 닫기
+        // 모달 닫기
         function closeFolderPopModal() {
             document.getElementById('folder-pop-modal').classList.remove('active');
         }
 
-        // 3. 실제 생성 실행 (기존 createNewFolderInModal 로직 활용)
+        // [핵심] 폴더 생성 및 목록 갱신 연동
         async function submitNewFolderPop() {
             const name = document.getElementById('pop-new-folder-name').value.trim();
             if (!name) {
@@ -1293,6 +1343,7 @@
                 return;
             }
 
+            // 현재 모달에서 탐색 중인 경로의 마지막 폴더 ID를 부모로 지정
             const parentId = modalCurrentPath.length > 0 ? modalCurrentPath[modalCurrentPath.length - 1].id : null;
 
             try {
@@ -1308,14 +1359,14 @@
                 });
 
                 if (res.ok) {
-                    closeFolderPopModal(); // 성공 시 모달 닫기
-                    // 부모 모달(리스트) 새로고침
+                    closeFolderPopModal(); // 모달 "뿅" 하고 사라짐
+                    // [중요] 기존 목록 갱신 함수 호출 (부모 모달 리스트 새로고침)
                     openNewModelModal(pendingModelData.model, pendingModelData.company_id, parentId);
                 } else {
-                    showAppAlert("폴더 생성 실패", "error");
+                    showAppAlert("이미 존재하는 폴더명이거나 생성에 실패했습니다.", "error");
                 }
             } catch (e) {
-                showAppAlert("서버 통신 오류", "error");
+                showAppAlert("서버와 통신할 수 없습니다.", "error");
             }
         }
 
@@ -1439,6 +1490,154 @@
             pendingModelData = null; modalCurrentPath = [];
         }
 
+        window.addEventListener('mousedown', function (e) {
+            // 1. 메뉴 요소가 존재하는지 확인
+            const menu = document.getElementById('schedule-context-menu');
+
+            if (menu) {
+                // 2. 클릭한 대상(e.target)이 메뉴 내부에 포함되어 있지 않다면 닫음
+                if (!menu.contains(e.target)) {
+                    hideScheduleMenu();
+                }
+            }
+        });
+        /* ==============================================================================
+   [추가] 일정 등록 전용 컨텍스트 메뉴 통합 로직 (복사/붙여넣기/추가/취소)
+   ============================================================================== */
+
+        /* [수정] 컨텍스트 메뉴 최종 통합 로직 */
+
+        let targetRowForMenu = null;
+        let clipboardData = null;
+        const scheduleMenu = document.getElementById('schedule-context-menu');
+
+        function hideScheduleMenu() {
+            const menu = document.getElementById('schedule-context-menu');
+            if (menu) {
+                menu.style.display = 'none';
+            }
+        }
+
+        // 1. 우클릭 메뉴 표시
+        /* [수정] 화면 경계를 인식하는 스마트 위치 계산 로직 */
+        document.getElementById('schedule-modal').addEventListener('contextmenu', function (e) {
+            const row = e.target.closest('tr');
+            if (row && row.closest('tbody')) {
+                e.preventDefault();
+                e.stopPropagation();
+                targetRowForMenu = row;
+
+                // 1. 먼저 메뉴를 보이게 해야 크기(width, height)를 계산할 수 있습니다.
+                scheduleMenu.style.display = 'block';
+
+                // 2. 브라우저 창 크기와 메뉴의 크기 가져오기
+                const winWidth = window.innerWidth;
+                const winHeight = window.innerHeight;
+                const menuWidth = scheduleMenu.offsetWidth;
+                const menuHeight = scheduleMenu.offsetHeight;
+
+                // 3. 마우스 클릭 위치 (화면 기준)
+                let posX = e.clientX;
+                let posY = e.clientY;
+
+                // 4. 가로 경계 체크: 오른쪽 끝을 벗어나면 왼쪽으로 이동
+                if (posX + menuWidth > winWidth) {
+                    posX = winWidth - menuWidth - 5; // 화면 끝에서 5px 여유
+                }
+
+                // 5. 세로 경계 체크: 아래쪽 끝을 벗어나면 위쪽으로 이동
+                if (posY + menuHeight > winHeight) {
+                    posY = winHeight - menuHeight - 5; // 화면 끝에서 5px 여유
+                }
+
+                // 6. 계산된 위치 적용
+                scheduleMenu.style.left = posX + 'px';
+                scheduleMenu.style.top = posY + 'px';
+
+                const pasteBtn = document.getElementById('ctx-paste-row');
+                if (pasteBtn) pasteBtn.style.opacity = clipboardData ? "1" : "0.4";
+            } else {
+                hideScheduleMenu();
+            }
+        });
+
+        // 2. 외부 클릭 시 메뉴 닫기 (취소 버튼 역할 대체)
+        window.addEventListener('click', function (e) {
+            if (scheduleMenu.style.display === 'block' && !scheduleMenu.contains(e.target)) {
+                hideScheduleMenu();
+            }
+        });
+
+        // [기능 1] 데이터 복사
+        document.getElementById('ctx-copy-row').onclick = function (e) {
+            e.stopPropagation();
+            if (!targetRowForMenu) return;
+            clipboardData = {
+                company: targetRowForMenu.querySelector('[data-field="company-modal"]').value,
+                orderYear: targetRowForMenu.querySelector('[data-field="orderYear"]').value,
+                model: targetRowForMenu.querySelector('[data-field="model-modal"]').value,
+                orderMonth: targetRowForMenu.querySelector('[data-field="orderMonth"]').value,
+                tb: targetRowForMenu.querySelector('[data-field="tb-modal"]').value,
+                lot: targetRowForMenu.querySelector('[data-field="lot-modal"]').value,
+                startDate: targetRowForMenu.querySelector('.start-date-select').value,
+                endDate: targetRowForMenu.querySelector('.end-date-select').value
+            };
+            hideScheduleMenu();
+        };
+
+        // [기능 2] 데이터 붙여넣기
+        // [수정] 이미 내용이 있는 행에 붙여넣을 때 확인창 띄우기
+        document.getElementById('ctx-paste-row').onclick = function (e) {
+            e.stopPropagation();
+            if (!targetRowForMenu || !clipboardData) return;
+
+            // 1. 현재 행이 비어있는지 체크 (업체, 모델명, LOT 중 하나라도 있으면 내용이 있는 것으로 간주)
+            const currentCompany = targetRowForMenu.querySelector('[data-field="company-modal"]').value;
+            const currentModel = targetRowForMenu.querySelector('[data-field="model-modal"]').value;
+            const currentLot = targetRowForMenu.querySelector('[data-field="lot-modal"]').value;
+
+            const isRowEmpty = !currentCompany && !currentModel && !currentLot;
+
+            // 2. 내용이 있는 경우에만 확인창 띄우기
+            if (!isRowEmpty) {
+                if (!confirm("해당 행에 이미 데이터가 존재합니다.\n복사한 데이터로 덮어쓰시겠습니까?")) {
+                    hideScheduleMenu();
+                    return; // '취소' 클릭 시 중단
+                }
+            }
+
+            // 3. 붙여넣기 실행 (기존 로직 동일)
+            targetRowForMenu.querySelector('[data-field="company-modal"]').value = clipboardData.company;
+            targetRowForMenu.querySelector('[data-field="orderYear"]').value = clipboardData.orderYear;
+            targetRowForMenu.querySelector('[data-field="model-modal"]').value = clipboardData.model;
+            targetRowForMenu.querySelector('[data-field="orderMonth"]').value = clipboardData.orderMonth;
+            targetRowForMenu.querySelector('[data-field="tb-modal"]').value = clipboardData.tb;
+            targetRowForMenu.querySelector('[data-field="lot-modal"]').value = clipboardData.lot;
+            targetRowForMenu.querySelector('.start-date-select').value = clipboardData.startDate;
+            targetRowForMenu.querySelector('.end-date-select').value = clipboardData.endDate;
+
+            console.log("데이터 덮어쓰기 완료");
+            hideScheduleMenu();
+        };
+
+        // [기능 3] 행 추가 (하단 즉시 추가)
+        document.getElementById('ctx-insert-row').onclick = function (e) {
+            e.stopPropagation();
+            if (!targetRowForMenu) return;
+            const tbody = targetRowForMenu.closest('tbody');
+            const line = targetRowForMenu.closest('.line-schedule-section').dataset.line;
+            addNewScheduleRow(tbody, line, {}, targetRowForMenu);
+            hideScheduleMenu();
+        };
+
+        // [기능 4] 행 삭제 (취소 버튼 위치에서 이관됨)
+        document.getElementById('ctx-delete-row').onclick = function (e) {
+            e.stopPropagation();
+            if (!targetRowForMenu) return;
+            // 기존에 정의된 handleRowDelete 함수를 호출하여 애니메이션과 함께 삭제
+            handleRowDelete(targetRowForMenu);
+            hideScheduleMenu();
+        };
 
     </script>
 

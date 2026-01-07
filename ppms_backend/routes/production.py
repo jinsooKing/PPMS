@@ -35,7 +35,6 @@ def get_schedules():
         return jsonify([s.to_dict() for s in schedules_from_db])
     except Exception as e: return jsonify({"error": str(e)}), 500
 
-# [전체 교체] models.py 변경 사항(LOT -> Batch/Total)을 반영한 저장 로직
 @bp.route('/schedules', methods=['POST'])
 def save_schedules():
     try:
@@ -43,63 +42,73 @@ def save_schedules():
         week_info = data['weekInfo']
         schedules = data['schedules']
 
-        # 1. 해당 주차의 기존 데이터 삭제 (덮어쓰기 방식)
-        # 주의: 이렇게 하면 기존의 Notes(비고)가 삭제될 수 있으므로, 
-        # 실제 운영 시에는 기존 데이터를 조회하여 Notes를 백업하거나 Update 방식을 권장합니다.
-        ProductionSchedule.query.filter_by(
-            prod_year=week_info['year'],
-            prod_month=week_info['month'],
-            prod_week=week_info['weekNum']
-        ).delete()
+        # 1. 이번에 넘어온 ID 목록 수집 (삭제된 행을 찾기 위함)
+        incoming_ids = [s.get('id') for s in schedules if s.get('id')]
+
+        # 2. 이번 주차 데이터 중, 프론트에서 넘어오지 않은(삭제된) 데이터 제거
+        ProductionSchedule.query.filter(
+            ProductionSchedule.prod_year == week_info['year'],
+            ProductionSchedule.prod_month == week_info['month'],
+            ProductionSchedule.prod_week == week_info['weekNum'],
+            ProductionSchedule.id.not_in(incoming_ids) if incoming_ids else True
+        ).delete(synchronize_session=False)
 
         for s in schedules:
-            # [핵심 수정] 프론트엔드의 문자열 LOT("100/200" 또는 "100")을 정수형 Batch/Total로 변환
+            # LOT 문자열 파싱 로직 (기존 유지)
             lot_str = str(s.get('lot', '')).strip()
-            batch_qty = 0
-            total_qty = 0
-            
+            batch_qty, total_qty = 0, 0
             if '/' in lot_str:
                 parts = lot_str.split('/')
                 try:
                     batch_qty = int(parts[0])
-                    # 뒤에 숫자가 있을 때만 파싱
-                    if len(parts) > 1 and parts[1].strip():
-                        total_qty = int(parts[1])
-                except ValueError:
-                    pass # 숫자가 아닌 경우 0으로 처리
+                    if len(parts) > 1 and parts[1].strip(): total_qty = int(parts[1])
+                except ValueError: pass
             elif lot_str:
                 try:
-                    # "/"가 없으면 입력값을 Batch로, Total은 동일하게(또는 0) 처리
                     batch_qty = int(lot_str)
                     total_qty = batch_qty 
-                except ValueError:
-                    pass
+                except ValueError: pass
 
-            new_schedule = ProductionSchedule(
-                prod_year=week_info['year'],
-                prod_month=week_info['month'],
-                prod_week=week_info['weekNum'],
-                line=s.get('line'),
-                company=s.get('company'),
-                model=s.get('model'),
-                order_year=s.get('orderYear'),
-                order_month=s.get('orderMonth'),
-                tb=s.get('tb'),
-                # [수정] lot 컬럼 제거 -> batch_quantity, total_quantity 매핑
-                batch_quantity=batch_qty,
-                total_quantity=total_qty,
-                manager=s.get('manager'),
-                start_date=s.get('startDate'),
-                end_date=s.get('endDate'),
-                actual_prod=s.get('actualProd', 0)
-            )
-            db.session.add(new_schedule)
+            schedule_id = s.get('id')
+            
+            if schedule_id:
+                # [핵심] 기존 데이터가 있는 경우: '계획' 필드만 업데이트 (현황 필드는 유지)
+                existing = db.session.get(ProductionSchedule, schedule_id)
+                if existing:
+                    existing.line = s.get('line')
+                    existing.company = s.get('company')
+                    existing.model = s.get('model')
+                    existing.order_year = s.get('orderYear')
+                    existing.order_month = s.get('orderMonth')
+                    existing.tb = s.get('tb')
+                    existing.batch_quantity = batch_qty
+                    existing.total_quantity = total_qty
+                    existing.start_date = s.get('startDate')
+                    existing.end_date = s.get('endDate')
+                    # actual_prod, notes 등은 수정하지 않음으로써 데이터 보존
+            else:
+                # 새로운 데이터인 경우: 새로 추가
+                new_schedule = ProductionSchedule(
+                    prod_year=week_info['year'],
+                    prod_month=week_info['month'],
+                    prod_week=week_info['weekNum'],
+                    line=s.get('line'),
+                    company=s.get('company'),
+                    model=s.get('model'),
+                    order_year=s.get('orderYear'),
+                    order_month=s.get('orderMonth'),
+                    tb=s.get('tb'),
+                    batch_quantity=batch_qty,
+                    total_quantity=total_qty,
+                    start_date=s.get('startDate'),
+                    end_date=s.get('endDate')
+                )
+                db.session.add(new_schedule)
         
         db.session.commit()
-        return jsonify({"message": "저장되었습니다."}), 201
+        return jsonify({"message": "수정사항이 반영되었습니다."}), 201
     except Exception as e: 
         db.session.rollback()
-        # 디버깅을 위해 에러 로그 출력
         print(f"Error saving schedules: {str(e)}")
         return jsonify({"error": str(e)}), 500
 

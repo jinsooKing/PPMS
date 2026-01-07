@@ -262,18 +262,20 @@ table.editable-table select:focus {
    [4. 비고(Note) 아이콘 & 전역 툴팁 스타일]
    ========================================= */
 
-/* 모델명 셀 래퍼: 상대 위치 기준 */
 .model-cell-wrapper {
     position: relative;
-    width: 100%; height: 100%;
-    display: block;
+    width: 100%; 
+    height: 100%;
+    display: flex;          /* block에서 flex로 변경 */
+    align-items: center;    /* 세로 중앙 정렬 */
+    justify-content: center;
 }
 
-/* 모델명 입력창: 아이콘 공간(30px) 확보 및 대칭 패딩 */
+/* [수정] 모델명 입력창: 상하 패딩을 5px로 수정하여 정렬 일치 */
 .model-cell-wrapper input {
     width: 100%;
     box-sizing: border-box;
-    padding: 0 30px !important; /* 좌우 대칭 패딩으로 중앙 정렬 유지 */
+    padding: 5px 30px !important; /* 상하 0 -> 5px로 수정하여 다른 셀과 높이 통일 */
     text-align: center; 
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -546,74 +548,237 @@ table.editable-table select:focus {
     width: 220px !important; /* 등록 버튼은 조금 더 넓게 강조 */
 }
 
-/* 6. 모달 전용 우클릭 메뉴 */
+/* [수정] 신규 모델 등록 모달 전용 컨텍스트 메뉴 스타일 */
 #modal-ctx-menu {
-    position: fixed;
-    z-index: 10000;
-    background: #2a2b38;
-    border: 1px solid var(--point-gold);
-    border-radius: 8px;
-    padding: 5px 0;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    position: fixed; /* 잔상 방지를 위해 fixed 사용 */
+    z-index: 30000;  /* 등록 모달보다 높은 레이어 */
+    width: 150px;
+    background: #2b2c3b; /* 검정~회색 계열 */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6);
     display: none;
+    overflow: hidden;
+    font-family: 'BMJUA', sans-serif;
 }
 
 .modal-ctx-item {
-    padding: 10px 20px;
-    color: #fff;
-    font-size: 0.9rem;
+    padding: 10px 14px;
+    color: rgba(255, 255, 255, 0.85); /* 옅은 흰색 */
+    font-size: 0.85rem;
+    font-weight: bold;
     cursor: pointer;
+    transition: all 0.2s ease;
     display: flex;
     align-items: center;
     gap: 10px;
 }
 
+/* 호버 시: 금색 배경 + 남색 글씨 */
 .modal-ctx-item:hover {
-    background: var(--point-gold);
-    color: #1a1b21;
+    background: var(--point-gold) !important;
+    color: var(--accent-blue) !important;
 }
 
-/* 새 폴더 팝업 전용 오버레이 (기존 모달보다 z-index 높게 설정) */
+/* [최적화] 새 폴더 팝업 오버레이 */
 .pop-modal-overlay {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0, 0, 0, 0.4); /* 배경은 살짝만 어둡게 */
-    backdrop-filter: blur(2px);
-    display: none; justify-content: center; align-items: center;
-    z-index: 20000; /* 최상위 레이어 */
+    /* 성능 저하 주범인 blur 강도를 낮추거나 제거 고려 */
+    background: rgba(0, 0, 0, 0.5); 
+    backdrop-filter: blur(2px); /* 5px에서 2px로 낮춤 */
+    display: flex;
+    justify-content: center; align-items: center;
+    z-index: 20000;
+    visibility: hidden;
+    opacity: 0;
+    /* transition 시간을 0.2s로 단축하여 체감 속도 향상 */
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+    will-change: opacity; /* 브라우저에 미리 알림 */
 }
 
-/* 팝업 창 본체 */
+/* [최적화] 팝업 창 본체 */
 .pop-modal-window {
-    background: #2a2b38; /* 기존 테마 유지 */
-    border: 2px solid var(--point-gold);
-    border-radius: 20px;
-    width: 320px; padding: 20px;
-    box-shadow: 0 15px 40px rgba(0,0,0,0.5);
+    background: #2a2b38; /* */
+    border: 2px solid var(--point-gold); /* */
+    border-radius: 24px;
+    width: 320px; 
+    padding: 25px;
+    /* shadow 값을 단순화하여 연산량 감소 */
+    box-shadow: 0 10px 30px rgba(0,0,0,0.4); 
     text-align: center;
     
-    /* "뿅" 애니메이션 초기 상태 */
-    transform: scale(0.5); opacity: 0;
-    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    /* scale 변화폭을 줄여서 더 빠르게 보이게 함 */
+    transform: scale(0.9); 
+    opacity: 0;
+    /* 0.4s에서 0.2s로 변경 및 GPU 가속 유도 */
+    transition: transform 0.2s cubic-bezier(0.17, 0.84, 0.44, 1), opacity 0.2s ease;
+    will-change: transform, opacity; /* GPU 가속 활성화 */
 }
 
-/* 활성화 시 효과 */
-.pop-modal-overlay.active { display: flex; }
-.pop-modal-overlay.active .pop-modal-window { transform: scale(1); opacity: 1; }
+.pop-modal-overlay.active {
+    visibility: visible;
+    opacity: 1;
+}
 
-.pop-modal-header { color: var(--point-gold); margin-bottom: 15px; font-family: 'BMJUA'; font-size: 1.2rem; }
-.pop-modal-header i { font-size: 1.5rem; display: block; margin-bottom: 5px; }
-
+.pop-modal-overlay.active .pop-modal-window {
+    transform: scale(1);
+    opacity: 1;
+}
+.pop-modal-header { color: var(--point-gold); margin-bottom: 20px; font-family: 'BMJUA'; font-size: 1.3rem; }
+.pop-modal-header i { font-size: 1.8rem; display: block; margin-bottom: 8px; color: var(--point-gold); }
 .pop-modal-body input {
-    width: 100%; padding: 12px; border-radius: 12px;
-    border: 1px solid rgba(255,255,255,0.1); background: #15151a;
-    color: #fff; text-align: center; outline: none; margin-bottom: 15px;
+    width: 100%; 
+    box-sizing: border-box; /* 패딩이 너비에 포함되도록 강제 */
+    padding: 14px; 
+    border-radius: 12px;
+    border: 2px solid rgba(255, 235, 167, 0.1); 
+    background: #15151a;
+    color: #fff; 
+    text-align: center; 
+    outline: none; 
+    margin-bottom: 20px;
+    font-family: 'Poppins', sans-serif;
+    transition: border-color 0.3s;
 }
 .pop-modal-body input:focus { border-color: var(--point-gold); }
 
-.pop-modal-footer { display: flex; gap: 10px; }
+.pop-modal-footer { display: flex; gap: 12px; }
 .pop-modal-footer button {
-    flex: 1; padding: 10px; border: none; border-radius: 10px;
+    flex: 1; padding: 12px; border: none; border-radius: 12px;
     font-family: 'BMJUA'; cursor: pointer; font-weight: bold;
+    transition: transform 0.2s, filter 0.2s;
 }
+.pop-modal-footer button:active { transform: scale(0.95); }
+
 .pop-btn-confirm { background: var(--point-gold); color: var(--accent-blue); }
 .pop-btn-cancel { background: #444; color: #ccc; }
+
+/* 1. 주차 선택 카드 기본 스타일 (회색빛 폰트 + 솔리드 배경) */
+.week-selection-card {
+    background: #2a2b38 !important; /* 글래스모피즘 제거 후 솔리드 배경 적용 */
+    border: 1px solid rgba(255, 255, 255, 0.05) !important;
+    border-radius: 15px !important;
+    padding: 25px 10px !important;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    position: relative;
+    overflow: visible;
+
+    /* [수정] 눈이 편안한 회색빛 폰트 적용 */
+    color: var(--text-color) !important; 
+    font-weight: bold !important;
+    
+    /* 입체감 있는 그림자 */
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4) !important;
+    transition: all 0.2s ease !important;
+}
+
+/* 2. 호버 시 스타일 (금색 배경 + 남색 글씨) */
+.week-selection-card:hover {
+    background: var(--point-gold) !important;
+    color: var(--accent-blue) !important;
+    transform: translateY(-3px);
+    box-shadow: 0 15px 30px rgba(255, 235, 167, 0.2) !important;
+}
+
+/* 호버 시 내부 폰트 색상도 남색으로 변경 */
+.week-selection-card:hover .week-title {
+    color: var(--accent-blue) !important;
+}
+
+/* 3. 현재 주차(Today) 스타일 (금색 테두리 제거 + 호버 기능 복구) */
+.week-selection-card.is-today-week {
+    border: 1px solid rgba(255, 255, 255, 0.05) !important; /* 금색 테두리 제거 */
+    color: var(--text-color) !important;
+    background: #2a2b38; /* !important를 제거하여 호버 시 배경색이 바뀔 수 있게 함 */
+}
+
+/* 현재 주차 전용 호버 스타일 추가 */
+.week-selection-card.is-today-week:hover {
+    background: var(--point-gold) !important;
+    color: var(--accent-blue) !important;
+}
+
+/* 4. 체크 아이콘 스타일 (유지 및 호버 시 가독성 보정) */
+.week-selection-card.is-today-week::after {
+    content: '✔';
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    width: 26px;
+    height: 26px;
+    background: var(--point-gold);
+    color: var(--accent-blue);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 900;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+    z-index: 10;
+    border: 2px solid var(--bg-dark); /* common.css 변수 사용 */
+}
+
+/* 호버 시 체크 아이콘 색상 반전 */
+.week-selection-card.is-today-week:hover::after {
+    background: var(--accent-blue);
+    color: var(--point-gold);
+    border-color: var(--point-gold);
+}
+
+/* 5. 선택된 주차(Active) 스타일 (남색 폰트 방지) */
+.week-selection-card.active {
+    border: 1px solid rgba(255, 235, 167, 0.3) !important;
+    background: #323344 !important;
+    color: var(--text-color) !important; 
+}
+
+/* 6. 주차 타이틀 스타일 */
+.week-title {
+    font-family: 'BMJUA', sans-serif;
+    font-size: 1.4rem;
+    color: inherit !important;
+    pointer-events: none;
+}
+
+/* [수정] 컨텍스트 메뉴 크기 축소 및 테마 적용 */
+#schedule-context-menu {
+    position: fixed;
+    z-index: 20000;
+    width: 150px; /* 200px -> 150px로 축소 */
+    background: #2b2c3b;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6);
+    display: none;
+    overflow: hidden;
+    font-family: 'BMJUA', sans-serif;
+}
+
+.ctx-item {
+    padding: 10px 14px; /* 패딩 축소 */
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 0.85rem; /* 글자 크기 축소 */
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* 호버: 금색 배경 + 남색 글씨 */
+.ctx-item:hover {
+    background: var(--point-gold) !important;
+    color: var(--accent-blue) !important;
+}
+
+.ctx-divider {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.06);
+    margin: 3px 0;
+}
