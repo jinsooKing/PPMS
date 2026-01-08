@@ -211,11 +211,34 @@ table.editable-table tbody tr:hover { background-color: rgba(255,255,255,0.03); 
     }
 }
 
-/* --- 버튼 스타일 --- */
-.row-delete-btn { 
-    position: absolute; right: 5px; top: 50%; transform: translateY(-50%);
-    background: var(--danger-red); color: #fff; border: none; border-radius: 4px;
-    padding: 2px 8px; font-size: 0.7rem; cursor: pointer; display: none; 
+.row-delete-btn {
+    position: absolute;
+    right: 2px; /* 여백 축소 */
+    top: 50%;
+    transform: translateY(-50%);
+    background: var(--danger-red);
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    
+    /* [핵심] 고정 패딩 대신 clamp를 사용하여 화면 크기에 따라 패딩 조절 */
+    padding: 2px clamp(4px, 0.8vw, 8px) !important;
+    /* 폰트 크기도 셀 글자 크기와 조화롭게 조절 */
+    font-size: clamp(9px, 0.7rem, 11px) !important;
+    
+    cursor: pointer;
+    display: none;
+}
+.model-group-wrapper.delete-mode-active .cumulative-cell {
+    /* 버튼이 차지하는 공간만큼 패딩을 주어 숫자를 왼쪽으로 밀어냄 */
+    padding-right: 32px !important;
+    transition: padding 0.2s ease;
+}
+
+/* 누계수량 텍스트가 항상 버튼보다 아래에 오지 않도록 인라인 블록화 */
+.cumulative-cell {
+    position: relative;
+    white-space: nowrap; /* 숫자가 줄바꿈되지 않도록 설정 */
 }
 .model-group-wrapper.delete-mode-active .row-delete-btn { display: inline-block; }
 .cumulative-cell { position: relative; color: var(--point-gold); font-weight: bold; }
@@ -273,9 +296,14 @@ table.editable-table tbody tr:hover { background-color: rgba(255,255,255,0.03); 
 
 .register-button-group { display: flex; gap: 10px; margin-top: 10px; }
 #dip-register-btn, #save-group-btn { flex: 1; background: var(--accent-blue) !important; color: #fff; text-align: center; justify-content: center; }
-#dip-register-btn:hover, #save-group-btn:hover { background: #0056b3 !important; }
 #dip-cancel-btn { flex: 1; background: #444 !important; text-align: center; justify-content: center; }
-
+/* [수정] 등록 및 저장 버튼 호버 스타일 통일 */
+#dip-register-btn:hover, #save-group-btn:hover {
+    background: var(--point-gold) !important; /* 금색 배경 */
+    color: var(--accent-blue) !important;      /* 남색 폰트 */
+    border-color: transparent !important;
+    box-shadow: 0 0 15px rgba(255, 235, 167, 0.4) !important;
+}
 /* 아코디언 */
 .company-category-header {
     display: flex; justify-content: space-between; align-items: center;
@@ -299,4 +327,41 @@ table.editable-table tbody tr:hover { background-color: rgba(255,255,255,0.03); 
     .header-right { display: none; }
     #dip-registration-modal .modal-content, #group-manage-modal .modal-content { flex-direction: column; }
     .dip-table-pair { flex-direction: column; }
+}
+
+/* [추가] DIP 전용 컨텍스트 메뉴 스타일 */
+#dip-context-menu {
+    position: fixed;
+    z-index: 20000;
+    width: 150px;
+    background: #2b2c3b;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6);
+    display: none;
+    overflow: hidden;
+    font-family: 'BMJUA', sans-serif;
+}
+
+.ctx-item {
+    padding: 10px 14px;
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 0.85rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.ctx-item:hover {
+    background: var(--point-gold) !important;
+    color: var(--accent-blue) !important;
+}
+
+.ctx-divider {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.06);
+    margin: 3px 0;
 }

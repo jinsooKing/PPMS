@@ -53,10 +53,6 @@
                             <i class="uil uil-map-pin-alt"></i> <span>고정</span>
                         </button>
 
-                        <button id="toggle-view-btn" class="header-btn">
-                            <i class="uil uil-eye"></i> <span>자세히 보기</span>
-                        </button>
-
                         <button id="manage-btn" class="header-btn">
                             <i class="uil uil-cog"></i> <span>관리</span>
                         </button>
@@ -245,8 +241,8 @@
             let pinnedRowId = null;
             let isPinMode = false;
             let isDeleteMode = false;
-            let isDetailMode = false;
-            const expandedGroups = new Set();
+            let isDetailMode = true;
+            const expandedGroups = new Set(['a', 'b', 'c', 'd']);
             let currentSelectedDate = new Date().toISOString().split('T')[0];
 
             // DOM 요소
@@ -721,87 +717,44 @@
                 adjustTableScrollbar();
             };
 
-            if (toggleViewBtn) {
-                toggleViewBtn.addEventListener('click', () => {
-                    isDetailMode = !isDetailMode;
-                    updateViewMode();
-                    adjustTableScrollbar();
-                });
-            }
-
             // ----------------------------------------------------------------
             // [6] 화면 모드 제어 (수정: 자세히 보기 시 모델명 세부열 제외, 불량 상세 그룹만 펼침)
             // ----------------------------------------------------------------
             function updateViewMode() {
                 const table = document.getElementById('aoi-table-main');
-                const btnIcon = toggleViewBtn.querySelector('i');
-                const btnText = toggleViewBtn.querySelector('span');
+                if (!table) return;
 
-                // 그룹 목록 정의
-                const allGroups = ['basic', 'a', 'b', 'c', 'd'];
-                // 자세히 보기 시 자동으로 펼쳐질 그룹 (모델명 세부열 'basic' 제외)
+                // 그룹 목록 정의 (모델 세부 정보 'basic' 제외)
                 const defectGroups = ['a', 'b', 'c', 'd'];
-                const modelDetailGroup = 'basic'; // 모델명 세부열(Point, 진행도, 양품)
+                const modelDetailGroup = 'basic';
 
-                // 1. [안전장치] 고정 헤더들은 무조건 rowspan="2" 유지 (밀림 방지)
-                const firstRowHeaders = table.querySelectorAll('thead tr:first-child th');
-                firstRowHeaders.forEach(th => {
-                    if (!th.classList.contains('sum-header') && !th.classList.contains('group-header-box')) {
-                        th.setAttribute('rowspan', '2');
-                    }
+                // 1. 간편 보기 클래스 제거 및 테이블 초기화
+                table.classList.remove('simple-view-mode');
+
+                // 2. 불량 상세 그룹들 강제 표시
+                defectGroups.forEach(g => {
+                    table.querySelectorAll(`.detail-col.group-${g}`).forEach(col => {
+                        col.classList.add('visible');
+                    });
                 });
 
-                // 2. 동적 스타일 초기화
-                const allDynamicEls = table.querySelectorAll('.sum-header, .group-sum-cell, .group-sum-col, .detail-col');
-                allDynamicEls.forEach(el => el.style.display = '');
+                // 3. 모델 세부(basic) 그룹은 사용자가 클릭한 상태에 따라 적용
+                const showBasic = expandedGroups.has(modelDetailGroup);
+                table.querySelectorAll(`.detail-col.group-${modelDetailGroup}`).forEach(col => {
+                    col.classList.toggle('visible', showBasic);
+                });
 
-                if (isDetailMode) {
-                    // --- [자세히 보기 모드] ---
-                    table.classList.remove('simple-view-mode');
-                    toggleViewBtn.classList.add('active');
-                    btnIcon.className = 'uil uil-eye-slash';
-                    btnText.textContent = '간편 보기';
+                // 4. 합계 헤더 숨김 처리
+                table.querySelectorAll('.sum-header').forEach(el => el.style.display = 'none');
 
-                    // 1. 불량 상세 그룹('a', 'b', 'c', 'd')만 강제로 펼칩니다.
-                    //    'basic' (모델명 세부열)은 추가하지 않으므로 클릭해야만 열립니다.
-                    defectGroups.forEach(g => expandedGroups.add(g));
-
-                    // 2. DOM에 .visible 클래스 적용
-                    //    expandedGroups에 있는 것들만 보여줌 (basic은 사용자가 열지 않았다면 숨겨짐)
-                    allGroups.forEach(g => {
-                        const shouldBeVisible = expandedGroups.has(g);
-                        table.querySelectorAll(`.detail-col.group-${g}`).forEach(col => {
-                            col.classList.toggle('visible', shouldBeVisible);
-                        });
-                    });
-
-                    // 3. 대분류 합계 헤더(숨겨짐)는 rowspan 제거
-                    table.querySelectorAll('.sum-header').forEach(el => el.removeAttribute('rowspan'));
-
-                } else {
-                    // --- [간편 보기 모드] ---
-                    table.classList.add('simple-view-mode');
-                    toggleViewBtn.classList.remove('active');
-                    btnIcon.className = 'uil uil-eye';
-                    btnText.textContent = '자세히 보기';
-
-                    // 간편 보기로 돌아갈 때는 모두 닫고, DOM에서도 숨김
-                    expandedGroups.clear();
-                    table.querySelectorAll('.detail-col').forEach(el => el.classList.remove('visible'));
-
-                    // 대분류 합계 헤더(보임)는 2줄 차지
-                    table.querySelectorAll('.sum-header').forEach(el => el.setAttribute('rowspan', '2'));
-                }
-
-                // 토글 아이콘 상태 업데이트 (모델명 헤더만: basic 그룹)
-                const header = document.querySelector(`.group-toggle-header[onclick*="toggleGroup('${modelDetailGroup}')"] i`);
-                if (header) {
-                    header.className = expandedGroups.has(modelDetailGroup) ? 'uil uil-angle-down' : 'uil uil-angle-right';
+                // 5. 토글 아이콘 상태 업데이트
+                const headerIcon = document.querySelector(`.group-toggle-header i`);
+                if (headerIcon) {
+                    headerIcon.className = showBasic ? 'uil uil-angle-down' : 'uil uil-angle-right';
                 }
 
                 adjustTableScrollbar();
             }
-
             if (pinModeBtn) {
                 pinModeBtn.addEventListener('click', () => {
                     if (isDeleteMode) return;

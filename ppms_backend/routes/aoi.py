@@ -114,6 +114,8 @@ def get_available_models():
         ).all()
 
         # 4. 업체명 매핑 (생산 스케줄 참조)
+      # [수정] aoi.py 내 get_available_models 함수의 업체 매핑 부분
+        # 4. 업체명 매핑 (생산 스케줄 참조)
         prods = db.session.query(
             ProductionSchedule.model,
             ProductionSchedule.order_year,
@@ -124,7 +126,9 @@ def get_available_models():
         
         company_map = {}
         for p in prods:
-            key = (p.model, str(p.order_year), p.order_month, str(p.total_quantity))
+            # [핵심 보정] 연도는 숫자형(int) 그대로 사용, 월은 '월분' 제거하여 정규화
+            m_norm = str(p.order_month).replace('월분', '').replace('월', '').strip()
+            key = (p.model, p.order_year, m_norm, str(p.total_quantity))
             company_map[key] = p.company
 
         # 5. 데이터 가공
@@ -135,12 +139,11 @@ def get_available_models():
             total_ship = sum(h.quantity for h in g.histories if h.type == 'ship')
             total_recv = sum(h.quantity for h in g.histories if h.type == 'receive')
             
-            # AoiRecord 조회용 포맷 통일
-            try:
-                m_clean_int = int(str(g.month).replace('월분', '').replace('월', ''))
-                m_query_str = str(m_clean_int)
-            except:
-                m_query_str = g.month
+            # [핵심 보정] DIP 그룹의 월 데이터도 동일하게 정규화하여 매칭률 향상
+            g_month_norm = str(g.month).replace('월분', '').replace('월', '').strip()
+            
+            # AOI 누적 검사 수량 조회 시 사용하는 월 포맷
+            m_query_str = g_month_norm
 
             # AOI 누적 검사 수량 조회
             aoi_total = db.session.query(func.sum(AoiRecord.inspection_qty)).filter_by(
@@ -150,7 +153,8 @@ def get_available_models():
                 lot=g.lot
             ).scalar() or 0
 
-            group_key = (g.model, g.year, g.month, g.lot)
+            # 정규화된 정보를 바탕으로 업체명 검색
+            group_key = (g.model, g.year, g_month_norm, g.lot)
             company = company_map.get(group_key, '업체 미지정')
 
             if company not in grouped_result:

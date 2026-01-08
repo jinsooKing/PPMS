@@ -1424,6 +1424,29 @@
                     ctx.style.left = e.pageX + 'px';
                     ctx.style.top = e.pageY + 'px';
                 };
+                // openNewModelModal 함수 내부에 적용
+                listContainer.oncontextmenu = (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    const ctx = document.getElementById('modal-ctx-menu');
+                    ctx.style.display = 'block';
+
+                    // 스마트 위치 계산 (화면 밖으로 나가지 않게 조절)
+                    const winWidth = window.innerWidth;
+                    const winHeight = window.innerHeight;
+                    const menuWidth = ctx.offsetWidth;
+                    const menuHeight = ctx.offsetHeight;
+
+                    let posX = e.clientX;
+                    let posY = e.clientY;
+
+                    if (posX + menuWidth > winWidth) posX = winWidth - menuWidth - 5;
+                    if (posY + menuHeight > winHeight) posY = winHeight - menuHeight - 5;
+
+                    ctx.style.left = posX + 'px';
+                    ctx.style.top = posY + 'px';
+                };
 
                 document.getElementById('new-model-reg-modal').classList.add('visible');
             } catch (e) {
@@ -1499,6 +1522,10 @@
                 if (!menu.contains(e.target)) {
                     hideScheduleMenu();
                 }
+            }
+            // [추가] 신규 모델 등록 메뉴 닫기
+            if (modelMenu && !modelMenu.contains(e.target)) {
+                modelMenu.style.display = 'none';
             }
         });
         /* ==============================================================================

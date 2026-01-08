@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PPMS - DIP (외주 관리)</title>
-    
+
     <link rel="stylesheet" href="common.css">
     <link rel="stylesheet" href="dip.css">
 
@@ -19,7 +19,7 @@
     <script src="logo.js"></script>
     <script src="auth.js"></script>
 
-    </head>
+</head>
 
 <body>
     <div class="page-container">
@@ -36,7 +36,7 @@
         </header>
 
         <main class="content-area dip-layout">
-            
+
             <div id="status-tabs">
                 <button class="status-tab active" data-status="all">전체</button>
                 <button class="status-tab" data-status="ongoing">미완료</button>
@@ -47,36 +47,46 @@
                 <div id="empty-message" style="text-align: center; color: #888; margin-top: 50px; display: none;">
                     등록된 모델 그룹이 없습니다.<br>우측 하단의 '그룹추가' 버튼을 눌러 그룹을 생성하세요.
                 </div>
-                </div>
+            </div>
         </main>
-
         <footer class="main-footer">
             <div class="footer-left footer-action-group">
-                <div class="common-box font-15pt clickable-box" id="open-dip-modal-btn"><i class="uil uil-plus-circle"></i> 출입고 등록</div>
             </div>
             <div class="footer-center footer-action-group">
-                <div class="common-box font-15pt clickable-box" id="dip-back-btn" onclick="history.back();"><i class="uil uil-arrow-left"></i></div>
-                <a href="index.html" id="dip-home-link"><div class="common-box font-15pt clickable-box" id="dip-home-btn"><i class="uil uil-home"></i></div></a>
-                <div class="common-box font-15pt clickable-box" id="dip-forward-btn" onclick="history.forward();"><i class="uil uil-arrow-right"></i></div>
+                <div class="common-box font-15pt clickable-box" id="dip-back-btn" onclick="history.back();"><i
+                        class="uil uil-arrow-left"></i></div>
+                <a href="index.html" id="dip-home-link">
+                    <div class="common-box font-15pt clickable-box" id="dip-home-btn"><i class="uil uil-home"></i></div>
+                </a>
+                <div class="common-box font-15pt clickable-box" id="dip-forward-btn" onclick="history.forward();"><i
+                        class="uil uil-arrow-right"></i></div>
             </div>
             <div class="footer-right footer-action-group">
-                <div class="common-box font-15pt clickable-box" id="edit-group-btn" style="background-color: #3a3a3c;"><i class="uil uil-edit"></i> 그룹편집</div>
-                <div class="common-box font-15pt clickable-box" id="add-group-btn" style="background-color: #102770;"><i class="uil uil-layer-group"></i> 그룹추가</div>
+                <div class="common-box font-15pt clickable-box" id="add-group-btn" style="background-color: #102770;"><i
+                        class="uil uil-layer-group"></i> 그룹추가</div>
             </div>
         </footer>
     </div>
 
     <div class="modal-overlay" id="dip-registration-modal">
-        <div class="modal-window" style="width: 90vw; max-width: 900px;"> 
+        <div class="modal-window" style="width: 90vw; max-width: 900px;">
             <button class="close-btn" id="close-dip-modal-btn">&times;</button>
             <div class="modal-content">
                 <div class="dip-modal-form-section">
                     <h2 class="modal-title" id="registration-title">신규 출고/입고 등록</h2>
                     <div class="dip-form-grid">
-                        <div class="dip-input-group"><label for="dip-date">날짜</label><input type="date" id="dip-date" class="form-input"></div>
-                        <div class="dip-input-group"><label for="dip-model">모델명</label><input type="text" id="dip-model" class="form-input" placeholder="모델명 입력..."></div>
-                        <div class="dip-input-group"><label for="dip-quantity">수량</label><input type="number" id="dip-quantity" class="form-input" placeholder="0"></div>
-                        <div class="dip-input-group"><label>구분</label><div class="dip-type-selector"><div class="common-box clickable-box" id="type-ship-btn" data-type="ship">출고</div><div class="common-box clickable-box" id="type-receive-btn" data-type="receive">입고</div></div></div>
+                        <div class="dip-input-group"><label for="dip-date">날짜</label><input type="date" id="dip-date"
+                                class="form-input"></div>
+                        <div class="dip-input-group"><label for="dip-model">모델명</label><input type="text" id="dip-model"
+                                class="form-input" placeholder="모델명 입력..."></div>
+                        <div class="dip-input-group"><label for="dip-quantity">수량</label><input type="number"
+                                id="dip-quantity" class="form-input" placeholder="0"></div>
+                        <div class="dip-input-group"><label>구분</label>
+                            <div class="dip-type-selector">
+                                <div class="common-box clickable-box" id="type-ship-btn" data-type="ship">출고</div>
+                                <div class="common-box clickable-box" id="type-receive-btn" data-type="receive">입고</div>
+                            </div>
+                        </div>
                         <div class="dip-input-group register-button-group">
                             <div class="common-box clickable-box" id="dip-cancel-btn" style="display: none;">수정취소</div>
                             <div class="common-box clickable-box" id="dip-register-btn">등록하기</div>
@@ -93,7 +103,7 @@
     </div>
 
     <div class="modal-overlay" id="group-manage-modal">
-        <div class="modal-window" style="width: 90vw; max-width: 900px;"> 
+        <div class="modal-window" style="width: 90vw; max-width: 900px;">
             <button class="close-btn" id="close-group-modal-btn">&times;</button>
             <div class="modal-content">
                 <div class="dip-modal-form-section">
@@ -109,10 +119,13 @@
                         </div>
                         <input type="hidden" id="group-year">
                         <input type="hidden" id="group-month">
-                        <input type="hidden" id="group-edit-id"> 
-                        
+                        <input type="hidden" id="group-edit-id">
+
                         <div class="dip-input-group" style="margin-top: 20px;">
-                            <div class="common-box clickable-box" id="save-group-btn" style="width: 100%; text-align: center; background-color: #007bff;">저장하기</div>
+                            <div class="common-box clickable-box" id="save-group-btn"
+                                style="width: 100%; box-sizing: border-box; text-align: center; background-color: #007bff; justify-content: center;">
+                                저장하기
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -124,6 +137,19 @@
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <div id="dip-context-menu">
+        <div class="ctx-item" id="ctx-ship-entry">
+            <i class="uil uil-export"></i> 출고
+        </div>
+        <div class="ctx-item" id="ctx-receive-entry">
+            <i class="uil uil-import"></i> 입고
+        </div>
+        <div class="ctx-divider"></div>
+        <div class="ctx-item" id="ctx-delete-group" style="color: #ff6b6b;">
+            <i class="uil uil-trash-alt"></i> 그룹삭제
         </div>
     </div>
 
@@ -144,7 +170,7 @@
         function formatDateYYMMDD(dateString) {
             // "YYYY-MM-DD" 형태에서 앞의 5글자(YYYY-)를 잘라내어 "MM-DD"만 반환
             if (dateString && dateString.length >= 10) {
-                return dateString.substring(5); 
+                return dateString.substring(5);
             }
             return dateString;
         }
@@ -152,15 +178,14 @@
         let groupList = [];
         let productionModelsCache = [];
         const API_BASE = 'http://127.0.0.1:5000/api/dip';
-        
+
         // [신규] 현재 탭 필터 상태 (all / ongoing / completed)
         let currentStatusFilter = 'all';
 
         const wrapper = document.getElementById('dip-history-wrapper');
         const emptyMsg = document.getElementById('empty-message');
-        
+
         const regModal = document.getElementById('dip-registration-modal');
-        const openRegModalBtn = document.getElementById('open-dip-modal-btn');
         const closeRegModalBtn = document.getElementById('close-dip-modal-btn');
         const regDateInput = document.getElementById('dip-date');
         const regModelInput = document.getElementById('dip-model');
@@ -177,7 +202,6 @@
 
         const groupModal = document.getElementById('group-manage-modal');
         const openGroupModalBtn = document.getElementById('add-group-btn');
-        const editGroupModeBtn = document.getElementById('edit-group-btn');
         const closeGroupModalBtn = document.getElementById('close-group-modal-btn');
         const groupModelInput = document.getElementById('group-model-name');
         const groupLotInput = document.getElementById('group-lot');
@@ -187,20 +211,14 @@
         const saveGroupBtn = document.getElementById('save-group-btn');
         const groupModalTitle = document.getElementById('group-modal-title');
         const productionModelsList = document.getElementById('production-models-list');
-        
-        let isGroupEditMode = false; 
+
+        let isGroupEditMode = false;
 
         document.addEventListener('DOMContentLoaded', () => {
             updateTime();
             setInterval(updateTime, 60000);
-            fetchGroups(); 
+            fetchGroups();
 
-            openRegModalBtn.addEventListener('click', () => {
-                resetRegForm();
-                openModal(regModal);
-                updateRegType('ship');
-                renderAvailableGroups(); 
-            });
             closeRegModalBtn.addEventListener('click', () => closeModal(regModal));
             cancelRegisterBtn.addEventListener('click', () => closeModal(regModal));
             regShipBtn.addEventListener('click', () => updateRegType('ship'));
@@ -209,14 +227,12 @@
 
             openGroupModalBtn.addEventListener('click', () => {
                 openGroupModal();
-                fetchProductionModels(); 
+                fetchProductionModels();
             });
             closeGroupModalBtn.addEventListener('click', () => closeModal(groupModal));
             saveGroupBtn.addEventListener('click', handleSaveGroup);
-
-            editGroupModeBtn.addEventListener('click', toggleGroupEditMode);
             wrapper.addEventListener('click', handleWrapperClick);
-            groupLotInput.addEventListener('input', function(e) { this.value = this.value.replace(/[^0-9/]/g, ''); });
+            groupLotInput.addEventListener('input', function (e) { this.value = this.value.replace(/[^0-9/]/g, ''); });
 
             // 아코디언 헤더 이벤트
             document.addEventListener('click', (e) => {
@@ -229,21 +245,21 @@
                     }
                 }
             });
-            
+
             // [신규] 탭 메뉴 이벤트 리스너 추가
             const statusTabs = document.getElementById('status-tabs');
             if (statusTabs) {
                 statusTabs.addEventListener('click', (e) => {
                     if (e.target.classList.contains('status-tab')) {
                         const newStatus = e.target.dataset.status;
-                        
+
                         // 1. 필터 상태 업데이트
                         currentStatusFilter = newStatus;
-                        
+
                         // 2. 활성화된 탭 스타일 업데이트
                         document.querySelectorAll('.status-tab').forEach(btn => btn.classList.remove('active'));
                         e.target.classList.add('active');
-                        
+
                         // 3. 그룹 목록 새로 렌더링
                         renderGroups();
                     }
@@ -265,12 +281,12 @@
             try {
                 const response = await fetch(`${API_BASE}/production_models`);
                 const models = await response.json();
-                productionModelsCache = models; 
-                
+                productionModelsCache = models;
+
                 const filteredModels = models.filter(m => {
-                    const isCompleted = groupList.some(g => 
-                        g.model === m.model && 
-                        g.lot === m.lot && 
+                    const isCompleted = groupList.some(g =>
+                        g.model === m.model &&
+                        g.lot === m.lot &&
                         g.status === 'completed'
                     );
                     return !isCompleted;
@@ -280,7 +296,7 @@
                     productionModelsList.innerHTML = '<p style="text-align:center;">등록 가능한(미완료) 생산 모델이 없습니다.</p>';
                     return;
                 }
-                
+
                 const groupedByCompany = {};
                 filteredModels.forEach(m => {
                     const companyName = m.company || '업체 미지정';
@@ -294,10 +310,10 @@
                              <div class="company-models-list">`;
                     groupedByCompany[company].forEach(m => {
                         html += `<div class="common-box clickable-box" style="margin-bottom:5px; font-size:14px; padding:5px 10px; text-align:left;" 
-                                      onclick="fillGroupForm('${m.model}', '${m.lot}', '${m.year}', '${m.month}')">
-                                    <span style="color:#fff; font-weight:bold;">${m.model} (${m.month})</span>
-                                    <span style="color:#aaa; font-size:0.9em; margin-left:10px;">(LOT: ${m.lot})</span>
-                                 </div>`;
+              onclick="fillGroupForm('${m.model}', '${m.lot}', '${m.year}', '${m.month}')">
+            <span style="color:inherit; font-weight:bold;">${m.model} (${m.month})</span>
+            <span style="color:#aaa; font-size:0.9em; margin-left:10px;">(LOT: ${m.lot})</span>
+         </div>`;
                     });
                     html += `</div>`;
                 });
@@ -309,7 +325,7 @@
 
         function renderGroups() {
             wrapper.innerHTML = '';
-            
+
             // [수정: 중요 필터링 로직 변경]
             // 모든 탭은 기본적으로 'active' (미완료) 그룹만을 대상으로 합니다.
             // status === 'completed' (DB에 저장된 과거 기록)은 모든 탭에서 숨깁니다.
@@ -353,19 +369,19 @@
             filteredGroups.forEach(group => {
                 const groupEl = document.createElement('div');
                 groupEl.className = 'model-group-wrapper';
-                
+
                 const totalShip = group.shipping.reduce((sum, item) => sum + parseInt(item.quantity), 0);
                 const totalReceive = group.receiving.reduce((sum, item) => sum + parseInt(item.quantity), 0);
                 const targetLot = parseInt(group.lot);
 
                 const isReadyToComplete = (targetLot === totalShip && targetLot === totalReceive);
-                
+
                 if (isReadyToComplete) {
                     groupEl.classList.add('ready-to-complete');
                 }
-                
-                if(isGroupEditMode) groupEl.classList.add('edit-mode-active');
-                
+
+                if (isGroupEditMode) groupEl.classList.add('edit-mode-active');
+
                 groupEl.dataset.groupId = group.id;
 
                 let controlsHtml = '';
@@ -373,7 +389,7 @@
                     controlsHtml = `<button class="group-delete-btn" title="그룹 전체 삭제">그룹 삭제</button>`;
                 } else {
                     if (isReadyToComplete) {
-                         controlsHtml += `<button class="group-complete-btn" title="그룹 완료 처리">완료</button>`;
+                        controlsHtml += `<button class="group-complete-btn" title="그룹 완료 처리">완료</button>`;
                     }
                     controlsHtml += `<button class="delete-toggle-icon" title="행 삭제 모드 켜기"><i class="uil uil-trash-alt"></i></button>`;
                 }
@@ -448,7 +464,7 @@
             availableGroupsList.innerHTML = '';
             // 여기서는 '등록'이 목적이므로 active 그룹만 보여주면 됨
             const activeGroups = groupList.filter(g => g.status !== 'completed');
-            
+
             if (activeGroups.length === 0) {
                 availableGroupsList.innerHTML = '<p style="text-align:center; color:#888;">미완료된 제품이 없습니다.</p>';
                 return;
@@ -465,7 +481,7 @@
             Object.keys(groupedByCompany).sort().forEach(company => {
                 html += `<div class="company-category-header"><span>${company}</span><i class="uil uil-angle-down"></i></div>
                          <div class="company-models-list">`;
-                
+
                 groupedByCompany[company].forEach(g => {
                     html += `<div class="common-box clickable-box" style="margin-bottom:5px; font-size:14px; padding:5px 10px; text-align:left;" 
                                   onclick="fillRegForm('${g.model}')">
@@ -478,15 +494,15 @@
             availableGroupsList.innerHTML = html;
         }
 
-        window.fillGroupForm = function(model, lot, year, month) {
+        window.fillGroupForm = function (model, lot, year, month) {
             groupModelInput.value = model;
             groupLotInput.value = lot;
             groupYearInput.value = year;
             groupMonthInput.value = month;
         };
 
-        window.fillRegForm = function(model) {
-            if(!regModelInput.readOnly) regModelInput.value = model;
+        window.fillRegForm = function (model) {
+            if (!regModelInput.readOnly) regModelInput.value = model;
         };
 
         async function handleSaveGroup() {
@@ -494,13 +510,13 @@
             const lot = groupLotInput.value.trim();
             const year = groupYearInput.value;
             const month = groupMonthInput.value;
-            
+
             if (!modelName) { alert('모델명을 선택하세요.'); return; }
             if (!lot) { alert('LOT를 입력하세요.'); return; }
 
             const isValid = productionModelsCache.some(pm => pm.model === modelName && pm.lot === lot);
             if (!isValid) {
-                if(!confirm('우측 리스트에서 선택하지 않았거나 일치하지 않는 정보입니다. 계속하시겠습니까?')) return;
+                if (!confirm('우측 리스트에서 선택하지 않았거나 일치하지 않는 정보입니다. 계속하시겠습니까?')) return;
             }
 
             try {
@@ -532,9 +548,9 @@
 
             let targetGroup;
             if (regEditingGroupId) {
-                 targetGroup = groupList.find(g => g.id == regEditingGroupId);
+                targetGroup = groupList.find(g => g.id == regEditingGroupId);
             } else {
-                 targetGroup = groupList.find(g => g.model === model);
+                targetGroup = groupList.find(g => g.model === model);
             }
 
             if (!targetGroup) {
@@ -630,9 +646,9 @@
                     cancelRegisterBtn.style.display = 'block';
                     regEditingGroupId = groupId;
                     regEditingRowId = rowId;
-                    regDateInput.value = rowData.date; 
+                    regDateInput.value = rowData.date;
                     regModelInput.value = group.model;
-                    regModelInput.readOnly = true; 
+                    regModelInput.readOnly = true;
                     regQtyInput.value = rowData.quantity;
                     updateRegType(type);
                     regShipBtn.style.pointerEvents = 'none';
@@ -649,21 +665,21 @@
                 const data = await res.json();
                 if (data.success) fetchGroups();
                 else alert(data.message);
-            } catch(e) { alert('완료 처리 실패'); }
+            } catch (e) { alert('완료 처리 실패'); }
         }
 
         async function deleteGroup(id) {
             try {
                 const res = await fetch(`${API_BASE}/groups/${id}`, { method: 'DELETE' });
                 if (res.ok) fetchGroups();
-            } catch(e) { alert('삭제 실패'); }
+            } catch (e) { alert('삭제 실패'); }
         }
 
         async function deleteRecord(id) {
             try {
                 const res = await fetch(`${API_BASE}/records/${id}`, { method: 'DELETE' });
                 if (res.ok) fetchGroups();
-            } catch(e) { alert('삭제 실패'); }
+            } catch (e) { alert('삭제 실패'); }
         }
 
         function openModal(modalEl) {
@@ -686,9 +702,9 @@
             const month = String(now.getMonth() + 1).padStart(2, '0');
             const day = String(now.getDate()).padStart(2, '0');
             regDateInput.value = `${year}-${month}-${day}`;
-            
+
             regModelInput.value = '';
-            regModelInput.readOnly = false; 
+            regModelInput.readOnly = false;
             regQtyInput.value = '';
             updateRegType('ship');
             regTitle.innerText = '신규 출고/입고 등록';
@@ -720,31 +736,89 @@
             groupEditIdInput.value = '';
             openModal(groupModal);
         }
+        /* ==============================================================================
+   [추가] DIP 그룹 컨텍스트 메뉴 로직
+   ============================================================================== */
 
-       /* [최종 수정] '편집 완료' 시 배경색 강제 적용 (!important 추가) */
-        function toggleGroupEditMode() {
-            isGroupEditMode = !isGroupEditMode;
-            
-            if (isGroupEditMode) {
-                // [편집 모드 ON] -> 배경 금색, 글씨 남색 (CSS 우선순위 무시하고 강제 적용)
-                editGroupModeBtn.style.setProperty('background-color', '#ffeba7', 'important');
-                editGroupModeBtn.style.setProperty('color', '#102770', 'important');
-                editGroupModeBtn.style.setProperty('border-color', '#ffeba7', 'important');
-                
-                editGroupModeBtn.style.fontWeight = ''; // 폰트 굵기는 CSS 상속
-                editGroupModeBtn.innerHTML = '<i class="uil uil-check"></i> 편집 완료';
+        let targetGroupIdForCtx = null;
+        const dipMenu = document.getElementById('dip-context-menu');
+
+        function hideDipMenu() { if (dipMenu) dipMenu.style.display = 'none'; }
+
+        // 1. 그룹 카드 위에서 우클릭 시 메뉴 표시
+        document.getElementById('dip-history-wrapper').addEventListener('contextmenu', function (e) {
+            const groupCard = e.target.closest('.model-group-wrapper');
+            if (groupCard) {
+                e.preventDefault();
+                e.stopPropagation();
+                targetGroupIdForCtx = groupCard.dataset.groupId;
+
+                dipMenu.style.display = 'block';
+
+                // 스마트 위치 계산
+                const winWidth = window.innerWidth;
+                const winHeight = window.innerHeight;
+                const menuWidth = dipMenu.offsetWidth;
+                const menuHeight = dipMenu.offsetHeight;
+
+                let posX = e.clientX;
+                let posY = e.clientY;
+
+                if (posX + menuWidth > winWidth) posX = winWidth - menuWidth - 5;
+                if (posY + menuHeight > winHeight) posY = winHeight - menuHeight - 5;
+
+                dipMenu.style.left = posX + 'px';
+                dipMenu.style.top = posY + 'px';
             } else {
-                // [편집 모드 OFF] -> 원래 어두운 색으로 복구
-                editGroupModeBtn.style.setProperty('background-color', '#3a3a3c', 'important');
-                editGroupModeBtn.style.setProperty('color', '#ffffff', 'important');
-                editGroupModeBtn.style.setProperty('border-color', 'rgba(255, 255, 255, 0.1)', 'important');
-                
-                editGroupModeBtn.style.fontWeight = '';
-                editGroupModeBtn.innerHTML = '<i class="uil uil-edit"></i> 그룹편집';
+                hideDipMenu();
             }
-            
-            renderGroups(); 
-        }
+        });
+
+        // 2. 외부 클릭 시 메뉴 닫기
+        window.addEventListener('mousedown', function (e) {
+            if (dipMenu.style.display === 'block' && !dipMenu.contains(e.target)) {
+                hideDipMenu();
+            }
+        });
+
+        // [기능 1] 출고 등록 바로가기
+        document.getElementById('ctx-ship-entry').onclick = function (e) {
+            e.stopPropagation();
+            const group = groupList.find(g => g.id == targetGroupIdForCtx);
+            if (group) {
+                resetRegForm();
+                fillRegForm(group.model);
+                updateRegType('ship');
+                regEditingGroupId = group.id; // 해당 그룹으로 ID 고정
+                openModal(regModal);
+            }
+            hideDipMenu();
+        };
+
+        // [기능 2] 입고 등록 바로가기
+        document.getElementById('ctx-receive-entry').onclick = function (e) {
+            e.stopPropagation();
+            const group = groupList.find(g => g.id == targetGroupIdForCtx);
+            if (group) {
+                resetRegForm();
+                fillRegForm(group.model);
+                updateRegType('receive');
+                regEditingGroupId = group.id; // 해당 그룹으로 ID 고정
+                openModal(regModal);
+            }
+            hideDipMenu();
+        };
+
+        // [기능 3] 그룹 삭제 실행
+        document.getElementById('ctx-delete-group').onclick = function (e) {
+            e.stopPropagation();
+            const group = groupList.find(g => g.id == targetGroupIdForCtx);
+            if (group && confirm(`'${group.model}' 그룹을 정말 삭제하시겠습니까?\n모든 출/입고 이력이 함께 삭제됩니다.`)) {
+                deleteGroup(targetGroupIdForCtx); // 기존 정의된 deleteGroup 함수 호출
+            }
+            hideDipMenu();
+        };
     </script>
 </body>
+
 </html>
