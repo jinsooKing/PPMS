@@ -371,3 +371,39 @@ input[type=number]::-webkit-outer-spin-button {
 input[type=number] {
     -moz-appearance: textfield; 
 }
+/* [추가] AOI 컨텍스트 메뉴 스타일 */
+#aoi-context-menu {
+    position: fixed;
+    z-index: 20000;
+    width: 160px;
+    background: #2b2c3b;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6);
+    display: none;
+    overflow: hidden;
+    font-family: 'BMJUA', sans-serif;
+}
+
+.ctx-item {
+    padding: 12px 15px;
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 0.9rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.ctx-item:hover {
+    background: var(--point-gold) !important;
+    color: var(--accent-blue) !important;
+}
+
+.ctx-divider {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.06);
+    margin: 3px 0;
+}

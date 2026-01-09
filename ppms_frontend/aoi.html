@@ -47,15 +47,7 @@
                         <i class="uil uil-keyboard cmd-icon"></i>
                         <input type="text" id="command-input" placeholder="명령어 입력 (예: 미삽 1)" autocomplete="off">
                     </div>
-
                     <div class="header-btn-group">
-                        <button id="pin-mode-btn" class="header-btn" title="모델 고정 모드">
-                            <i class="uil uil-map-pin-alt"></i> <span>고정</span>
-                        </button>
-
-                        <button id="manage-btn" class="header-btn">
-                            <i class="uil uil-cog"></i> <span>관리</span>
-                        </button>
                     </div>
                 </div>
 
@@ -211,6 +203,15 @@
     </div>
 
     <div id="global-tooltip"></div>
+    <div id="aoi-context-menu" class="custom-context-menu">
+        <div class="ctx-item" id="ctx-pin-row">
+            <i class="uil uil-map-pin-alt"></i> <span id="pin-text">고정</span>
+        </div>
+        <div class="ctx-divider"></div>
+        <div class="ctx-item" id="ctx-delete-record" style="color: #ff6b6b;">
+            <i class="uil uil-trash-alt"></i> 행 삭제
+        </div>
+    </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
@@ -248,9 +249,7 @@
             // DOM 요소
             const commandInput = document.getElementById('command-input');
             const table = document.querySelector('.aoi-table');
-            const pinModeBtn = document.getElementById('pin-mode-btn');
             const toggleViewBtn = document.getElementById('toggle-view-btn');
-            const manageBtn = document.getElementById('manage-btn');
 
             // ----------------------------------------------------------------
             // [1] 데이터 로드
@@ -279,6 +278,106 @@
                     console.error(e);
                 }
             }
+
+            /* ==============================================================================
+   [통합] AOI 컨텍스트 메뉴 로직 (고정 및 삭제 기능 이관)
+   ============================================================================== */
+
+            let targetRecordIdForCtx = null;
+            const aoiMenu = document.getElementById('aoi-context-menu');
+            const cmdInput = document.getElementById('command-input');
+
+            function hideAoiMenu() { if (aoiMenu) aoiMenu.style.display = 'none'; }
+
+            // 1. 테이블 행 우클릭 시 메뉴 표시
+            document.getElementById('aoi-list-body').addEventListener('contextmenu', function (e) {
+                const row = e.target.closest('tr');
+                if (row) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    targetRecordIdForCtx = row.dataset.id;
+
+                    // 현재 행이 고정되어 있는지 확인하여 메뉴 텍스트 변경
+                    const pinText = document.getElementById('pin-text');
+                    pinText.textContent = (pinnedRowId === targetRecordIdForCtx) ? "고정 해제" : "모델 고정";
+
+                    aoiMenu.style.display = 'block';
+
+                    // 스마트 위치 계산
+                    const winWidth = window.innerWidth;
+                    const winHeight = window.innerHeight;
+                    const menuWidth = aoiMenu.offsetWidth;
+                    const menuHeight = aoiMenu.offsetHeight;
+
+                    let posX = e.clientX;
+                    let posY = e.clientY;
+
+                    if (posX + menuWidth > winWidth) posX = winWidth - menuWidth - 5;
+                    if (posY + menuHeight > winHeight) posY = winHeight - menuHeight - 5;
+
+                    aoiMenu.style.left = posX + 'px';
+                    aoiMenu.style.top = posY + 'px';
+                } else {
+                    hideAoiMenu();
+                }
+            });
+
+            // 2. 외부 클릭 시 메뉴 닫기
+            window.addEventListener('mousedown', function (e) {
+                if (aoiMenu.style.display === 'block' && !aoiMenu.contains(e.target)) {
+                    hideAoiMenu();
+                }
+            });
+
+            // [기능 1] 모델 고정/해제 이관
+            document.getElementById('ctx-pin-row').onclick = function (e) {
+                e.stopPropagation();
+                if (!targetRecordIdForCtx) return;
+
+                if (pinnedRowId === targetRecordIdForCtx) {
+                    // 이미 고정된 경우 -> 해제
+                    document.querySelectorAll(`tr[data-id="${pinnedRowId}"]`).forEach(r => r.classList.remove('pinned-row'));
+                    pinnedRowId = null;
+                    cmdInput.placeholder = "명령어 입력 (예: 미삽 1)";
+                } else {
+                    // 고정 실행
+                    if (pinnedRowId) {
+                        document.querySelectorAll(`tr[data-id="${pinnedRowId}"]`).forEach(r => r.classList.remove('pinned-row'));
+                    }
+                    pinnedRowId = targetRecordIdForCtx;
+                    document.querySelectorAll(`tr[data-id="${pinnedRowId}"]`).forEach(r => r.classList.add('pinned-row'));
+
+                    const upperRow = document.querySelector(`tr.upper-row[data-id="${pinnedRowId}"]`);
+                    const modelName = upperRow ? upperRow.querySelector('.model-text').textContent.trim() : '모델';
+                    cmdInput.placeholder = `[${modelName}] 고정됨 - 명령어 입력`;
+                    cmdInput.focus();
+                }
+                hideAoiMenu();
+            };
+
+            // [기능 2] 기록 삭제 이관
+            document.getElementById('ctx-delete-record').onclick = function (e) {
+                e.stopPropagation();
+                if (!targetRecordIdForCtx) return;
+
+                const upperRow = document.querySelector(`tr.upper-row[data-id="${targetRecordIdForCtx}"]`);
+                const modelName = upperRow ? upperRow.querySelector('.model-text').textContent.trim() : '모델';
+
+                if (confirm(`[${modelName}] 기록을 정말 삭제하시겠습니까?`)) {
+                    fetch(`http://127.0.0.1:5000/api/aoi/records/${targetRecordIdForCtx}`, { method: 'DELETE' })
+                        .then(res => res.json())
+                        .then(res => {
+                            if (res.success) {
+                                document.querySelectorAll(`tr[data-id="${targetRecordIdForCtx}"]`).forEach(r => r.remove());
+                                if (pinnedRowId === targetRecordIdForCtx) {
+                                    pinnedRowId = null;
+                                    cmdInput.placeholder = "명령어 입력 (예: 미삽 1)";
+                                }
+                            } else { alert('삭제 실패'); }
+                        }).catch(() => alert('오류 발생'));
+                }
+                hideAoiMenu();
+            };
 
             // ----------------------------------------------------------------
             // [2] 진행도 UI 업데이트
@@ -755,23 +854,7 @@
 
                 adjustTableScrollbar();
             }
-            if (pinModeBtn) {
-                pinModeBtn.addEventListener('click', () => {
-                    if (isDeleteMode) return;
-                    isPinMode = !isPinMode;
-                    if (isPinMode) {
-                        pinModeBtn.classList.add('active');
-                        commandInput.placeholder = "모델명을 클릭하여 고정하세요.";
-                    } else {
-                        pinModeBtn.classList.remove('active');
-                        commandInput.placeholder = "명령어 입력 (예: 미삽 1)";
-                        if (pinnedRowId) {
-                            document.querySelectorAll(`tr[data-id="${pinnedRowId}"]`).forEach(r => r.classList.remove('pinned-row'));
-                            pinnedRowId = null;
-                        }
-                    }
-                });
-            }
+
 
             document.getElementById('aoi-list-body').addEventListener('click', (e) => {
                 if (isDeleteMode) {
@@ -813,23 +896,6 @@
                     }
                 }
             });
-
-            if (manageBtn) {
-                manageBtn.addEventListener('click', () => {
-                    isDeleteMode = !isDeleteMode;
-                    const tableEl = document.querySelector('.aoi-table');
-                    if (isDeleteMode) {
-                        manageBtn.classList.add('active');
-                        manageBtn.innerHTML = '<i class="uil uil-check"></i> 완료';
-                        tableEl.classList.add('delete-mode');
-                        if (isPinMode) pinModeBtn.click();
-                    } else {
-                        manageBtn.classList.remove('active');
-                        manageBtn.innerHTML = '<i class="uil uil-cog"></i> 관리';
-                        tableEl.classList.remove('delete-mode');
-                    }
-                });
-            }
 
             function showToast(msg, type = 'success') {
                 const container = document.getElementById('toast-container');

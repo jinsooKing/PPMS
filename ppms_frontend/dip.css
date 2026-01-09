@@ -297,13 +297,7 @@ table.editable-table tbody tr:hover { background-color: rgba(255,255,255,0.03); 
 .register-button-group { display: flex; gap: 10px; margin-top: 10px; }
 #dip-register-btn, #save-group-btn { flex: 1; background: var(--accent-blue) !important; color: #fff; text-align: center; justify-content: center; }
 #dip-cancel-btn { flex: 1; background: #444 !important; text-align: center; justify-content: center; }
-/* [수정] 등록 및 저장 버튼 호버 스타일 통일 */
-#dip-register-btn:hover, #save-group-btn:hover {
-    background: var(--point-gold) !important; /* 금색 배경 */
-    color: var(--accent-blue) !important;      /* 남색 폰트 */
-    border-color: transparent !important;
-    box-shadow: 0 0 15px rgba(255, 235, 167, 0.4) !important;
-}
+
 /* 아코디언 */
 .company-category-header {
     display: flex; justify-content: space-between; align-items: center;

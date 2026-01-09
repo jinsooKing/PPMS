@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PPMS - 통계 분석</title>
-    
+
     <link rel="stylesheet" href="common.css">
     <link rel="stylesheet" href="aoi.css">
     <link rel="stylesheet" href="statistics.css">
@@ -18,217 +18,512 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script src="auth.js"></script>
-    
+
     <style>
         /* [통계 페이지 전용 스타일 오버라이드] */
-        
-        /* 1. 레이아웃 */
+        html {
+            /* 14px에서 18px 사이로 화면 너비(vw)에 따라 변함 */
+            font-size: clamp(14px, 1.1vw, 18px);
+        }
+
         .content-area {
-            display: flex; flex-direction: column; 
-            padding: 15px 25px !important; 
-            gap: 10px; 
-            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center !important;
+            /* 내부 요소들을 가로 중앙 정렬 */
+            justify-content: flex-start;
+            padding: 20px 0 !important;
+            /* 좌우 패딩 제거하여 결과 영역이 끝까지 차게 함 */
+            gap: 20px;
+            width: 100%;
+            box-sizing: border-box;
         }
 
-        /* 2. 상단 툴바 */
+        .analysis-toolbar,
+        #statistics-result-area {
+            /* 기존 1600px 제한을 해제하고 화면의 98%를 사용하도록 변경 */
+            width: 98% !important;
+            max-width: 2560px;
+            /* 4K 모니터까지 고려한 최대 너비 */
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .statistics-table th,
+        .summary-table th {
+            font-size: 1.05rem;
+            /* 헤더 강조 */
+        }
+
+        .statistics-table td,
+        .summary-table td {
+            font-size: 0.95rem;
+            /* 본문 가독성 향상 */
+        }
+
+        #aoi-summary-container {
+            width: 100% !important;
+            height: auto !important;
+            overflow-y: visible !important;
+            overflow-x: auto;
+            margin-bottom: 15px;
+            /* 간격 축소 */
+            border: 2px solid var(--point-gold);
+            flex-shrink: 0;
+            padding: 5px !important;
+            /* 내부 여백 축소 */
+            background-color: #15151a;
+        }
+
         .analysis-toolbar {
-            display: flex; justify-content: space-between; align-items: center;
-            background-color: var(--card-bg); 
-            padding: clamp(5px, 1vh, 10px) clamp(10px, 1vw, 20px);
-            border-radius: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.05); 
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-            flex-shrink: 0; 
-            flex-wrap: nowrap; 
-            gap: clamp(10px, 2vw, 20px); 
-            z-index: 50;
-            white-space: nowrap; 
-            overflow-x: auto; 
-        }
-        .analysis-toolbar::-webkit-scrollbar { height: 0; width: 0; }
-
-        .tab-group { 
-            display: flex; gap: 5px; 
-            background: rgba(0,0,0,0.2); padding: 3px; border-radius: 8px; 
+            /* 최소 800px, 권장 95%, 최대 1600px로 제한 */
+            width: clamp(800px, 95vw, 1600px) !important;
+            margin: 0 auto !important;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-sizing: border-box;
             flex-shrink: 0;
         }
+
+        #statistics-result-area {
+            width: 100% !important;
+            flex: 1 !important;
+            display: flex !important;
+            flex-direction: column !important;
+            overflow: hidden !important;
+            /* 부모 스크롤 차단 (Sticky 작동의 핵심) */
+            background-color: rgba(0, 0, 0, 0.2);
+            min-height: 0;
+            /* Flex 자식의 스크롤을 위한 필수 설정 */
+        }
+
+        .analysis-toolbar::-webkit-scrollbar {
+            height: 0;
+            width: 0;
+        }
+
+        .tab-group {
+            display: flex;
+            gap: 5px;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 3px;
+            border-radius: 8px;
+            flex-shrink: 0;
+        }
+
         .tab-btn {
-            padding: 6px clamp(10px, 1.5vw, 18px); 
-            color: #888; border-radius: 6px; font-family: 'BMDOHYEON', sans-serif;
-            font-size: clamp(0.85rem, 1vw, 1rem); 
-            cursor: pointer; transition: all 0.2s ease; 
-            display: flex; align-items: center; gap: 6px;
+            padding: 6px clamp(10px, 1.5vw, 18px);
+            color: #888;
+            border-radius: 6px;
+            font-family: 'BMDOHYEON', sans-serif;
+            font-size: clamp(0.85rem, 1vw, 1rem);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
-        .tab-btn:hover { color: #ccc; background-color: rgba(255,255,255,0.05); }
-        .tab-btn.active { background-color: var(--point-gold); color: var(--accent-blue); font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
 
-        .control-wrapper { 
-            display: none; align-items: center; 
-            gap: clamp(8px, 1.5vw, 15px); 
-            animation: fadeInRight 0.3s ease; 
+        .tab-btn:hover {
+            color: #ccc;
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        .tab-btn.active {
+            background-color: var(--point-gold);
+            color: var(--accent-blue);
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .control-wrapper {
+            display: none;
+            align-items: center;
+            gap: clamp(8px, 1.5vw, 15px);
+            animation: fadeInRight 0.3s ease;
             flex-shrink: 0;
         }
-        .control-wrapper.active { display: flex; }
-        @keyframes fadeInRight { from { opacity: 0; transform: translateX(10px); } to { opacity: 1; transform: translateX(0); } }
+
+        .control-wrapper.active {
+            display: flex;
+        }
+
+        @keyframes fadeInRight {
+            from {
+                opacity: 0;
+                transform: translateX(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
 
         /* 입력 필드 */
-        .compact-select, .compact-input {
-            background-color: #15151a; color: #fff; border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 6px; padding: 4px 8px; 
+        .compact-select,
+        .compact-input {
+            background-color: #15151a;
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 6px;
+            padding: 4px 8px;
             font-family: 'Poppins', 'BMJUA', sans-serif;
-            font-size: clamp(0.8rem, 0.9vw, 0.95rem); height: 34px; outline: none; text-align: center;
+            font-size: clamp(0.8rem, 0.9vw, 0.95rem);
+            height: 34px;
+            outline: none;
+            text-align: center;
         }
-        .compact-select:focus, .compact-input:focus { border-color: var(--point-gold); box-shadow: 0 0 5px rgba(255, 235, 167, 0.2); }
-        
-        .compact-btn { 
-            padding: 0 clamp(15px, 2vw, 25px) !important; 
-            height: 34px !important; 
-            font-size: clamp(0.85rem, 0.9vw, 0.95rem) !important; 
+
+        .compact-select:focus,
+        .compact-input:focus {
+            border-color: var(--point-gold);
+            box-shadow: 0 0 5px rgba(255, 235, 167, 0.2);
+        }
+
+        .compact-btn {
+            padding: 0 clamp(15px, 2vw, 25px) !important;
+            height: 34px !important;
+            font-size: clamp(0.85rem, 0.9vw, 0.95rem) !important;
             white-space: nowrap;
         }
 
-        .period-toggle { 
-            display: flex; background: rgba(255,255,255,0.05); 
-            border-radius: 6px; padding: 2px; border: 1px solid rgba(255,255,255,0.1); 
+        .period-toggle {
+            display: flex;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 6px;
+            padding: 2px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
-        .period-option { 
-            padding: 4px 10px; font-size: clamp(0.75rem, 0.8vw, 0.85rem); 
-            cursor: pointer; border-radius: 4px; color: #aaa; transition: all 0.2s; font-family: 'BMDOHYEON'; 
-        }
-        .period-option.active { background-color: var(--accent-blue); color: #fff; font-weight: bold; }
 
-        /* 3. 결과 영역 */
-        #statistics-result-area {
-            flex: 1; min-height: 0; position: relative;
-            background-color: #1f2029;
-            border-radius: 8px; border: none; 
-            overflow: hidden;
-            display: flex; flex-direction: column;
+        .period-option {
+            padding: 4px 10px;
+            font-size: clamp(0.75rem, 0.8vw, 0.85rem);
+            cursor: pointer;
+            border-radius: 4px;
+            color: #aaa;
+            transition: all 0.2s;
+            font-family: 'BMDOHYEON';
         }
-        
+
+        .period-option.active {
+            background-color: var(--accent-blue);
+            color: #fff;
+            font-weight: bold;
+        }
+
         /* 테이블 컨테이너 */
-        .table-container { 
-            flex: 0 1 auto; 
-            overflow: auto; 
-            width: 100%; 
-            height: auto; 
-            max-height: 100%; 
-            display: none; 
-        } 
-        
+        .table-container {
+            flex: 1 !important;
+            /* 남은 공간 모두 차지 */
+            width: 100% !important;
+            overflow: auto !important;
+            /* 내부 스크롤 활성화 */
+            min-height: 0 !important;
+            height: auto !important;
+            max-height: none !important;
+        }
+
         /* 4. 테이블 스타일 재정의 (AOI 호환 및 생산실적 2단 스타일) */
-        #aoi-table-main .detail-col { display: table-cell !important; }
-        #aoi-table-main col.detail-col { display: table-column !important; }
-        #aoi-table-main .sum-header { display: none !important; } 
-        
+        #aoi-table-main .detail-col {
+            display: table-cell !important;
+        }
+
+        #aoi-table-main col.detail-col {
+            display: table-column !important;
+        }
+
+        #aoi-table-main .sum-header {
+            display: none !important;
+        }
+
         /* 헤더 고정 */
         #aoi-table-main thead th,
-        .statistics-table thead th { 
-            position: sticky; top: 0; z-index: 200; 
+        .statistics-table thead th {
+            position: sticky;
+            top: 0;
+            z-index: 200;
         }
-        
+
+        /* 5. 모델명 열 가로 고정 (세로 스크롤 시에도 유지) */
+        #aoi-table-main thead th.model-name-ellipsis {
+            z-index: 600 !important;
+            left: 0 !important;
+        }
+
+        /* 요약표 내부 패딩 보정 (내용 잘림 방지) */
+        .summary-table th,
+        .summary-table td {
+            padding: 10px 8px !important;
+            /* 요청하신 패딩 추가 */
+            box-sizing: border-box;
+        }
+
+        #aoi-table-main thead tr:nth-child(1) th {
+            position: sticky !important;
+            top: 0 !important;
+            z-index: 210 !important;
+            background-color: #15151a !important;
+        }
+
+        /* 두 번째 줄 (소분류: 미삽, 오삽 등) */
+        #aoi-table-main thead tr:nth-child(2) th {
+            position: sticky !important;
+            top: 40px !important;
+            /* 첫 번째 행 높이(40px)만큼 아래에 고정 */
+            z-index: 200 !important;
+            background-color: #15151a !important;
+            border-top: 1px solid rgba(255, 235, 167, 0.3) !important;
+        }
+
+        #aoi-table-main thead tr:nth-child(1) th:first-child {
+            z-index: 600 !important;
+            /* 가장 높은 우선순위 */
+            left: 0 !important;
+        }
+
         /* 모델명 헤더 고정 */
         #aoi-table-main thead th.model-name-ellipsis {
             position: sticky !important;
             left: 0 !important;
             z-index: 600 !important;
-            background-color: #15151a !important; 
-            box-shadow: 2px 0 5px rgba(0,0,0,0.3);
+            background-color: #15151a !important;
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.3);
         }
 
         /* 입력창 커서 */
-        #aoi-table-main input { 
-            pointer-events: auto !important; 
-            cursor: default !important; 
+        #aoi-table-main input {
+            pointer-events: auto !important;
+            cursor: default !important;
         }
+
         #aoi-table-main input[type="text"] {
             cursor: pointer !important;
         }
+
         #aoi-table-main input:focus {
-            box-shadow: inset 0 0 0 1px var(--point-gold) !important; 
+            box-shadow: inset 0 0 0 1px var(--point-gold) !important;
             background-color: rgba(255, 235, 167, 0.05) !important;
         }
+
         #aoi-table-main input::placeholder {
-            color: rgba(255, 255, 255, 0.2); font-weight: normal;
+            color: rgba(255, 255, 255, 0.2);
+            font-weight: normal;
         }
 
         /* [생산 실적 테이블 스타일] */
         .statistics-table th {
-            background-color: #15151a; color: var(--point-gold);
-            padding: 12px; font-size: 0.95rem;
+            background-color: #15151a;
+            color: var(--point-gold);
+            padding: 12px;
+            font-size: 0.95rem;
             border-bottom: 2px solid var(--point-gold);
-            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
         }
+
         .statistics-table td {
             padding: 10px 5px;
             border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            font-size: 0.9rem; vertical-align: middle;
+            font-size: 0.9rem;
+            vertical-align: middle;
         }
+
         .stats-clickable-val {
-            cursor: pointer; font-weight: bold; color: var(--point-gold);
-            text-decoration: underline; text-underline-offset: 3px;
+            cursor: pointer;
+            font-weight: bold;
+            color: var(--point-gold);
+            text-decoration: underline;
+            text-underline-offset: 3px;
             transition: all 0.2s;
         }
-        .stats-clickable-val:hover { color: #fff; text-decoration-color: #fff; }
-        .stats-lot-val { color: #888; font-size: 0.85em; }
-        
+
+        .stats-clickable-val:hover {
+            color: #fff;
+            text-decoration-color: #fff;
+        }
+
+        .stats-lot-val {
+            color: #888;
+            font-size: 0.85em;
+        }
+
         /* [수정] 상태별 강조 색상 변경 (기존 Gold와 확실히 구분) */
-        .stats-problem-yellow { color: #FF3D00 !important; } /* 부족: 강렬한 오렌지 레드 */
-        .stats-problem-red { color: #EA00FF !important; }    /* 불균형: 선명한 마젠타/보라 */
+        .stats-problem-yellow {
+            color: #FF3D00 !important;
+        }
+
+        /* 부족: 강렬한 오렌지 레드 */
+        .stats-problem-red {
+            color: #EA00FF !important;
+        }
+
+        /* 불균형: 선명한 마젠타/보라 */
 
         /* 모달 내 링크 스타일 */
         #details-modal-content a {
-            color: var(--point-gold); text-decoration: underline; text-underline-offset: 3px;
+            color: var(--point-gold);
+            text-decoration: underline;
+            text-underline-offset: 3px;
             transition: color 0.2s;
         }
-        #details-modal-content a:hover { color: #fff; }
+
+        #details-modal-content a:hover {
+            color: #fff;
+        }
 
         /* 5. 뷰어 팝업 */
         #global-viewer {
-            position: fixed; display: none; z-index: 9999;
-            background: rgba(30, 30, 40, 0.95); backdrop-filter: blur(5px);
-            border: 1px solid var(--point-gold); border-radius: 8px; padding: 10px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5); color: #fff;
-            min-width: 200px; max-width: 400px; font-size: 0.9rem;
-            line-height: 1.5; white-space: pre-wrap; pointer-events: none;
+            position: fixed;
+            display: none;
+            z-index: 9999;
+            background: rgba(30, 30, 40, 0.95);
+            backdrop-filter: blur(5px);
+            border: 1px solid var(--point-gold);
+            border-radius: 8px;
+            padding: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            color: #fff;
+            min-width: 200px;
+            max-width: 400px;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            pointer-events: none;
         }
-        
+
         /* 6. 모델명 툴팁 */
         #model-tooltip-simple {
-            position: fixed; display: none; background: rgba(30, 30, 40, 0.95); 
-            color: #fff; padding: 8px 12px; border-radius: 6px; z-index: 10000; 
-            font-size: 0.9rem; pointer-events: none; border: 1px solid var(--point-gold);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.5); font-family: 'Poppins', sans-serif;
+            position: fixed;
+            display: none;
+            background: rgba(30, 30, 40, 0.95);
+            color: #fff;
+            padding: 8px 12px;
+            border-radius: 6px;
+            z-index: 10000;
+            font-size: 0.9rem;
+            pointer-events: none;
+            border: 1px solid var(--point-gold);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .summary-table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: auto;
+        }
+
+        .summary-table th,
+        .summary-table td {
+            border: 1px solid rgba(255, 235, 167, 0.3);
+            /* [수정] 셀 크기 및 폰트 축소 */
+            padding: 8px 6px !important;
+            font-size: clamp(11px, 0.8vw, 13px) !important;
+            white-space: nowrap;
+            line-height: 1.3;
+        }
+
+        .summary-accent {
+            font-size: 1.1rem !important;
+            /* 강조 수치 크기 조정 */
+        }
+
+        .summary-title-cell {
+            background-color: var(--card-bg);
+            color: var(--point-gold);
+            width: 6%;
+        }
+
+        .summary-label-cell {
+            background-color: #1a1b23;
+            color: #aaa;
+            font-size: 0.8rem;
+        }
+
+        .summary-highlight-row {
+            background-color: rgba(255, 235, 167, 0.05);
+            color: var(--point-gold);
+            font-weight: bold;
+        }
+
+        .summary-value-row {
+            color: #fff;
+        }
+
+
+        #aoi-summary-container {
+            flex-shrink: 0 !important;
+            /* 테이블 스크롤 시 밀리지 않음 */
+            margin-bottom: 10px;
+            /* 기존 스타일 유지 */
+        }
+
+        .no-line-data-message {
+            margin: 0 !important;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+            /* 부모 공간 전체를 차지하여 정중앙 유지 */
+            color: #888;
+            font-size: 1.2rem;
+            gap: 15px;
+            text-align: center;
         }
     </style>
 </head>
 
 <body>
     <svg style="position: absolute; width: 0; height: 0;" class="svg-sprite">
-        <defs><filter id="filter"><feTurbulence type="fractalNoise" baseFrequency="0.01 0.004" numOctaves="1" result="warp"></feTurbulence><feDisplacementMap xChannelSelector="R" yChannelSelector="G" scale="30" in="SourceGraphic" in2="warp"></feDisplacementMap></filter></defs>
+        <defs>
+            <filter id="filter">
+                <feTurbulence type="fractalNoise" baseFrequency="0.01 0.004" numOctaves="1" result="warp">
+                </feTurbulence>
+                <feDisplacementMap xChannelSelector="R" yChannelSelector="G" scale="30" in="SourceGraphic" in2="warp">
+                </feDisplacementMap>
+            </filter>
+        </defs>
     </svg>
 
     <div class="page-container">
         <header class="main-header">
             <div class="header-left">
                 <a href="index.html" class="header-logo-wrapper btn-glitch">
-                    <svg class="header-logo" version="1.0" xmlns="http://www.w3.org/2000/svg" width="233.000000pt" height="240.000000pt" viewBox="0 0 233.000000 240.000000" preserveAspectRatio="xMidYMid meet">
+                    <svg class="header-logo" version="1.0" xmlns="http://www.w3.org/2000/svg" width="233.000000pt"
+                        height="240.000000pt" viewBox="0 0 233.000000 240.000000" preserveAspectRatio="xMidYMid meet">
                         <g transform="translate(0.000000,240.000000) scale(0.100000,-0.100000)" stroke="none">
-                            <path d="M978 2385 c-184 -31 -309 -94 -433 -219 -143 -144 -199 -279 -198 -481 1 -235 87 -444 246 -592 271 -253 686 -282 997 -70 54 37 151 127 193 181 26 32 16 27 -66 -37 -189 -148 -291 -189 -467 -189 -275 1 -472 113 -575 327 -128 265 -86 586 101 773 99 99 243 150 389 138 172 -14 293 -86 355 -208 38 -77 41 -167 9 -253 -38 -102 -159 -206 -276 -240 l-23 -6 0 188 c0 134 4 193 12 201 7 7 31 12 55 12 32 0 43 4 43 15 0 13 -35 15 -251 15 -196 0 -250 -3 -247 -12 3 -7 24 -14 49 -16 24 -2 47 -9 51 -15 14 -21 10 -661 -4 -675 -7 -7 -31 -12 -55 -12 -32 0 -43 -4 -43 -15 0 -13 34 -15 250 -15 216 0 250 2 250 15 0 11 -12 15 -45 15 -59 0 -65 14 -65 139 l0 100 58 6 c109 11 184 26 236 46 183 68 285 273 230 460 -94 317 -404 487 -776 424z"/>
-                            <path d="M1991 638 c-60 -130 -103 -211 -120 -225 l-26 -22 73 -1 c39 0 72 3 72 6 0 3 -9 13 -19 22 -19 16 -19 19 -4 55 l15 37 87 0 c84 0 88 -1 99 -25 18 -38 15 -63 -8 -70 -45 -14 -15 -25 70 -25 50 0 90 3 90 6 0 3 -10 16 -21 28 -12 12 -61 109 -109 216 -48 107 -92 196 -97 197 -5 2 -52 -88 -102 -199z m113 -9 c14 -33 26 -62 26 -65 0 -2 -27 -4 -61 -4 -33 0 -59 4 -57 8 2 4 14 33 27 65 14 31 28 57 32 57 3 0 18 -27 33 -61z"/>
-                            <path d="M0 811 c0 -5 11 -16 25 -25 25 -16 25 -17 25 -179 0 -89 -4 -167 -8 -173 -4 -6 -15 -13 -24 -17 -43 -16 -13 -27 72 -27 50 0 90 4 90 9 0 5 -11 16 -25 25 -24 16 -26 22 -23 79 l3 62 85 5 c131 9 180 44 180 130 0 53 -22 84 -76 106 -38 16 -324 20 -324 5z m264 -35 c58 -24 69 -107 18 -146 -19 -15 -40 -20 -88 -20 l-64 0 0 78 c0 47 5 83 12 90 16 16 81 15 122 -2z"/>
-                            <path d="M440 810 c0 -6 11 -15 25 -20 l25 -10 0 -175 0 -175 -25 -10 c-50 -19 -26 -30 65 -30 50 0 90 4 90 9 0 5 -10 15 -22 23 -19 13 -23 26 -26 92 l-4 76 96 0 96 0 0 -75 c0 -68 -2 -76 -25 -91 -14 -9 -25 -20 -25 -25 0 -5 41 -9 90 -9 50 0 90 4 90 9 0 5 -11 16 -25 25 -25 16 -25 17 -25 181 0 164 0 165 25 181 14 9 25 20 25 25 0 5 -40 9 -90 9 -49 0 -90 -4 -90 -10z"/>
-                            <path d="M940 810 c0 -6 11 -15 25 -20 l25 -10 0 -167 c0 -93 -4 -173 -8 -179 -4 -6 -15 -13 -24 -17 -43 -16 -13 -27 72 -27 50 0 90 4 90 9 0 5 -11 16 -25 25 -25 16 -25 17 -25 181 0 164 0 165 25 181 14 9 25 20 25 25 0 5 -40 9 -90 9 -55 0 -90 -4 -90 -10z"/>
-                            <path d="M1170 810 c0 -6 8 -14 18 -17 9 -4 20 -11 24 -17 4 -6 8 -83 8 -171 0 -88 -4 -165 -8 -171 -4 -6 -15 -13 -24 -17 -10 -3 -18 -11 -18 -17 0 -6 66 -10 190 -10 l190 0 6 28 c3 15 10 42 15 61 15 60 -7 69 -36 15 -21 -39 -51 -59 -106 -69 -44 -8 -115 10 -123 31 -3 9 -6 81 -6 160 0 142 1 145 25 168 14 13 25 26 25 30 0 3 -40 6 -90 6 -55 0 -90 -4 -90 -10z"/>
-                            <path d="M1630 811 c0 -5 11 -16 25 -25 25 -16 25 -17 25 -181 0 -164 0 -165 -25 -181 -14 -9 -25 -20 -25 -25 0 -5 38 -9 85 -9 84 0 104 9 65 30 -19 10 -20 21 -20 185 0 164 1 175 20 185 39 21 19 30 -65 30 -47 0 -85 -4 -85 -9z"/>
-                            <path d="M532 273 c3 -17 40 -18 591 -21 582 -2 587 -2 587 18 0 20 -6 20 -591 20 -557 0 -590 -1 -587 -17z"/>
-                            <path d="M530 180 c0 -5 14 -10 30 -10 l30 0 0 -80 c0 -64 3 -80 15 -80 12 0 15 16 15 80 l0 80 30 0 c17 0 30 5 30 10 0 6 -32 10 -75 10 -43 0 -75 -4 -75 -10z"/>
-                            <path d="M700 100 l0 -90 65 0 c37 0 65 4 65 10 0 6 -25 10 -55 10 -54 0 -55 0 -55 30 0 29 1 30 50 30 28 0 50 5 50 10 0 6 -22 10 -50 10 -49 0 -50 1 -50 30 0 29 1 30 55 30 30 0 55 5 55 10 0 6 -28 10 -65 10 l-65 0 0 -90z"/>
-                            <path d="M850 101 l0 -91 60 0 c33 0 60 4 60 10 0 6 -20 10 -45 10 l-44 0 -3 77 c-2 50 -7 78 -15 81 -10 3 -13 -19 -13 -87z"/>
-                            <path d="M990 100 l0 -90 65 0 c37 0 65 4 65 10 0 6 -22 10 -50 10 -49 0 -50 1 -50 30 0 29 2 30 44 30 25 0 48 5 51 10 4 6 -13 10 -44 10 -50 0 -51 1 -51 30 0 29 1 30 50 30 28 0 50 5 50 10 0 6 -28 10 -65 10 l-65 0 0 -90z"/>
-                            <path d="M1161 164 c-32 -41 -28 -98 9 -136 26 -25 36 -29 62 -24 36 7 68 32 68 53 0 20 -16 16 -32 -8 -16 -24 -59 -29 -83 -9 -20 17 -20 94 1 114 20 20 58 21 78 1 16 -17 36 -20 36 -6 0 19 -45 41 -81 41 -29 0 -43 -6 -58 -26z"/>
-                            <path d="M1351 171 c-48 -48 -29 -143 33 -164 87 -29 148 89 83 161 -27 29 -89 30 -116 3z m103 -23 c47 -66 -19 -154 -79 -106 -29 23 -34 71 -9 106 20 30 68 30 88 0z"/>
-                            <path d="M1520 100 c0 -53 4 -90 10 -90 6 0 10 25 10 55 0 30 4 55 8 55 5 0 16 -25 26 -56 22 -71 43 -70 71 6 l20 55 3 -58 c2 -40 7 -57 15 -54 18 6 17 172 -2 172 -12 0 -22 -20 -63 -125 -9 -23 -12 -19 -39 53 -42 107 -59 104 -59 -13z"/>
+                            <path
+                                d="M978 2385 c-184 -31 -309 -94 -433 -219 -143 -144 -199 -279 -198 -481 1 -235 87 -444 246 -592 271 -253 686 -282 997 -70 54 37 151 127 193 181 26 32 16 27 -66 -37 -189 -148 -291 -189 -467 -189 -275 1 -472 113 -575 327 -128 265 -86 586 101 773 99 99 243 150 389 138 172 -14 293 -86 355 -208 38 -77 41 -167 9 -253 -38 -102 -159 -206 -276 -240 l-23 -6 0 188 c0 134 4 193 12 201 7 7 31 12 55 12 32 0 43 4 43 15 0 13 -35 15 -251 15 -196 0 -250 -3 -247 -12 3 -7 24 -14 49 -16 24 -2 47 -9 51 -15 14 -21 10 -661 -4 -675 -7 -7 -31 -12 -55 -12 -32 0 -43 -4 -43 -15 0 -13 34 -15 250 -15 216 0 250 2 250 15 0 11 -12 15 -45 15 -59 0 -65 14 -65 139 l0 100 58 6 c109 11 184 26 236 46 183 68 285 273 230 460 -94 317 -404 487 -776 424z" />
+                            <path
+                                d="M1991 638 c-60 -130 -103 -211 -120 -225 l-26 -22 73 -1 c39 0 72 3 72 6 0 3 -9 13 -19 22 -19 16 -19 19 -4 55 l15 37 87 0 c84 0 88 -1 99 -25 18 -38 15 -63 -8 -70 -45 -14 -15 -25 70 -25 50 0 90 3 90 6 0 3 -10 16 -21 28 -12 12 -61 109 -109 216 -48 107 -92 196 -97 197 -5 2 -52 -88 -102 -199z m113 -9 c14 -33 26 -62 26 -65 0 -2 -27 -4 -61 -4 -33 0 -59 4 -57 8 2 4 14 33 27 65 14 31 28 57 32 57 3 0 18 -27 33 -61z" />
+                            <path
+                                d="M0 811 c0 -5 11 -16 25 -25 25 -16 25 -17 25 -179 0 -89 -4 -167 -8 -173 -4 -6 -15 -13 -24 -17 -43 -16 -13 -27 72 -27 50 0 90 4 90 9 0 5 -11 16 -25 25 -24 16 -26 22 -23 79 l3 62 85 5 c131 9 180 44 180 130 0 53 -22 84 -76 106 -38 16 -324 20 -324 5z m264 -35 c58 -24 69 -107 18 -146 -19 -15 -40 -20 -88 -20 l-64 0 0 78 c0 47 5 83 12 90 16 16 81 15 122 -2z" />
+                            <path
+                                d="M440 810 c0 -6 11 -15 25 -20 l25 -10 0 -175 0 -175 -25 -10 c-50 -19 -26 -30 65 -30 50 0 90 4 90 9 0 5 -10 15 -22 23 -19 13 -23 26 -26 92 l-4 76 96 0 96 0 0 -75 c0 -68 -2 -76 -25 -91 -14 -9 -25 -20 -25 -25 0 -5 41 -9 90 -9 50 0 90 4 90 9 0 5 -11 16 -25 25 -25 16 -25 17 -25 181 0 164 0 165 25 181 14 9 25 20 25 25 0 5 -40 9 -90 9 -49 0 -90 -4 -90 -10z" />
+                            <path
+                                d="M940 810 c0 -6 11 -15 25 -20 l25 -10 0 -167 c0 -93 -4 -173 -8 -179 -4 -6 -15 -13 -24 -17 -43 -16 -13 -27 72 -27 50 0 90 4 90 9 0 5 -11 16 -25 25 -25 16 -25 17 -25 181 0 164 0 165 25 181 14 9 25 20 25 25 0 5 -40 9 -90 9 -55 0 -90 -4 -90 -10z" />
+                            <path
+                                d="M1170 810 c0 -6 8 -14 18 -17 9 -4 20 -11 24 -17 4 -6 8 -83 8 -171 0 -88 -4 -165 -8 -171 -4 -6 -15 -13 -24 -17 -10 -3 -18 -11 -18 -17 0 -6 66 -10 190 -10 l190 0 6 28 c3 15 10 42 15 61 15 60 -7 69 -36 15 -21 -39 -51 -59 -106 -69 -44 -8 -115 10 -123 31 -3 9 -6 81 -6 160 0 142 1 145 25 168 14 13 25 26 25 30 0 3 -40 6 -90 6 -55 0 -90 -4 -90 -10z" />
+                            <path
+                                d="M1630 811 c0 -5 11 -16 25 -25 25 -16 25 -17 25 -181 0 -164 0 -165 -25 -181 -14 -9 -25 -20 -25 -25 0 -5 38 -9 85 -9 84 0 104 9 65 30 -19 10 -20 21 -20 185 0 164 1 175 20 185 39 21 19 30 -65 30 -47 0 -85 -4 -85 -9z" />
+                            <path
+                                d="M532 273 c3 -17 40 -18 591 -21 582 -2 587 -2 587 18 0 20 -6 20 -591 20 -557 0 -590 -1 -587 -17z" />
+                            <path
+                                d="M530 180 c0 -5 14 -10 30 -10 l30 0 0 -80 c0 -64 3 -80 15 -80 12 0 15 16 15 80 l0 80 30 0 c17 0 30 5 30 10 0 6 -32 10 -75 10 -43 0 -75 -4 -75 -10z" />
+                            <path
+                                d="M700 100 l0 -90 65 0 c37 0 65 4 65 10 0 6 -25 10 -55 10 -54 0 -55 0 -55 30 0 29 1 30 50 30 28 0 50 5 50 10 0 6 -22 10 -50 10 -49 0 -50 1 -50 30 0 29 1 30 55 30 30 0 55 5 55 10 0 6 -28 10 -65 10 l-65 0 0 -90z" />
+                            <path
+                                d="M850 101 l0 -91 60 0 c33 0 60 4 60 10 0 6 -20 10 -45 10 l-44 0 -3 77 c-2 50 -7 78 -15 81 -10 3 -13 -19 -13 -87z" />
+                            <path
+                                d="M990 100 l0 -90 65 0 c37 0 65 4 65 10 0 6 -22 10 -50 10 -49 0 -50 1 -50 30 0 29 2 30 44 30 25 0 48 5 51 10 4 6 -13 10 -44 10 -50 0 -51 1 -51 30 0 29 1 30 50 30 28 0 50 5 50 10 0 6 -28 10 -65 10 l-65 0 0 -90z" />
+                            <path
+                                d="M1161 164 c-32 -41 -28 -98 9 -136 26 -25 36 -29 62 -24 36 7 68 32 68 53 0 20 -16 16 -32 -8 -16 -24 -59 -29 -83 -9 -20 17 -20 94 1 114 20 20 58 21 78 1 16 -17 36 -20 36 -6 0 19 -45 41 -81 41 -29 0 -43 -6 -58 -26z" />
+                            <path
+                                d="M1351 171 c-48 -48 -29 -143 33 -164 87 -29 148 89 83 161 -27 29 -89 30 -116 3z m103 -23 c47 -66 -19 -154 -79 -106 -29 23 -34 71 -9 106 20 30 68 30 88 0z" />
+                            <path
+                                d="M1520 100 c0 -53 4 -90 10 -90 6 0 10 25 10 55 0 30 4 55 8 55 5 0 16 -25 26 -56 22 -71 43 -70 71 6 l20 55 3 -58 c2 -40 7 -57 15 -54 18 6 17 172 -2 172 -12 0 -22 -20 -63 -125 -9 -23 -12 -19 -39 53 -42 107 -59 104 -59 -13z" />
                         </g>
                     </svg>
                 </a>
@@ -236,11 +531,13 @@
             <div class="header-center">
                 <div class="common-box font-35pt">통계 분석</div>
             </div>
-            <div class="header-right"><div class="common-box time-display" id="current-time"></div></div>
+            <div class="header-right">
+                <div class="common-box time-display" id="current-time"></div>
+            </div>
         </header>
 
         <main class="content-area">
-            
+
             <div class="analysis-toolbar">
                 <div class="tab-group">
                     <div class="tab-btn active" data-tab="production"><i class="uil uil-chart-line"></i> 생산 실적</div>
@@ -248,9 +545,11 @@
                 </div>
 
                 <div id="production-controls" class="control-wrapper active">
-                    <input type="number" id="order-year-input" class="compact-input" placeholder="2025" style="width:70px;">
+                    <input type="number" id="order-year-input" class="compact-input" placeholder="2025"
+                        style="width:70px;">
                     <select id="order-month-select" class="compact-select"></select>
-                    <div class="common-box clickable-box compact-btn" id="search-prod-btn"><i class="uil uil-search"></i> 조회</div>
+                    <div class="common-box clickable-box compact-btn" id="search-prod-btn"><i
+                            class="uil uil-search"></i> 조회</div>
                 </div>
 
                 <div id="aoi-controls" class="control-wrapper">
@@ -262,17 +561,22 @@
                     <div style="display:flex; align-items:center; gap:5px; color:#ccc; font-size:0.9rem;">
                         <select id="aoi-year-select" class="compact-select"></select>년
                         <select id="aoi-month-select" class="compact-select"></select>월
-                        <span id="week-select-wrapper"><select id="aoi-week-select" class="compact-select"></select>주</span>
+                        <span id="week-select-wrapper"><select id="aoi-week-select"
+                                class="compact-select"></select>주</span>
                     </div>
 
-                    <div class="common-box clickable-box compact-btn" id="search-aoi-btn"><i class="uil uil-search"></i> 분석</div>
-                    <div id="period-info-text" style="color:var(--point-gold); font-size:0.8rem; font-weight:bold;"></div>
+                    <div class="common-box clickable-box compact-btn" id="search-aoi-btn"><i class="uil uil-search"></i>
+                        분석</div>
+                    <div id="period-info-text" style="color:var(--point-gold); font-size:0.8rem; font-weight:bold;">
+                    </div>
                 </div>
             </div>
 
             <div id="statistics-result-area">
                 <div id="prod-table-container" class="table-container" style="display:none;"></div>
-
+                <div id="aoi-summary-container" class="table-container"
+                    style="display:none; margin-bottom: 15px; border: 2px solid var(--point-gold);">
+                </div>
                 <div id="aoi-table-container" class="table-container" style="display:none;">
                     <table class="aoi-table" id="aoi-table-main">
                         <colgroup>
@@ -282,21 +586,21 @@
                             <col style="width: clamp(70px, 6vw, 120px);" class="detail-col group-basic">
                             <col style="width: clamp(70px, 6vw, 120px);" class="detail-col group-basic good-col">
                             <col style="width: clamp(70px, 6vw, 120px);">
-                            
+
                             <col style="width: clamp(70px, 6vw, 120px);" class="detail-col group-a">
                             <col style="width: clamp(70px, 6vw, 120px);" class="detail-col group-a">
                             <col style="width: clamp(70px, 6vw, 120px);" class="detail-col group-a">
                             <col style="width: clamp(70px, 6vw, 120px);" class="detail-col group-a">
                             <col style="width: clamp(70px, 6vw, 120px);" class="detail-col group-a">
-                            
+
                             <col style="width: clamp(70px, 6vw, 120px);" class="detail-col group-b">
                             <col style="width: clamp(70px, 6vw, 120px);" class="detail-col group-b">
                             <col style="width: clamp(70px, 6vw, 120px);" class="detail-col group-b">
-                            
+
                             <col style="width: clamp(70px, 6vw, 120px);" class="detail-col group-c">
                             <col style="width: clamp(70px, 6vw, 120px);" class="detail-col group-c">
                             <col style="width: clamp(70px, 6vw, 120px);" class="detail-col group-c">
-                            
+
                             <col style="width: clamp(70px, 6vw, 120px);" class="detail-col group-d">
                             <col style="width: clamp(70px, 6vw, 120px);" class="detail-col group-d">
                         </colgroup>
@@ -337,7 +641,7 @@
                         </tbody>
                     </table>
                 </div>
-                
+
                 <p class="no-line-data-message" style="margin-top:50px;">
                     <i class="uil uil-mouse-alt" style="font-size:2rem; display:block; margin-bottom:10px;"></i>
                     분석할 내용을 선택해주세요.
@@ -358,7 +662,7 @@
         <div id="global-tooltip">
             <textarea id="editor-textarea" readonly></textarea>
         </div>
-        
+
         <div id="model-tooltip-simple"></div>
 
         <div class="modal-overlay" id="details-modal">
@@ -373,10 +677,10 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => { document.body.style.opacity = '1'; }, 50);
-            
+
             // 로고 효과
             const filter = document.querySelector('.svg-sprite');
-            if(filter) {
+            if (filter) {
                 const turb = filter.querySelector('#filter feTurbulence');
                 const glitchElements = document.querySelectorAll('.btn-glitch');
                 let turbVal = { val: 0.000001 }, turbValX = { val: 0.000001 };
@@ -385,19 +689,19 @@
                     onUpdate: function () { turb.setAttribute('baseFrequency', turbVal.val + ' ' + turbValX.val); }
                 });
                 timeline.to(turbValX, 0.1, { val: 0.5 }).to(turbVal, 0.1, { val: 0.02 })
-                        .set(turbValX, { val: 0.000001 }).set(turbVal, { val: 0.000001 })
-                        .to(turbValX, 0.2, { val: 0.4 }, 0.4).to(turbVal, 0.2, { val: 0.002 }, 0.4)
-                        .set(turbValX, { val: 0.000001 }).set(turbVal, { val: 0.000001 });
+                    .set(turbValX, { val: 0.000001 }).set(turbVal, { val: 0.000001 })
+                    .to(turbValX, 0.2, { val: 0.4 }, 0.4).to(turbVal, 0.2, { val: 0.002 }, 0.4)
+                    .set(turbValX, { val: 0.000001 }).set(turbVal, { val: 0.000001 });
                 glitchElements.forEach(el => {
-                    el.addEventListener('mouseenter', function() { this.classList.add('btn-glitch-active'); timeline.restart(); });
-                    el.addEventListener('mouseleave', function() { this.classList.remove('btn-glitch-active'); timeline.pause(); gsap.set(turbVal, {val:0}); gsap.set(turbValX, {val:0}); turb.setAttribute('baseFrequency', '0.000001 0.000001'); });
+                    el.addEventListener('mouseenter', function () { this.classList.add('btn-glitch-active'); timeline.restart(); });
+                    el.addEventListener('mouseleave', function () { this.classList.remove('btn-glitch-active'); timeline.pause(); gsap.set(turbVal, { val: 0 }); gsap.set(turbValX, { val: 0 }); turb.setAttribute('baseFrequency', '0.000001 0.000001'); });
                 });
             }
 
             // DOM
             const resultArea = document.getElementById('statistics-result-area');
             const noMsg = resultArea.querySelector('.no-line-data-message');
-            
+
             const prodTableContainer = document.getElementById('prod-table-container');
             const aoiTableContainer = document.getElementById('aoi-table-container');
 
@@ -417,26 +721,32 @@
             const aoiMonthSel = document.getElementById('aoi-month-select');
             const aoiWeekSel = document.getElementById('aoi-week-select');
             const now = new Date(); const curYear = now.getFullYear();
-            for(let y = curYear - 1; y <= curYear + 1; y++) aoiYearSel.innerHTML += `<option value="${y}" ${y===curYear ? 'selected' : ''}>${y}</option>`;
-            for(let m = 1; m <= 12; m++) aoiMonthSel.innerHTML += `<option value="${m}" ${m===(now.getMonth()+1) ? 'selected' : ''}>${m}</option>`;
-            for(let w = 1; w <= 5; w++) aoiWeekSel.innerHTML += `<option value="${w}">${w}</option>`;
+            for (let y = curYear - 1; y <= curYear + 1; y++) aoiYearSel.innerHTML += `<option value="${y}" ${y === curYear ? 'selected' : ''}>${y}</option>`;
+            for (let m = 1; m <= 12; m++) aoiMonthSel.innerHTML += `<option value="${m}" ${m === (now.getMonth() + 1) ? 'selected' : ''}>${m}</option>`;
+            for (let w = 1; w <= 5; w++) aoiWeekSel.innerHTML += `<option value="${w}">${w}</option>`;
 
             // [탭 전환 로직]
+            // [수정] 탭 클릭 시 요약표 상태 제어 추가
             tabs.forEach(tab => {
                 tab.addEventListener('click', () => {
+                    const summaryContainer = document.getElementById('aoi-summary-container');
                     tabs.forEach(t => t.classList.remove('active'));
                     tab.classList.add('active');
-                    
-                    if(tab.dataset.tab === 'production') {
+
+                    if (tab.dataset.tab === 'production') {
                         prodControls.classList.add('active'); aoiControls.classList.remove('active');
                         aoiTableContainer.style.display = 'none';
                         prodTableContainer.style.display = 'none';
-                        noMsg.style.display = 'block'; noMsg.innerHTML = '<i class="uil uil-search" style="font-size:2rem; display:block; margin-bottom:10px;"></i> 조건을 선택하고 조회를 눌러주세요.';
+                        // [추가] 생산 실적 탭에서는 요약표를 무조건 숨김
+                        if (summaryContainer) summaryContainer.style.display = 'none';
+                        noMsg.style.display = 'flex'; noMsg.innerHTML = '<i class="uil uil-search" style="font-size:2rem; display:block; margin-bottom:10px;"></i> 조건을 선택하고 조회를 눌러주세요.';
                     } else {
                         prodControls.classList.remove('active'); aoiControls.classList.add('active');
                         prodTableContainer.style.display = 'none';
                         aoiTableContainer.style.display = 'none';
-                        noMsg.style.display = 'block'; noMsg.innerHTML = '<i class="uil uil-search" style="font-size:2rem; display:block; margin-bottom:10px;"></i> 조건을 선택하고 분석을 눌러주세요.';
+                        // [추가] AOI 탭 전환 시에도 초기에는 숨김
+                        if (summaryContainer) summaryContainer.style.display = 'none';
+                        noMsg.style.display = 'flex'; noMsg.innerHTML = '<i class="uil uil-search" style="font-size:2rem; display:block; margin-bottom:10px;"></i> 조건을 선택하고 분석을 눌러주세요.';
                     }
                 });
             });
@@ -457,46 +767,101 @@
             });
             [aoiYearSel, aoiMonthSel, aoiWeekSel].forEach(el => el.addEventListener('change', updatePeriodText));
 
+            /* [수정] 월말 날짜를 초과하지 않도록 보정된 날짜 계산 로직 */
             function getDates() {
                 const y = parseInt(aoiYearSel.value), m = parseInt(aoiMonthSel.value);
-                if(periodType === 'monthly') {
-                    return { start: new Date(y, m-1, 1), end: new Date(y, m, 0) };
+                // 해당 월의 실제 마지막 날짜를 구함 (예: 28, 30, 31)
+                const lastDay = new Date(y, m, 0).getDate();
+
+                if (periodType === 'monthly') {
+                    return { start: new Date(y, m - 1, 1), end: new Date(y, m, 0) };
                 } else {
                     const w = parseInt(aoiWeekSel.value);
-                    const sDay = (w-1)*7 + 1;
-                    const eDay = Math.min(w*7, new Date(y, m, 0).getDate());
-                    return { start: new Date(y, m-1, sDay), end: new Date(y, m-1, eDay) };
+                    let sDay = (w - 1) * 7 + 1;
+                    let eDay = w * 7;
+
+                    // [핵심 수정] 시작일과 종료일이 해당 월의 마지막 날을 넘지 않도록 제한
+                    if (sDay > lastDay) sDay = lastDay;
+                    if (eDay > lastDay) eDay = lastDay;
+
+                    // 만약 주차 범위가 역전되는 현상을 방지하기 위해 시작일이 종료일보다 클 수 없게 처리
+                    if (sDay > eDay) sDay = eDay;
+
+                    return { start: new Date(y, m - 1, sDay), end: new Date(y, m - 1, eDay) };
+                }
+            }/* [수정] 달력 표시 및 생산 주차 기준에 맞춘 날짜 범위 계산 함수 */
+            function getDates() {
+                const y = parseInt(aoiYearSel.value), m = parseInt(aoiMonthSel.value);
+
+                if (periodType === 'monthly') {
+                    // 월간 분석: 해당 월의 1일부터 말일까지
+                    return { start: new Date(y, m - 1, 1), end: new Date(y, m, 0) };
+                } else {
+                    // 주간 분석: 생산 주차(월~금) 및 달력 경계 기준
+                    const w = parseInt(aoiWeekSel.value);
+
+                    // 1. 해당 월의 1일 정보를 가져옴
+                    const firstDayOfMonth = new Date(y, m - 1, 1);
+                    const firstDayOfWeek = firstDayOfMonth.getDay(); // 0(일) ~ 6(토)
+
+                    // 2. 해당 월의 1일이 포함된 주의 월요일 날짜를 계산 (Monday Start 기준)
+                    // 월요일을 0으로 맞추기 위한 오프셋 계산 (일요일은 6으로 처리)
+                    const offset = (firstDayOfWeek + 6) % 7;
+
+                    // 3. 선택한 주차(w)의 월요일과 금요일 날짜 계산
+                    // 공식: 1일 - (1일의 요일 오프셋) + (주차-1)*7
+                    let startDayNum = 1 - offset + (w - 1) * 7;
+                    let endDayNum = startDayNum + 4; // 월요일부터 금요일까지(+4일)
+
+                    // 4. 해당 월의 범위를 벗어나지 않도록 클리핑(Clipping)
+                    const lastDayOfMonth = new Date(y, m, 0).getDate();
+
+                    // 시작일이 1일보다 작으면 1일로 고정
+                    const finalStartDay = Math.max(1, startDayNum);
+                    // 종료일이 말일보다 크면 말일로 고정
+                    const finalEndDay = Math.min(lastDayOfMonth, endDayNum);
+
+                    // 5. 만약 계산된 시작일이 해당 월의 마지막 날보다 크다면 (존재하지 않는 주차)
+                    // 이전 코드가 1/33 같은 날짜를 만드는 것을 방지합니다.
+                    if (finalStartDay > lastDayOfMonth) {
+                        return { start: new Date(y, m, 0), end: new Date(y, m, 0) };
+                    }
+
+                    return {
+                        start: new Date(y, m - 1, finalStartDay),
+                        end: new Date(y, m - 1, finalEndDay)
+                    };
                 }
             }
             function updatePeriodText() {
-                const {start, end} = getDates();
-                const fmt = d => `${d.getMonth()+1}/${d.getDate()}`;
+                const { start, end } = getDates();
+                const fmt = d => `${d.getMonth() + 1}/${d.getDate()}`;
                 infoText.textContent = `${fmt(start)} ~ ${fmt(end)}`;
             }
             updatePeriodText();
 
             document.getElementById('search-aoi-btn').addEventListener('click', async () => {
-                const {start, end} = getDates();
-                const fmt = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-                
-                noMsg.style.display = 'block'; noMsg.innerHTML = '분석 중...';
+                const { start, end } = getDates();
+                const fmt = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+                noMsg.style.display = 'flex'; noMsg.innerHTML = '분석 중...';
                 aoiTableContainer.style.display = 'none'; prodTableContainer.style.display = 'none';
 
                 try {
                     const res = await fetch(`http://127.0.0.1:5000/api/statistics/aoi_performance?start_date=${fmt(start)}&end_date=${fmt(end)}`);
                     const data = await res.json();
                     renderAoi(data);
-                } catch(e) { noMsg.innerHTML = '실패'; }
+                } catch (e) { noMsg.innerHTML = '실패'; }
             });
 
             // [수정된 함수] 생산 실적 테이블 렌더링 (2단 레이아웃 + 구분선 최적화)
             function renderProdTable(data) {
-                if(!data || data.length===0) { 
-                    noMsg.style.display = 'block'; noMsg.innerHTML='데이터 없음'; 
-                    return; 
+                if (!data || data.length === 0) {
+                    noMsg.style.display = 'flex'; noMsg.innerHTML = '데이터 없음';
+                    return;
                 }
-                noMsg.style.display='none'; 
-                prodTableContainer.style.display = 'block'; 
+                noMsg.style.display = 'none';
+                prodTableContainer.style.display = 'block';
 
                 // Colgroup: 25% 25% | 2px | 25% 25% (합계 ~100%)
                 let html = `
@@ -513,16 +878,16 @@
                         </thead>
                         <tbody>`;
 
-                for(let i=0; i<data.length; i+=2) {
+                for (let i = 0; i < data.length; i += 2) {
                     const item1 = data[i];
-                    const item2 = data[i+1];
-                    
+                    const item2 = data[i + 1];
+
                     html += `<tr>`;
                     html += createProdCells(item1);
-                    
+
                     // 중앙 구분선 (Divider) - 은은한 색상 적용
-                    html += `<td style="padding:0; background:rgba(255, 235, 167, 0.6); border:none;"></td>`; 
-                    
+                    html += `<td style="padding:0; background:rgba(255, 235, 167, 0.6); border:none;"></td>`;
+
                     if (item2) {
                         html += createProdCells(item2);
                     } else {
@@ -531,7 +896,7 @@
                     html += `</tr>`;
                 }
                 html += `</tbody></table>`;
-                
+
                 prodTableContainer.innerHTML = html;
             }
 
@@ -541,10 +906,10 @@
                 let statusClass = '';
                 if (item.status === 'shortage') statusClass = 'stats-problem-yellow';
                 else if (item.status === 'imbalance') statusClass = 'stats-problem-red';
-                
+
                 const lot = item.totalQuantity.toLocaleString();
                 const actual = item.actualProduction.toLocaleString();
-                
+
                 // 모델명 / [LOT / 실생산(클릭가능)]
                 return `
                     <td style="color:#fff; font-weight:bold; text-align:center;">${item.model}</td>
@@ -565,16 +930,16 @@
             const modal = document.getElementById('details-modal');
             const mContent = document.getElementById('details-modal-content');
             const mTitle = document.getElementById('details-modal-title');
-            document.addEventListener('click', async(e)=>{
+            document.addEventListener('click', async (e) => {
                 // .stats-details-btn 대신 .stats-clickable-val 사용
                 const target = e.target.closest('.stats-clickable-val');
-                if(target){
-                    const {model,year,month}=target.dataset;
-                    mTitle.textContent=`${model} 상세`; modal.classList.add('visible');
-                    try{
-                        const res=await fetch(`http://127.0.0.1:5000/api/statistics/model_details?model=${encodeURIComponent(model)}&year=${year}&month=${encodeURIComponent(month)}`);
-                        const d=await res.json();
-                        let html=`<table class="statistics-table" style="width:100%"><thead><tr><th>주차</th><th>라인</th><th>T/B</th><th>LOT</th><th>실적</th></tr></thead><tbody>`;
+                if (target) {
+                    const { model, year, month } = target.dataset;
+                    mTitle.textContent = `${model} 상세`; modal.classList.add('visible');
+                    try {
+                        const res = await fetch(`http://127.0.0.1:5000/api/statistics/model_details?model=${encodeURIComponent(model)}&year=${year}&month=${encodeURIComponent(month)}`);
+                        const d = await res.json();
+                        let html = `<table class="statistics-table" style="width:100%"><thead><tr><th>주차</th><th>라인</th><th>T/B</th><th>LOT</th><th>실적</th></tr></thead><tbody>`;
                         d.forEach(r => {
                             // [기능 복구] 주차 클릭 시 링크 이동
                             const linkUrl = `production.html?year=${year}&month=${month}&week=${r.prod_week}`;
@@ -586,94 +951,154 @@
                                 <td>${r.actualProd}</td>
                             </tr>`;
                         });
-                        html+=`</tbody></table>`;
-                        mContent.innerHTML=html;
-                    }catch(err){mContent.innerHTML='오류';}
+                        html += `</tbody></table>`;
+                        mContent.innerHTML = html;
+                    } catch (err) { mContent.innerHTML = '오류'; }
                 }
             });
-            document.getElementById('close-details-modal-btn').onclick=()=>modal.classList.remove('visible');
+            document.getElementById('close-details-modal-btn').onclick = () => modal.classList.remove('visible');
 
+            /* [수정] 전체 합계 요약표가 포함된 AOI 렌더링 함수 */
             function renderAoi(data) {
-                if(!data || data.length === 0) { 
-                    noMsg.style.display = 'block'; noMsg.innerHTML = '데이터 없음'; 
-                    return; 
+                const summaryContainer = document.getElementById('aoi-summary-container');
+                if (!data || data.length === 0) {
+                    // block 대신 flex로 변경하여 중앙 정렬 보장
+                    noMsg.style.display = 'flex';
+                    noMsg.innerHTML = '<i class="uil uil-file-slash" style="font-size:3.5rem; margin-bottom:15px;"></i> 데이터가 없습니다.';
+                    aoiTableContainer.style.display = 'none';
+                    summaryContainer.style.display = 'none';
+                    return;
                 }
-                noMsg.style.display = 'none'; 
-                aoiTableContainer.style.display = 'block'; 
+                noMsg.style.display = 'none';
+                aoiTableContainer.style.display = 'block';
+                summaryContainer.style.display = 'block';
 
+                // 1. 전체 합계 계산 초기화
+                let gTotalInsp = 0, gTotalDefect = 0;
+                const gDefects = {
+                    reverse: 0, missing: 0, wrong: 0, skewed: 0, flipped: 0,
+                    damaged: 0, manhattan: 0, detached: 0,
+                    cold: 0, unsoldered: 0, short: 0,
+                    material: 0, dip: 0
+                };
+
+                // 2. 데이터 순회하며 합산
+                data.forEach(r => {
+                    gTotalInsp += (parseInt(r.inspection_qty) || 0);
+                    gTotalDefect += (parseInt(r.total_defect) || 0);
+                    for (let key in gDefects) {
+                        gDefects[key] += (parseInt(r[key]) || 0);
+                    }
+                });
+
+                // 3. 요약표 HTML 생성 (image_ca14d7 스타일)
+                const defectRate = gTotalInsp > 0 ? ((gTotalDefect / gTotalInsp) * 100).toFixed(2) : 0;
+                const getValStr = (val) => {
+                    const rate = gTotalDefect > 0 ? Math.round((val / gTotalDefect) * 100) : 0;
+                    return `${rate}% (${val})`; // 줄바꿈 제거
+                };
+
+                summaryContainer.innerHTML = `
+        <table class="summary-table">
+            <colgroup>
+                <col style="width:6%;"> <col style="width:10%;"> <col span="3" style="width:5%;">
+                <col span="13" style="width:auto;"> 
+                <col style="width:5%;">
+            </colgroup>
+            <tr>
+                <th rowspan="3" class="summary-title-cell">전체 현황</th>
+                <th rowspan="3" class="summary-label-cell">PBA 불량율<br>(총 검사수 대비)</th>
+                <th class="summary-label-cell">검사수</th>
+                <th class="summary-label-cell">불량수</th>
+                <th class="summary-label-cell">불량율</th>
+                <th colspan="13" class="summary-label-cell">유형별 불량 (비율 및 수량)</th>
+                <th class="summary-label-cell">소계</th>
+            </tr>
+            <tr class="summary-highlight-row">
+                <td rowspan="2" class="summary-accent">${gTotalInsp.toLocaleString()}</td>
+                <td rowspan="2" class="summary-accent" style="color:var(--danger-red);">${gTotalDefect.toLocaleString()}</td>
+                <td rowspan="2" class="summary-accent">${defectRate}%</td>
+                <td>역삽</td> <td>미삽</td> <td>오삽</td> <td>틀어짐</td> <td>뒤집힘</td>
+                <td>파손</td> <td>맨하탄</td> <td>이탈</td> <td>냉납</td> <td>미납</td> <td>쇼트</td>
+                <td>자재</td> <td>DIP</td>
+                <td rowspan="2" style="background:var(--card-bg); color:var(--point-gold); font-size:1rem;">100%<br>(${gTotalDefect})</td>
+            </tr>
+            <tr class="summary-value-row">
+                <td>${getValStr(gDefects.reverse)}</td>
+                <td>${getValStr(gDefects.missing)}</td>
+                <td>${getValStr(gDefects.wrong)}</td>
+                <td>${getValStr(gDefects.skewed)}</td>
+                <td>${getValStr(gDefects.flipped)}</td>
+                <td>${getValStr(gDefects.damaged)}</td>
+                <td>${getValStr(gDefects.manhattan)}</td>
+                <td>${getValStr(gDefects.detached)}</td>
+                <td>${getValStr(gDefects.cold)}</td>
+                <td>${getValStr(gDefects.unsoldered)}</td>
+                <td>${getValStr(gDefects.short)}</td>
+                <td>${getValStr(gDefects.material)}</td>
+                <td>${getValStr(gDefects.dip)}</td>
+            </tr>
+        </table>
+    `;
+
+                // 4. 상세 테이블 렌더링 (기존 로직 유지)
                 tbody.innerHTML = data.map(r => {
+                    // ... (기존 renderAoi 내부의 tbody.innerHTML 생성 로직 그대로 유지) ...
                     const s = (v) => v || 0; const sr = (v) => v || '';
-                    const lot = parseInt(r.lot)||0;
-                    
-                    const periodInsp = parseInt(r.inspection_qty) || 0; 
+                    const lot = parseInt(r.lot) || 0;
+                    const periodInsp = parseInt(r.inspection_qty) || 0;
                     const totalInsp = parseInt(r.cumulative_qty) || periodInsp;
                     const pct = lot > 0 ? Math.min((totalInsp / lot) * 100, 100) : 0;
-                    
                     const barClass = pct >= 100 ? 'qty-progress-fill completed' : 'qty-progress-fill';
                     const goodColor = r.good_qty < 0 ? 'var(--danger-red)' : 'var(--success-green)';
 
                     return `
-                    <tr class="upper-row">
-                        <td class="merge-top" style="cursor:pointer;"><div class="row-span-wrapper model-text" data-tooltip="[${r.model}] ${r.period_info}">${r.model}</div></td>
-                        <td class="detail-col group-basic merge-top"><div class="row-span-wrapper"><input value="${s(r.inspection_point)}" readonly></div></td>
-                        
-                        <td class="merge-top"><div class="row-span-wrapper"><input class="qty-input-visible" value="${periodInsp}" readonly></div></td>
-                        
-                        <td class="detail-col group-basic merge-top">
-                            <div class="row-span-wrapper" style="flex-direction:column; padding:0 5px;">
-                                <div class="progress-cell-wrapper">
-                                    <div class="qty-progress-track" title="누적 달성률 ${parseInt(pct)}% (금주: ${periodInsp})">
-                                        <div class="${barClass}" style="width:${pct}%;"></div>
-                                    </div>
-                                    <div class="qty-info-text"><span class="acc-val">${totalInsp}</span><span class="lot-val">/ ${lot}</span></div>
-                                </div>
-                            </div>
-                        </td>
-                        <td class="detail-col group-basic good-col merge-top"><div class="row-span-wrapper" style="color:${goodColor}; font-weight: bold;">${s(r.good_qty)}</div></td>
-                        <td class="defect-total-col merge-top"><div class="row-span-wrapper" style="color:var(--danger-red); font-weight:bold;">${s(r.total_defect)}</div></td>
-                        
-                        <td class="detail-col group-a ref-cell group-start"><input type="text" class="ref-input" value="${sr(r.missing_ref)}" readonly placeholder="Ref"></td>
-                        <td class="detail-col group-a ref-cell"><input type="text" class="ref-input" value="${sr(r.wrong_ref)}" readonly placeholder="Ref"></td>
-                        <td class="detail-col group-a ref-cell"><input type="text" class="ref-input" value="${sr(r.reverse_ref)}" readonly placeholder="Ref"></td>
-                        <td class="detail-col group-a ref-cell"><input type="text" class="ref-input" value="${sr(r.skewed_ref)}" readonly placeholder="Ref"></td>
-                        <td class="detail-col group-a ref-cell group-end"><input type="text" class="ref-input" value="${sr(r.flipped_ref)}" readonly placeholder="Ref"></td>
-
-                        <td class="detail-col group-b ref-cell group-start"><input type="text" class="ref-input" value="${sr(r.damaged_ref)}" readonly placeholder="Ref"></td>
-                        <td class="detail-col group-b ref-cell"><input type="text" class="ref-input" value="${sr(r.manhattan_ref)}" readonly placeholder="Ref"></td>
-                        <td class="detail-col group-b ref-cell group-end"><input type="text" class="ref-input" value="${sr(r.detached_ref)}" readonly placeholder="Ref"></td>
-
-                        <td class="detail-col group-c ref-cell group-start"><input type="text" class="ref-input" value="${sr(r.cold_ref)}" readonly placeholder="Ref"></td>
-                        <td class="detail-col group-c ref-cell"><input type="text" class="ref-input" value="${sr(r.unsoldered_ref)}" readonly placeholder="Ref"></td>
-                        <td class="detail-col group-c ref-cell group-end"><input type="text" class="ref-input" value="${sr(r.short_ref)}" readonly placeholder="Ref"></td>
-
-                        <td class="detail-col group-d ref-cell group-start"><input type="text" class="ref-input" value="${sr(r.material_ref)}" readonly placeholder="Ref"></td>
-                        <td class="detail-col group-d ref-cell group-end"><input type="text" class="ref-input" value="${sr(r.dip_ref)}" readonly placeholder="Ref"></td>
-                    </tr>
-                    <tr class="lower-row">
-                        <td class="merge-bottom"></td>
-                        <td class="detail-col group-basic merge-bottom"></td>
-                        <td class="merge-bottom"></td>
-                        <td class="detail-col group-basic merge-bottom"></td>
-                        <td class="detail-col group-basic good-col merge-bottom"></td>
-                        <td class="defect-total-col merge-bottom"></td>
-
-                        <td class="detail-col group-a qty-cell group-start"><input type="number" value="${s(r.missing)}" readonly></td>
-                        <td class="detail-col group-a qty-cell"><input type="number" value="${s(r.wrong)}" readonly></td>
-                        <td class="detail-col group-a qty-cell"><input type="number" value="${s(r.reverse)}" readonly></td>
-                        <td class="detail-col group-a qty-cell"><input type="number" value="${s(r.skewed)}" readonly></td>
-                        <td class="detail-col group-a qty-cell group-end"><input type="number" value="${s(r.flipped)}" readonly></td>
-
-                        <td class="detail-col group-b qty-cell group-start"><input type="number" value="${s(r.damaged)}" readonly></td>
-                        <td class="detail-col group-b qty-cell"><input type="number" value="${s(r.manhattan)}" readonly></td>
-                        <td class="detail-col group-b qty-cell group-end"><input type="number" value="${s(r.detached)}" readonly></td>
-
-                        <td class="detail-col group-c qty-cell group-start"><input type="number" value="${s(r.cold)}" readonly></td>
-                        <td class="detail-col group-c qty-cell"><input type="number" value="${s(r.unsoldered)}" readonly></td>
-                        <td class="detail-col group-c qty-cell group-end"><input type="number" value="${s(r.short)}" readonly></td>
-
-                        <td class="detail-col group-d qty-cell group-start"><input type="number" value="${s(r.material)}" readonly></td>
-                        <td class="detail-col group-d qty-cell group-end"><input type="number" value="${s(r.dip)}" readonly></td>
-                    </tr>`;
+        <tr class="upper-row">
+            <td class="merge-top" style="cursor:pointer;"><div class="row-span-wrapper model-text" data-tooltip="[${r.model}] ${r.period_info}">${r.model}</div></td>
+            <td class="detail-col group-basic merge-top"><div class="row-span-wrapper"><input value="${s(r.inspection_point)}" readonly></div></td>
+            <td class="merge-top"><div class="row-span-wrapper"><input class="qty-input-visible" value="${periodInsp}" readonly></div></td>
+            <td class="detail-col group-basic merge-top">
+                <div class="row-span-wrapper" style="flex-direction:column; padding:0 5px;">
+                    <div class="progress-cell-wrapper">
+                        <div class="qty-progress-track" title="누적 달성률 ${parseInt(pct)}% (금주: ${periodInsp})">
+                            <div class="${barClass}" style="width:${pct}%;"></div>
+                        </div>
+                        <div class="qty-info-text"><span class="acc-val">${totalInsp}</span><span class="lot-val">/ ${lot}</span></div>
+                    </div>
+                </div>
+            </td>
+            <td class="detail-col group-basic good-col merge-top"><div class="row-span-wrapper" style="color:${goodColor}; font-weight: bold;">${s(r.good_qty)}</div></td>
+            <td class="defect-total-col merge-top"><div class="row-span-wrapper" style="color:var(--danger-red); font-weight:bold;">${s(r.total_defect)}</div></td>
+            <td class="detail-col group-a ref-cell group-start"><input type="text" class="ref-input" value="${sr(r.missing_ref)}" readonly></td>
+            <td class="detail-col group-a ref-cell"><input type="text" class="ref-input" value="${sr(r.wrong_ref)}" readonly></td>
+            <td class="detail-col group-a ref-cell"><input type="text" class="ref-input" value="${sr(r.reverse_ref)}" readonly></td>
+            <td class="detail-col group-a ref-cell"><input type="text" class="ref-input" value="${sr(r.skewed_ref)}" readonly></td>
+            <td class="detail-col group-a ref-cell group-end"><input type="text" class="ref-input" value="${sr(r.flipped_ref)}" readonly></td>
+            <td class="detail-col group-b ref-cell group-start"><input type="text" class="ref-input" value="${sr(r.damaged_ref)}" readonly></td>
+            <td class="detail-col group-b ref-cell"><input type="text" class="ref-input" value="${sr(r.manhattan_ref)}" readonly></td>
+            <td class="detail-col group-b ref-cell group-end"><input type="text" class="ref-input" value="${sr(r.detached_ref)}" readonly></td>
+            <td class="detail-col group-c ref-cell group-start"><input type="text" class="ref-input" value="${sr(r.cold_ref)}" readonly></td>
+            <td class="detail-col group-c ref-cell"><input type="text" class="ref-input" value="${sr(r.unsoldered_ref)}" readonly></td>
+            <td class="detail-col group-c ref-cell group-end"><input type="text" class="ref-input" value="${sr(r.short_ref)}" readonly></td>
+            <td class="detail-col group-d ref-cell group-start"><input type="text" class="ref-input" value="${sr(r.material_ref)}" readonly></td>
+            <td class="detail-col group-d ref-cell group-end"><input type="text" class="ref-input" value="${sr(r.dip_ref)}" readonly></td>
+        </tr>
+        <tr class="lower-row">
+            <td class="merge-bottom"></td> <td class="detail-col group-basic merge-bottom"></td> <td class="merge-bottom"></td> <td class="detail-col group-basic merge-bottom"></td> <td class="detail-col group-basic good-col merge-bottom"></td> <td class="defect-total-col merge-bottom"></td>
+            <td class="detail-col group-a qty-cell group-start"><input type="number" value="${s(r.missing)}" readonly></td>
+            <td class="detail-col group-a qty-cell"><input type="number" value="${s(r.wrong)}" readonly></td>
+            <td class="detail-col group-a qty-cell"><input type="number" value="${s(r.reverse)}" readonly></td>
+            <td class="detail-col group-a qty-cell"><input type="number" value="${s(r.skewed)}" readonly></td>
+            <td class="detail-col group-a qty-cell group-end"><input type="number" value="${s(r.flipped)}" readonly></td>
+            <td class="detail-col group-b qty-cell group-start"><input type="number" value="${s(r.damaged)}" readonly></td>
+            <td class="detail-col group-b qty-cell"><input type="number" value="${s(r.manhattan)}" readonly></td>
+            <td class="detail-col group-b qty-cell group-end"><input type="number" value="${s(r.detached)}" readonly></td>
+            <td class="detail-col group-c qty-cell group-start"><input type="number" value="${s(r.cold)}" readonly></td>
+            <td class="detail-col group-c qty-cell"><input type="number" value="${s(r.unsoldered)}" readonly></td>
+            <td class="detail-col group-c qty-cell group-end"><input type="number" value="${s(r.short)}" readonly></td>
+            <td class="detail-col group-d qty-cell group-start"><input type="number" value="${s(r.material)}" readonly></td>
+            <td class="detail-col group-d qty-cell group-end"><input type="number" value="${s(r.dip)}" readonly></td>
+        </tr>`;
                 }).join('');
             }
 
@@ -686,7 +1111,7 @@
                 if (!targetEl || viewer.style.display === 'none') return;
                 const rect = targetEl.getBoundingClientRect();
                 viewer.classList.remove('pos-right', 'pos-left');
-                const topPos = (rect.top + window.scrollY + (rect.height/2)) - 26;
+                const topPos = (rect.top + window.scrollY + (rect.height / 2)) - 26;
                 let leftPos;
                 if (rect.right + 250 + 20 < window.innerWidth) {
                     leftPos = rect.right + 12; viewer.classList.add('pos-right');
@@ -698,7 +1123,7 @@
 
             tableEl.addEventListener('click', (e) => {
                 const target = e.target;
-                if(target.classList.contains('ref-input') && target.value.trim() !== '' && target.value !== '0') {
+                if (target.classList.contains('ref-input') && target.value.trim() !== '' && target.value !== '0') {
                     editorText.value = target.value.replace(/,\s*/g, '\n');
                     viewer.style.display = 'block';
                     updateEditorPosition(target);
@@ -707,7 +1132,7 @@
             });
 
             document.addEventListener('click', (e) => {
-                if(!viewer.contains(e.target)) {
+                if (!viewer.contains(e.target)) {
                     viewer.style.display = 'none';
                 }
             });
@@ -731,30 +1156,35 @@
 
             // [생산실적 조회]
             const searchProdBtn = document.getElementById('search-prod-btn');
+            // [수정] 생산 실적 조회 버튼 클릭 시 요약표 숨김 강제 적용
             searchProdBtn.addEventListener('click', async () => {
                 const mm = monthSelect.value, yy = yearInput.value;
-                if(!mm || !yy) { alert('선택 필요'); return; }
-                
-                noMsg.style.display = 'block'; noMsg.innerHTML = '조회 중...';
-                aoiTableContainer.style.display = 'none'; prodTableContainer.style.display = 'none';
+                if (!mm || !yy) { alert('선택 필요'); return; }
+
+                noMsg.style.display = 'flex'; noMsg.innerHTML = '조회 중...';
+                aoiTableContainer.style.display = 'none';
+                prodTableContainer.style.display = 'none';
+                // [추가] 생산 데이터 조회 시 AOI 요약표가 보이지 않도록 처리
+                document.getElementById('aoi-summary-container').style.display = 'none';
 
                 try {
                     const res = await fetch(`http://127.0.0.1:5000/api/statistics/order_month_summary?order_month=${mm}&year=${yy}`);
                     const data = await res.json();
                     renderProdTable(data);
-                } catch(e) { noMsg.innerHTML = '실패'; }
+                } catch (e) { noMsg.innerHTML = '실패'; }
             });
 
             // 공통
-            function updateTime(){
-                const n=new Date();
-                document.getElementById('current-time').textContent = n.toLocaleString('ko-KR',{year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'});
+            function updateTime() {
+                const n = new Date();
+                document.getElementById('current-time').textContent = n.toLocaleString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
             }
-            setInterval(updateTime,1000); updateTime();
-            document.getElementById('home-btn').onclick=()=>location.href='index.html';
+            setInterval(updateTime, 1000); updateTime();
+            document.getElementById('home-btn').onclick = () => location.href = 'index.html';
             document.getElementById('back-btn').onclick = () => location.href = 'admin_process_map.html';
-            document.getElementById('forward-btn').onclick=()=>history.forward();
+            document.getElementById('forward-btn').onclick = () => history.forward();
         });
     </script>
 </body>
+
 </html>
