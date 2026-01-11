@@ -242,15 +242,23 @@ a:hover { color: var(--point-gold); }
 
 .modal-overlay.visible, .dropup-overlay.visible { display: flex; animation: fadeInOverlay 0.3s forwards; }
 
+/* [common.css 수정] */
 .modal-window {
     background-color: #23242d;
-    padding: 0; /* 패딩 제거하고 내부 content에서 처리 */
+    padding: 0;
     border-radius: 12px;
     border: 1px solid var(--border-color);
     box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
-    width: 95vw; max-width: 1400px; height: 90vh;
+    width: 95vw;
+    max-width: 1400px;
+    
+    /* 기존 height: 90vh; 를 아래와 같이 변경하여 유동적으로 조절 */
+    height: auto !important; 
+    max-height: 90vh; /* 화면 높이의 90%를 넘지 않도록 제한 */
+    
     position: relative;
-    display: flex; flex-direction: column;
+    display: flex;
+    flex-direction: column;
     color: #fff;
     animation: modalSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }

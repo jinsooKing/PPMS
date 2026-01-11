@@ -75,27 +75,36 @@
             background-color: #15151a;
         }
 
+        /* 3. 분석 툴바: 요청하신 대로 고정 너비(Clamp) 유지 */
         .analysis-toolbar {
-            /* 최소 800px, 권장 95%, 최대 1600px로 제한 */
             width: clamp(800px, 95vw, 1600px) !important;
-            margin: 0 auto !important;
+            margin: 15px auto !important;
+            /* 상하 여백 추가 및 중앙 정렬 */
             display: flex;
             justify-content: space-between;
             align-items: center;
-            box-sizing: border-box;
             flex-shrink: 0;
         }
 
         #statistics-result-area {
             width: 100% !important;
-            flex: 1 !important;
-            display: flex !important;
-            flex-direction: column !important;
-            overflow: hidden !important;
-            /* 부모 스크롤 차단 (Sticky 작동의 핵심) */
+            /* 화면 가로폭 100% 채움 */
+            max-width: none !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start !important;
             background-color: rgba(0, 0, 0, 0.2);
-            min-height: 0;
-            /* Flex 자식의 스크롤을 위한 필수 설정 */
+            overflow-y: auto;
+            border-radius: 0;
+            /* 끝까지 채울 때 이질감 방지 */
+        }
+
+        #statistics-result-area:has(.no-line-data-message[style*="display: flex"]) {
+            justify-content: center !important;
         }
 
         .analysis-toolbar::-webkit-scrollbar {
@@ -252,29 +261,44 @@
             left: 0 !important;
         }
 
-        /* 요약표 내부 패딩 보정 (내용 잘림 방지) */
         .summary-table th,
         .summary-table td {
-            padding: 10px 8px !important;
-            /* 요청하신 패딩 추가 */
-            box-sizing: border-box;
+            border: 1px solid rgba(255, 235, 167, 0.3);
+            padding: 6px 8px !important;
+            /* 패딩 축소 */
+            font-size: 0.85rem !important;
+            /* 폰트 크기 최적화 */
+            white-space: nowrap;
+            line-height: 1.2;
         }
 
+        #prod-table-container,
+        #aoi-table-container {
+            width: 100% !important;
+            flex: 0 1 auto !important;
+            /* [핵심] 내용이 적으면 줄어들고, 많으면 화면 내에서 커짐 */
+            max-height: 75vh;
+            /* 최대 높이 제한 (화면의 75%) */
+            overflow: auto;
+            border: 2px solid var(--point-gold) !important;
+            background-color: #1f2029;
+            box-sizing: border-box;
+            margin-bottom: 20px;
+        }
+
+        /* [중요] 테이블 헤더 고정 유지 */
         #aoi-table-main thead tr:nth-child(1) th {
             position: sticky !important;
-            top: 0 !important;
-            z-index: 210 !important;
+            top: 0;
+            z-index: 210;
             background-color: #15151a !important;
         }
 
-        /* 두 번째 줄 (소분류: 미삽, 오삽 등) */
         #aoi-table-main thead tr:nth-child(2) th {
             position: sticky !important;
-            top: 40px !important;
-            /* 첫 번째 행 높이(40px)만큼 아래에 고정 */
-            z-index: 200 !important;
+            top: 40px;
+            z-index: 200;
             background-color: #15151a !important;
-            border-top: 1px solid rgba(255, 235, 167, 0.3) !important;
         }
 
         #aoi-table-main thead tr:nth-child(1) th:first-child {
@@ -414,16 +438,6 @@
             table-layout: auto;
         }
 
-        .summary-table th,
-        .summary-table td {
-            border: 1px solid rgba(255, 235, 167, 0.3);
-            /* [수정] 셀 크기 및 폰트 축소 */
-            padding: 8px 6px !important;
-            font-size: clamp(11px, 0.8vw, 13px) !important;
-            white-space: nowrap;
-            line-height: 1.3;
-        }
-
         .summary-accent {
             font-size: 1.1rem !important;
             /* 강조 수치 크기 조정 */
@@ -452,11 +466,18 @@
         }
 
 
+        /* 2. 요약표 컨테이너: 내용만큼만 높이 차지 (flex-grow 제거) */
         #aoi-summary-container {
-            flex-shrink: 0 !important;
-            /* 테이블 스크롤 시 밀리지 않음 */
+            width: 100% !important;
+            height: auto !important;
+            flex: 0 0 auto !important;
+            /* 강제로 늘어나지 않음 */
             margin-bottom: 10px;
-            /* 기존 스타일 유지 */
+            border: 2px solid var(--point-gold);
+            padding: 3px !important;
+            /* 테두리 여백 최소화 */
+            background-color: #15151a;
+            box-sizing: border-box;
         }
 
         .no-line-data-message {
@@ -581,7 +602,6 @@
                     <table class="aoi-table" id="aoi-table-main">
                         <colgroup>
                             <col style="width: 200px;">
-                            <col style="width: clamp(70px, 6vw, 120px);" class="detail-col group-basic">
                             <col style="width: clamp(70px, 6vw, 120px);">
                             <col style="width: clamp(70px, 6vw, 120px);" class="detail-col group-basic">
                             <col style="width: clamp(70px, 6vw, 120px);" class="detail-col group-basic good-col">
@@ -607,7 +627,6 @@
                         <thead>
                             <tr>
                                 <th rowspan="2" class="model-name-ellipsis" style="text-align:center;">모델명</th>
-                                <th rowspan="2" class="detail-col group-basic">Point</th>
                                 <th rowspan="2">수량</th>
                                 <th rowspan="2" class="detail-col group-basic">진행도</th>
                                 <th rowspan="2" class="detail-col group-basic good-col">양품</th>
@@ -1041,10 +1060,13 @@
         </table>
     `;
 
-                // 4. 상세 테이블 렌더링 (기존 로직 유지)
+                /* [수정] Point 열 제거 및 Ref placeholder가 적용된 렌더링 코드 */
                 tbody.innerHTML = data.map(r => {
-                    // ... (기존 renderAoi 내부의 tbody.innerHTML 생성 로직 그대로 유지) ...
-                    const s = (v) => v || 0; const sr = (v) => v || '';
+                    // 기본 값 처리 함수 (r 객체 필드 접근 시 사용)
+                    const s = (v) => v || 0;
+                    const sr = (v) => v || '';
+
+                    // 계산 로직
                     const lot = parseInt(r.lot) || 0;
                     const periodInsp = parseInt(r.inspection_qty) || 0;
                     const totalInsp = parseInt(r.cumulative_qty) || periodInsp;
@@ -1055,7 +1077,7 @@
                     return `
         <tr class="upper-row">
             <td class="merge-top" style="cursor:pointer;"><div class="row-span-wrapper model-text" data-tooltip="[${r.model}] ${r.period_info}">${r.model}</div></td>
-            <td class="detail-col group-basic merge-top"><div class="row-span-wrapper"><input value="${s(r.inspection_point)}" readonly></div></td>
+            
             <td class="merge-top"><div class="row-span-wrapper"><input class="qty-input-visible" value="${periodInsp}" readonly></div></td>
             <td class="detail-col group-basic merge-top">
                 <div class="row-span-wrapper" style="flex-direction:column; padding:0 5px;">
@@ -1069,22 +1091,28 @@
             </td>
             <td class="detail-col group-basic good-col merge-top"><div class="row-span-wrapper" style="color:${goodColor}; font-weight: bold;">${s(r.good_qty)}</div></td>
             <td class="defect-total-col merge-top"><div class="row-span-wrapper" style="color:var(--danger-red); font-weight:bold;">${s(r.total_defect)}</div></td>
-            <td class="detail-col group-a ref-cell group-start"><input type="text" class="ref-input" value="${sr(r.missing_ref)}" readonly></td>
-            <td class="detail-col group-a ref-cell"><input type="text" class="ref-input" value="${sr(r.wrong_ref)}" readonly></td>
-            <td class="detail-col group-a ref-cell"><input type="text" class="ref-input" value="${sr(r.reverse_ref)}" readonly></td>
-            <td class="detail-col group-a ref-cell"><input type="text" class="ref-input" value="${sr(r.skewed_ref)}" readonly></td>
-            <td class="detail-col group-a ref-cell group-end"><input type="text" class="ref-input" value="${sr(r.flipped_ref)}" readonly></td>
-            <td class="detail-col group-b ref-cell group-start"><input type="text" class="ref-input" value="${sr(r.damaged_ref)}" readonly></td>
-            <td class="detail-col group-b ref-cell"><input type="text" class="ref-input" value="${sr(r.manhattan_ref)}" readonly></td>
-            <td class="detail-col group-b ref-cell group-end"><input type="text" class="ref-input" value="${sr(r.detached_ref)}" readonly></td>
-            <td class="detail-col group-c ref-cell group-start"><input type="text" class="ref-input" value="${sr(r.cold_ref)}" readonly></td>
-            <td class="detail-col group-c ref-cell"><input type="text" class="ref-input" value="${sr(r.unsoldered_ref)}" readonly></td>
-            <td class="detail-col group-c ref-cell group-end"><input type="text" class="ref-input" value="${sr(r.short_ref)}" readonly></td>
-            <td class="detail-col group-d ref-cell group-start"><input type="text" class="ref-input" value="${sr(r.material_ref)}" readonly></td>
-            <td class="detail-col group-d ref-cell group-end"><input type="text" class="ref-input" value="${sr(r.dip_ref)}" readonly></td>
+            
+            <td class="detail-col group-a ref-cell group-start"><input type="text" class="ref-input" value="${sr(r.missing_ref)}" placeholder="Ref" readonly></td>
+            <td class="detail-col group-a ref-cell"><input type="text" class="ref-input" value="${sr(r.wrong_ref)}" placeholder="Ref" readonly></td>
+            <td class="detail-col group-a ref-cell"><input type="text" class="ref-input" value="${sr(r.reverse_ref)}" placeholder="Ref" readonly></td>
+            <td class="detail-col group-a ref-cell"><input type="text" class="ref-input" value="${sr(r.skewed_ref)}" placeholder="Ref" readonly></td>
+            <td class="detail-col group-a ref-cell group-end"><input type="text" class="ref-input" value="${sr(r.flipped_ref)}" placeholder="Ref" readonly></td>
+            <td class="detail-col group-b ref-cell group-start"><input type="text" class="ref-input" value="${sr(r.damaged_ref)}" placeholder="Ref" readonly></td>
+            <td class="detail-col group-b ref-cell"><input type="text" class="ref-input" value="${sr(r.manhattan_ref)}" placeholder="Ref" readonly></td>
+            <td class="detail-col group-b ref-cell group-end"><input type="text" class="ref-input" value="${sr(r.detached_ref)}" placeholder="Ref" readonly></td>
+            <td class="detail-col group-c ref-cell group-start"><input type="text" class="ref-input" value="${sr(r.cold_ref)}" placeholder="Ref" readonly></td>
+            <td class="detail-col group-c ref-cell"><input type="text" class="ref-input" value="${sr(r.unsoldered_ref)}" placeholder="Ref" readonly></td>
+            <td class="detail-col group-c ref-cell group-end"><input type="text" class="ref-input" value="${sr(r.short_ref)}" placeholder="Ref" readonly></td>
+            <td class="detail-col group-d ref-cell group-start"><input type="text" class="ref-input" value="${sr(r.material_ref)}" placeholder="Ref" readonly></td>
+            <td class="detail-col group-d ref-cell group-end"><input type="text" class="ref-input" value="${sr(r.dip_ref)}" placeholder="Ref" readonly></td>
         </tr>
         <tr class="lower-row">
-            <td class="merge-bottom"></td> <td class="detail-col group-basic merge-bottom"></td> <td class="merge-bottom"></td> <td class="detail-col group-basic merge-bottom"></td> <td class="detail-col group-basic good-col merge-bottom"></td> <td class="defect-total-col merge-bottom"></td>
+            <td class="merge-bottom"></td> 
+            
+            <td class="merge-bottom"></td> 
+            <td class="detail-col group-basic merge-bottom"></td> 
+            <td class="detail-col group-basic good-col merge-bottom"></td> 
+            <td class="defect-total-col merge-bottom"></td>
             <td class="detail-col group-a qty-cell group-start"><input type="number" value="${s(r.missing)}" readonly></td>
             <td class="detail-col group-a qty-cell"><input type="number" value="${s(r.wrong)}" readonly></td>
             <td class="detail-col group-a qty-cell"><input type="number" value="${s(r.reverse)}" readonly></td>

@@ -1312,6 +1312,18 @@
             transform: scale(1.05);
             transition: all 0.2s ease;
         }
+
+        /* 담당자 수정 모달 전용 클래스 (해당 페이지 <style> 태그 또는 CSS 하단 추가) */
+        .manager-edit-modal .modal-window {
+            max-width: 450px;
+            /* 사진의 비율에 맞게 너비를 콤팩트하게 설정 */
+        }
+
+        /* 내부 레이아웃이 너무 압축되지 않도록 패딩 확인 */
+        .manager-edit-modal .modal-content {
+            padding: 30px 25px;
+            /* 내용물 사이의 간격을 충분히 확보 */
+        }
     </style>
 </head>
 
