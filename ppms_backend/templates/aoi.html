@@ -297,13 +297,17 @@
 
             // [수정] 뒤로가기 시 화면을 다시 보여주는 로직 추가
             window.addEventListener('popstate', (event) => {
-                document.body.style.opacity = '1';
+                // [수정] 즉시 opacity를 1로 만드는 코드를 제거하거나, 
+                // 내부 날짜 이동이 아닐 때(index로 나갈 때)를 위해 안전장치로만 사용합니다.
 
                 if (event.state && event.state.date) {
-                    // 현재 위치(historyIndex)를 브라우저 기록에 맞춰 업데이트합니다.
+                    // 내부 날짜 기록이 있으면 화면을 어둡게 유지한 채 데이터를 먼저 가져옵니다.
+                    document.body.style.opacity = '0';
                     historyIndex = event.state.index;
                     loadRecordsByDate(event.state.date, false);
                 } else {
+                    // index.html로 나가는 경우라면 화면을 어둡게 하고 이동합니다.
+                    document.body.style.opacity = '1';
                     historyIndex = 0;
                     loadRecordsByDate(initialDate, false);
                 }

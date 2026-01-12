@@ -443,6 +443,9 @@
         /* 필요한 경우 body에만 적용 */
 
         body {
+            opacity: 0;
+            /* 초기 상태: 투명 */
+            transition: opacity 0.5s ease-in-out;
             overflow: hidden;
             background-color: #1a1b21;
             font-family: 'BMDOHYEON', sans-serif;
@@ -1333,7 +1336,8 @@
     <div class="page-container">
 
         <header class="main-header">
-            <div class="header-left"><a href="/" class="ppms-logo-placeholder"></a></div>
+            <div class="header-left"><a href="javascript:void(0)" onclick="goToHome()"
+                    class="ppms-logo-placeholder"></a></div>
             <div class="header-center">
                 <div class="common-box">공정 데이터 관리</div>
             </div>
@@ -1395,6 +1399,30 @@
         </footer>
     </div>
     <script>
+        // 1. 공통 내비게이션 및 페이드 효과 함수 정의
+        window.goToPage = function (url) {
+            document.body.style.opacity = '0';
+            setTimeout(() => { location.href = url; }, 500);
+        };
+
+        window.goToHome = function () {
+            window.goToPage('/');
+        };
+
+        window.goBack = function () {
+            // 내부 경로가 있으면 폴더를 거슬러 올라가고, 없으면 브라우저 뒤로가기 실행
+            if (state.currentPath && state.currentPath.length > 0) {
+                goBackLevel();
+            } else {
+                document.body.style.opacity = '0';
+                setTimeout(() => { history.back(); }, 500);
+            }
+        };
+
+        window.goForward = function () {
+            document.body.style.opacity = '0';
+            setTimeout(() => { history.forward(); }, 500);
+        };
         /** * [PPMS Admin Process Map Script]
          * - 보안 강화(XSS 방지), 경쟁 상태 해결, 에러 핸들링 추가됨
          * - 모델 아이콘 변경: uil-file-alt -> uil-layer-group
@@ -1442,8 +1470,8 @@
         });
         /* [전체 교체] 탭 동작 분리: 통합관리는 업체목록, 나머지는 자유 폴더 뷰 */
         window.switchTab = function (tabName) {
-            if (tabName === 'statistics') { location.href = 'statistics.html'; return; }
-            if (tabName === 'status') { location.href = 'admin_status.html'; return; }
+            if (tabName === 'statistics') { goToPage('/api/statistics/view'); return; }
+            if (tabName === 'status') { goToPage('/api/admin_status/view'); return; }
 
             state.activeTab = tabName;
             state.currentPath = []; // 경로 초기화
@@ -1488,12 +1516,12 @@
                     <div class="card-title">담당자 관리</div>
                     <div class="card-desc">직원 인사 정보 및 역할 설정</div>
                 </div>
-                <div class="dashboard-card" onclick="location.href='statistics.html'">
+                <div class="dashboard-card" onclick="sessionStorage.removeItem('returnToModal'); goToPage('/api/statistics/view')">
                     <div class="card-icon"><i class="uil uil-analytics"></i></div>
                     <div class="card-title">통계 분석</div>
                     <div class="card-desc">생산 실적 및 AOI 데이터 분석</div>
                 </div>
-                <div class="dashboard-card" onclick="location.href='admin_status.html'">
+                <div class="dashboard-card" onclick="goToPage('admin_status.html')">
                     <div class="card-icon"><i class="uil uil-clipboard-notes"></i></div>
                     <div class="card-title">작업 현황</div>
                     <div class="card-desc">공정별 실시간 작업 상태 현황</div>
@@ -2871,18 +2899,10 @@
         }
 
         function setupEvents() {
-            document.getElementById('back-btn').addEventListener('click', () => { if (state.currentPath.length > 0) goBackLevel(); else history.back(); });
-            document.getElementById('home-btn').addEventListener('click', () => {
-                // 1. 화면을 투명하게 만듭니다 (페이드 아웃)
-                document.body.style.opacity = '0';
-
-                // 2. 0.5초 뒤에 Flask 루트 경로('/')로 이동합니다.
-                setTimeout(() => {
-                    // 기존: location.href = 'index.html';
-                    location.href = '/';
-                }, 500);
-            });
-            document.getElementById('forward-btn').addEventListener('click', () => history.forward());
+            // 기존 리스너를 위에서 정의한 window 함수들로 교체합니다.
+            document.getElementById('back-btn').onclick = window.goBack;
+            document.getElementById('home-btn').onclick = window.goToHome;
+            document.getElementById('forward-btn').onclick = window.goForward;
         }
         window.addEventListener("dragover", e => e.preventDefault(), false);
         window.addEventListener("drop", e => e.preventDefault(), false);
@@ -2891,6 +2911,9 @@
             const now = new Date();
             document.getElementById('current-time').textContent = now.toLocaleString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
         }
+        window.addEventListener('pageshow', (event) => {
+            document.body.style.opacity = '1';
+        });
     </script>
     <div id="manager-info-modal" class="modal-overlay">
         <div class="modal-window manager-fit-modal">

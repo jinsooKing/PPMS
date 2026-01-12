@@ -128,7 +128,19 @@
         </footer>
     </div>
 
+    <style>
+        body {
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+        }
+    </style>
+
     <script>
+
+        window.addEventListener('pageshow', (event) => {
+            // 뒤로가기로 페이지에 진입했을 때(BFCache) 화면을 다시 밝게 만듭니다.
+            document.body.style.opacity = '1';
+        });
         // 페이지 전환 함수 (페이드 아웃 효과 유지)
         function transitionToPage(e, url) {
             e.preventDefault();

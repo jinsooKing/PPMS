@@ -1,10 +1,15 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, render_template
 # [중요] models.py에서 ProductionSchedule 모델을 가져옵니다.
 from models import db, ProductionSchedule, AoiRecord
 from sqlalchemy import func
 
 # [신규] 'statistics' 블루프린트를 '/api/statistics' 주소로 생성합니다.
 bp = Blueprint('statistics', __name__, url_prefix='/api/statistics')
+
+@bp.route('/view', methods=['GET'])
+def statistics_view():
+    # templates/statistics.html 파일을 반환
+    return render_template('statistics.html')
 
 @bp.route('/order_month_summary', methods=['GET'])
 def get_order_month_summary():

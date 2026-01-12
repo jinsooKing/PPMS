@@ -29,7 +29,7 @@
     <div class="page-container">
         <header class="main-header">
             <div class="header-left">
-                <a href="/" class="ppms-logo-placeholder"></a>
+                <a href="javascript:void(0)" onclick="goToHome()" class="ppms-logo-placeholder"></a>
                 <div id="current-week-display" class="common-box clickable-box">
                     <i class="uil uil-calendar-alt"></i> <span>Loading...</span>
                 </div>
@@ -322,8 +322,39 @@
         </div>
     </div>
     <datalist id="model-suggestions-list"></datalist>
+    <style>
+        /* 페이지 페이드 인-아웃 효과 */
+        body {
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+        }
+
+        /* 기존 스타일 유지... */
+    </style>
 
     <script>
+        let historyIndex = 0;
+        let maxHistoryIndex = 0;
+        let initialViewData = null;
+
+        // 2. 부드러운 전환 효과를 포함한 내비게이션 함수들
+        window.goBack = function () {
+            document.body.style.opacity = '0';
+            setTimeout(() => { history.back(); }, 500);
+        };
+
+        window.goToHome = function () {
+            document.body.style.opacity = '0';
+            setTimeout(() => { location.href = '/'; }, 500);
+        };
+
+        window.goForward = function () {
+            if (historyIndex < maxHistoryIndex) {
+                document.body.style.opacity = '0';
+                setTimeout(() => { history.forward(); }, 500);
+            }
+        };
+
         document.addEventListener('DOMContentLoaded', () => {
 
             setTimeout(() => {
@@ -346,15 +377,37 @@
 
             const urlParams = new URLSearchParams(window.location.search);
             const pYear = urlParams.get('year'), pMonth = urlParams.get('month'), pWeek = urlParams.get('week');
-            if (pYear && pMonth && pWeek) displayScheduleForWeek(parseInt(pYear), parseInt(pMonth), parseInt(pWeek));
-            else displayCurrentWeekSchedule();
+            if (pYear && pMonth && pWeek) {
+                // 최초 로드 시에는 히스토리를 쌓지 않도록 false 전달
+                displayScheduleForWeek(parseInt(pYear), parseInt(pMonth), parseInt(pWeek), false);
+            } else {
+                // displayCurrentWeekSchedule 함수 내부의 displayScheduleForWeek 호출부에도 false를 전달해야 합니다.
+                displayCurrentWeekSchedule(false);
+            }
 
             setupWeekPicker('week-picker-btn', (y, m, w) => displayScheduleForWeek(y, m, w));
 
+            // 1. 초기 상태 기록
+            const d = new Date();
+            const y = d.getFullYear(), m = d.getMonth() + 1, w = getCurrentWeekNumber(d);
+            initialViewData = { year: y, month: m, week: w };
+            history.replaceState({ ...initialViewData, index: 0 }, "", `?year=${y}&month=${m}&week=${w}`);
+
+            // 2. 뒤로가기/앞으로가기 시 처리
+            window.addEventListener('popstate', (event) => {
+                document.body.style.opacity = '1'; // 다른 페이지에서 올 때를 위해 즉시 밝게
+                if (event.state && event.state.index !== undefined) {
+                    historyIndex = event.state.index;
+                    displayScheduleForWeek(event.state.year, event.state.month, event.state.week, false);
+                }
+            });
+
+            // 3. 기존 버튼 리스너를 위에서 만든 애니메이션 함수로 교체
+            backBtn.addEventListener('click', window.goBack);
+            homeBtn.addEventListener('click', window.goToHome);
+            forwardBtn.addEventListener('click', window.goForward);
+
             // Event Listeners
-            backBtn.addEventListener('click', goBackView);
-            homeBtn.addEventListener('click', () => window.location.href = 'index.html');
-            forwardBtn.addEventListener('click', goForwardView);
             if (regScheduleBtn) regScheduleBtn.addEventListener('click', openWeekSelectorDropup);
 
             weekSelectorDropup.addEventListener('click', (e) => { if (e.target === weekSelectorDropup) closeWeekSelectorDropup(); });
@@ -868,16 +921,24 @@
             });
         }
 
-        function displayCurrentWeekSchedule() {
+        function displayCurrentWeekSchedule(pushHistory = true) {
             const d = new Date();
             const y = d.getFullYear(), m = d.getMonth() + 1, w = getCurrentWeekNumber(d);
             currentView = { mode: 'current_week', data: { year: y, month: m, weekNum: w } };
-            displayScheduleForWeek(y, m, w);
+            displayScheduleForWeek(y, m, w, pushHistory); // pushHistory 전달
         }
 
-        async function displayScheduleForWeek(y, m, w) {
+        async function displayScheduleForWeek(y, m, w, pushHistory = true) {
+            // [추가] 히스토리 인덱스 관리
+            if (pushHistory) {
+                historyIndex++;
+                maxHistoryIndex = historyIndex;
+                history.pushState({ year: y, month: m, week: w, index: historyIndex }, "", `?year=${y}&month=${m}&week=${w}`);
+            }
+
             currentView = { mode: 'schedule_view', data: { year: y, month: m, weekNum: w } };
             weekDisplay.innerHTML = `<i class="uil uil-calendar-alt"></i> ${y}년 ${m}월 ${w}주차`;
+
             await loadMasterData();
             try {
                 const res = await fetch(`/api/production/schedules?year=${y}&month=${m}&weekNum=${w}`);
@@ -885,7 +946,12 @@
                 displayArea.innerHTML = createScheduleTableHTML(data);
                 if (data.length > 0) populateDateSelectorsForProductionPage({ year: y, month: m, weekNum: w }, data);
                 ['A', 'B', 'C'].forEach(l => updateLineProgress(l));
-            } catch (e) { displayArea.innerHTML = '<p class="no-line-data-message">데이터 로딩 실패</p>'; }
+            } catch (e) {
+                displayArea.innerHTML = '<p class="no-line-data-message">데이터 로딩 실패</p>';
+            } finally {
+                // [추가] 로딩 완료 후 화면 밝게 만들기
+                document.body.style.opacity = '1';
+            }
         }
 
         function updateLineProgress(line) {
