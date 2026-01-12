@@ -1,0 +1,167 @@
+/* =========================================
+   [통계 분석 (Statistics) 전용 스타일]
+   ========================================= *
+
+/* 검색 컨트롤 바 */
+
+.content-area {
+    /* align-items: flex-start !important; <-- 이 부분을 삭제하거나 HTML 스타일이 덮어쓰도록 둡니다 */
+    flex-direction: column;
+    padding: 30px 0; /* 상하 여백만 유지 */
+    gap: 20px;
+}
+
+.statistics-controls {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    background-color: var(--card-bg);
+    padding: 15px 25px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    margin-bottom: 10px;
+    width: auto; 
+}
+
+/* 입력 필드 (연도, 월) */
+.statistics-controls input[type="number"],
+.statistics-controls select {
+    background-color: #15151a;
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    padding: 8px 15px;
+    font-family: 'BMDOHYEON', sans-serif;
+    font-size: 1rem;
+    height: 40px;
+    width: 140px;
+    text-align: center;
+    outline: none;
+    transition: all 0.2s;
+    box-sizing: border-box;
+}
+
+.statistics-controls input[type="number"]:focus,
+.statistics-controls select:focus {
+    border-color: var(--point-gold);
+    box-shadow: 0 0 8px rgba(255, 235, 167, 0.3);
+}
+
+.statistics-controls input[type="number"],
+.statistics-controls select,
+.compact-select, .compact-input {
+    /* 폰트 크기에 비례하여 높이와 너비가 조절되도록 em 단위 사용 */
+    height: 2.4rem; 
+    font-size: 0.95rem;
+    padding: 0 1rem;
+}
+
+.compact-btn {
+    height: 2.4rem !important;
+    font-size: 1rem !important;
+    padding: 0 1.5rem !important;
+}
+
+/* [수정 1] 조회 버튼 스타일 변경 (평소엔 다크, 호버 시 포인트) */
+.search-btn {
+    padding: 8px 30px;
+    height: 40px;
+    font-size: 1rem;
+    
+    /* 기본: 다른 버튼들과 동일한 다크 테마 */
+    background-color: var(--card-bg) !important; 
+    color: var(--text-color) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.search-btn:hover {
+    /* 호버: 금색 배경 + 남색 글씨 */
+    background-color: var(--point-gold) !important;
+    color: var(--accent-blue) !important;
+    border-color: transparent !important;
+    box-shadow: 0 0 15px rgba(255, 235, 167, 0.4);
+    transform: translateY(-2px);
+}
+
+#statistics-result-area {
+    width: 100%; /* HTML의 !important가 우선 적용됩니다 */
+    flex: 1;
+    overflow: hidden;
+    background-color: rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+}
+
+/* 통계 테이블 */
+.statistics-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'Poppins', 'BMJUA', sans-serif;
+    white-space: nowrap;
+    /* 테이블 레이아웃 고정 (칸 너비 준수) */
+    table-layout: fixed; 
+}
+
+.statistics-table th {
+    background-color: #15151a;
+    color: var(--point-gold);
+    padding: 15px;
+    position: sticky; top: 0; z-index: 10;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+    font-size: 1rem;
+}
+
+.statistics-table td {
+    padding: 12px;
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    font-size: 0.95rem;
+    color: var(--text-color);
+    /* 내용이 넘치면 말줄임표 처리 */
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.statistics-table tbody tr:hover {
+    background-color: rgba(255, 235, 167, 0.05);
+}
+
+/* 상태별 강조 색상 */
+.stats-problem-yellow { color: #FFD700 !important; font-weight: bold; }
+.stats-problem-red { color: var(--danger-red) !important; font-weight: bold; }
+
+/* 상세보기 아이콘 버튼 */
+.stats-details-btn {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #fff;
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 1rem;
+}
+.stats-details-btn:hover {
+    background-color: var(--point-gold);
+    color: var(--accent-blue);
+    border-color: var(--point-gold);
+    transform: scale(1.1);
+}
+
+/* 상세 내역 모달 */
+#details-modal .modal-window {
+    max-width: 900px;
+    height: 80vh;
+}
+
+#details-modal-table a {
+    color: var(--point-gold);
+    text-decoration: none;
+    font-weight: bold;
+    border-bottom: 1px dashed var(--point-gold);
+}
+#details-modal-table a:hover {
+    color: #fff;
+    border-bottom-style: solid;
+}

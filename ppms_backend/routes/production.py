@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify, send_from_directory
+from flask import Blueprint, request, jsonify, send_from_directory, render_template
 from models import db, ProductionSchedule, Manager, Company, ProductModel, ModelData, ModelFolder
 import os
 from werkzeug.utils import secure_filename
@@ -6,6 +6,18 @@ from flask import current_app
 import re
 
 bp = Blueprint('production', __name__, url_prefix='/api/production')
+
+# [추가] 생산 관리 화면을 보여주는 라우트
+@bp.route('/view', methods=['GET'])
+def production_view():
+    # templates/production.html 파일을 찾아 브라우저에 띄움
+    return render_template('production.html')
+
+# ▼ [추가] 관리자용 공정 맵 화면 연결
+@bp.route('/admin_view', methods=['GET'])
+def admin_view():
+    # 관리자 전용 HTML을 호출합니다.
+    return render_template('admin_process_map.html')
 
 UPLOAD_FOLDER = 'uploads'
 if not os.path.exists(UPLOAD_FOLDER):

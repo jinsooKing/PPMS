@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, render_template
 from models import db, User
 from extensions import bcrypt  
 from flask_login import login_user, logout_user, current_user
@@ -59,3 +59,7 @@ def check_session():
         })
     else:
         return jsonify({"is_logged_in": False}), 401 # 401: 비인증
+    
+@bp.route('/login_view', methods=['GET'])
+def login_view():
+    return render_template('login.html')

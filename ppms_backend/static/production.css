@@ -1,0 +1,784 @@
+/* =========================================
+   [1. 생산 현황판 (메인 화면)]
+   ========================================= */
+
+#schedule-display-area {
+    width: 100%;
+    max-width: 1600px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+}
+
+.line-schedule-section {
+    background-color: var(--card-bg);
+    border-radius: 12px;
+    padding: 15px 20px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    display: flex;
+    flex-direction: column;
+    height: auto !important; 
+    min-height: 200px; 
+    flex-shrink: 0;
+    transition: transform 0.2s ease;
+}
+
+.line-schedule-section:hover {
+    border-color: rgba(255, 235, 167, 0.3);
+}
+
+.line-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.line-title-group {
+    display: flex; align-items: center; gap: 15px;
+}
+
+.line-title {
+    font-family: 'BMDOHYEON', sans-serif;
+    font-size: 1.4rem;
+    font-weight: bold;
+    color: var(--text-white);
+    margin: 0;
+    display: flex; align-items: center; gap: 10px;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
+
+.line-title::before {
+    content: ''; display: block; width: 5px; height: 20px;
+    background-color: var(--point-gold); border-radius: 2px;
+    box-shadow: 0 0 8px var(--point-gold);
+}
+
+.progress-bar-container {
+    width: 150px; height: 14px; background-color: #15151a;
+    border-radius: 7px; overflow: hidden; position: relative;
+    border: 1px solid rgba(255,255,255,0.1);
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.5);
+}
+
+.progress-bar-fill {
+    height: 100%; background: linear-gradient(90deg, #ffbc00, var(--point-gold));
+    width: 0%; transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 0 10px rgba(255, 235, 167, 0.5);
+}
+
+.progress-bar-text {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    font-size: 10px; color: #fff; text-shadow: 0 0 3px #000;
+    font-weight: 800; letter-spacing: 0.5px; z-index: 2;
+}
+
+select {
+    -webkit-appearance: none; -moz-appearance: none; appearance: none;
+    background-image: none !important;
+}
+select::-ms-expand { display: none; }
+
+
+/* =========================================
+   [2. 데이터 테이블 스타일]
+   ========================================= */
+.table-container {
+    width: 100%;
+    overflow-x: auto;    
+    overflow-y: visible; 
+    max-height: none !important;
+    height: auto !important;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    background-color: rgba(0, 0, 0, 0.2);
+}
+
+.table-container::-webkit-scrollbar { width: 8px; height: 8px; }
+.table-container::-webkit-scrollbar-track { background: #1f2029; }
+.table-container::-webkit-scrollbar-thumb { background: #555; border-radius: 4px; }
+.table-container::-webkit-scrollbar-thumb:hover { background: var(--point-gold); }
+
+table.editable-table {
+    width: 100%; border-collapse: collapse;
+    font-family: 'Poppins', 'BMJUA', sans-serif;
+    color: var(--text-color); white-space: nowrap;
+}
+
+table.editable-table th {
+    background-color: #15151a; color: var(--point-gold);
+    font-weight: bold;
+    font-size: 0.9rem; padding: 10px 8px;
+    text-align: center; text-transform: uppercase;
+    border-bottom: 2px solid rgba(255, 235, 167, 0.2);
+    position: sticky; top: 0; z-index: 100;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+}
+
+table.editable-table td {
+    padding: 6px 8px; text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    font-size: 0.85rem; height: 40px;
+    position: relative; z-index: 1;
+}
+
+table.editable-table tbody tr:hover { background-color: rgba(255, 235, 167, 0.05); }
+
+table.editable-table input,
+table.editable-table select {
+    width: 100%; height: 30px; background: transparent;
+    border: 1px solid transparent; border-radius: 4px;
+    color: #fff; text-align: center; font-family: inherit;
+    transition: all 0.2s;
+}
+
+table.editable-table input:focus,
+table.editable-table select:focus {
+    background-color: #1f2029; border-color: var(--point-gold);
+    outline: none; box-shadow: 0 0 5px rgba(255, 235, 167, 0.3);
+}
+
+/* 폰트 굵기 제어 */
+#schedule-modal table.editable-table td,
+#schedule-modal table.editable-table input,
+#schedule-modal table.editable-table select { font-weight: bold; }
+
+#schedule-display-area table.editable-table td,
+#schedule-display-area table.editable-table input,
+#schedule-display-area table.editable-table select { font-weight: normal; }
+
+
+/* =========================================
+   [3. 등록 모달 UI]
+   ========================================= */
+
+.modal-content {
+    overflow-y: auto !important; 
+    padding: 15px;
+    display: flex; flex-direction: column; gap: 20px;
+}
+
+.header-controls { display: flex; align-items: center; gap: 8px; }
+
+.text-btn {
+    background: #3a3a3c; border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #ccc; font-family: 'BMJUA', sans-serif; font-size: 0.85rem;
+    font-weight: bold;
+    padding: 5px 12px; border-radius: 4px; cursor: pointer;
+    transition: all 0.2s ease; height: 32px;
+    display: flex; align-items: center; justify-content: center;
+}
+.text-btn:hover {
+    background: #15151a; color: var(--point-gold);
+    border-color: var(--point-gold); transform: translateY(-1px);
+}
+
+.import-options-container {
+    display: flex; gap: 5px; overflow: hidden;
+    max-width: 0; opacity: 0;
+    transform: translateX(-10px);
+    transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    pointer-events: none;
+}
+
+.import-options-container.active {
+    max-width: 300px; opacity: 1;
+    transform: translateX(0); pointer-events: auto;
+    margin-right: 5px;
+}
+
+.import-option-btn {
+    background-color: #15151a; color: var(--point-gold);
+    border: 1px solid rgba(255, 235, 167, 0.3);
+    padding: 5px 10px; border-radius: 4px; 
+    font-family: 'BMJUA'; font-size: 0.8rem;
+    font-weight: bold;
+    cursor: pointer; white-space: nowrap;
+    transition: all 0.2s;
+}
+.import-option-btn:hover {
+    background-color: var(--point-gold); color: var(--accent-blue);
+    border-color: var(--point-gold);
+    box-shadow: 0 0 8px rgba(255, 235, 167, 0.5);
+    transform: translateY(-1px);
+}
+
+.text-btn.delete-mode-active {
+    background-color: var(--danger-red) !important; color: #fff !important;
+    border-color: var(--danger-red) !important;
+    box-shadow: 0 0 10px rgba(255, 68, 68, 0.4); animation: pulse-red 2s infinite;
+}
+.delete-mode tbody tr { cursor: pointer; }
+.delete-mode tbody tr:hover { background-color: rgba(255, 68, 68, 0.15) !important; }
+.delete-mode tbody tr:hover td { color: #ffcccc; }
+
+@keyframes pulse-red {
+    0% { box-shadow: 0 0 0 0 rgba(255, 68, 68, 0.7); }
+    70% { box-shadow: 0 0 0 6px rgba(255, 68, 68, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(255, 68, 68, 0); }
+}
+
+.line-tab-nav {
+    display: flex; border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    background: #15151a; margin-bottom: 0; border-radius: 12px 12px 0 0; overflow: hidden;
+    flex-shrink: 0;
+}
+.line-tab-btn {
+    flex: 1; padding: 15px; background: transparent; border: none;
+    color: #888; cursor: pointer; font-family: 'BMJUA'; font-size: 1.1rem;
+    font-weight: bold;
+    border-bottom: 3px solid transparent; transition: all 0.2s;
+}
+.line-tab-btn:hover { background: rgba(255, 255, 255, 0.05); color: #ddd; }
+.line-tab-btn.active {
+    color: var(--point-gold); border-bottom-color: var(--point-gold);
+    background: linear-gradient(to top, rgba(255, 235, 167, 0.05), transparent);
+}
+
+.tab-content { display: none; animation: fadeIn 0.3s ease; padding-top: 10px; }
+.tab-content.active { display: block; }
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+@keyframes rowFadeIn { 
+    from { opacity: 0; transform: translateY(-15px); } 
+    to { opacity: 1; transform: translateY(0); } 
+}
+@keyframes rowFadeOutNatural { 
+    0% { opacity: 1; transform: scale(1); background-color: rgba(255,68,68,0.1); }
+    100% { opacity: 0; transform: scale(0.95); background-color: rgba(255,68,68,0.3); } 
+}
+
+.animate-in { animation: rowFadeIn 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+.animate-out { animation: rowFadeOutNatural 0.35s ease-out forwards; }
+
+
+/* =========================================
+   [4. 비고(Note) 아이콘 & 전역 툴팁 스타일]
+   ========================================= */
+
+.model-cell-wrapper {
+    position: relative;
+    width: 100%; 
+    height: 100%;
+    display: flex;          /* block에서 flex로 변경 */
+    align-items: center;    /* 세로 중앙 정렬 */
+    justify-content: center;
+}
+
+/* [수정] 모델명 입력창: 상하 패딩을 5px로 수정하여 정렬 일치 */
+.model-cell-wrapper input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 5px 30px !important; /* 상하 0 -> 5px로 수정하여 다른 셀과 높이 통일 */
+    text-align: center; 
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+/* 메모 아이콘: 오른쪽 끝 고정 */
+.note-badge-icon {
+    position: absolute;
+    right: 5px; 
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--point-gold);
+    font-size: 1.1rem;
+    cursor: help;
+    z-index: 5;
+    /* 흔들림 방지를 위해 width 고정 */
+    width: 20px; 
+    text-align: center;
+}
+
+/* [신규] 전역 툴팁 스타일 (자바스크립트로 제어됨) */
+#global-tooltip {
+    position: fixed; /* 화면 최상위 배치 */
+    display: none;
+    z-index: 10000;
+    background-color: rgba(31, 32, 41, 0.98);
+    color: #fff;
+    border: 1px solid var(--point-gold);
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.85rem;
+    font-weight: normal;
+    line-height: 1.4;
+    white-space: pre-wrap;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+    pointer-events: none; /* 마우스 이벤트 무시 */
+    
+    /* 등장 애니메이션 */
+    animation: tooltipAppear 0.2s ease-out;
+}
+
+@keyframes tooltipAppear {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+
+/* 기타 유틸리티 */
+.notes-modal-content-container { display: flex; flex-direction: column; height: 100%; overflow: hidden; }
+.notes-tab-nav { display: flex; border-bottom: 1px solid rgba(255,255,255,0.1); background: #15151a; flex-shrink: 0; }
+.notes-tab-nav .tab-btn { flex: 1; padding: 12px; background: transparent; border: none; color: #888; cursor: pointer; font-family: 'BMJUA'; font-size: 1rem; font-weight: bold; border-bottom: 2px solid transparent; transition: all 0.2s; }
+.notes-tab-nav .tab-btn.active { color: var(--point-gold); border-bottom-color: var(--point-gold); background: rgba(255, 235, 167, 0.05); }
+.notes-modal-content { flex: 1; overflow-y: auto; padding: 20px; background: #1a1b23; }
+.notes-tab-content { display: none; animation: fadeIn 0.3s ease; }
+.notes-tab-content.active { display: block; }
+
+#week-selector-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 15px; padding: 10px; }
+.week-box { background: linear-gradient(145deg, #2a2b38, #23242d); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 10px; padding: 20px 10px; text-align: center; color: #c4c3ca; font-family: 'BMJUA', sans-serif; font-size: 1.1rem; cursor: pointer; font-weight: bold; transition: all 0.3s ease; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
+.week-box:hover { background: var(--point-gold); color: var(--accent-blue); transform: translateY(-5px); box-shadow: 0 8px 15px rgba(255, 235, 167, 0.3); }
+
+.period-selector-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; width: 100%; }
+.period-btn { background: #2a2b38; color: #fff; padding: 15px; text-align: center; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); cursor: pointer; font-family: 'BMJUA'; transition: all 0.2s; font-weight: bold; }
+.period-btn:hover { background: var(--point-gold); color: var(--accent-blue); transform: translateY(-3px); }
+
+.no-line-data-message { text-align: center; padding: 40px; color: #666; font-family: 'BMDOHYEON'; font-size: 1.1rem; font-weight: bold; border: 2px dashed rgba(255,255,255,0.05); border-radius: 8px; margin-top: 10px; }
+
+/* --- [비고 모달 내부 스타일 수정] --- */
+.note-item {
+    background: #23242d; 
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px; 
+    padding: 15px; 
+    margin-bottom: 15px;
+}
+
+/* 헤더 영역 (모델명 + 체크박스 가로 배치) */
+.note-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.note-item h4 {
+    margin: 0;
+    color: var(--point-gold);
+    font-size: 0.95rem;
+    font-weight: bold;
+}
+
+/* 아이콘 숨기기 체크박스 디자인 */
+.note-toggle-label {
+    font-size: 0.8rem;
+    color: #aaa;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    user-select: none;
+}
+
+.note-toggle-label input {
+    accent-color: var(--point-gold); /* 체크박스 색상 */
+    cursor: pointer;
+}
+
+.note-toggle-label:hover {
+    color: #fff;
+}
+
+.note-item textarea {
+    width: 100%; 
+    min-height: 80px; 
+    background: #15151a; 
+    border: 1px solid #444;
+    color: #eee; 
+    padding: 10px; 
+    border-radius: 5px; 
+    font-family: 'Poppins', sans-serif;
+    resize: vertical; 
+    font-size: 0.9rem; 
+    font-weight: bold;
+    box-sizing: border-box;
+}
+.note-item textarea:focus { 
+    border-color: var(--point-gold); 
+    outline: none; 
+}
+
+/* ==========================================================================
+   [최종 개편] 신규 모델 등록 모달 - 초정밀 그리드 & 공간 최적화 스타일
+   ========================================================================== */
+
+/* 1. 모달 윈도우: 쾌적한 너비 확보 및 불필요한 패딩 제거 */
+#new-model-reg-modal .modal-window {
+    width: 1100px !important; 
+    max-width: 95vw !important;
+    height: auto !important;
+    max-height: 80vh !important;
+    border-radius: 16px !important;
+}
+
+#new-model-reg-modal .modal-content {
+    padding: 15px 25px !important;
+    gap: 12px !important;
+}
+
+/* 2. 폴더 그리드: 세로 늘어짐 방지 및 컴팩트 정렬 */
+#folder-selector-list {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)) !important; /* 폴더 크기 축소 */
+    align-content: start !important; /* [핵심] 아이템이 위로 밀착되어 세로 늘어짐 방지 */
+    gap: 10px !important;
+    padding: 15px !important;
+    background: rgba(0, 0, 0, 0.25) !important;
+    border-radius: 10px !important;
+    min-height: 350px !important;
+    max-height: 450px !important;
+    overflow-y: auto !important;
+    position: relative;
+}
+
+/* 3. 폴더 카드 디자인: 윈도우 탐색기 스타일 */
+.modal-folder-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 12px 5px !important;
+    height: fit-content !important; /* [핵심] 내용물 높이에 딱 맞춤 */
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid transparent;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.modal-folder-card:hover {
+    background: rgba(255, 235, 167, 0.05);
+}
+
+.modal-folder-card input[type="radio"] {
+    display: none; /* 실제 라디오 버튼은 숨김 */
+}
+
+/* [핵심] 선택 시 우측 상단 체크 표시 (공정 데이터 관리 페이지 스타일) */
+.modal-folder-card.selected {
+    background: rgba(212, 175, 55, 0.12) !important;
+    border: 1px solid var(--point-gold) !important;
+}
+
+.modal-folder-card.selected::after {
+    content: '✔';
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 18px;
+    height: 18px;
+    background: var(--point-gold);
+    color: #1a1b21;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: bold;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+    z-index: 5;
+}
+
+.modal-card-icon {
+    font-size: 2.2rem !important; /* 아이콘 크기 최적화 */
+    color: #fddb72;
+    margin-bottom: 6px;
+}
+
+.modal-card-name {
+    font-size: 0.8rem !important;
+    color: #ddd;
+    text-align: center;
+    width: 90%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* 4. 새 폴더 입력 영역: 조화로운 너비 제한 */
+#new-folder-input-area {
+    width: 100%;
+    max-width: 500px !important; /* [핵심] 너무 넓지 않게 제한 */
+    margin: 5px auto !important; /* 중앙 정렬 */
+    padding: 10px 15px !important;
+    background: rgba(212, 175, 55, 0.08) !important;
+    border: 1px dashed var(--point-gold) !important;
+    border-radius: 10px !important;
+    display: none;
+    flex-direction: row;
+    gap: 10px;
+}
+
+#new-folder-name {
+    flex: 1;
+    height: 38px !important;
+    background: #000 !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 6px !important;
+    color: #fff !important;
+    padding: 0 12px !important;
+}
+
+/* 5. 하단 버튼: 조화로운 너비 및 정렬 */
+#new-model-reg-modal .modal-footer-btns {
+    display: flex;
+    justify-content: center; /* [핵심] 버튼들을 중앙으로 모음 */
+    gap: 15px;
+    margin-top: 10px;
+}
+
+#new-model-reg-modal .common-box {
+    width: 160px !important; /* [핵심] 너무 길지 않은 조화로운 너비 */
+    flex: none !important;
+    height: 45px !important;
+    font-size: 1rem !important;
+}
+
+#confirm-model-reg-btn {
+    width: 220px !important; /* 등록 버튼은 조금 더 넓게 강조 */
+}
+
+/* [수정] 신규 모델 등록 모달 전용 컨텍스트 메뉴 스타일 */
+#modal-ctx-menu {
+    position: fixed; /* 잔상 방지를 위해 fixed 사용 */
+    z-index: 30000;  /* 등록 모달보다 높은 레이어 */
+    width: 150px;
+    background: #2b2c3b; /* 검정~회색 계열 */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6);
+    display: none;
+    overflow: hidden;
+    font-family: 'BMJUA', sans-serif;
+}
+
+.modal-ctx-item {
+    padding: 10px 14px;
+    color: rgba(255, 255, 255, 0.85); /* 옅은 흰색 */
+    font-size: 0.85rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* 호버 시: 금색 배경 + 남색 글씨 */
+.modal-ctx-item:hover {
+    background: var(--point-gold) !important;
+    color: var(--accent-blue) !important;
+}
+
+/* [최적화] 새 폴더 팝업 오버레이 */
+.pop-modal-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    /* 성능 저하 주범인 blur 강도를 낮추거나 제거 고려 */
+    background: rgba(0, 0, 0, 0.5); 
+    backdrop-filter: blur(2px); /* 5px에서 2px로 낮춤 */
+    display: flex;
+    justify-content: center; align-items: center;
+    z-index: 20000;
+    visibility: hidden;
+    opacity: 0;
+    /* transition 시간을 0.2s로 단축하여 체감 속도 향상 */
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+    will-change: opacity; /* 브라우저에 미리 알림 */
+}
+
+/* [최적화] 팝업 창 본체 */
+.pop-modal-window {
+    background: #2a2b38; /* */
+    border: 2px solid var(--point-gold); /* */
+    border-radius: 24px;
+    width: 320px; 
+    padding: 25px;
+    /* shadow 값을 단순화하여 연산량 감소 */
+    box-shadow: 0 10px 30px rgba(0,0,0,0.4); 
+    text-align: center;
+    
+    /* scale 변화폭을 줄여서 더 빠르게 보이게 함 */
+    transform: scale(0.9); 
+    opacity: 0;
+    /* 0.4s에서 0.2s로 변경 및 GPU 가속 유도 */
+    transition: transform 0.2s cubic-bezier(0.17, 0.84, 0.44, 1), opacity 0.2s ease;
+    will-change: transform, opacity; /* GPU 가속 활성화 */
+}
+
+.pop-modal-overlay.active {
+    visibility: visible;
+    opacity: 1;
+}
+
+.pop-modal-overlay.active .pop-modal-window {
+    transform: scale(1);
+    opacity: 1;
+}
+.pop-modal-header { color: var(--point-gold); margin-bottom: 20px; font-family: 'BMJUA'; font-size: 1.3rem; }
+.pop-modal-header i { font-size: 1.8rem; display: block; margin-bottom: 8px; color: var(--point-gold); }
+.pop-modal-body input {
+    width: 100%; 
+    box-sizing: border-box; /* 패딩이 너비에 포함되도록 강제 */
+    padding: 14px; 
+    border-radius: 12px;
+    border: 2px solid rgba(255, 235, 167, 0.1); 
+    background: #15151a;
+    color: #fff; 
+    text-align: center; 
+    outline: none; 
+    margin-bottom: 20px;
+    font-family: 'Poppins', sans-serif;
+    transition: border-color 0.3s;
+}
+.pop-modal-body input:focus { border-color: var(--point-gold); }
+
+.pop-modal-footer { display: flex; gap: 12px; }
+.pop-modal-footer button {
+    flex: 1; padding: 12px; border: none; border-radius: 12px;
+    font-family: 'BMJUA'; cursor: pointer; font-weight: bold;
+    transition: transform 0.2s, filter 0.2s;
+}
+.pop-modal-footer button:active { transform: scale(0.95); }
+
+.pop-btn-confirm { background: var(--point-gold); color: var(--accent-blue); }
+.pop-btn-cancel { background: #444; color: #ccc; }
+
+/* 1. 주차 선택 카드 기본 스타일 (회색빛 폰트 + 솔리드 배경) */
+.week-selection-card {
+    background: #2a2b38 !important; /* 글래스모피즘 제거 후 솔리드 배경 적용 */
+    border: 1px solid rgba(255, 255, 255, 0.05) !important;
+    border-radius: 15px !important;
+    padding: 25px 10px !important;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    position: relative;
+    overflow: visible;
+
+    /* [수정] 눈이 편안한 회색빛 폰트 적용 */
+    color: var(--text-color) !important; 
+    font-weight: bold !important;
+    
+    /* 입체감 있는 그림자 */
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4) !important;
+    transition: all 0.2s ease !important;
+}
+
+/* 2. 호버 시 스타일 (금색 배경 + 남색 글씨) */
+.week-selection-card:hover {
+    background: var(--point-gold) !important;
+    color: var(--accent-blue) !important;
+    transform: translateY(-3px);
+    box-shadow: 0 15px 30px rgba(255, 235, 167, 0.2) !important;
+}
+
+/* 호버 시 내부 폰트 색상도 남색으로 변경 */
+.week-selection-card:hover .week-title {
+    color: var(--accent-blue) !important;
+}
+
+/* 3. 현재 주차(Today) 스타일 (금색 테두리 제거 + 호버 기능 복구) */
+.week-selection-card.is-today-week {
+    border: 1px solid rgba(255, 255, 255, 0.05) !important; /* 금색 테두리 제거 */
+    color: var(--text-color) !important;
+    background: #2a2b38; /* !important를 제거하여 호버 시 배경색이 바뀔 수 있게 함 */
+}
+
+/* 현재 주차 전용 호버 스타일 추가 */
+.week-selection-card.is-today-week:hover {
+    background: var(--point-gold) !important;
+    color: var(--accent-blue) !important;
+}
+
+/* 4. 체크 아이콘 스타일 (유지 및 호버 시 가독성 보정) */
+.week-selection-card.is-today-week::after {
+    content: '✔';
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    width: 26px;
+    height: 26px;
+    background: var(--point-gold);
+    color: var(--accent-blue);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 900;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+    z-index: 10;
+    border: 2px solid var(--bg-dark); /* common.css 변수 사용 */
+}
+
+/* 호버 시 체크 아이콘 색상 반전 */
+.week-selection-card.is-today-week:hover::after {
+    background: var(--accent-blue);
+    color: var(--point-gold);
+    border-color: var(--point-gold);
+}
+
+/* 5. 선택된 주차(Active) 스타일 (남색 폰트 방지) */
+.week-selection-card.active {
+    border: 1px solid rgba(255, 235, 167, 0.3) !important;
+    background: #323344 !important;
+    color: var(--text-color) !important; 
+}
+
+/* 6. 주차 타이틀 스타일 */
+.week-title {
+    font-family: 'BMJUA', sans-serif;
+    font-size: 1.4rem;
+    color: inherit !important;
+    pointer-events: none;
+}
+
+/* [수정] 컨텍스트 메뉴 크기 축소 및 테마 적용 */
+#schedule-context-menu {
+    position: fixed;
+    z-index: 20000;
+    width: 150px; /* 200px -> 150px로 축소 */
+    background: #2b2c3b;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6);
+    display: none;
+    overflow: hidden;
+    font-family: 'BMJUA', sans-serif;
+}
+
+.ctx-item {
+    padding: 10px 14px; /* 패딩 축소 */
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 0.85rem; /* 글자 크기 축소 */
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* 호버: 금색 배경 + 남색 글씨 */
+.ctx-item:hover {
+    background: var(--point-gold) !important;
+    color: var(--accent-blue) !important;
+}
+
+.ctx-divider {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.06);
+    margin: 3px 0;
+}

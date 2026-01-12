@@ -1,10 +1,16 @@
 # routes/dip.py (전체 덮어쓰기 추천)
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, render_template
 from models import db, DipGroup, DipHistory, ProductionSchedule
 from sqlalchemy import or_, and_
 from datetime import datetime
 
 bp = Blueprint('dip', __name__, url_prefix='/api/dip')
+
+# [추가] 조립(DIP) 화면을 보여주는 라우트
+@bp.route('/view', methods=['GET'])
+def dip_view():
+    # templates 폴더 안의 dip.html 파일을 브라우저에 띄웁니다.
+    return render_template('dip.html')
 
 @bp.route('/groups', methods=['GET'])
 def get_groups():

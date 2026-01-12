@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, render_template
 # [중요] 필요한 모델 모두 Import
 from models import db, AoiRecord, ProductionSchedule, DipGroup, DipHistory
 from sqlalchemy import or_, and_, func
@@ -6,6 +6,11 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 
 bp = Blueprint('aoi', __name__, url_prefix='/api/aoi')
+
+@bp.route('/view', methods=['GET'])
+def aoi_view():
+    # templates 폴더 내의 aoi.html 파일을 읽어서 전달합니다.
+    return render_template('aoi.html')
 
 # -------------------------------------------------------------------------
 # [Helper] 수량 감소 시 완료 상태를 해제하는 함수 (복구 로직)

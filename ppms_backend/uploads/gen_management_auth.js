@@ -18,7 +18,7 @@ async function checkLoginStatus(requiredRole = null) {
 
     try {
         // 2. 백엔드에 '내 세션 정보 줘'라고 요청
-        const response = await fetch('http://127.0.0.1:5000/api/auth/check_session', {
+        const response = await fetch('/api/auth/check_session', {
             credentials: 'include' // 세션 쿠키를 함께 보냄
         });
 
@@ -65,7 +65,7 @@ function setupLogoutButton() {
             localStorage.removeItem('ppms_user_role');
 
             try {
-                await fetch('http://127.0.0.1:5000/api/auth/logout', {
+                await fetch('/api/auth/logout', {
                     method: 'POST',
                     credentials: 'include'
                 });
