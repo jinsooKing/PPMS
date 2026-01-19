@@ -130,9 +130,10 @@
                 </div>
                 <div class="dip-modal-separator"></div>
                 <div class="dip-modal-other-section">
-                    <h3 class="dip-title" style="margin: 0 0 15px 0; border-bottom: 2px solid #555;">생산 완료 모델 (SMD)</h3>
+                    <h3 class="dip-title" style="margin: 0 0 15px 0; border-bottom: 2px solid #555;">모델리스트(SMD)
+                    </h3>
                     <div id="production-models-list" style="color: #ddd; overflow-y: auto; max-height: 400px;">
-                        <p style="text-align:center; color:#888;">로딩중...</p>
+                        <p style="text-align:center; color:#888;">계획 리스트 로딩중...</p>
                     </div>
                 </div>
             </div>
@@ -182,7 +183,7 @@
                 setTimeout(() => { history.forward(); }, 500);
             }
         };
-        
+
         /* [로고 애니메이션 (GSAP)] */
         document.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => { document.body.style.opacity = '1'; }, 50);
@@ -198,7 +199,7 @@
             fetchGroups();
         });
 
-        
+
 
         function updateTime() {
             const timeDisplay = document.getElementById('current-time');
@@ -312,14 +313,14 @@
             // [주의] DIP 페이지는 현재 단일 뷰이므로 pushState 로직은 생략하거나 
             // 탭 전환 시에만 추가하도록 설계할 수 있습니다. 
             // 여기서는 페이지 로드 후 화면 노출 로직에 집중합니다.
-            
+
             try {
                 const response = await fetch(`${API_BASE}/groups`);
                 if (!response.ok) throw new Error('데이터 로딩 실패');
                 groupList = await response.json();
                 renderGroups();
-            } catch (error) { 
-                console.error(error); 
+            } catch (error) {
+                console.error(error);
             } finally {
                 // 데이터 렌더링이 완료된 후 화면을 부드럽게 보여줍니다.
                 document.body.style.opacity = '1';

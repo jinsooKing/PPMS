@@ -1,9 +1,10 @@
 from flask import Blueprint, request, jsonify, send_from_directory, render_template
-from models import db, ProductionSchedule, Manager, Company, ProductModel, ModelData, ModelFolder
+from models import db, ProductionSchedule, AoiRecord, Manager, Company, ProductModel, ModelData, ModelFolder
 import os
 from werkzeug.utils import secure_filename
 from flask import current_app
 import re
+from difflib import SequenceMatcher
 
 bp = Blueprint('production', __name__, url_prefix='/api/production')
 
@@ -12,6 +13,16 @@ bp = Blueprint('production', __name__, url_prefix='/api/production')
 def production_view():
     # templates/production.html 파일을 찾아 브라우저에 띄움
     return render_template('production.html')
+
+def calculate_similarity(a, b):
+    if not a or not b: return 0.0
+    
+    # 1. 대문자 변환
+    # 2. 공백, 하이픈(-), 언더바(_), 괄호((, )) 제거 정규식 적용
+    clean_a = re.sub(r'[\s\-_()]', '', str(a).upper())
+    clean_b = re.sub(r'[\s\-_()]', '', str(b).upper())
+    
+    return SequenceMatcher(None, clean_a, clean_b).ratio()
 
 # ▼ [추가] 관리자용 공정 맵 화면 연결
 @bp.route('/admin_view', methods=['GET'])
@@ -47,6 +58,8 @@ def get_schedules():
         return jsonify([s.to_dict() for s in schedules_from_db])
     except Exception as e: return jsonify({"error": str(e)}), 500
 
+# production.py의 save_schedules 함수 내부 수정
+
 @bp.route('/schedules', methods=['POST'])
 def save_schedules():
     try:
@@ -54,16 +67,40 @@ def save_schedules():
         week_info = data['weekInfo']
         schedules = data['schedules']
 
-        # 1. 이번에 넘어온 ID 목록 수집 (삭제된 행을 찾기 위함)
+        # 1. 이번에 넘어온 ID 목록 수집
         incoming_ids = [s.get('id') for s in schedules if s.get('id')]
 
-        # 2. 이번 주차 데이터 중, 프론트에서 넘어오지 않은(삭제된) 데이터 제거
-        ProductionSchedule.query.filter(
+        # 2. [수정] 삭제 대상 후보를 먼저 조회합니다.
+        delete_candidates_query = ProductionSchedule.query.filter(
             ProductionSchedule.prod_year == week_info['year'],
             ProductionSchedule.prod_month == week_info['month'],
             ProductionSchedule.prod_week == week_info['weekNum'],
             ProductionSchedule.id.not_in(incoming_ids) if incoming_ids else True
-        ).delete(synchronize_session=False)
+        )
+        
+        candidates = delete_candidates_query.all()
+
+        # 3. [핵심] 삭제하려는 행 중 실적이 입력된 행이 있는지 검사합니다.
+        # 생산(actual_prod), 조립(assy_actual), AOI(aoi_insp_qty) 중 하나라도 0보다 크면 보호
+        protected_items = []
+        for c in candidates:
+            has_prod = (c.actual_prod or 0) > 0
+            has_assy = (getattr(c, 'assy_actual', 0) or 0) > 0
+            has_aoi = (getattr(c, 'aoi_insp_qty', 0) or 0) > 0
+            
+            if has_prod or has_assy or has_aoi:
+                protected_items.append(f"{c.model}({c.line}라인)")
+
+        # 4. 보호해야 할 실적 데이터가 있다면 삭제를 중단하고 경고를 보냅니다.
+        if protected_items:
+            # 400 에러와 함께 메시지 전송
+            return jsonify({
+                "error": "protected_records",
+                "message": f"타 부서 기록 존재 시 삭제 불가: {', '.join(protected_items)}"
+            }), 400
+
+        # 5. 실적이 없는 깨끗한 행만 삭제를 진행합니다.
+        delete_candidates_query.delete(synchronize_session=False)
 
         for s in schedules:
             # LOT 문자열 파싱 로직 (기존 유지)
@@ -118,7 +155,39 @@ def save_schedules():
                 db.session.add(new_schedule)
         
         db.session.commit()
-        return jsonify({"message": "수정사항이 반영되었습니다."}), 201
+        all_aoi_models = db.session.query(AoiRecord.model, AoiRecord.lot).distinct().all()
+        official_models = [s.get('model') for s in schedules]
+    
+        matches_found = []
+
+        for manual_item in all_aoi_models:
+            m_model, m_lot = manual_item
+
+            # 이미 공식 계획에 존재하는 모델은 제외
+            if m_model in official_models:
+                continue
+                
+            for s in schedules:
+                official_m = s.get('model')
+                # 유사도 계산 (80% 이상 기준)
+                similarity = calculate_similarity(official_m, m_model)
+
+                if similarity >= 0.8:
+                    matches_found.append({
+                        "manual_model": m_model,
+                        "manual_lot": m_lot,
+                        "official_model": official_m,
+                        "official_lot": s.get('lot'),
+                        "official_year": week_info['year'],
+                        "official_month": week_info['month'],
+                        "similarity": round(similarity * 100, 1)
+                    })
+
+        # 매칭 후보가 발견되면 응답에 포함하여 프론트엔드에서 팝업을 띄우게 함
+        return jsonify({
+            "message": "수정사항이 반영되었습니다.",
+            "matches": matches_found if matches_found else None
+        }), 201
     except Exception as e: 
         db.session.rollback()
         print(f"Error saving schedules: {str(e)}")
@@ -661,4 +730,47 @@ def upload_general_file():
         db.session.rollback() 
         # 디버깅을 위해 에러 내용 출력
         print(f"Upload Error: {str(e)}") 
+        return jsonify({"error": str(e)}), 500
+    
+# ==============================================================================
+# [5] 부서별 독립 실적 업데이트 API (추가)
+# ==============================================================================
+
+# (1) 조립(DIP) 실적 전용 업데이트
+@bp.route('/schedules/<int:id>/assembly', methods=['PUT'])
+def update_assembly_actual(id):
+    try:
+        schedule = db.session.get(ProductionSchedule, id)
+        if not schedule: return jsonify({"error": "계획을 찾을 수 없습니다."}), 404
+        
+        data = request.json
+        # 조립 부서 관련 필드만 업데이트 (다른 데이터 보존)
+        if 'assyActual' in data: schedule.assy_actual = data['assyActual']
+        if 'assyWorker' in data: schedule.assy_worker = data['assyWorker']
+        if 'assyStart' in data: schedule.assy_start_date = data['assyStart']
+        if 'assyEnd' in data: schedule.assy_end_date = data['assyEnd']
+        
+        db.session.commit()
+        return jsonify({"message": "조립 실적이 반영되었습니다."})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+# (2) AOI 실적 전용 업데이트
+@bp.route('/schedules/<int:id>/aoi', methods=['PUT'])
+def update_aoi_actual(id):
+    try:
+        schedule = db.session.get(ProductionSchedule, id)
+        if not schedule: return jsonify({"error": "계획을 찾을 수 없습니다."}), 404
+        
+        data = request.json
+        # AOI 부서 관련 필드만 업데이트
+        if 'aoiInspQty' in data: schedule.aoi_insp_qty = data['aoiInspQty']
+        if 'aoiDefectQty' in data: schedule.aoi_defect_qty = data['aoiDefectQty']
+        if 'aoiWorker' in data: schedule.aoi_worker = data['aoiWorker']
+        
+        db.session.commit()
+        return jsonify({"message": "AOI 실적이 반영되었습니다."})
+    except Exception as e:
+        db.session.rollback()
         return jsonify({"error": str(e)}), 500

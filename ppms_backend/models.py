@@ -3,6 +3,8 @@ from flask_login import UserMixin
 from datetime import datetime
 
 # 1. 생산 계획 모델
+# [models.py 수정본 - ProductionSchedule 클래스 부분]
+
 class ProductionSchedule(db.Model):
     __tablename__ = 'production_schedules'
     id = db.Column(db.Integer, primary_key=True)
@@ -17,10 +19,28 @@ class ProductionSchedule(db.Model):
     tb = db.Column(db.String(50))
     start_date = db.Column(db.String(50))
     end_date = db.Column(db.String(50))
+    
+    # --- [공정별 독립 실적 컬럼 추가] ---
+    
+    # (1) 생산 부서 영역
     manager = db.Column(db.String(100))
     actual_prod = db.Column(db.Integer, default=0)
     actual_start_date = db.Column(db.String(50))
     actual_end_date = db.Column(db.String(50))
+    
+    # (2) 조립(DIP) 부서 영역 (신규 추가)
+    assy_actual = db.Column(db.Integer, default=0) # 조립 완료 수량
+    assy_start_date = db.Column(db.String(50))
+    assy_end_date = db.Column(db.String(50))
+    assy_worker = db.Column(db.String(100))        # 조립 담당자
+    
+    # (3) AOI 부서 영역 (신규 추가)
+    aoi_insp_qty = db.Column(db.Integer, default=0)   # 검사 수량
+    aoi_defect_qty = db.Column(db.Integer, default=0) # 불량 수량
+    aoi_worker = db.Column(db.String(100))           # AOI 담당자
+    
+    # ----------------------------------
+    
     notes = db.Column(db.Text)
     batch_quantity = db.Column(db.Integer, default=0)
     total_quantity = db.Column(db.Integer, default=0)
@@ -35,7 +55,14 @@ class ProductionSchedule(db.Model):
             "orderYear": self.order_year, "orderMonth": self.order_month, "tb": self.tb,
             "startDate": self.start_date, "endDate": self.end_date, "manager": self.manager,
             "actualProd": self.actual_prod, "actualStartDate": self.actual_start_date,
-            "actualEndDate": self.actual_end_date, "notes": self.notes, "lot": lot_string,
+            "actualEndDate": self.actual_end_date, 
+            # 조립 및 AOI 데이터 포함
+            "assyActual": self.assy_actual,
+            "assyWorker": self.assy_worker,
+            "aoiInspQty": self.aoi_insp_qty,
+            "aoiDefectQty": self.aoi_defect_qty,
+            "aoiWorker": self.aoi_worker,
+            "notes": self.notes, "lot": lot_string,
             "prod_year": self.prod_year, "prod_month": self.prod_month, "prod_week": self.prod_week
         }
 

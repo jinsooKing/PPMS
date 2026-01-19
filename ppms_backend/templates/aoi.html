@@ -180,7 +180,7 @@
 
                 <h3
                     style="margin:0; color:var(--point-gold); display:flex; align-items:center; gap:10px; font-size: 1.3rem; white-space: nowrap;">
-                    <i class="uil uil-list-ul"></i> 생산 완료 모델 선택
+                    <i class="uil uil-list-ul"></i> 모델 리스트 (SMD)
                 </h3>
 
                 <div style="display:flex; align-items:center; gap:20px;">
@@ -210,12 +210,72 @@
 
     <div id="global-tooltip"></div>
     <div id="aoi-context-menu" class="custom-context-menu">
+        <div class="ctx-item" id="ctx-add-direct-model" style="color: #4dabf7;">
+            <i class="uil uil-plus-circle"></i> 모델 직접 추가
+        </div>
+        <div class="ctx-divider"></div>
         <div class="ctx-item" id="ctx-pin-row">
             <i class="uil uil-map-pin-alt"></i> <span id="pin-text">고정</span>
         </div>
         <div class="ctx-divider"></div>
         <div class="ctx-item" id="ctx-delete-record" style="color: #ff6b6b;">
             <i class="uil uil-trash-alt"></i> 행 삭제
+        </div>
+    </div>
+    <div class="modal-overlay" id="direct-add-modal" style="z-index: 11000;">
+        <div class="modal-window"
+            style="width: 480px; border: 1px solid var(--point-gold); border-radius: 12px; background: #1a1c23;">
+            <div class="modal-header"
+                style="display: flex; justify-content: space-between; align-items: center; padding: 20px 25px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                <h3
+                    style="margin: 0; color: var(--point-gold); font-family: 'BMDOHYEON'; font-size: 1.3rem; display: flex; align-items: center; gap: 10px;">
+                    <i class="uil uil-plus-circle"></i> 모델 직접 추가
+                </h3>
+                <button class="close-btn" onclick="closeDirectAddModal()"
+                    style="background: none; border: none; color: #888; font-size: 1.8rem; cursor: pointer;">&times;</button>
+            </div>
+
+            <div class="modal-content" style="padding: 25px;">
+                <div style="display: flex; flex-direction: column; gap: 20px;">
+
+                    <div class="dip-input-group">
+                        <label style="display: block; color: #bbb; margin-bottom: 8px; font-size: 0.95rem;">모델명</label>
+                        <input type="text" id="direct-model-name" class="form-input" placeholder="예: ABC-100"
+                            style="width: 100%; background: #222; border: 1px solid #444; color: #fff; padding: 10px; border-radius: 6px;">
+                    </div>
+
+                    <div style="display: flex; gap: 15px;">
+                        <div class="dip-input-group" style="flex: 1.2;">
+                            <label style="display: block; color: #bbb; margin-bottom: 8px; font-size: 0.95rem;">주문
+                                연도</label>
+                            <input type="number" id="direct-order-year" class="form-input"
+                                style="width: 100%; background: #222; border: 1px solid #444; color: #fff; padding: 10px; border-radius: 6px;">
+                        </div>
+                        <div class="dip-input-group" style="flex: 1;">
+                            <label style="display: block; color: #bbb; margin-bottom: 8px; font-size: 0.95rem;">주문
+                                월</label>
+                            <select id="direct-order-month" class="form-input"
+                                style="width: 100%; background: #222; border: 1px solid #444; color: #fff; padding: 10px; border-radius: 6px; cursor: pointer;">
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="dip-input-group">
+                        <label style="display: block; color: #bbb; margin-bottom: 8px; font-size: 0.95rem;">LOT
+                            (분할/전체)</label>
+                        <input type="text" id="direct-lot-no" class="form-input" placeholder="예: 100/500 (숫자, / 허용)"
+                            style="width: 100%; background: #222; border: 1px solid #444; color: #fff; padding: 10px; border-radius: 6px;">
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer"
+                style="padding: 20px 25px; border-top: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: flex-end; gap: 12px;">
+                <button class="common-box clickable-box" onclick="closeDirectAddModal()"
+                    style="background: #3d3d3d; color: #eee; border: none; padding: 10px 25px; border-radius: 20px; font-family: 'BMJUA';">취소</button>
+                <button class="common-box clickable-box" id="btn-submit-direct" onclick="submitDirectAdd()"
+                    style="background: var(--point-gold); color: #1a1c23; border: none; padding: 10px 30px; border-radius: 20px; font-family: 'BMJUA'; font-weight: bold;">추가하기</button>
+            </div>
         </div>
     </div>
     <style>
@@ -259,6 +319,76 @@
             }
         };
 
+        function hideAoiMenu() {
+            const aoiMenu = document.getElementById('aoi-context-menu');
+            if (aoiMenu) aoiMenu.style.display = 'none';
+        }
+
+        function openDirectAddModal() {
+            const now = new Date();
+            const modal = document.getElementById('direct-add-modal');
+
+            document.getElementById('direct-model-name').value = '';
+            document.getElementById('direct-lot-no').value = '';
+            document.getElementById('direct-order-year').value = now.getFullYear();
+
+            const monthSelect = document.getElementById('direct-order-month');
+            let monthHtml = '';
+            for (let i = 1; i <= 12; i++) {
+                const isSelected = (i === (now.getMonth() + 1)) ? 'selected' : '';
+                monthHtml += `<option value="${i}월분" ${isSelected}>${i}월분</option>`;
+            }
+            monthSelect.innerHTML = monthHtml;
+
+            modal.classList.add('visible');
+            hideAoiMenu();
+        }
+
+        function closeDirectAddModal() {
+            const modal = document.getElementById('direct-add-modal');
+            if (modal) modal.classList.remove('visible');
+        }
+
+        async function submitDirectAdd() {
+            const model = document.getElementById('direct-model-name').value.trim().toUpperCase();
+            const year = document.getElementById('direct-order-year').value;
+            const month = document.getElementById('direct-order-month').value;
+            const lotRaw = document.getElementById('direct-lot-no').value.trim();
+
+            const lot = lotRaw.replace(/[^0-9/]/g, '');
+
+            if (!model || !year || !month || !lot) {
+                alert("모든 고유키 정보(모델명, 연도, 월, LOT)를 정확히 입력해주세요.");
+                return;
+            }
+
+            if (!confirm(`[${model}] 모델을 직접 추가하시겠습니까?`)) return;
+
+            try {
+                const res = await fetch('/api/aoi/records', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        model: model,
+                        year: parseInt(year),
+                        month: month,
+                        lot: lot,
+                        date: currentSelectedDate
+                    })
+                });
+
+                const result = await res.json();
+                if (result.success) {
+                    alert('기록이 성공적으로 추가되었습니다.');
+                    closeDirectAddModal();
+                    location.reload();
+                } else {
+                    alert('저장 실패: ' + result.message);
+                }
+            } catch (err) {
+                alert('서버 통신 중 오류가 발생했습니다.');
+            }
+        }
         document.addEventListener('DOMContentLoaded', () => {
             // ----------------------------------------------------------------
             // [초기 설정]
@@ -368,46 +498,60 @@
             }
 
             /* ==============================================================================
-    [통합] AOI 컨텍스트 메뉴 로직 (고정 및 삭제 기능 이관)
-    ============================================================================== */
+                [수정] AOI 컨텍스트 메뉴 및 모델 직접 추가 로직
+            ============================================================================== */
 
             let targetRecordIdForCtx = null;
             const aoiMenu = document.getElementById('aoi-context-menu');
             const cmdInput = document.getElementById('command-input');
 
-            function hideAoiMenu() { if (aoiMenu) aoiMenu.style.display = 'none'; }
+            function hideAoiMenu() {
+                if (aoiMenu) aoiMenu.style.display = 'none';
+            }
 
-            // 1. 테이블 행 우클릭 시 메뉴 표시
-            document.getElementById('aoi-list-body').addEventListener('contextmenu', function (e) {
+            // 1. 섹션 영역(line-schedule-section) 우클릭 시 메뉴 표시
+            document.querySelector('.line-schedule-section').addEventListener('contextmenu', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+
                 const row = e.target.closest('tr');
-                if (row) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    targetRecordIdForCtx = row.dataset.id;
+                const pinItem = document.getElementById('ctx-pin-row');
+                const deleteItem = document.getElementById('ctx-delete-record');
+                const dividers = document.querySelectorAll('.ctx-divider');
 
-                    // 현재 행이 고정되어 있는지 확인하여 메뉴 텍스트 변경
+                if (row) {
+                    // 행 위에서 우클릭한 경우: 모든 메뉴 표시
+                    targetRecordIdForCtx = row.dataset.id;
                     const pinText = document.getElementById('pin-text');
                     pinText.textContent = (pinnedRowId === targetRecordIdForCtx) ? "고정 해제" : "모델 고정";
 
-                    aoiMenu.style.display = 'block';
-
-                    // 스마트 위치 계산
-                    const winWidth = window.innerWidth;
-                    const winHeight = window.innerHeight;
-                    const menuWidth = aoiMenu.offsetWidth;
-                    const menuHeight = aoiMenu.offsetHeight;
-
-                    let posX = e.clientX;
-                    let posY = e.clientY;
-
-                    if (posX + menuWidth > winWidth) posX = winWidth - menuWidth - 5;
-                    if (posY + menuHeight > winHeight) posY = winHeight - menuHeight - 5;
-
-                    aoiMenu.style.left = posX + 'px';
-                    aoiMenu.style.top = posY + 'px';
+                    pinItem.style.display = 'flex';
+                    deleteItem.style.display = 'flex';
+                    dividers.forEach(d => d.style.display = 'block');
                 } else {
-                    hideAoiMenu();
+                    // 빈 공간에서 우클릭한 경우: '직접 추가'만 표시
+                    targetRecordIdForCtx = null;
+                    pinItem.style.display = 'none';
+                    deleteItem.style.display = 'none';
+                    dividers.forEach(d => d.style.display = 'none');
                 }
+
+                aoiMenu.style.display = 'block';
+
+                // 위치 계산
+                const winWidth = window.innerWidth;
+                const winHeight = window.innerHeight;
+                const menuWidth = aoiMenu.offsetWidth;
+                const menuHeight = aoiMenu.offsetHeight;
+
+                let posX = e.clientX;
+                let posY = e.clientY;
+
+                if (posX + menuWidth > winWidth) posX = winWidth - menuWidth - 5;
+                if (posY + menuHeight > winHeight) posY = winHeight - menuHeight - 5;
+
+                aoiMenu.style.left = posX + 'px';
+                aoiMenu.style.top = posY + 'px';
             });
 
             // 2. 외부 클릭 시 메뉴 닫기
@@ -416,19 +560,32 @@
                     hideAoiMenu();
                 }
             });
+            const addDirectBtn = document.getElementById('ctx-add-direct-model');
+            if (addDirectBtn) {
+                addDirectBtn.onclick = function (e) {
+                    e.stopPropagation();
+                    openDirectAddModal(); // 이제 전역 함수이므로 호출 가능
+                };
+            }
 
-            // [기능 1] 모델 고정/해제 이관
+            // 모달 바깥 클릭 시 닫기
+            window.addEventListener('click', function (e) {
+                const modal = document.getElementById('direct-add-modal');
+                if (e.target === modal && modal.classList.contains('visible')) {
+                    closeDirectAddModal();
+                }
+            });
+
+            // [기능 2] 모델 고정/해제
             document.getElementById('ctx-pin-row').onclick = function (e) {
                 e.stopPropagation();
                 if (!targetRecordIdForCtx) return;
 
                 if (pinnedRowId === targetRecordIdForCtx) {
-                    // 이미 고정된 경우 -> 해제
                     document.querySelectorAll(`tr[data-id="${pinnedRowId}"]`).forEach(r => r.classList.remove('pinned-row'));
                     pinnedRowId = null;
                     cmdInput.placeholder = "명령어 입력 (예: 미삽 1)";
                 } else {
-                    // 고정 실행
                     if (pinnedRowId) {
                         document.querySelectorAll(`tr[data-id="${pinnedRowId}"]`).forEach(r => r.classList.remove('pinned-row'));
                     }
@@ -443,7 +600,7 @@
                 hideAoiMenu();
             };
 
-            // [기능 2] 기록 삭제 이관
+            // [기능 3] 기록 삭제
             document.getElementById('ctx-delete-record').onclick = function (e) {
                 e.stopPropagation();
                 if (!targetRecordIdForCtx) return;

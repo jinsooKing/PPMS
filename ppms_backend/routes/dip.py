@@ -89,8 +89,7 @@ def get_production_models():
         ProductionSchedule.order_month,  # [추가]
         ProductionSchedule.company
     ).filter(
-        or_(*date_filters),
-        ProductionSchedule.actual_prod > 0
+        or_(*date_filters)
     ).all()
     
     unique_models = {}
@@ -149,7 +148,28 @@ def complete_group(group_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({'success': False, 'message': str(e)}), 500
-        
+
+# [추가] DIP 입고 실적을 ProductionSchedule에 동기화하는 함수
+def sync_to_schedule(group_id):
+    group = DipGroup.query.get(group_id)
+    if not group: return
+    
+    # 해당 그룹의 모든 '입고(receive)' 수량 합산
+    total_receive = sum(h.quantity for h in group.histories if h.type == 'receive')
+    
+    # ProductionSchedule에서 해당 모델/LOT 찾기
+    schedule = ProductionSchedule.query.filter_by(
+        model=group.model,
+        total_quantity=int(group.lot),
+        order_year=group.year,
+        order_month=group.month
+    ).first()
+    
+    if schedule:
+        schedule.assy_actual = total_receive # 조립 실적 업데이트
+        db.session.commit()
+
+# add_record API에 동기화 호출 추가
 @bp.route('/records', methods=['POST'])
 def add_record():
     data = request.json
@@ -162,6 +182,10 @@ def add_record():
         )
         db.session.add(new_record)
         db.session.commit()
+        
+        # 실적 저장 후 메인 스케줄 테이블과 동기화
+        sync_to_schedule(data['group_id'])
+        
         return jsonify({'success': True})
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500

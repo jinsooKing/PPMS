@@ -4,6 +4,7 @@ from models import db, AoiRecord, ProductionSchedule, DipGroup, DipHistory
 from sqlalchemy import or_, and_, func
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
+from difflib import SequenceMatcher
 
 bp = Blueprint('aoi', __name__, url_prefix='/api/aoi')
 
@@ -11,6 +12,12 @@ bp = Blueprint('aoi', __name__, url_prefix='/api/aoi')
 def aoi_view():
     # templates 폴더 내의 aoi.html 파일을 읽어서 전달합니다.
     return render_template('aoi.html')
+
+def calculate_similarity(a, b):
+    """문자열 유사도를 0.0 ~ 1.0 사이로 반환 (공백 무시, 대소문자 무시)"""
+    a = str(a).upper().replace(" ", "").strip()
+    b = str(b).upper().replace(" ", "").strip()
+    return SequenceMatcher(None, a, b).ratio()
 
 # -------------------------------------------------------------------------
 # [Helper] 수량 감소 시 완료 상태를 해제하는 함수 (복구 로직)
@@ -89,7 +96,7 @@ def get_available_models():
         
         now = datetime.now()
         
-        # 1. 날짜 범위 설정
+        # 1. 날짜 범위 설정 (조회 기간)
         if not all([s_year, s_month, e_year, e_month]):
             start_dt = now - relativedelta(months=1)
             end_dt = now + relativedelta(months=1)
@@ -97,90 +104,149 @@ def get_available_models():
             start_dt = datetime(int(s_year), int(s_month), 1)
             end_dt = datetime(int(e_year), int(e_month), 1)
 
-        # 2. 검색 대상 기간 생성
-        period_filters = []
-        curr = start_dt
-        while curr <= end_dt:
-            y_int = int(curr.year) 
-            m_str_1 = f"{curr.month}월분"
-            m_str_2 = str(curr.month)
-            
-            period_filters.append(and_(DipGroup.year == y_int, DipGroup.month == m_str_1))
-            period_filters.append(and_(DipGroup.year == y_int, DipGroup.month == m_str_2))
-            
-            curr += relativedelta(months=1)
+        # 2. 생산 계획(ProductionSchedule) 조회
+        # [핵심 수정] 이제 DipGroup이 아닌 생산 계획 테이블을 직접 바라봅니다.
+        query = ProductionSchedule.query
 
-        # 3. 필터링 쿼리 실행
-        # 조건: 기간 일치 AND 상태가 'aoi_completed'가 아닌 것
-        # ('ongoing' 상태인 그룹들이 검색됨)
-        dip_groups = DipGroup.query.filter(
-            or_(*period_filters),
-            DipGroup.status != 'aoi_completed' 
-        ).all()
+        # prod_year, prod_month 숫자를 이용해 기간 필터링
+        query = query.filter(
+            (ProductionSchedule.prod_year * 100 + ProductionSchedule.prod_month) >= (start_dt.year * 100 + start_dt.month),
+            (ProductionSchedule.prod_year * 100 + ProductionSchedule.prod_month) <= (end_dt.year * 100 + end_dt.month)
+        )
 
-        # 4. 업체명 매핑 (생산 스케줄 참조)
-      # [수정] aoi.py 내 get_available_models 함수의 업체 매핑 부분
-        # 4. 업체명 매핑 (생산 스케줄 참조)
-        prods = db.session.query(
-            ProductionSchedule.model,
-            ProductionSchedule.order_year,
-            ProductionSchedule.order_month,
-            ProductionSchedule.total_quantity,
-            ProductionSchedule.company
-        ).all()
-        
-        company_map = {}
-        for p in prods:
-            # [핵심 보정] 연도는 숫자형(int) 그대로 사용, 월은 '월분' 제거하여 정규화
-            m_norm = str(p.order_month).replace('월분', '').replace('월', '').strip()
-            key = (p.model, p.order_year, m_norm, str(p.total_quantity))
-            company_map[key] = p.company
+        schedules = query.all()
 
-        # 5. 데이터 가공
+        # 3. 데이터 가공 및 그룹화
         grouped_result = {}
 
-        for g in dip_groups:
-            # 수량 집계
-            total_ship = sum(h.quantity for h in g.histories if h.type == 'ship')
-            total_recv = sum(h.quantity for h in g.histories if h.type == 'receive')
-            
-            # [핵심 보정] DIP 그룹의 월 데이터도 동일하게 정규화하여 매칭률 향상
-            g_month_norm = str(g.month).replace('월분', '').replace('월', '').strip()
-            
-            # AOI 누적 검사 수량 조회 시 사용하는 월 포맷
-            m_query_str = g_month_norm
-
-            # AOI 누적 검사 수량 조회
-            aoi_total = db.session.query(func.sum(AoiRecord.inspection_qty)).filter_by(
-                model=g.model,
-                order_year=g.year,       
-                order_month=m_query_str, 
-                lot=g.lot
-            ).scalar() or 0
-
-            # 정규화된 정보를 바탕으로 업체명 검색
-            group_key = (g.model, g.year, g_month_norm, g.lot)
-            company = company_map.get(group_key, '업체 미지정')
-
+        for s in schedules:
+            company = s.company or '업체 미지정'
             if company not in grouped_result:
                 grouped_result[company] = []
 
+            # [핵심 매핑] 
+            # - recv_qty: ProductionSchedule에 저장된 조립 실적(assy_actual)
+            # - aoi_qty: ProductionSchedule에 저장된 AOI 실적(aoi_insp_qty)
+            # - lot: 생산 계획의 목표 수량(total_quantity)
+            
             grouped_result[company].append({
-                'id': g.id,
-                'model': g.model,
-                'year': g.year,
-                'month': str(g.month).replace('월분', ''),
-                'lot': g.lot,
-                'ship_qty': total_ship,
-                'recv_qty': total_recv,
-                'aoi_qty': aoi_total
+                'id': s.id,
+                'model': s.model,
+                'year': s.order_year,  # 통계 매칭용 연도 (Int)
+                'month': str(s.order_month).replace('월분', '').strip(), # 통계 매칭용 월 (String)
+                'lot': str(s.total_quantity),
+                'recv_qty': getattr(s, 'assy_actual', 0) or 0,
+                'aoi_qty': getattr(s, 'aoi_insp_qty', 0) or 0
             })
 
         return jsonify([{'company': k, 'models': v} for k, v in grouped_result.items()])
 
     except Exception as e:
-        print(f"Error fetching available models: {e}")
+        print(f"Error fetching available models from schedule: {e}")
         return jsonify({'error': str(e)}), 500
+    
+def sync_aoi_to_schedule(model, year, month, lot):
+    """AOI 실적을 메인 ProductionSchedule 테이블에 동기화 (LOT '/' 규칙 적용)"""
+    try:
+        # 1. LOT 문자열 파싱 (생산일정 등록과 동일한 규칙 적용)
+        lot_str = str(lot).strip()
+        target_total_qty = 0
+        
+        if '/' in lot_str:
+            # '100/500' 형태일 경우 뒤의 500을 전체 수량으로 인식
+            parts = lot_str.split('/')
+            try:
+                if len(parts) > 1 and parts[1].strip():
+                    target_total_qty = int(parts[1])
+                else:
+                    target_total_qty = int(parts[0])
+            except ValueError:
+                target_total_qty = 0
+        else:
+            # '/'가 없으면 입력값 자체가 전체 수량
+            try:
+                target_total_qty = int(lot_str)
+            except ValueError:
+                target_total_qty = 0
+
+        # 2. 해당 모델/LOT의 모든 AOI 기록 합산
+        totals = db.session.query(
+            func.sum(AoiRecord.inspection_qty).label('total_insp'),
+            func.sum(AoiRecord.total_defect).label('total_defect')
+        ).filter_by(
+            model=model, 
+            order_year=year, 
+            order_month=str(month), 
+            lot=lot_str # DB의 lot 문자열과 일치하는 기록 합산
+        ).first()
+
+        total_insp = totals.total_insp or 0
+        total_defect = totals.total_defect or 0
+
+        # 3. ProductionSchedule 테이블에서 동기화할 대상 탐색
+        # total_quantity 컬럼을 기준으로 비교하여 정확한 매칭 수행
+        schedule = ProductionSchedule.query.filter_by(
+            model=model, 
+            order_year=year, 
+            order_month=str(month), 
+            total_quantity=target_total_qty
+        ).first()
+        
+        if schedule:
+            schedule.aoi_insp_qty = total_insp
+            schedule.aoi_defect_qty = total_defect
+            db.session.commit()
+            print(f"[AOI Sync Success] {model} (Total LOT: {target_total_qty})")
+        else:
+            print(f"[AOI Sync Skip] 계획에 없는 모델이거나 수량이 일치하지 않습니다: {model}")
+            
+    except Exception as e:
+        print(f"[AOI Sync Error] {e}")
+        db.session.rollback()
+    
+@bp.route('/sync_manual_record', methods=['POST'])
+def sync_manual_record():
+    """수동 입력된 AOI 기록을 공식 생산계획 데이터로 덮어쓰고 통합함"""
+    try:
+        data = request.json
+        # AOI에 수동 입력된 정보 (검색용)
+        manual_model = data['manual_model']
+        manual_lot = data['manual_lot']
+        
+        # 생산계획서의 공식 정보 (덮어씌울 기준)
+        official_model = data['official_model']
+        official_lot = str(data['official_lot'])
+        official_year = int(data['official_year'])
+        official_month = str(data['official_month']).replace('월분', '').strip()
+
+        # 1. 수동 입력된 모든 AOI 기록 찾기
+        records = AoiRecord.query.filter_by(
+            model=manual_model, 
+            lot=manual_lot
+        ).all()
+        
+        if not records:
+            return jsonify({"success": False, "message": "통합할 수동 기록을 찾을 수 없습니다."}), 404
+
+        # 2. 공식 데이터로 덮어쓰기 (생산계획 우선 원칙)
+        for r in records:
+            r.model = official_model
+            r.lot = official_lot
+            r.order_year = official_year
+            r.order_month = official_month
+        
+        db.session.commit()
+
+        # 3. 통합된 실적을 메인 계획 테이블(ProductionSchedule)에 즉시 반영
+        sync_aoi_to_schedule(official_model, official_year, official_month, official_lot)
+
+        return jsonify({
+            "success": True, 
+            "message": f"[{manual_model}] 기록이 공식 모델 [{official_model}]으로 통합되었습니다."
+        })
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"success": False, "message": str(e)}), 500
 
 # -------------------------------------------------------------------------
 # [API 1-1] AOI 검사 완료 처리 (리스트에서 숨기기)
@@ -258,6 +324,9 @@ def add_aoi_record():
         )
         db.session.add(new_record)
         db.session.commit()
+        sync_aoi_to_schedule(data['model'], data['year'], data['month'], data['lot'])
+        
+        
         return jsonify({'success': True})
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
@@ -293,6 +362,8 @@ def update_aoi_record(record_id):
 
         # 1. 커밋
         db.session.commit()
+        check_and_revert_status(record.model, record.order_year, record.order_month, record.lot)
+        sync_aoi_to_schedule(record.model, record.order_year, record.order_month, record.lot)
 
         # 2. 상태 복구 체크 (커밋 후 실행)
         check_and_revert_status(record.model, record.order_year, record.order_month, record.lot)
@@ -315,6 +386,7 @@ def delete_aoi_record(record_id):
         db.session.commit()
 
         check_and_revert_status(model, year, month, lot)
+        sync_aoi_to_schedule(model, year, month, lot)
 
         return jsonify({'success': True})
     except Exception as e:
