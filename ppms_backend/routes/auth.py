@@ -1,15 +1,16 @@
 from flask import Blueprint, request, jsonify, render_template
 from models import db, User
-from extensions import bcrypt  
+from extensions import bcrypt
 from flask_login import login_user, logout_user, current_user
+from mobile_utils import mobile_render
 
 bp = Blueprint('auth', __name__, url_prefix='/api/auth')
+
 
 @bp.route('/login', methods=['POST'])
 def login():
     try:
-        data = request.json
-        # [수정] 'username'을 프론트엔드로부터 받습니다 (값은 'user' 또는 'admin')
+        data     = request.json
         username = data.get('username')
         password = data.get('password')
 
@@ -18,48 +19,48 @@ def login():
         if not password:
             return jsonify({"success": False, "message": "비밀번호를 입력하세요."}), 400
 
-        # [삭제] username을 'admin'으로 하드코딩하던 부분 삭제
-        # username_to_check = "admin" 
-        
-        # 1. DB에서 프론트가 보낸 'username'으로 사용자를 찾습니다.
         user = User.query.filter_by(username=username).first()
 
-        # 2. 사용자가 존재하고, 암호화된 비밀번호가 일치하는지 확인
         if user and bcrypt.check_password_hash(user.password_hash, password):
-            # 3. Flask-Login을 사용해 '로그인 세션' 생성
             login_user(user, remember=True)
-            
             return jsonify({
-                "success": True, 
-                "message": f"'{user.username}'님, 환영합니다!", 
-                "role": user.role  # [중요] localStorage에 저장할 역할을 응답
+                "success": True,
+                "message": f"'{user.username}'님, 환영합니다!",
+                "role":     user.role,
+                "username": user.username,
             })
-        
-        # 4. 로그인 실패 (계정이 없거나 비밀번호가 틀림)
+
         return jsonify({"success": False, "message": "계정 또는 비밀번호가 잘못되었습니다."}), 401
 
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
 
+
 @bp.route('/logout', methods=['POST'])
 def logout():
-    # '로그아웃 세션' 삭제
     logout_user()
     return jsonify({"success": True, "message": "로그아웃 되었습니다."})
 
 
 @bp.route('/check_session', methods=['GET'])
 def check_session():
-    # (페이지가 로드될 때 '현재 로그인 상태'를 확인할 때 사용)
     if current_user.is_authenticated:
         return jsonify({
             "is_logged_in": True,
-            "username": current_user.username,
-            "role": current_user.role
+            "username":     current_user.username,
+            "role":         current_user.role,
         })
-    else:
-        return jsonify({"is_logged_in": False}), 401 # 401: 비인증
-    
+    return jsonify({"is_logged_in": False}), 401
+
+
+# ── 로그인 화면 ─────────────────────────────────
 @bp.route('/login_view', methods=['GET'])
 def login_view():
-    return render_template('login.html')
+    """데스크탑/모바일 자동 감지 → 적절한 로그인 페이지 반환"""
+    return mobile_render('login.html', 'mobile_login.html')
+
+
+@bp.route('/mobile_login_view', methods=['GET'])
+def mobile_login_view():
+    """모바일 로그인 페이지 직접 접속용 (QR 등)"""
+    return render_template('mobile_login.html')

@@ -140,8 +140,6 @@
                                     <button class="import-option-btn" data-source="A">A라인</button>
                                     <button class="import-option-btn" data-source="C">C라인</button>
                                 </div>
-                                <button class="text-btn add-row-btn" title="행 추가">행 추가</button>
-                                <button class="text-btn toggle-delete-btn" title="삭제 모드">행 삭제</button>
                             </div>
                         </div>
                     </div>
@@ -182,8 +180,6 @@
                                     <button class="import-option-btn" data-source="A">A라인</button>
                                     <button class="import-option-btn" data-source="B">B라인</button>
                                 </div>
-                                <button class="text-btn add-row-btn" title="행 추가">행 추가</button>
-                                <button class="text-btn toggle-delete-btn" title="삭제 모드">행 삭제</button>
                             </div>
                         </div>
                     </div>
@@ -321,26 +317,7 @@
             <i class="uil uil-trash-alt"></i> 행 삭제
         </div>
     </div>
-    <div class="modal-overlay" id="merge-modal" style="z-index: 12000;">
-        <div class="modal-window" style="width: 500px; height: auto; border-color: var(--point-gold);">
-            <button class="close-btn" onclick="closeMergeModal()">&times;</button>
-            <div class="modal-content" style="padding: 25px;">
-                <h3 style="color: var(--point-gold); margin-bottom: 15px; font-family: 'BMDOHYEON';">
-                    <i class="uil uil-sync"></i> 수동 기록 통합 제안
-                </h3>
-                <p style="font-size: 0.95rem; color: #ddd; line-height: 1.6; margin-bottom: 20px;">
-                    AOI에서 직접 추가한 기록 중 유사한 모델이 발견되었습니다. <br>
-                    <strong>생산 계획의 정보</strong>로 데이터를 통합하시겠습니까?
-                </p>
-                <div id="match-list-container"
-                    style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px;">
-                </div>
-                <p style="font-size: 0.8rem; color: #888; text-align: center;">
-                    * 통합 시 AOI의 수동 기록이 공식 계획 데이터로 덮어씌워집니다.
-                </p>
-            </div>
-        </div>
-    </div>
+
     <datalist id="model-suggestions-list"></datalist>
     <style>
         /* 페이지 페이드 인-아웃 효과 */
@@ -349,80 +326,198 @@
             transition: opacity 0.5s ease-in-out;
         }
 
-        .autocomplete-list {
-            /* 고정 높이 및 강제 스크롤 제거 -> 내용에 따라 자동으로 늘어남 */
-            max-height: none !important;
-            /* 기존 200px 제한 해제 */
-            overflow-y: visible !important;
-            /* 불필요한 스크롤바 제거 */
+        /* [수정] 모달창을 유동적 크기로 변경 (내용이 길면 옆으로 늘어남) */
+        #new-model-reg-modal .modal-window {
+            width: fit-content !important;
+            /* 내용에 맞춰 가로폭 자동 조절 */
+            min-width: 500px;
+            max-width: 95vw;
             height: auto !important;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+        }
 
-            border: 1px solid #444;
-            background: #222;
-            /* 기본 배경색 지정 */
+        #new-model-reg-modal .modal-content {
+            height: auto !important;
+            max-height: none !important;
+            overflow: visible !important;
+            /* 내부 스크롤 강제 제거 */
+        }
+
+        /* [핵심] 커스텀 자동완성 리스트 (datalist 대체) */
+        .custom-autocomplete-list {
+            position: absolute;
+            background: #1a1c23 !important;
+            border: 1px solid var(--point-gold) !important;
+            border-radius: 6px;
+            z-index: 15000;
             padding: 5px 0;
             margin: 0;
             list-style: none;
-            position: absolute;
-            width: calc(100% - 22px);
-            /* 입력창 너비에 맞춤 */
-            z-index: 1000;
-            border-radius: 0 0 6px 6px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+            min-width: 100%;
+            /* 입력창 너비보다 좁아지지 않음 */
+            width: max-content;
+            /* 긴 모델명은 옆으로 확장 */
         }
 
-        /* [수정 2] 리스트 아이템 호버 시 시인성 확보 */
-        .autocomplete-list li {
-            padding: 10px 15px;
-            /* 클릭 영역 확대 */
+        .custom-autocomplete-list li {
+            padding: 12px 20px;
+            color: #ddd;
             cursor: pointer;
-            color: #ccc;
-            /* 기본 글자색 */
-            transition: all 0.2s ease;
-            /* 부드러운 색상 전환 */
+            font-size: 0.95rem;
             border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-
-            /* 긴 모델명도 잘리지 않고 한눈에 보이도록 설정 */
-            white-space: normal !important;
-            /* 줄바꿈 허용 */
-            word-break: break-all;
-            /* 필요 시 단어 중간에서도 줄바꿈 */
-            line-height: 1.4;
+            white-space: nowrap;
+            /* 한 줄로 표시 */
         }
 
-        /* 마우스 호버 시 강조 스타일 (핵심 수정) */
-        .autocomplete-list li:hover,
-        .autocomplete-list li.focused {
+        .custom-autocomplete-list li:hover,
+        .custom-autocomplete-list li.ac-active {
             background-color: var(--accent-blue) !important;
-            /* 배경을 밝은 파란색으로 */
-            color: #fff !important;
-            /* 글자색을 흰색으로 변경하여 명확하게 보이게 함 */
+            color: #ffffff !important;
             font-weight: bold;
-            /* 선택된 항목 강조 */
         }
 
-        /* 마지막 아이템 테두리 제거 */
-        .autocomplete-list li:last-child {
-            border-bottom: none;
+        /* [수정] 통합 제안 모달: 화면 중앙 정렬 및 크기 최적화 */
+        #merge-modal {
+            display: none;
+            /* 기본 숨김 */
+
+            /* 화면 전체를 덮고 내용물을 정중앙에 배치 */
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.85);
+            /* 배경 어둡게 */
+            z-index: 12000;
+
+            /* [핵심] Flexbox를 이용한 완벽한 중앙 정렬 */
+            justify-content: center;
+            align-items: center;
         }
 
-        /* [수정 3] 모달창 콘텐츠 영역의 유동적 높이 설정 */
-        /* 모달 내부가 너무 커질 경우에만 전체 스크롤이 생기도록 설정 */
-        #modal-new-model .modal-content {
-            /* 고정 높이 제거 */
+        #merge-modal.visible {
+            display: flex;
+            /* 활성화 시 flex로 변경 */
+            animation: fadeInOverlay 0.3s forwards;
+        }
+
+        #merge-modal .modal-window {
+            /* [핵심] 유동적 너비 + 화면 넘어감 방지 */
+            width: fit-content !important;
+            min-width: 600px;
+            /* 최소 너비 */
+            max-width: 90vw;
+            /* 화면 폭의 90%를 넘지 않음 (잘림 방지) */
+
             height: auto !important;
-            /* 화면 높이의 80%까지만 늘어나고, 그 이상 커지면 스크롤 생성 */
-            max-height: 80vh !important;
-            overflow-y: auto !important;
-            padding-bottom: 30px;
-            /* 하단 여백 확보 */
+            max-height: 85vh;
+
+            background-color: #23242d;
+            border: 2px solid var(--point-gold) !important;
+            border-radius: 16px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.8);
+
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            margin: 0 !important;
+            /* 기존 마진 제거 (Flex 중앙 정렬 활용) */
         }
 
-        /* 폼 섹션의 불필요한 스크롤 및 높이 제한 제거 */
-        #modal-new-model .dip-modal-form-section {
-            max-height: none !important;
-            overflow-y: visible !important;
-            height: auto !important;
+        #merge-modal .modal-content {
+            padding: 30px 40px !important;
+            overflow-y: auto;
+            /* 내용 많으면 스크롤 */
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        /* 리스트 아이템 디자인 */
+        #match-list-container .common-box {
+            display: flex;
+            justify-content: space-between;
+            /* 좌측 텍스트, 우측 버튼 분리 */
+            align-items: center;
+            padding: 15px 20px !important;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 235, 167, 0.1);
+            gap: 30px;
+            /* 텍스트와 버튼 사이 간격 */
+        }
+
+        /* 텍스트 영역 스타일 (말줄임표 적용) */
+        .match-info-text {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
+            /* 남은 공간 차지 */
+            min-width: 0;
+            /* Flexbox 내 말줄임표 작동 필수 조건 */
+        }
+
+        .match-info-text span {
+            display: inline-block;
+            vertical-align: middle;
+
+            /* [핵심] 긴 텍스트 말줄임표 처리 */
+            max-width: 220px;
+            /* 이 너비를 넘으면 ... 처리 */
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+
+            cursor: help;
+            /* 호버 시 물음표 커서 */
+            font-family: 'Roboto Mono', monospace;
+            /* 가독성 좋은 폰트 */
+        }
+
+        /* 화살표 아이콘 고정 */
+        .match-info-text i {
+            flex-shrink: 0;
+            color: #888;
+        }
+
+        /* 우측 통합 버튼 고정 */
+        .merge-action-btn {
+            flex-shrink: 0;
+            /* 버튼 크기 줄어듬 방지 */
+            white-space: nowrap;
+        }
+
+        #merge-modal .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 2rem;
+            z-index: 10;
+            color: #888;
+        }
+
+        #merge-modal .close-btn:hover {
+            color: var(--point-gold);
+        }
+
+        #match-list-container .common-box:hover .match-info-text span,
+        #match-list-container .common-box:hover .match-info-text i,
+        #match-list-container .common-box:hover .match-info-text small {
+            color: var(--accent-blue) !important;
+            /* 인라인 스타일을 덮어쓰기 위해 !important 필수 */
+            text-shadow: none !important;
+            /* 혹시 모를 텍스트 그림자 제거 */
+        }
+
+        /* (선택사항) 호버 시 오른쪽 버튼 스타일도 유지/변경 */
+        #match-list-container .common-box:hover .merge-action-btn {
+            border: 1px solid var(--accent-blue) !important;
+            /* 버튼이 배경과 너무 묻힌다면 아래 주석 해제하여 흰색 테두리 추가 등 조정 가능 */
+            /* box-shadow: 0 0 5px rgba(0,0,0,0.2); */
         }
     </style>
 
@@ -430,6 +525,7 @@
         let historyIndex = 0;
         let maxHistoryIndex = 0;
         let initialViewData = null;
+        let modelMenu;
 
         // 2. 부드러운 전환 효과를 포함한 내비게이션 함수들
         window.goBack = function () {
@@ -450,7 +546,6 @@
         };
 
         document.addEventListener('DOMContentLoaded', () => {
-
             setTimeout(() => {
                 document.body.style.opacity = '1';
             }, 50);
@@ -700,24 +795,33 @@
         }
 
         /* ==============================================================================
-           [전체 교체] 스마트 매칭을 지원하는 저장 함수
-        ============================================================================== */
+   [수정] 강제 삭제 기능을 지원하는 일정 저장 함수 (생량 없음)
+============================================================================== */
 
         async function saveSchedules() {
-            if (localStorage.getItem('ppms_user_role') !== 'admin') return alert('권한 없음');
+            // 1. 권한 체크
+            if (localStorage.getItem('ppms_user_role') !== 'admin') {
+                alert('관리자만 일정을 수정하거나 삭제할 수 있습니다.');
+                return;
+            }
 
+            // 2. 현재 모달에 입력된 데이터 수집
             const scheds = [];
             for (const l in lineControls) {
                 lineControls[l].tableBody.querySelectorAll('tr').forEach(r => {
                     const c = r.querySelector('[data-field="company-modal"]').value;
                     const m = r.querySelector('[data-field="model-modal"]').value;
                     const lt = r.querySelector('[data-field="lot-modal"]').value;
+
                     if (c || m || lt) {
                         let yv = r.querySelector('[data-field="orderYear"]').value;
-                        if (yv && yv.length === 2) yv = '20' + yv;
+                        if (yv && yv.length === 2) yv = '20' + yv; // 26 -> 2026 보정
+
                         scheds.push({
                             id: r.dataset.scheduleId ? parseInt(r.dataset.scheduleId) : null,
-                            line: l, company: c, model: m,
+                            line: l,
+                            company: c,
+                            model: m,
                             orderYear: yv ? parseInt(yv) : null,
                             orderMonth: r.querySelector('[data-field="orderMonth"]').value,
                             tb: r.querySelector('[data-field="tb-modal"]').value,
@@ -738,69 +842,39 @@
                 const d = await res.json();
 
                 if (res.status === 400 && d.error === 'protected_records') {
-                    alert(d.message); return;
+                    // 이제 AOI 데이터는 체크하지 않으므로, 이 경고는 생산/조립 실적이 있을 때만 뜹니다.
+                    alert(d.message);
+                    return;
                 }
 
                 if (res.ok) {
-                    // [핵심] 유사 매칭 기록이 있다면 팝업 표시, 없으면 일반 종료
-                    if (d.matches && d.matches.length > 0) {
-                        showMergeModal(d.matches);
-                    } else {
-                        alert(d.message);
-                        closeModal();
-                        renderContent();
-                    }
-                } else { alert("저장 실패: " + (d.error || "알 수 없는 오류")); }
+                    alert("일정이 저장되었습니다.");
+                    closeModal();
+                    renderContent();
+                }
             } catch (e) { alert("서버 통신 오류"); }
         }
 
-        // 매칭 모달 표시 함수
-        function showMergeModal(matches) {
-            const container = document.getElementById('match-list-container');
-            container.innerHTML = '';
-            matches.forEach(m => {
-                const item = document.createElement('div');
-                item.className = 'common-box';
-                item.style.cssText = 'padding:12px; background:rgba(255,255,255,0.05); display:flex; justify-content:space-between; align-items:center; border:1px solid #444;';
-                item.innerHTML = `
-            <div style="font-size:0.9rem;">
-                <span style="color:#ff6b6b;">${m.manual_model}</span>
-                <i class="uil uil-arrow-right" style="margin:0 5px; color:#888;"></i>
-                <span style="color:var(--point-gold); font-weight:bold;">${m.official_model} (${m.similarity}%)</span>
-            </div>
-            <button class="common-box clickable-box" style="background:var(--accent-blue); padding:4px 12px; font-size:0.85rem; border:none;"
-                    onclick='requestMerge(${JSON.stringify(m)})'>통합</button>`;
-                container.appendChild(item);
-            });
-            document.getElementById('merge-modal').classList.add('visible');
-        }
-
-        // production.html 내의 통합 요청 함수 (보강)
-        async function requestMerge(matchData) {
-            // 사용자가 선택한 매칭 정보(matchData)가 인자로 전달됨
-            if (!confirm(`[${matchData.manual_model}] 기록을 공식 모델 [${matchData.official_model}]로 통합할까요?`)) return;
-
+        /* [신규 추가] 강제 저장 실행 함수 (force=true 파라미터 전달) */
+        async function executeForceSave(scheds) {
             try {
-                const response = await fetch('/api/aoi/sync_manual_record', {
+                const res = await fetch('/api/production/schedules?force=true', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(matchData) // 선택된 단일 매칭 데이터 전송
+                    body: JSON.stringify({ weekInfo: currentSelectedWeekInfo, schedules: scheds })
                 });
+                const result = await res.json();
 
-                const result = await response.json();
-                if (result.success) {
-                    alert(result.message);
-                    // 통합된 항목을 화면에서 즉시 반영하기 위해 리로드
-                    location.reload();
+                if (res.ok) {
+                    alert("현장 실적 데이터를 포함하여 강제로 삭제/수정되었습니다.");
+                    closeModal();
+                    renderContent();
+                } else {
+                    alert("강제 저장 실패: " + result.error);
                 }
-            } catch (error) {
-                alert("통합 작업 중 오류가 발생했습니다.");
+            } catch (e) {
+                alert("강제 저장 처리 중 통신 오류가 발생했습니다.");
             }
-        }
-
-        function closeMergeModal() {
-            document.getElementById('merge-modal').classList.remove('visible');
-            location.reload();
         }
         // [초기화 버튼: 현재 탭 내용만 비움]
         function resetSchedules() {
@@ -900,7 +974,7 @@
                 <td><input type="number" data-field="orderYear" class="form-input" value="${shortYear}" ${ro}></td>
                 <td><input type="text" data-field="model-modal" class="form-input" list="model-suggestions-list" value="${data.model || ''}" ${ro}></td>
                 <td><select data-field="orderMonth" class="form-select" ${ro}><option value="">-</option>${mOpts}</select></td>
-                <td><select data-field="tb-modal" class="form-select" ${ro}><option value="Top" ${data.tb === 'Top' ? 'selected' : ''}>Top</option><option value="Bot" ${data.tb === 'Bot' ? 'selected' : ''}>Bot</option><option value="T/O" ${data.tb === 'T/O' ? 'selected' : ''}>T/O</option><option value="B/O" ${data.tb === 'B/O' ? 'selected' : ''}>B/O</option></select></td>
+                <td><select data-field="tb-modal" class="form-select" ${ro}><option value="Top" ${data.tb === 'Top' ? 'selected' : ''}>Top</option><option value="Bot" ${data.tb === 'Bot' ? 'selected' : ''}>Bot</option><option value="T/B" ${data.tb === 'T/B' ? 'selected' : ''}>T/B</option><option value="T/O" ${data.tb === 'T/O' ? 'selected' : ''}>T/O</option><option value="B/O" ${data.tb === 'B/O' ? 'selected' : ''}>B/O</option></select></td>
                 <td><input type="text" data-field="lot-modal" class="form-input" value="${data.lot || ''}" ${ro}></td>
                 <td style="display:flex; gap:5px; align-items:center; justify-content:center;">
                     <select class="start-date-select form-select" ${ro}></select>
@@ -916,48 +990,168 @@
 
             const modelInput = row.querySelector('[data-field="model-modal"]');
             if (modelInput) {
+                // blur 시 모델 존재 여부 확인
+                // input 이벤트 시 자동완성 드롭다운
+                let _acTimer = null;
+                modelInput.addEventListener('input', function () {
+                    clearTimeout(_acTimer);
+                    const val = this.value.trim();
+                    if (val.length < 1) { closeAutocomplete(); return; }
+                    _acTimer = setTimeout(() => showModelAutocomplete(this), 200);
+                });
+                modelInput.addEventListener('keydown', function (e) {
+                    handleAutocompleteKeydown(e, this);
+                });
                 modelInput.addEventListener('blur', function () {
-                    const companyInput = row.querySelector('[data-field="company-modal"]');
-                    // 전역에 선언된 handleModelInput 함수 호출
-                    handleModelInput(companyInput, this);
+                    setTimeout(closeAutocomplete, 150);
                 });
             }
             const companySelect = row.querySelector('[data-field="company-modal"]');
             if (companySelect) {
                 companySelect.addEventListener('change', function () {
-                    updateModelSuggestions(this.value); // 업체 선택 시 추천 리스트 업데이트
+                    // 업체 변경 시 모델 입력창에 포커스 이동
+                    if (modelInput) modelInput.focus();
                 });
             }
 
             return row;
         }
 
-        /* [신규 추가] 업체별 기존 모델 목록을 가져와 자동완성 리스트 생성 */
-        async function updateModelSuggestions(companyName) {
-            const datalist = document.getElementById('model-suggestions-list');
-            datalist.innerHTML = '';
-            if (!companyName) return;
+        // ----------------------------------------------------------------
+        // [모델명 자동완성] 공통 함수
+        // ----------------------------------------------------------------
+        function closeAutocomplete() {
+            const existing = document.querySelector('.custom-autocomplete-list');
+            if (existing) existing.remove();
+        }
 
-            // 1. 전역 변수 companyList에서 업체 ID 찾기
+        async function showModelAutocomplete(inputEl) {
+            closeAutocomplete();
+            const q = inputEl.value.trim();
+            if (!q) return;
+
+            try {
+                const res = await fetch(`/api/production/model_suggestions?q=${encodeURIComponent(q)}`);
+                const names = await res.json();
+                if (!names.length) return;
+
+                const list = document.createElement('ul');
+                list.className = 'custom-autocomplete-list';
+
+                const rect = inputEl.getBoundingClientRect();
+                list.style.position = 'fixed';
+                list.style.top  = (rect.bottom + 2) + 'px';
+                list.style.left = rect.left + 'px';
+                list.style.minWidth = rect.width + 'px';
+                list.style.maxHeight = '220px';
+                list.style.overflowY = 'auto';
+
+                names.forEach(name => {
+                    const li = document.createElement('li');
+                    li.textContent = name;
+                    li.dataset.value = name;
+                    li.addEventListener('mousedown', (e) => {
+                        e.preventDefault();
+                        inputEl.value = name;
+                        closeAutocomplete();
+
+                    });
+                    list.appendChild(li);
+                });
+
+                document.body.appendChild(list);
+
+                const outsideClose = (e) => {
+                    if (!list.contains(e.target) && e.target !== inputEl) {
+                        list.remove();
+                        document.removeEventListener('mousedown', outsideClose);
+                    }
+                };
+                document.addEventListener('mousedown', outsideClose);
+
+            } catch(e) { console.error('자동완성 로드 실패:', e); }
+        }
+
+        function handleAutocompleteKeydown(e, inputEl) {
+            const list = document.querySelector('.custom-autocomplete-list');
+            if (!list) return;
+            const items = list.querySelectorAll('li');
+            const active = list.querySelector('li.ac-active');
+
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                if (!active) {
+                    items[0]?.classList.add('ac-active');
+                } else {
+                    active.classList.remove('ac-active');
+                    (active.nextElementSibling || items[0]).classList.add('ac-active');
+                }
+                list.querySelector('li.ac-active')?.scrollIntoView({ block: 'nearest' });
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                if (active) {
+                    active.classList.remove('ac-active');
+                    (active.previousElementSibling || items[items.length - 1]).classList.add('ac-active');
+                }
+                list.querySelector('li.ac-active')?.scrollIntoView({ block: 'nearest' });
+            } else if (e.key === 'Enter') {
+                if (active) {
+                    e.preventDefault();
+                    inputEl.value = active.dataset.value;
+                    closeAutocomplete();
+                }
+            } else if (e.key === 'Escape') {
+                closeAutocomplete();
+            }
+        }
+
+        async function updateModelSuggestions(inputEl, companyName) {
+            // 기존 리스트 삭제
+            const oldList = document.querySelector('.custom-autocomplete-list');
+            if (oldList) oldList.remove();
+
+            if (!companyName || !inputEl.value) return;
+
             const comp = companyList.find(c => c.name === companyName);
             if (!comp) return;
 
             try {
-                // 2. 해당 업체의 모델 데이터를 조회
                 const res = await fetch(`/api/production/directory?company_id=${comp.id}&section=common`);
                 const data = await res.json();
 
-                // 3. datalist에 옵션 추가 (중복 방지를 위해 Set 사용)
                 if (data.models && data.models.length > 0) {
-                    data.models.forEach(m => {
-                        const option = document.createElement('option');
-                        option.value = m.name;
-                        datalist.appendChild(option);
-                    });
-                }
-            } catch (e) { console.error("추천 리스트 로드 실패:", e); }
-        }
+                    const list = document.createElement('ul');
+                    list.className = 'custom-autocomplete-list';
 
+                    // 입력창 위치에 맞춰 동적 배치
+                    const rect = inputEl.getBoundingClientRect();
+                    list.style.top = (window.scrollY + rect.bottom + 5) + 'px';
+                    list.style.left = (window.scrollX + rect.left) + 'px';
+
+                    data.models.forEach(m => {
+                        const li = document.createElement('li');
+                        li.textContent = m.name;
+                        li.onclick = (e) => {
+                            e.stopPropagation();
+                            inputEl.value = m.name;
+                            list.remove();
+                        };
+                        list.appendChild(li);
+                    });
+
+                    document.body.appendChild(list);
+
+                    // 리스트 외 클릭 시 닫기
+                    const closeList = (e) => {
+                        if (!list.contains(e.target) && e.target !== inputEl) {
+                            list.remove();
+                            document.removeEventListener('mousedown', closeList);
+                        }
+                    };
+                    document.addEventListener('mousedown', closeList);
+                }
+            } catch (e) { console.error("추천 로드 실패:", e); }
+        }
         // [삭제 로직]
         function handleRowDelete(row) {
             row.classList.add('animate-out');
@@ -1292,7 +1486,7 @@
                                 </div>
                             </td>
                             <td><select class="form-select" data-field="orderMonth" ${ro}><option value="">-</option>${moOpts}</select></td>
-                            <td><select class="form-select" data-field="tb" ${ro}><option value="Top" ${s.tb === 'Top' ? 'selected' : ''}>Top</option><option value="Bot" ${s.tb === 'Bot' ? 'selected' : ''}>Bot</option><option value="T/O" ${s.tb === 'T/O' ? 'selected' : ''}>T/O</option><option value="B/O" ${s.tb === 'B/O' ? 'selected' : ''}>B/O</option></select></td>
+                            <td><select class="form-select" data-field="tb" ${ro}><option value="Top" ${s.tb === 'Top' ? 'selected' : ''}>Top</option><option value="Bot" ${s.tb === 'Bot' ? 'selected' : ''}>Bot</option><option value="T/B" ${s.tb === 'T/B' ? 'selected' : ''}>T/B</option><option value="T/O" ${s.tb === 'T/O' ? 'selected' : ''}>T/O</option><option value="B/O" ${s.tb === 'B/O' ? 'selected' : ''}>B/O</option></select></td>
                             <td><input type="text" class="form-input" data-field="lot" value="${s.lot || ''}" ${ro}></td>
                             <td><input type="text" class="form-input" data-field="actualProd" value="${s.actualProd || ''}" ${ro}></td>
                             <td><select class="form-select prod-start-date" data-field="prodStart" ${ro}></select></td>
@@ -1517,6 +1711,7 @@
             document.body.appendChild(ctx);
             document.addEventListener('click', () => ctx.style.display = 'none');
         }
+        modelMenu = document.getElementById('modal-ctx-menu');
         // 새 폴더 입력 모달 토글 (수정 버전)
         function toggleNewFolderInput(show) {
             const modal = document.getElementById('folder-pop-modal');

@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PPMS - Wave Solder 점검</title>
+    <link rel="stylesheet" href="/static/common.css">
+    <link rel="stylesheet" href="https://unicons.iconscout.com/release/v4.0.8/css/line.css">
+    <link href="https://hangeul.pstatic.net/hangeul_static/css/bmdohyeon.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Poppins:400,600,800" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="/static/logo.js"></script>
+
+    <style>
+        .content-area { box-sizing: border-box; overflow-x: hidden; }
+        .smd-inner { display:flex;flex-direction:column;width:100%;height:100%;gap:8px;box-sizing:border-box;min-width:0; }
+        .ctrl-bar { flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;background:var(--card-bg);border:1px solid var(--border-color);border-radius:10px;padding:8px 16px;gap:12px; }
+        .month-ctrl { display:flex;align-items:center;gap:10px;font-family:'BMDOHYEON';font-size:1.1rem;color:#fff; }
+        .arrow-btn { background:none;border:1px solid #555;color:var(--point-gold);width:28px;height:28px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.95rem;transition:all .2s; }
+        .arrow-btn:hover { background:var(--point-gold);color:#1f2029; }
+        .guide { display:flex;gap:12px;font-size:0.8rem;flex-wrap:wrap;align-items:center; }
+        .table-wrapper { flex:1;min-height:0;overflow:auto;background:var(--card-bg);border-radius:12px;border:1px solid var(--border-color); }
+        table { width:max-content;min-width:100%;border-collapse:collapse;table-layout:auto; }
+        th,td { border:1px solid #3a3b47;text-align:center;padding:0; }
+        th { background:#1a1b21;color:var(--point-gold);font-family:'BMDOHYEON';padding:7px 4px;font-size:.82rem;position:sticky;top:0;z-index:20;white-space:nowrap; }
+        .item-col { position:sticky;left:0;background:#1a1b21;z-index:30;min-width:150px;text-align:left;padding:5px 8px;font-size:.8rem;border-right:2px solid var(--point-gold);white-space:nowrap;color:#ccc; }
+        th.item-col { z-index:40;color:var(--point-gold); }
+        .freq-col { min-width:60px;color:#888;font-size:.75rem; }
+        .day-col { min-width:34px;height:38px;padding:0!important; }
+        @keyframes pulseGlow { 0%,100%{box-shadow:inset 0 3px 0 var(--point-gold),0 0 6px rgba(255,235,167,.05)}50%{box-shadow:inset 0 3px 0 var(--point-gold),0 0 14px rgba(255,235,167,.25)} }
+        th.today { position:sticky;top:0;z-index:20;background:#1e2535!important;border:1px solid rgba(255,235,167,.3)!important;border-bottom:2px solid var(--point-gold)!important;animation:pulseGlow 3s infinite ease-in-out;color:var(--point-gold)!important; }
+        .check-cell { width:100%;height:38px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:.9rem;font-weight:bold;transition:background .15s;user-select:none; }
+        .check-cell:hover { background:rgba(255,235,167,.07); }
+        .st-V { background:rgba(78,115,223,.15);color:#4e73df; }
+        .st-△ { background:rgba(255,235,167,.1);color:var(--point-gold); }
+        .st-X { background:rgba(255,68,68,.15);color:var(--danger-red); }
+        .st-☆ { background:rgba(255,50,50,.25);color:#ff1744;font-size:1rem; }
+        /* 주차 시작 열 구분선 */
+        th.week-start { border-left: 2px solid rgba(255,235,167,0.5) !important; }
+        td.week-start { border-left: 2px solid rgba(255,235,167,0.25) !important; }
+        tr.freq-D td.item-col { border-left:3px solid #4e73df; }
+        tr.freq-W td.item-col { border-left:3px solid var(--point-gold); }
+        tr.freq-W { background:rgba(255,235,167,0.02); }
+    </style>
+</head>
+<body>
+    <div class="page-container">
+        <header class="main-header">
+            <div class="header-left">
+                <a href="javascript:void(0)" onclick="goToHome()" class="ppms-logo-placeholder"></a>
+            </div>
+            <div class="header-center">
+                <div class="common-box font-35pt">Wave Solder 점검</div>
+            </div>
+            <div class="header-right">
+                <div class="common-box font-15pt time-display" id="current-time"></div>
+            </div>
+        </header>
+        <main class="content-area">
+            <div class="smd-inner">
+                <div class="ctrl-bar">
+                    <div class="month-ctrl">
+                        <button class="arrow-btn" onclick="moveMonth(-1)"><i class="uil uil-angle-left"></i></button>
+                        <span id="month-display"></span>
+                        <button class="arrow-btn" onclick="moveMonth(1)"><i class="uil uil-angle-right"></i></button>
+                        <button class="quick-ok-btn" onclick="jumpToday()" style="border-color:#888;color:#aaa;">오늘로 이동</button>
+                        <div class="ctrl-divider"></div>
+                        <button class="quick-ok-btn" onclick="fillToday('D')">일간 OK</button>
+                        <button class="quick-ok-btn" onclick="fillToday('W')" style="border-color:var(--point-gold);color:var(--point-gold);">주간 OK</button>
+                        <button class="quick-ok-btn" onclick="clearToday()" style="border-color:#ff4444;color:#ff4444;">초기화</button>
+                    </div>
+                    <div class="guide">
+                        <span style="color:#4e73df;font-weight:bold;">V</span><span style="color:#888;">이상없음</span>
+                        <span style="color:var(--point-gold);font-weight:bold;">△</span><span style="color:#888;">이상(작업가능)</span>
+                        <span style="color:var(--danger-red);font-weight:bold;">X</span><span style="color:#888;">이상보고</span>
+                        <span style="color:#ff1744;font-weight:bold;">☆</span><span style="color:#888;">긴급수리</span>
+                    </div>
+                </div>
+                <div class="table-wrapper">
+                    <table id="check-table">
+                        <thead><tr id="header-row"></tr></thead>
+                        <tbody id="table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+        <footer class="main-footer">
+            <div class="footer-left"></div>
+            <div class="footer-center">
+                <div class="footer-btn" onclick="goBack()"><i class="uil uil-arrow-left"></i></div>
+                <div class="footer-btn" onclick="goToHome()"><i class="uil uil-home"></i></div>
+                <div class="footer-btn" onclick="goForward()"><i class="uil uil-arrow-right"></i></div>
+            </div>
+            <div class="footer-right"></div>
+        </footer>
+    </div>
+    <style>body{opacity:0;transition:opacity .5s ease-in-out}
+    .quick-ok-btn{background:none;border:1px solid #4e73df;color:#4e73df;padding:3px 10px;border-radius:6px;cursor:pointer;font-size:.8rem;font-family:'BMDOHYEON';transition:all .2s;}
+    .quick-ok-btn:hover{opacity:.75;}
+    .ctrl-btn-group{display:flex;gap:6px;align-items:center;}
+    .ctrl-divider{width:1px;height:18px;background:#444;margin:0 4px;}
+    </style>
+    <script>
+    const SHEET_TYPE  = 'wave_solder';
+    const EQUIPMENT   = 'Auto Solder';
+    const STATUS_CYCLE = ['','V','△','X','☆'];
+    const DAY_NAMES   = ['일','월','화','수','목','금','토'];
+    const ITEMS = [
+        {no:1, item:'장비 미사용',           freq:'일 1회', freqCode:'D'},
+        {no:2, item:'Control Box',           freq:'일 1회', freqCode:'D'},
+        {no:4, item:'납조 DROSS',            freq:'일 1회', freqCode:'D'},
+        {no:5, item:'Conveyor 동작 확인',    freq:'일 1회', freqCode:'D'},
+        {no:6, item:'Flux 노즐 상태',        freq:'일 1회', freqCode:'D'},
+        {no:8, item:'Pre-Heater 150℃±5',    freq:'일 1회', freqCode:'D'},
+        {no:9, item:'납조 Wave 상태',        freq:'일 1회', freqCode:'D'},
+        {no:12,item:'납조온도 250℃±5',      freq:'일 1회/작업시', freqCode:'D'},
+        {no:3, item:'Finger 상태',           freq:'주 1회', freqCode:'W'},
+        {no:7, item:'열풍 FAN',              freq:'주 1회', freqCode:'W'},
+        {no:10,item:'배기 Duct',             freq:'주 1회', freqCode:'W'},
+        {no:11,item:'비상정지 스위치',        freq:'주 1회', freqCode:'W'},
+        {no:13,item:'Flux 주유',             freq:'주 1회', freqCode:'W'},
+        {no:14,item:'FLUX 이물 상태',        freq:'주 1회', freqCode:'W'},
+    ];
+
+    let viewYear = new Date().getFullYear();
+    let viewMonth = new Date().getMonth()+1;
+    let monthData = {};
+    let holidays = {};
+
+    function isWorkday(ds, dow) { return dow!==0 && dow!==6 && !holidays[ds]; }
+
+    function getWeekNum(y,m,d) {
+        const firstDow = new Date(y,m-1,1).getDay();
+        return Math.ceil((d + firstDow) / 7);
+    }
+
+    function renderTable() {
+        const lastDay = new Date(viewYear, viewMonth, 0).getDate();
+        const today   = new Date();
+        const todayStr = dateStr(today.getFullYear(), today.getMonth()+1, today.getDate());
+        document.getElementById('month-display').textContent = `${viewYear}년 ${viewMonth}월`;
+
+        // 평일 날짜 목록 + 주차 계산
+        const workdays = [];
+        for (let d=1;d<=lastDay;d++) {
+            const ds=dateStr(viewYear,viewMonth,d), dow=new Date(viewYear,viewMonth-1,d).getDay();
+            if (!isWorkday(ds,dow)) continue;
+            const wk = getWeekNum(viewYear,viewMonth,d);
+            workdays.push({d, ds, dow, wk});
+        }
+
+        // 헤더: 주차 바뀌는 첫 날에 week-start 클래스
+        let hHtml = `<th class="item-col">점검 사항</th><th class="freq-col">주기</th>`;
+        let prevWk = null;
+        workdays.forEach(({d, ds, dow, wk}) => {
+            const isWkStart = wk !== prevWk;
+            prevWk = wk;
+            hHtml += `<th class="day-col ${ds===todayStr?'today':''} ${isWkStart?'week-start':''}"
+                title="${DAY_NAMES[dow]} (${wk}주)">${d}</th>`;
+        });
+        document.getElementById('header-row').innerHTML = hHtml;
+
+        // 바디: 동일하게 week-start 적용
+        let bHtml='', prevFreq=null;
+        ITEMS.forEach(item => {
+            const isGroupStart = item.freqCode !== prevFreq;
+            prevFreq = item.freqCode;
+            bHtml += `<tr class="freq-${item.freqCode}${isGroupStart?' freq-group-start':''}">
+                <td class="item-col">${item.no}. ${item.item}</td>
+                <td class="freq-col" style="font-size:.72rem;padding:2px;">${item.freq}</td>`;
+            prevWk = null;
+            workdays.forEach(({ds, wk}) => {
+                const isWkStart = wk !== prevWk;
+                prevWk = wk;
+                const key=`${EQUIPMENT}_${item.no}_${ds}`;
+                const st=(monthData[key]||{}).status||'';
+                bHtml += `<td class="day-col ${isWkStart?'week-start':''}">
+                    <div class="check-cell st-${st}" data-no="${item.no}" data-date="${ds}" data-freq="${item.freqCode}" data-status="${st}">${st}</div></td>`;
+            });
+            bHtml += '</tr>';
+        });
+        document.getElementById('table-body').innerHTML = bHtml;
+    }
+
+    let isDragging=false,dragStatus=null,draggedCells=[];
+    document.addEventListener('mousedown',e=>{
+        const c=e.target.closest('.check-cell'); if(!c)return;
+        e.preventDefault();
+        const idx=STATUS_CYCLE.indexOf(c.dataset.status||'');
+        dragStatus=STATUS_CYCLE[(idx+1)%STATUS_CYCLE.length];
+        isDragging=true;draggedCells=[];applyDrag(c);
+    });
+    document.addEventListener('mouseenter',e=>{
+        if(!isDragging)return;
+        const c=e.target.closest('.check-cell');if(c)applyDrag(c);
+    },true);
+    document.addEventListener('mouseup',async()=>{
+        if(!isDragging)return;
+        isDragging=false;
+        for(const c of draggedCells)await saveCell(c);
+        draggedCells=[];dragStatus=null;
+    });
+    function applyDrag(c){
+        if(draggedCells.find(x=>x===c))return;
+        if(c.dataset.status===dragStatus)return;
+        c.dataset.status=dragStatus;c.className=`check-cell st-${dragStatus}`;c.textContent=dragStatus;
+        draggedCells.push(c);
+    }
+    async function saveCell(c){
+        const key=`${EQUIPMENT}_${c.dataset.no}_${c.dataset.date}`;
+        try{
+            await fetch('/api/smd_check/equipment/toggle',{method:'POST',headers:{'Content-Type':'application/json'},
+                body:JSON.stringify({sheet_type:SHEET_TYPE,equipment:EQUIPMENT,item_no:parseInt(c.dataset.no),date:c.dataset.date,status:c.dataset.status})});
+            monthData[key]={status:c.dataset.status};
+        }catch(e){console.error(e);}
+    }
+    async function loadData(){
+        try{
+            const [holRes,dataRes] = await Promise.all([
+                fetch(`/api/inspection/holidays?year=${viewYear}`),
+                fetch(`/api/smd_check/equipment/monthly?sheet_type=${SHEET_TYPE}&year=${viewYear}&month=${viewMonth}`)
+            ]);
+            holidays  = holRes.ok  ? await holRes.json()  : {};
+            monthData = dataRes.ok ? await dataRes.json() : {};
+        }catch(e){holidays={};monthData={};}
+        renderTable();
+    }
+    async function moveMonth(d){viewMonth+=d;if(viewMonth>12){viewMonth=1;viewYear++;}else if(viewMonth<1){viewMonth=12;viewYear--;}await loadData();}
+    function dateStr(y,m,d){return `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;}
+    async function moveMonth(d){viewMonth+=d;if(viewMonth>12){viewMonth=1;viewYear++;}else if(viewMonth<1){viewMonth=12;viewYear--;}await loadData();}
+    function dateStr(y,m,d){return `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;}
+    async function jumpToday(){
+        const n=new Date(),ty=n.getFullYear(),tm=n.getMonth()+1;
+        if(viewYear!==ty||viewMonth!==tm){viewYear=ty;viewMonth=tm;await loadData();}
+        const td=dateStr(ty,tm,n.getDate());
+        document.querySelector(`th[data-date="${td}"]`)?.scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'});
+    }
+    async function fillToday(freq){
+        const n=new Date(),ty=n.getFullYear(),tm=n.getMonth()+1;
+        if(viewYear!==ty||viewMonth!==tm){viewYear=ty;viewMonth=tm;await loadData();}
+        const td=dateStr(ty,tm,n.getDate()),ok=STATUS_CYCLE[1];
+        const cells=document.querySelectorAll(`.check-cell[data-date="${td}"][data-freq="${freq}"]`);
+        const ps=[];
+        cells.forEach(c=>{if(c.dataset.status!=='')return;c.dataset.status=ok;c.className=`check-cell st-${ok}`;c.textContent=ok;ps.push(saveCell(c));});
+        await Promise.all(ps);
+    }
+    async function clearToday(){
+        if(!confirm('오늘 날짜의 모든 체크를 초기화하시겠습니까?'))return;
+        const n=new Date(),td=dateStr(n.getFullYear(),n.getMonth()+1,n.getDate());
+        const cells=document.querySelectorAll(`.check-cell[data-date="${td}"]`);
+        const ps=[];
+        cells.forEach(c=>{if(c.dataset.status==='')return;c.dataset.status='';c.className='check-cell';c.textContent='';ps.push(saveCell(c));});
+        await Promise.all(ps);
+    }
+    function updateTime(){const n=new Date(),el=document.getElementById('current-time');if(el)el.textContent=`${n.getFullYear()}년 ${n.getMonth()+1}월 ${n.getDate()}일 ${n.getHours()}시 ${n.getMinutes()}분`;}
+    setInterval(updateTime,1000);updateTime();
+    window.addEventListener('pageshow',()=>setTimeout(()=>document.body.style.opacity='1',50));
+    window.goBack=()=>{document.body.style.opacity='0';setTimeout(()=>history.back(),500);};
+    window.goToHome=()=>{document.body.style.opacity='0';setTimeout(()=>location.href='/',500);};
+    window.goForward=()=>{document.body.style.opacity='0';setTimeout(()=>history.forward(),500);};
+    window.onload=loadData;
+    </script>
+</body>
+</html>

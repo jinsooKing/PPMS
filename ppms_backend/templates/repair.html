@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PPMS - 수리 관리</title>
+
+    <link rel="stylesheet" href="/static/common.css">
+    <link href="https://hangeul.pstatic.net/hangeul_static/css/bmdohyeon.css" rel="stylesheet">
+    <link href="https://hangeul.pstatic.net/hangeul_static/css/bmjua.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://unicons.iconscout.com/release/v2.1.9/css/unicons.css">
+    <link href="https://fonts.googleapis.com/css?family=Poppins:400,500,600,700,800,900" rel="stylesheet">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="/static/auth.js"></script>
+    <script src="/static/logo.js"></script>
+
+    <style>
+        /* ── content-area: AOI와 동일 구조 ── */
+        .content-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: clamp(15px, 2vw, 30px);
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+
+        /* ── 섹션 카드: AOI의 line-schedule-section과 동일 ── */
+        .repair-section {
+            width: 100%;
+            max-width: 1200px;
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+            border: 1px solid rgba(255,255,255,0.08);
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+
+        /* ── 월 네비게이터: 섹션 상단 고정 (AOI의 aoi-header 역할) ── */
+        .month-nav {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            flex-shrink: 0;
+            box-sizing: border-box;
+        }
+
+        /* ── 스크롤 목록 컨테이너: AOI의 table-container 역할 ── */
+        .repair-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px 20px 20px;
+            box-sizing: border-box;
+        }
+        .repair-list::-webkit-scrollbar { width: 6px; }
+        .repair-list::-webkit-scrollbar-track { background: transparent; }
+        .repair-list::-webkit-scrollbar-thumb { background: #444; border-radius: 3px; }
+        .month-nav-btn {
+            background-color: var(--card-bg);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: var(--text-color);
+            width: 34px; height: 34px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; font-size: 1rem;
+            transition: all 0.2s; flex-shrink: 0;
+        }
+        .month-nav-btn:hover {
+            background-color: var(--point-gold);
+            color: var(--accent-blue);
+            border-color: transparent;
+        }
+        .month-nav-btn:disabled {
+            opacity: 0.4; cursor: default;
+            pointer-events: none;
+        }
+        .month-label {
+            font-family: 'BMJUA', sans-serif;
+            font-size: 1.1rem;
+            color: var(--point-gold);
+            min-width: 110px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+        .loading-indicator {
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.82rem;
+            color: #555;
+            display: none;
+            align-items: center;
+            gap: 6px;
+        }
+        .loading-indicator.visible { display: flex; }
+        .spinning { animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .month-spacer { flex: 1; }
+        .group-count-label {
+            font-family: 'BMJUA', sans-serif;
+            font-size: 0.88rem;
+            color: var(--text-color);
+            white-space: nowrap;
+        }
+
+        /* ── 군집 래퍼 ── */
+        .repair-wrapper {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        /* ── 빈 상태 ── */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 80px 20px;
+            color: #555;
+            gap: 12px;
+        }
+        .empty-state i { font-size: 3.5rem; color: #3a3a3c; }
+        .empty-state span { font-family: 'BMJUA', sans-serif; font-size: 1.1rem; }
+
+        /* ── 군집 카드 ── */
+        .repair-group-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            transition: box-shadow 0.2s;
+        }
+        .repair-group-card:hover { box-shadow: 0 6px 20px rgba(0,0,0,0.4); }
+
+        /* ── 군집 헤더 ── */
+        .group-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 13px 18px;
+            cursor: pointer;
+            user-select: none;
+            border-bottom: 1px solid transparent;
+            transition: background-color 0.2s, border-color 0.2s;
+        }
+        .group-header:hover { background-color: rgba(255,235,167,0.04); }
+        .group-header.open  { border-bottom-color: rgba(255,255,255,0.07); }
+
+        .group-chevron {
+            color: var(--text-color);
+            font-size: 1.1rem;
+            transition: transform 0.25s ease;
+            flex-shrink: 0;
+        }
+        .group-header.open .group-chevron { transform: rotate(90deg); }
+
+        .group-model {
+            font-family: 'BMDOHYEON', sans-serif;
+            font-size: 1.1rem;
+            color: #fff;
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .group-meta {
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.78rem;
+            color: var(--text-color);
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        /* 배지 */
+        .group-badge {
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.8rem; font-weight: 600;
+            padding: 3px 12px; border-radius: 20px;
+            white-space: nowrap; flex-shrink: 0;
+        }
+        .group-badge.partial  { background: rgba(255,68,68,0.12);  color:#ff7070; border:1px solid rgba(255,68,68,0.3); }
+        .group-badge.all-done { background: rgba(0,230,118,0.12); color:var(--success-green); border:1px solid rgba(0,230,118,0.3); }
+
+        /* 메모 버튼 */
+        .memo-icon-btn {
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.12);
+            color: var(--text-color);
+            width: 30px; height: 30px; border-radius: 6px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; font-size: 1rem;
+            transition: all 0.2s; flex-shrink: 0;
+        }
+        .memo-icon-btn:hover { background-color: var(--point-gold); color: var(--accent-blue); border-color: transparent; }
+        .memo-icon-btn.has-note { color: var(--point-gold); border-color: rgba(255,235,167,0.4); }
+
+        /* ── 배치 테이블 ── */
+        .group-body { display: none; padding: 0 18px 14px; }
+        .group-body.open { display: block; }
+
+        .batch-table { width: 100%; border-collapse: collapse; font-size: clamp(11px, 1.05vw, 13px); }
+        .batch-table th {
+            background-color: #1a1b23; color: var(--point-gold);
+            font-weight: 600; padding: 8px 10px; text-align: center;
+            border-bottom: 2px solid rgba(255,235,167,0.2);
+            font-family: 'Poppins', sans-serif; font-size: 0.76rem;
+            text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        .batch-table td {
+            padding: 9px 10px; text-align: center;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+            color: var(--text-color); font-family: 'Poppins', sans-serif;
+            vertical-align: middle;
+        }
+        .batch-table tbody tr:hover { background-color: rgba(255,235,167,0.03); }
+        .batch-table tbody tr:last-child td { border-bottom: none; }
+
+        .batch-num    { color: #555; font-size: 0.75rem; }
+        .batch-defect { color: #ff7070; font-weight: 600; }
+
+        /* 토글 버튼 */
+        .toggle-btn {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 5px 13px; border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
+            background-color: #1e1e26; color: #555;
+            cursor: pointer; font-family: 'BMJUA', sans-serif;
+            font-size: 0.78rem; transition: all 0.25s; white-space: nowrap;
+        }
+        .toggle-btn:hover:not(:disabled) { border-color: rgba(255,255,255,0.25); color: var(--text-color); }
+        .toggle-btn.done {
+            background-color: rgba(0,230,118,0.1);
+            color: var(--success-green); border-color: rgba(0,230,118,0.3);
+        }
+        .toggle-btn.done:hover:not(:disabled) {
+            background-color: rgba(255,68,68,0.1);
+            color: #ff7070; border-color: rgba(255,68,68,0.3);
+        }
+        .toggle-btn:disabled { opacity: 0.5; cursor: default; }
+
+        .done-time {
+            font-size: 0.76rem; color: rgba(0,230,118,0.55); white-space: nowrap;
+        }
+
+        /* 폐기 입력 */
+        .scrap-input {
+            width: 64px; background-color: #15151a;
+            border: 1px solid rgba(255,255,255,0.08); border-radius: 5px;
+            color: #fff; font-family: 'Poppins', sans-serif;
+            font-size: 0.82rem; text-align: center; padding: 4px 6px;
+            transition: border-color 0.2s; -moz-appearance: textfield;
+        }
+        .scrap-input::-webkit-outer-spin-button,
+        .scrap-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        .scrap-input:focus { outline: none; border-color: rgba(255,68,68,0.5); }
+
+        /* ── 메모 모달 ── */
+        #memo-modal .modal-title {
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .memo-textarea {
+            width: 100%; min-height: 220px; resize: vertical;
+            background-color: #15151a; border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px; color: #fff;
+            font-family: 'BMDOHYEON', sans-serif; font-size: 0.95rem;
+            line-height: 1.7; padding: 14px; box-sizing: border-box;
+            outline: none; transition: border-color 0.2s;
+        }
+        .memo-textarea:focus { border-color: var(--point-gold); }
+        .memo-textarea::placeholder { color: #3a3a3c; }
+        .memo-save-btn {
+            font-family: 'BMJUA', sans-serif; font-size: 0.95rem;
+            padding: 10px 30px; border-radius: 8px; border: none;
+            background-color: var(--point-gold); color: var(--accent-blue);
+            cursor: pointer; font-weight: bold;
+            transition: opacity 0.2s; margin-top: 14px;
+        }
+        .memo-save-btn:hover { opacity: 0.85; }
+
+        /* ── 토스트 ── */
+        #toast-container {
+            position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%);
+            z-index: 9999; display: flex; flex-direction: column; gap: 8px;
+            pointer-events: none;
+        }
+        .toast {
+            background-color: var(--card-bg); color: #fff;
+            border: 1px solid var(--border-color); border-radius: 8px;
+            padding: 10px 20px; font-family: 'BMJUA', sans-serif; font-size: 0.9rem;
+            opacity: 0; animation: toastFade 2.5s ease forwards; white-space: nowrap;
+        }
+        .toast.success { border-color: rgba(0,230,118,0.4); color: var(--success-green); }
+        .toast.error   { border-color: rgba(255,68,68,0.4);  color: #ff7070; }
+        @keyframes toastFade {
+            0%   { opacity: 0; transform: translateY(10px); }
+            15%  { opacity: 1; transform: translateY(0); }
+            75%  { opacity: 1; }
+            100% { opacity: 0; }
+        }
+    </style>
+</head>
+
+<body>
+<div class="page-container">
+
+    <!-- ── 헤더 ── -->
+    <header class="main-header">
+        <div class="header-left">
+            <a href="javascript:void(0)" onclick="goToHome()" class="header-logo-wrapper btn-glitch">
+                <div class="ppms-logo-placeholder"></div>
+            </a>
+        </div>
+        <div class="header-center">
+            <div class="common-box font-35pt">REPAIR</div>
+        </div>
+        <div class="header-right">
+            <div class="common-box font-15pt time-display" id="current-time"></div>
+        </div>
+    </header>
+
+    <!-- ── 본문 ── -->
+    <main class="content-area">
+        <div class="repair-section">
+
+            <!-- 월 네비게이터: 섹션 상단 고정 -->
+            <div class="month-nav">
+                <button class="month-nav-btn" id="prev-btn" onclick="changeMonth(-1)">
+                    <i class="uil uil-angle-left"></i>
+                </button>
+                <span class="month-label" id="month-label">-</span>
+                <button class="month-nav-btn" id="next-btn" onclick="changeMonth(1)">
+                    <i class="uil uil-angle-right"></i>
+                </button>
+                <div class="loading-indicator" id="loading-indicator">
+                    <i class="uil uil-spinner-alt spinning"></i> 불러오는 중...
+                </div>
+                <div class="month-spacer"></div>
+                <span class="group-count-label" id="group-count-info"></span>
+            </div>
+
+            <!-- 스크롤 목록 영역 -->
+            <div class="repair-list">
+                <div class="repair-wrapper" id="repair-wrapper">
+                    <div class="empty-state" id="empty-state" style="display:none;">
+                        <i class="uil uil-wrench"></i>
+                        <span>이 달의 수리 항목이 없습니다.</span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- ── 푸터 ── -->
+    <footer class="main-footer">
+        <div class="footer-left"></div>
+        <div class="footer-center">
+            <div class="footer-btn" onclick="history.back()">
+                <i class="uil uil-arrow-left"></i>
+            </div>
+            <div class="footer-btn" onclick="goToHome()">
+                <i class="uil uil-home"></i>
+            </div>
+            <div class="footer-btn" onclick="history.forward()">
+                <i class="uil uil-arrow-right"></i>
+            </div>
+        </div>
+        <div class="footer-right"></div>
+    </footer>
+</div>
+
+<div id="toast-container"></div>
+
+<!-- ── 메모 모달 ── -->
+<div class="modal-overlay" id="memo-modal">
+    <div class="modal-window" style="max-width:640px;">
+        <button class="close-btn" onclick="closeMemoModal()">&times;</button>
+        <h2 class="modal-title" id="memo-modal-title">NOTES / REMARKS</h2>
+        <div class="modal-content" style="gap:0;">
+            <textarea class="memo-textarea" id="memo-textarea" placeholder="특이사항을 입력하세요..."></textarea>
+            <div style="text-align:right;">
+                <button class="memo-save-btn" onclick="saveMemo()">저장</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// ================================================================
+//  상태
+// ================================================================
+let groupsData  = [];
+let memoGroupId = null;
+let isLoading   = false;
+
+// 현재 보고 있는 날짜 (월 단위)
+const today = new Date();
+let viewDate = new Date(today.getFullYear(), today.getMonth(), 1);
+
+// AOI DB의 order_month 형식: "1월분" ~ "12월분"
+function viewYear()     { return viewDate.getFullYear(); }
+function viewMonthNum() { return viewDate.getMonth() + 1; }            // 1~12 (숫자)
+function viewMonthStr() { return `${viewMonthNum()}월분`; }            // "1월분"~"12월분"
+
+// ================================================================
+//  페이드 인
+// ================================================================
+document.addEventListener('DOMContentLoaded', () => {
+    document.body.style.opacity = '0';
+    requestAnimationFrame(() => {
+        document.body.style.transition = 'opacity 0.4s ease-in-out';
+        document.body.style.opacity = '1';
+    });
+    updateMonthLabel();
+    syncAndLoad();
+});
+
+// ================================================================
+//  시계
+// ================================================================
+function updateClock() {
+    const el = document.getElementById('current-time');
+    if (!el) return;
+    const now = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    el.textContent = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())} `
+                   + `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ================================================================
+//  네비게이션
+// ================================================================
+function navigate(url) {
+    document.body.style.opacity = '0';
+    setTimeout(() => { location.href = url; }, 400);
+}
+function goToHome() { navigate('/'); }
+
+// ================================================================
+//  월 네비게이터
+// ================================================================
+function updateMonthLabel() {
+    document.getElementById('month-label').textContent =
+        `${viewYear()}년 ${viewMonthNum()}월분`;
+}
+
+function changeMonth(delta) {
+    if (isLoading) return;
+    viewDate.setMonth(viewDate.getMonth() + delta);
+    updateMonthLabel();
+    syncAndLoad();
+}
+
+// ================================================================
+//  로딩 상태
+// ================================================================
+function setLoading(state) {
+    isLoading = state;
+    document.getElementById('loading-indicator').classList.toggle('visible', state);
+    document.getElementById('prev-btn').disabled = state;
+    document.getElementById('next-btn').disabled = state;
+}
+
+// ================================================================
+//  AOI 동기화 + 조회 (자동 실행)
+//  month 파라미터: "X월분" 형식 (AOI DB와 동일)
+// ================================================================
+async function syncAndLoad() {
+    setLoading(true);
+    try {
+        const params = `year=${viewYear()}&month=${encodeURIComponent(viewMonthStr())}`;
+        const res  = await fetch(`/api/repair/sync?${params}`, { method: 'POST' });
+        const data = await res.json();
+
+        if (!res.ok || !data.success) {
+            showToast('오류: ' + (data.error || res.status), 'error');
+            console.error(data);
+            return;
+        }
+
+        groupsData = data.groups;
+        renderGroups();
+
+        if (data.new_batches > 0) {
+            showToast(`신규 배치 ${data.new_batches}건 추가됨`, 'success');
+        }
+    } catch (e) {
+        showToast('로드 실패: ' + e.message, 'error');
+        console.error(e);
+    } finally {
+        setLoading(false);
+    }
+}
+
+// ================================================================
+//  렌더링
+// ================================================================
+function renderGroups() {
+    const wrapper = document.getElementById('repair-wrapper');
+    const empty   = document.getElementById('empty-state');
+    const countEl = document.getElementById('group-count-info');
+
+    wrapper.querySelectorAll('.repair-group-card').forEach(el => el.remove());
+
+    if (!groupsData.length) {
+        empty.style.display = 'flex';
+        countEl.textContent = '';
+        return;
+    }
+    empty.style.display = 'none';
+    countEl.textContent = `${groupsData.length}건`;
+    groupsData.forEach(g => wrapper.appendChild(buildGroupCard(g)));
+}
+
+// ================================================================
+//  군집 카드 빌드
+// ================================================================
+function buildGroupCard(group) {
+    const batches   = group.batches || [];
+    const doneCount = batches.filter(b => b.is_done).length;
+    const allDone   = batches.length > 0 && doneCount === batches.length;
+
+    const card = document.createElement('div');
+    card.className = 'repair-group-card';
+    card.dataset.groupId = group.id;
+
+    const header = document.createElement('div');
+    header.className = 'group-header';
+    header.innerHTML = `
+        <i class="uil uil-angle-right group-chevron"></i>
+        <span class="group-model">${escHtml(group.model)}</span>
+        <span class="group-meta">${group.order_year}년 ${group.order_month} &nbsp;|&nbsp; LOT ${escHtml(group.lot)}</span>
+        <span class="group-badge ${allDone ? 'all-done' : 'partial'}" data-badge>
+            ${doneCount}/${batches.length} 배치 완료
+        </span>
+        <button class="memo-icon-btn ${group.notes ? 'has-note' : ''}"
+                title="메모"
+                onclick="openMemoModal(event, ${group.id})">
+            <i class="uil uil-notes"></i>
+        </button>
+    `;
+
+    const body = document.createElement('div');
+    body.className = 'group-body';
+    body.innerHTML = buildBatchTable(batches);
+
+    header.addEventListener('click', e => {
+        if (e.target.closest('button')) return;
+        header.classList.toggle('open');
+        body.classList.toggle('open');
+    });
+
+    card.appendChild(header);
+    card.appendChild(body);
+    return card;
+}
+
+// ================================================================
+//  배치 테이블 빌드
+// ================================================================
+function buildBatchTable(batches) {
+    if (!batches || !batches.length)
+        return `<p style="color:#555;font-size:.85rem;padding:12px 0;">배치 데이터 없음</p>`;
+
+    const rows = batches.map((b, idx) => `
+        <tr>
+            <td class="batch-num">배치 ${idx + 1}</td>
+            <td>${b.aoi_date || '-'}</td>
+            <td class="batch-defect">${b.defect_qty}</td>
+            <td>
+                <button class="toggle-btn ${b.is_done ? 'done' : ''}"
+                        onclick="toggleBatch(this, ${b.id})">
+                    ${b.is_done
+                        ? `<i class="uil uil-check-circle"></i> 수리완료`
+                        : `<i class="uil uil-circle"></i> 미완료`}
+                </button>
+            </td>
+            <td class="done-time" data-done-at="${b.id}">${b.done_at || '-'}</td>
+            <td>
+                <input type="number" class="scrap-input"
+                       min="0" max="${b.defect_qty}"
+                       value="${b.scrap_qty || 0}"
+                       onchange="saveScrap(this, ${b.id})">
+            </td>
+        </tr>`
+    ).join('');
+
+    return `
+        <table class="batch-table">
+            <thead>
+                <tr>
+                    <th style="width:70px;">배치</th>
+                    <th>검사일</th>
+                    <th>불량수 (PCB)</th>
+                    <th>수리 상태</th>
+                    <th>완료 시각</th>
+                    <th style="width:90px;">폐기</th>
+                </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+        </table>`;
+}
+
+// ================================================================
+//  배치 토글 (DOM 직접 업데이트 — 아코디언 유지)
+// ================================================================
+async function toggleBatch(btn, batchId) {
+    btn.disabled = true;
+    try {
+        const res  = await fetch(`/api/repair/batches/${batchId}/toggle`, { method: 'PUT' });
+        const data = await res.json();
+        if (!data.success) throw new Error(data.message);
+
+        // 로컬 상태 업데이트
+        let targetGroup = null;
+        for (const g of groupsData) {
+            const b = g.batches.find(b => b.id === batchId);
+            if (b) { b.is_done = data.is_done; b.done_at = data.done_at; targetGroup = g; break; }
+        }
+
+        // 버튼 갱신
+        btn.classList.toggle('done', data.is_done);
+        btn.innerHTML = data.is_done
+            ? `<i class="uil uil-check-circle"></i> 수리완료`
+            : `<i class="uil uil-circle"></i> 미완료`;
+
+        // 완료 시각 셀 갱신
+        btn.closest('tr').querySelector(`[data-done-at="${batchId}"]`).textContent = data.done_at || '-';
+
+        // 헤더 배지 갱신
+        if (targetGroup) updateGroupHeader(targetGroup);
+
+    } catch (e) {
+        showToast('저장 실패: ' + e.message, 'error');
+    } finally {
+        btn.disabled = false;
+    }
+}
+
+function updateGroupHeader(group) {
+    const card = document.querySelector(`.repair-group-card[data-group-id="${group.id}"]`);
+    if (!card) return;
+    const batches   = group.batches || [];
+    const doneCount = batches.filter(b => b.is_done).length;
+    const allDone   = batches.length > 0 && doneCount === batches.length;
+
+    const badge = card.querySelector('[data-badge]');
+    if (badge) {
+        badge.className   = `group-badge ${allDone ? 'all-done' : 'partial'}`;
+        badge.textContent = `${doneCount}/${batches.length} 배치 완료`;
+    }
+}
+
+// ================================================================
+//  폐기 수량 저장
+// ================================================================
+async function saveScrap(input, batchId) {
+    const qty = Math.max(0, parseInt(input.value) || 0);
+    input.value = qty;
+    try {
+        const res  = await fetch(`/api/repair/batches/${batchId}/scrap`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ scrap_qty: qty })
+        });
+        const data = await res.json();
+        if (!data.success) throw new Error(data.message);
+        for (const g of groupsData) {
+            const b = g.batches.find(b => b.id === batchId);
+            if (b) { b.scrap_qty = data.scrap_qty; break; }
+        }
+        showToast('폐기 수량 저장', 'success');
+    } catch (e) {
+        showToast('저장 실패: ' + e.message, 'error');
+    }
+}
+
+// ================================================================
+//  메모 모달
+// ================================================================
+function openMemoModal(e, groupId) {
+    e.stopPropagation();
+    memoGroupId = groupId;
+    const group = groupsData.find(g => g.id === groupId);
+    if (!group) return;
+    document.getElementById('memo-modal-title').textContent = `NOTES — ${group.model}`;
+    document.getElementById('memo-textarea').value = group.notes || '';
+    document.getElementById('memo-modal').classList.add('visible');
+}
+
+async function saveMemo() {
+    if (!memoGroupId) return;
+    const notes = document.getElementById('memo-textarea').value;
+    try {
+        const res  = await fetch(`/api/repair/groups/${memoGroupId}/notes`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ notes })
+        });
+        const data = await res.json();
+        if (!data.success) throw new Error(data.message);
+
+        const group = groupsData.find(g => g.id === memoGroupId);
+        if (group) {
+            group.notes = notes;
+            const card = document.querySelector(`.repair-group-card[data-group-id="${memoGroupId}"]`);
+            if (card) card.querySelector('.memo-icon-btn').classList.toggle('has-note', !!notes);
+        }
+        closeMemoModal();
+        showToast('메모가 저장되었습니다.', 'success');
+    } catch (e) {
+        showToast('저장 실패: ' + e.message, 'error');
+    }
+}
+
+function closeMemoModal() {
+    document.getElementById('memo-modal').classList.remove('visible');
+    memoGroupId = null;
+}
+
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+    overlay.addEventListener('click', function(e) {
+        if (e.target === this) this.classList.remove('visible');
+    });
+});
+
+// ================================================================
+//  토스트
+// ================================================================
+function showToast(msg, type = 'info') {
+    const c = document.getElementById('toast-container');
+    const t = document.createElement('div');
+    t.className = `toast ${type}`;
+    t.textContent = msg;
+    c.appendChild(t);
+    setTimeout(() => t.remove(), 2600);
+}
+
+// ================================================================
+//  유틸
+// ================================================================
+function escHtml(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+</script>
+</body>
+</html>

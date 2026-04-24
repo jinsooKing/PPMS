@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>PPMS - 점검 관리</title>
+<link href="https://hangeul.pstatic.net/hangeul_static/css/bmdohyeon.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css?family=Poppins:400,500,600,700,800,900" rel="stylesheet">
+<link rel="stylesheet" href="https://unicons.iconscout.com/release/v2.1.9/css/unicons.css">
+<style>
+:root {
+    --bg-dark:      #1f2029;
+    --card-bg:      #2a2b38;
+    --text-color:   #c4c3ca;
+    --text-white:   #ffffff;
+    --point-gold:   #ffeba7;
+    --accent-blue:  #102770;
+    --border-color: rgba(255,235,167,0.15);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body {
+    background-color: #111218;
+    color: var(--text-color); font-family: 'Poppins', 'BMDOHYEON', sans-serif;
+    min-height: unset; display: flex; flex-direction: column;
+    opacity: 0; transition: opacity 0.4s ease;
+}
+
+/* ── 헤더 ── */
+.m-header {
+    background: rgba(17,18,24,0.98); border-bottom: 1px solid var(--border-color);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    padding: 0 16px; height: 64px;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-shrink: 0; position: sticky; top: 0; z-index: 100;
+}
+.m-header-left { display: flex; align-items: center; gap: 10px; flex: 1; }
+.m-logo-box {
+    width: 34px; height: 34px;
+    background: rgba(255,235,167,0.08); border: 1px solid rgba(255,235,167,0.35);
+    border-radius: 9px; display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; cursor: pointer;
+}
+.m-logo-box svg { width: 20px; height: 20px; fill: var(--point-gold); }
+.m-header-title { font-size: 0.82rem; font-weight: 800; color: var(--point-gold); letter-spacing: 1.5px; text-transform: uppercase; display: block; }
+.m-header-sub { font-size: 0.74rem; color: #8a8a9a; }
+.m-time { display: flex; align-items: center; gap: 4px; font-size: 0.76rem; color: var(--text-color); white-space: nowrap; flex-shrink: 0; }
+.m-time i { font-size: 0.8rem; color: var(--point-gold); opacity: 0.8; }
+
+/* ── 콘텐츠 ── */
+.m-content {
+    flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;
+    padding: 16px 12px 24px;
+    display: flex; flex-direction: column; gap: 14px;
+}
+
+/* ── 섹션 타이틀 ── */
+.m-section-title {
+    font-size: 0.76rem; color: var(--point-gold); font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.08em;
+    display: flex; align-items: center; gap: 6px; padding: 0 2px;
+}
+.m-section-title::before {
+    content: ''; display: block;
+    width: 3px; height: 12px;
+    background: var(--point-gold); border-radius: 2px;
+}
+
+/* ── 메뉴 카드 그리드 ── */
+.m-menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+.m-menu-card {
+    background: var(--card-bg);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 14px; padding: 18px 14px 16px;
+    display: flex; flex-direction: column; align-items: center;
+    gap: 8px; text-align: center; cursor: pointer;
+    transition: all 0.22s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative; overflow: hidden;
+}
+.m-menu-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0;
+    height: 1px; background: linear-gradient(90deg, transparent, rgba(255,235,167,0.2), transparent);
+}
+.m-menu-card:active {
+    transform: scale(0.96);
+    background: rgba(255,235,167,0.1);
+    border-color: rgba(255,235,167,0.4);
+}
+.m-menu-card.full { grid-column: 1 / -1; flex-direction: row; justify-content: flex-start; padding: 16px 20px; gap: 16px; }
+.m-card-icon { font-size: 2rem; line-height: 1; }
+.m-card-label { font-family: 'BMDOHYEON', sans-serif; font-size: 0.88rem; color: var(--text-white); letter-spacing: 0.5px; }
+.m-card-desc { font-size: 0.75rem; color: #666; line-height: 1.5; }
+
+/* 카드 아이콘 색 */
+.ic-blue   { color: #4e73df; text-shadow: 0 0 16px rgba(78,115,223,0.4); }
+.ic-orange { color: #ff9800; text-shadow: 0 0 16px rgba(255,152,0,0.4); }
+.ic-teal   { color: #26c6da; text-shadow: 0 0 16px rgba(38,198,218,0.4); }
+.ic-gold   { color: var(--point-gold); text-shadow: 0 0 16px rgba(255,235,167,0.3); }
+.ic-green  { color: #00e676; text-shadow: 0 0 16px rgba(0,230,118,0.4); }
+.ic-red    { color: #ff4444; text-shadow: 0 0 16px rgba(255,68,68,0.4); }
+.ic-purple { color: #7c4dff; text-shadow: 0 0 16px rgba(124,77,255,0.4); }
+
+/* ── 하단 바 ── */
+.m-action-bar {
+    background: rgba(17,18,24,0.98); border-top: 1px solid var(--border-color);
+    padding: 10px 16px; display: flex; align-items: center; gap: 8px;
+    flex-shrink: 0;
+}
+.m-bar-btn {
+    display: flex; align-items: center; justify-content: center; gap: 5px;
+    padding: 9px 14px; border-radius: 20px; font-size: 0.75rem;
+    cursor: pointer; transition: all 0.2s;
+}
+.m-bar-btn.home { background: rgba(255,235,167,0.07); border: 1px solid rgba(255,235,167,0.2); color: var(--point-gold); }
+.m-bar-btn:active { background: var(--point-gold); color: var(--accent-blue); border-color: transparent; }
+.m-footer-copy { flex: 1; text-align: center; font-size: 0.76rem; color: #888; }
+
+.page-overlay { position: fixed; inset: 0; background: var(--bg-dark); opacity: 0; pointer-events: none; z-index: 9999; transition: opacity 0.3s ease; }
+.page-overlay.active { opacity: 1; pointer-events: all; }
+
+/* ── 홈버튼 표준 스타일 (전체 모바일 페이지 공통) ── */
+.m-nav-home-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    background: rgba(255,235,167,0.08);
+    border: 1.5px solid rgba(255,235,167,0.35);
+    border-radius: 14px;
+    color: var(--point-gold);
+    font-size: 1.25rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+.m-nav-home-btn:active {
+    background: var(--point-gold);
+    color: var(--accent-blue);
+    border-color: var(--point-gold);
+    transform: scale(0.92);
+}
+
+/* ── 하단 바 표준 높이/패딩 (전체 모바일 공통) ── */
+.m-action-bar,
+.m-nav-bar {
+    min-height: 62px;
+    padding: 9px 16px !important;
+    gap: 10px !important;
+}
+
+/* ══════════════════════════════════════════════════════
+   입력 요소 가독성 강화 (전체 모바일 공통)
+   — 다크 배경에서 입력 가능 칸임을 명확히 표시
+   ══════════════════════════════════════════════════════ */
+
+/* 공통 입력 필드 기반 스타일 재정의 */
+.m-card-input,
+.m-info-input,
+.m-defect-chip-input,
+.m-scrap-input,
+.m-sheet-input,
+.m-sheet-select,
+.m-filter-input,
+.m-filter-select,
+.m-add-model-input,
+.m-memo-area,
+.m-checker-input,
+.pw-input {
+    background: #0d0e14 !important;          /* 카드 배경보다 확실히 어두운 색 */
+    border: 1.5px solid rgba(255,255,255,0.22) !important;
+    box-shadow: inset 0 1px 4px rgba(0,0,0,0.45);
+    color: #f0f0f0 !important;
+}
+
+/* 왼쪽 포인트 선으로 "입력 가능" 신호 */
+.m-card-input,
+.m-info-input,
+.m-sheet-input,
+.m-add-model-input,
+.pw-input {
+    border-left: 3px solid rgba(255,235,167,0.45) !important;
+    padding-left: 12px !important;
+}
+
+/* 수량 입력 (중앙 정렬, 작은 칸) */
+.m-defect-chip-input,
+.m-scrap-input {
+    border-left: 3px solid rgba(255,235,167,0.35) !important;
+}
+
+/* placeholder 가독성 */
+.m-card-input::placeholder,
+.m-info-input::placeholder,
+.m-sheet-input::placeholder,
+.m-add-model-input::placeholder,
+.pw-input::placeholder,
+.m-memo-area::placeholder {
+    color: rgba(255,255,255,0.3) !important;
+}
+
+/* select 드롭다운 (기본 화살표 유지 + 스타일) */
+.m-sheet-select,
+.m-filter-select {
+    border-left: 3px solid rgba(255,235,167,0.35) !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23ffeba7' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 12px center !important;
+    padding-right: 32px !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    appearance: none !important;
+}
+
+/* 포커스 시: 골드 테두리로 강화 */
+.m-card-input:focus,
+.m-info-input:focus,
+.m-defect-chip-input:focus,
+.m-scrap-input:focus,
+.m-sheet-input:focus,
+.m-sheet-select:focus,
+.m-filter-input:focus,
+.m-filter-select:focus,
+.m-add-model-input:focus,
+.m-memo-area:focus,
+.pw-input:focus {
+    outline: none !important;
+    border-color: rgba(255,235,167,0.75) !important;
+    border-left-color: var(--point-gold) !important;
+    box-shadow: inset 0 1px 4px rgba(0,0,0,0.4),
+                0 0 0 2px rgba(255,235,167,0.12) !important;
+    background: #141520 !important;
+}
+
+/* disabled 상태 명확화 */
+.m-card-input:disabled,
+.m-info-input:disabled,
+.m-defect-chip-input:disabled,
+.m-scrap-input:disabled {
+    background: #0d0e14 !important;
+    border: 1.5px dashed rgba(255,255,255,0.1) !important;
+    border-left: 3px dashed rgba(255,255,255,0.1) !important;
+    box-shadow: none !important;
+    opacity: 0.45 !important;
+    cursor: not-allowed !important;
+}
+
+/* 카드 테두리 강화 (기존보다 밝게) */
+.m-aoi-card,
+.m-schedule-card,
+.m-repair-card,
+.m-group-card,
+.m-dip-card,
+.m-batch-item {
+    border-color: rgba(255,255,255,0.14) !important;
+}
+
+/* 액션 버튼 (저장/완료 등) 최소 높이 보장 */
+.m-card-save-btn,
+.m-save-btn,
+.m-toggle-btn,
+.m-group-action-btn {
+    min-height: 40px;
+    font-size: 0.82rem !important;
+}
+
+/* ═══════════════════════════════════════════════════
+   전체 화면 레이아웃 고정 — 스크롤 없이 뷰포트에 꼭 맞춤
+   ═══════════════════════════════════════════════════ */
+html, body {
+    height: 100% !important;
+    overflow-x: hidden !important;
+}
+body {
+    display: flex !important;
+    flex-direction: column !important;
+    min-height: unset !important;   /* min-height:100vh 덮어쓰기 */
+}
+/* 헤더·탭·하단바 — 절대 줄어들지 않음 */
+.m-header, .m-tab-nav, .m-status-tabs, .m-main-tabs,
+.m-action-bar, .m-nav-bar, .m-action-bar,
+.m-date-bar, .m-filter-bar, .m-month-nav,
+.m-summary-bar, .m-breadcrumb, .m-footer, nav {
+    flex-shrink: 0 !important;
+}
+/* 스크롤 가능 영역 — 남은 공간 전부 차지 */
+.m-content, #app-body, #m-content {
+    flex: 1 1 0 !important;      /* 1 1 0 → 줄어들 수 있음 */
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    min-height: 0 !important;    /* flex child 줄어들기 허용 */
+}
+
+/* ════════════════════════════════════════════════════════
+   UI 박스 구분 강화 — 테두리·그림자·배경 대비
+   ════════════════════════════════════════════════════════ */
+
+/* ── 카드 계열 전부 ── */
+.m-schedule-card, .m-aoi-card, .m-dip-card, .m-group-card,
+.m-repair-card, .m-batch-item, .m-mgr-card, .m-item,
+.m-aoi-stat-cell, .m-summary-panel,
+.m-modal-sheet, .m-file-card,
+.m-card, .m-select-btn, .m-dept-column,
+.m-dash-card, .m-menu-card {
+    border-color: rgba(255,255,255,0.18) !important;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.55),
+                0 0 0 1px rgba(255,255,255,0.06) !important;
+}
+
+/* ── 호버/액티브 시 더 밝게 ── */
+.m-schedule-card:active, .m-aoi-card:active,
+.m-group-card:active, .m-item:active,
+.m-dash-card:active, .m-menu-card:active {
+    border-color: rgba(255,235,167,0.45) !important;
+    box-shadow: 0 4px 18px rgba(0,0,0,0.65),
+                0 0 0 1px rgba(255,235,167,0.18) !important;
+}
+
+/* ── KPI 칸 (생산/AOI 카드 안) ── */
+.m-card-kpi, .m-aoi-kpi {
+    background: #0d0e14 !important;
+    border-color: rgba(255,255,255,0.16) !important;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.5) !important;
+}
+
+/* ── 점검 대시보드 카드 ── */
+.m-insp-card {
+    border-color: rgba(255,255,255,0.18) !important;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.55) !important;
+}
+
+/* ── 탭 네비 ── */
+.m-tab-nav, .m-main-tabs, .m-status-tabs {
+    border-bottom: 1px solid rgba(255,255,255,0.12) !important;
+    background: rgba(17,18,24,0.98) !important;
+}
+
+/* ── 필터 바 ── */
+.m-filter-bar {
+    border-bottom: 1px solid rgba(255,255,255,0.1) !important;
+    background: rgba(17,18,24,0.95) !important;
+}
+
+/* ── 헤더 ── */
+.m-header {
+    border-bottom: 1px solid rgba(255,235,167,0.2) !important;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.6) !important;
+}
+
+/* ── 하단 액션 바 ── */
+.m-action-bar, .m-nav-bar, .m-footer {
+    border-top: 1px solid rgba(255,255,255,0.12) !important;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.5) !important;
+}
+
+/* ── 배경보다 살짝 밝은 mid-layer (모달 등) ── */
+.m-modal-sheet {
+    background: #1e1f2e !important;
+    border-top: 1px solid rgba(255,255,255,0.18) !important;
+    box-shadow: 0 -8px 40px rgba(0,0,0,0.8) !important;
+}
+
+/* ── 섹션 구분선 ── */
+.m-section-label {
+    color: rgba(255,235,167,0.7) !important;
+    border-bottom: 1px solid rgba(255,235,167,0.18) !important;
+    padding-bottom: 4px;
+    margin-bottom: 8px;
+}
+
+/* ── index 메뉴 카드 특별 강조 ── */
+.m-menu-card {
+    background: #1e1f2e !important;
+}
+.m-menu-card.primary {
+    background: linear-gradient(135deg, rgba(255,235,167,0.10) 0%, #1e1f2e 100%) !important;
+    border-color: rgba(255,235,167,0.30) !important;
+}
+
+/* ── 점검 배너 ── */
+.m-inspect-banner {
+    background: rgba(255,235,167,0.07) !important;
+    border: 1.5px solid rgba(255,235,167,0.28) !important;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.5) !important;
+}
+
+/* ── 입력 필드 ── */
+.m-sheet-input, .m-sheet-select,
+.m-card-input, .m-info-input {
+    background: #0d0e14 !important;
+    border-color: rgba(255,255,255,0.25) !important;
+}
+
+/* ── 진행률 트랙 ── */
+.m-progress-track, .m-card-progress-track,
+.m-card-mini-bar-track {
+    background: rgba(255,255,255,0.14) !important;
+}
+
+/* ── 요약 칩 ── */
+.m-summary-chip {
+    background: #0d0e14 !important;
+    border: 1px solid rgba(255,255,255,0.15) !important;
+}
+
+/* ── 생산 진행률 패널 ── */
+.m-progress-wrap {
+    background: rgba(255,255,255,0.04) !important;
+    border: 1px solid rgba(255,255,255,0.1) !important;
+    border-radius: 12px;
+    padding: 10px 14px;
+    margin-bottom: 10px;
+}
+
+/* ── 점검시트 선택 버튼 ── */
+.m-select-btn {
+    background: #1e1f2e !important;
+}
+.m-insp-type-card, .m-insp-card {
+    background: #1e1f2e !important;
+    border-color: rgba(255,255,255,0.18) !important;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.5) !important;
+}
+
+/* ── mobile_check 점검 항목 ── */
+.m-item {
+    background: #1e1f2e !important;
+    border: 1px solid rgba(255,255,255,0.16) !important;
+}
+.m-item.done {
+    border-color: rgba(78,115,223,0.6) !important;
+    background: rgba(78,115,223,0.1) !important;
+}
+
+/* ── 모달 오버레이 (기본 숨김) ── */
+.m-modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.75);
+    z-index: 500;
+    display: none;
+    align-items: flex-end;
+}
+.m-modal-overlay.open { display: flex; }
+.m-modal-sheet {
+    width: 100%;
+    background: #1e1f2e;
+    border-radius: 20px 20px 0 0;
+    border-top: 1px solid rgba(255,255,255,0.18);
+    padding: 20px 20px 48px;
+    box-shadow: 0 -8px 40px rgba(0,0,0,0.8);
+    animation: slideUp 0.25s ease;
+    max-height: 85vh;
+    overflow-y: auto;
+}
+@keyframes slideUp {
+    from { transform: translateY(100%); }
+    to   { transform: translateY(0); }
+}
+.m-sheet-title {
+    font-family: 'BMDOHYEON', sans-serif;
+    font-size: 1.05rem; color: var(--point-gold);
+    margin-bottom: 14px;
+    display: flex; align-items: center; gap: 8px;
+}
+.m-sheet-label {
+    font-size: 0.72rem; color: #8a8a9a;
+    margin-bottom: 5px; margin-top: 12px;
+}
+.m-sheet-input, .m-sheet-select {
+    width: 100%; background: #0d0e14;
+    border: 1.5px solid rgba(255,255,255,0.22);
+    border-left: 3px solid rgba(255,235,167,0.45);
+    border-radius: 10px; padding: 11px 14px;
+    color: #f0f0f0; font-size: 0.88rem;
+    font-family: 'Poppins', sans-serif;
+    -webkit-appearance: none; appearance: none;
+}
+.m-sheet-input:focus, .m-sheet-select:focus {
+    outline: none; border-color: rgba(255,235,167,0.75); background: #141520;
+}
+.m-sheet-btn-row { display: flex; gap: 8px; margin-top: 16px; }
+.m-sheet-btn {
+    flex: 1; padding: 12px; border-radius: 10px;
+    font-size: 0.9rem; font-weight: 700; cursor: pointer;
+    border: none; font-family: 'Poppins', sans-serif; transition: all 0.15s;
+}
+.m-sheet-btn.cancel  { background: rgba(255,255,255,0.07); color: #888; }
+.m-sheet-btn.confirm { background: var(--point-gold); color: var(--accent-blue); }
+
+/* ════════════════════════════════════════════════
+   테마 폰트 통일 — 모든 입력 요소
+   라벨·제목: BMDOHYEON
+   입력값·수치: Poppins
+   ════════════════════════════════════════════════ */
+
+/* 전체 기본 폰트 */
+body, * {
+    font-family: 'Poppins', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+}
+
+/* 입력 요소 — Poppins (숫자·영문 가독성) */
+input, select, textarea,
+.m-sheet-input, .m-sheet-select,
+.m-card-input, .m-info-input,
+.m-defect-chip-input, .m-scrap-input,
+.m-add-model-input, .m-memo-area,
+.m-checker-input, .pw-input,
+.dm-qty-input, .dm-ref-input,
+.m-defect-row-input,
+.m-filter-input, .m-filter-select {
+    font-family: 'Poppins', 'Apple SD Gothic Neo', sans-serif !important;
+    font-size: 0.9rem !important;
+}
+
+/* placeholder 폰트 */
+input::placeholder, textarea::placeholder,
+.m-sheet-input::placeholder,
+.m-card-input::placeholder,
+.m-info-input::placeholder,
+.m-memo-area::placeholder {
+    font-family: 'Poppins', 'Apple SD Gothic Neo', sans-serif !important;
+    font-size: 0.82rem !important;
+    opacity: 0.45;
+}
+
+/* 타이틀·라벨 — BMDOHYEON */
+.m-sheet-title, .m-section-label,
+.m-header-title, .m-header-sub,
+.m-card-model, .m-card-company,
+.m-tab-btn, .m-main-tab,
+.m-kpi-label, .m-kpi-value,
+.m-aoi-kpi .m-kpi-label,
+.m-aoi-kpi .m-kpi-value,
+.m-sheet-label,
+.m-section-title,
+.m-equip-title,
+.m-empty-text,
+.m-loading,
+.m-result-title {
+    font-family: 'BMDOHYEON', 'Apple SD Gothic Neo', sans-serif !important;
+}
+
+/* 버튼 — Poppins (숫자 포함) */
+button, .m-sheet-btn, .m-nav-btn,
+.m-bar-btn, .m-action-btn,
+.m-aoi-entry-btn, .m-aoi-del-btn,
+.m-aoi-detail-btn, .m-card-action-btn,
+.m-save-btn, .m-search-btn,
+.m-submit-btn, .m-bulk-btn,
+.m-type-btn, .m-line-btn,
+.m-period-opt, .m-sheet-type-btn,
+.m-select-btn {
+    font-family: 'Poppins', 'Apple SD Gothic Neo', sans-serif !important;
+}
+
+/* 숫자 표시 — Poppins */
+.m-kpi-value, .m-chip-value,
+.m-card-info-value, .m-progress-pct,
+.m-card-tb-badge, .m-card-defect-badge,
+.m-prod-actual {
+    font-family: 'Poppins', sans-serif !important;
+    font-feature-settings: 'tnum';
+}
+</style>
+
+  <!-- ═══ PWA 메타 태그 ═══ -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#ffeba7">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="PPMS 점검">
+  <link rel="apple-touch-icon" href="/static/pwa/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/static/pwa/favicon-32.png">
+  <!-- ═══════════════════════ -->
+</head>
+<body>
+
+<div class="page-overlay" id="page-overlay"></div>
+
+<!-- 헤더 -->
+<header class="m-header">
+    <div class="m-header-left">
+        <div class="m-logo-box" onclick="goTo('/mobile_index')">
+            <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                <path d="M40 160 L40 40 L100 40 C140 40 160 60 160 90 C160 120 140 140 100 140 L70 140 L70 160 Z M70 65 L70 115 L98 115 C122 115 132 105 132 90 C132 75 122 65 98 65 Z"/>
+            </svg>
+        </div>
+        <div>
+            <span class="m-header-title">점검 관리</span>
+            <span class="m-header-sub">Inspection Dashboard</span>
+        </div>
+    </div>
+    <div class="m-time" id="m-time">
+        <i class="uil uil-clock-eight"></i><span>--:--</span>
+    </div>
+</header>
+
+<!-- 콘텐츠 -->
+<main class="m-content">
+
+    <!-- 비전 장비 -->
+    <div class="m-section-title">비전 장비 점검</div>
+    <div class="m-menu-grid">
+        <div class="m-menu-card" onclick="goMobile('vision', {m:'1'})">
+            <i class="uil uil-eye m-card-icon ic-blue"></i>
+            <div class="m-card-label">비전 1호기</div>
+            <div class="m-card-desc">A-Line<br>비전 검사 장비</div>
+        </div>
+        <div class="m-menu-card" onclick="goMobile('vision', {m:'2'})">
+            <i class="uil uil-eye m-card-icon ic-purple"></i>
+            <div class="m-card-label">비전 2호기</div>
+            <div class="m-card-desc">B-Line<br>비전 검사 장비</div>
+        </div>
+    </div>
+
+    <!-- SMD 설비 점검 -->
+    <div class="m-section-title">SMD 설비 점검</div>
+    <div class="m-menu-grid">
+        <div class="m-menu-card" onclick="goMobile('smd_daily')">
+            <i class="uil uil-processor m-card-icon ic-blue"></i>
+            <div class="m-card-label">SMD 설비</div>
+            <div class="m-card-desc">일일 점검<br>9개 설비</div>
+        </div>
+        <div class="m-menu-card" onclick="goMobile('wave_solder')">
+            <i class="uil uil-fire m-card-icon ic-orange"></i>
+            <div class="m-card-label">Wave Solder</div>
+            <div class="m-card-desc">일/주별<br>14개 항목</div>
+        </div>
+        <div class="m-menu-card" onclick="goMobile('metal_mask')">
+            <i class="uil uil-layer-group m-card-icon ic-teal"></i>
+            <div class="m-card-label">Metal Mask</div>
+            <div class="m-card-desc">세척기 점검<br>O/X 판정</div>
+        </div>
+    </div>
+
+    <!-- 환경 / 전기 점검 -->
+    <div class="m-section-title">환경 · 전기 점검</div>
+    <div class="m-menu-grid">
+        <div class="m-menu-card" onclick="goMobile('esd')">
+            <i class="uil uil-bolt m-card-icon ic-gold"></i>
+            <div class="m-card-label">제전화</div>
+            <div class="m-card-desc">손목띠 포함<br>정전기 방지</div>
+        </div>
+        <div class="m-menu-card" onclick="goMobile('environment')">
+            <i class="uil uil-temperature m-card-icon ic-green"></i>
+            <div class="m-card-label">환경 점검</div>
+            <div class="m-card-desc">냉장고·실내<br>온·습도 기록</div>
+        </div>
+        <div class="m-menu-card full" onclick="goMobile('ac_leakage')">
+            <i class="uil uil-bolt m-card-icon ic-red"></i>
+            <div>
+                <div class="m-card-label">AC 누설전류 점검</div>
+                <div class="m-card-desc">A·B·C 라인 설비별 누설전압 월 1회 측정</div>
+            </div>
+        </div>
+    </div>
+
+</main>
+
+<!-- 하단 바 -->
+<nav class="m-action-bar">
+    <button class="m-nav-home-btn" onclick="goTo('/mobile_index')"><i class="uil uil-home"></i></button>
+    <span class="m-footer-copy">© PHILIA TELECOM</span>
+</nav>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const role = localStorage.getItem('ppms_user_role') || '';
+    if (!role) { window.location.href = '/api/auth/login_view'; return; }
+    updateTime(); setInterval(updateTime, 1000);
+    setTimeout(() => { document.body.style.opacity = '1'; }, 50);
+});
+
+window.addEventListener('pageshow', () => {
+    document.body.style.opacity = '1';
+    document.getElementById('page-overlay').classList.remove('active');
+});
+
+function updateTime() {
+    const el = document.querySelector('#m-time span');
+    if (!el) return;
+    const now = new Date();
+    const pad = n => String(n).padStart(2,'0');
+    el.textContent = `${now.getFullYear()}.${pad(now.getMonth()+1)}.${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+}
+
+/* ─────────────────────────────────────────────────────────
+   goMobile: 서버에서 토큰을 발급받은 후 mobile_check.html 로 이동
+   
+   mobile_check.html 은 URL에 ?s=시트타입&t=토큰 이 반드시 있어야 함.
+   QR 없이 직접 접속할 때도 서버 토큰을 먼저 받아서 전달한다.
+   
+   tokenEndpoint:
+     - SMD/Wave/Metal/Env/AC → /api/smd_check/qr/token
+     - Vision/ESD            → /api/inspection/qr/token
+   ───────────────────────────────────────────────────────── */
+async function goMobile(sheetType, extra = {}) {
+    showLoadingOverlay(true);
+    try {
+        // 시트 타입에 따라 토큰 발급 엔드포인트 분기
+        const useInspectionToken = ['vision', 'esd'].includes(sheetType);
+        const tokenEndpoint = useInspectionToken
+            ? '/api/inspection/qr/token'
+            : '/api/smd_check/qr/token';
+
+        // 파라미터 구성 (s + 추가 파라미터)
+        const params = new URLSearchParams({ s: sheetType, ...extra });
+        const res  = await fetch(`${tokenEndpoint}?${params}`);
+        const data = await res.json();
+
+        if (!data.token) throw new Error('토큰 발급 실패');
+
+        // 토큰 포함해서 mobile_check.html 로 이동
+        params.append('t', data.token);
+        goTo(`/api/smd_check/mobile?${params}`);
+
+    } catch (e) {
+        showLoadingOverlay(false);
+        showToast('점검 페이지를 열 수 없습니다: ' + e.message);
+    }
+}
+
+function showLoadingOverlay(show) {
+    const overlay = document.getElementById('page-overlay');
+    if (show) overlay.classList.add('active');
+    else      overlay.classList.remove('active');
+}
+
+function showToast(msg) {
+    const t = document.createElement('div');
+    t.textContent = msg;
+    t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1e1f2e;border:1px solid rgba(255,68,68,0.35);border-radius:20px;padding:10px 20px;font-size:0.8rem;color:#ff7070;z-index:9999;white-space:nowrap;pointer-events:none;';
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 3000);
+}
+
+function goTo(url) {
+    document.getElementById('page-overlay').classList.add('active');
+    setTimeout(() => { window.location.href = url; }, 300);
+}
+</script>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js', { scope: '/' })
+          .catch(() => {/* SW 등록 실패는 무시 — 앱 동작에 영향 없음 */});
+      });
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,1584 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>PPMS - 통계 분석</title>
+<link href="https://hangeul.pstatic.net/hangeul_static/css/bmdohyeon.css" rel="stylesheet">
+<link href="https://hangeul.pstatic.net/hangeul_static/css/bmjua.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css?family=Poppins:400,500,600,700,800,900" rel="stylesheet">
+<link rel="stylesheet" href="https://unicons.iconscout.com/release/v2.1.9/css/unicons.css">
+<style>
+/* =============================================
+   [1] 전역 변수 & 리셋
+   ============================================= */
+:root {
+    --bg-dark:       #111218;
+    --card-bg:       #1e1f2e;
+    --text-color:    #c4c3ca;
+    --text-white:    #ffffff;
+    --point-gold:    #ffeba7;
+    --accent-blue:   #102770;
+    --danger-red:    #ff4444;
+    --success-green: #00e676;
+    --border-color:  rgba(255,235,167,0.15);
+    --group-a:       #4e73df;
+    --group-b:       #f6c23e;
+    --group-c:       #e74a3b;
+    --group-d:       #858796;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body {
+    background-color: #111218;
+    color: var(--text-color);
+    font-family: 'Poppins', 'BMDOHYEON', sans-serif;
+    display: flex; flex-direction: column;
+    opacity: 0; transition: opacity 0.4s ease;
+}
+a { text-decoration: none; color: inherit; }
+
+/* =============================================
+   [2] 헤더: 로고 + 제목 + 시각
+   ============================================= */
+.m-header {
+    background: rgba(17,18,24,0.98);
+    border-bottom: 1px solid var(--border-color);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    padding: 0 16px; height: 64px;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-shrink: 0; position: sticky; top: 0; z-index: 100; gap: 10px;
+}
+.m-header-left { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+.m-logo-box {
+    width: 34px; height: 34px;
+    background: rgba(255,235,167,0.08); border: 1px solid rgba(255,235,167,0.35);
+    border-radius: 9px; display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; cursor: pointer;
+}
+.m-logo-box svg { width: 20px; height: 20px; fill: var(--point-gold); }
+.m-header-title { font-family: 'Poppins', sans-serif; font-size: 0.82rem; font-weight: 800; color: var(--point-gold); letter-spacing: 1.5px; text-transform: uppercase; display: block; }
+.m-header-sub { font-size: 0.74rem; color: #8a8a9a; }
+.m-time-display { display: flex; align-items: center; gap: 4px; font-size: 0.76rem; color: var(--text-color); white-space: nowrap; flex-shrink: 0; }
+.m-time-display i { font-size: 0.8rem; color: var(--point-gold); opacity: 0.8; }
+
+/* =============================================
+   [3] 메인 탭 (생산실적 / AOI / 점검시트)
+   ============================================= */
+.m-main-tabs {
+    background: rgba(17,18,24,0.97); border-bottom: 1px solid var(--border-color);
+    display: flex; flex-shrink: 0; position: sticky; top: 64px; z-index: 99;
+}
+.m-main-tab {
+    flex: 1; padding: 11px 4px; font-size: 0.72rem; font-weight: 700;
+    color: #8a8a9a; background: transparent; border: none;
+    border-bottom: 3px solid transparent;
+    cursor: pointer; transition: all 0.2s; font-family: 'Poppins', sans-serif;
+    display: flex; align-items: center; justify-content: center; gap: 4px;
+}
+.m-main-tab i { font-size: 0.9rem; }
+.m-main-tab.active { color: var(--point-gold); border-bottom-color: var(--point-gold); }
+
+/* =============================================
+   [4] 필터 바
+   ============================================= */
+.m-filter-bar {
+    background: rgba(17,18,24,0.95); border-bottom: 1px solid rgba(255,255,255,0.05);
+    padding: 10px 14px; display: flex; align-items: center; gap: 8px;
+    flex-shrink: 0; flex-wrap: wrap;
+}
+.m-filter-select, .m-filter-input {
+    background: var(--card-bg); border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 8px; padding: 7px 10px; color: var(--text-white);
+    font-size: 0.78rem; font-family: 'Poppins', sans-serif;
+    -webkit-appearance: none; flex: 1; min-width: 70px;
+}
+.m-filter-select:focus, .m-filter-input:focus { outline: none; border-color: var(--point-gold); }
+.m-filter-label { font-size: 0.78rem; color: #777; white-space: nowrap; flex-shrink: 0; }
+.m-search-btn {
+    padding: 7px 16px; background: rgba(255,235,167,0.12);
+    border: 1px solid rgba(255,235,167,0.35); border-radius: 8px;
+    color: var(--point-gold); font-size: 0.78rem; font-weight: 700;
+    cursor: pointer; transition: all 0.15s; white-space: nowrap; flex-shrink: 0;
+    display: flex; align-items: center; gap: 5px;
+}
+.m-search-btn:active { background: var(--point-gold); color: var(--accent-blue); }
+
+/* 기간 토글 (주간/월간) */
+.m-period-toggle {
+    display: flex; background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1); border-radius: 7px;
+    padding: 2px; gap: 2px; flex-shrink: 0;
+}
+.m-period-opt {
+    padding: 5px 10px; font-size: 0.80rem; border-radius: 5px;
+    color: #888; cursor: pointer; transition: all 0.2s; white-space: nowrap;
+    font-family: 'BMDOHYEON', sans-serif;
+}
+.m-period-opt.active { background: var(--accent-blue); color: #fff; font-weight: bold; }
+
+/* 점검 시트 타입 스크롤 */
+.m-sheet-types { flex-wrap: wrap !important;
+    display: flex; gap: 6px; overflow-x: auto; -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; padding-bottom: 2px;
+}
+.m-sheet-types::-webkit-scrollbar { display: none; }
+.m-sheet-type-btn {
+    padding: 6px 12px; border-radius: 20px; font-size: 0.80rem; font-weight: 700;
+    background: var(--card-bg); border: 1px solid rgba(255,255,255,0.1);
+    color: #777; cursor: pointer; transition: all 0.2s; white-space: nowrap;
+    font-family: 'BMDOHYEON', sans-serif;
+}
+.m-sheet-type-btn.active { background: var(--point-gold); color: var(--accent-blue); border-color: transparent; }
+
+/* =============================================
+   [5] 콘텐츠 영역
+   ============================================= */
+.m-content {
+    flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;
+    padding: 12px 12px 24px;
+    display: flex; flex-direction: column; gap: 10px;
+}
+
+/* =============================================
+   [6] 요약 패널 (전체 통계 칩)
+   ============================================= */
+.m-summary-panel {
+    background: var(--card-bg); border: 1px solid var(--border-color);
+    border-radius: 14px; padding: 14px 16px;
+    display: flex; flex-direction: column; gap: 10px;
+}
+.m-summary-panel-title {
+    font-size: 0.78rem; color: var(--point-gold); font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.06em;
+}
+.m-summary-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+.m-summary-chip {
+    display: flex; flex-direction: column; align-items: center;
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 10px; padding: 8px 12px; min-width: 70px; flex: 1;
+}
+.m-chip-label { font-size: 0.73rem; color: #666; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 2px; }
+.m-chip-value { font-size: 0.95rem; font-weight: 700; font-family: 'Poppins', sans-serif; }
+
+/* 불량 유형 바 */
+.m-defect-breakdown { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
+.m-defect-bar-row { display: flex; align-items: center; gap: 8px; }
+.m-defect-bar-label { font-size: 0.75rem; color: #888; width: 46px; flex-shrink: 0; }
+.m-defect-bar-track { flex: 1; height: 5px; background: rgba(255,255,255,0.07); border-radius: 10px; overflow: hidden; }
+.m-defect-bar-fill { height: 100%; border-radius: 10px; transition: width 0.6s ease; }
+.bar-a { background: var(--group-a); }
+.bar-b { background: var(--group-b); }
+.bar-c { background: var(--group-c); }
+.bar-d { background: var(--group-d); }
+.m-defect-bar-val { font-size: 0.76rem; color: #888; width: 50px; text-align: right; flex-shrink: 0; font-family: 'Poppins', sans-serif; }
+
+/* =============================================
+   [7] 결과 카드들
+   ============================================= */
+.m-section-label {
+    font-size: 0.76rem; color: #777; text-transform: uppercase;
+    letter-spacing: 0.06em; padding: 0 2px;
+}
+
+/* 생산 실적 카드 */
+.m-prod-card {
+    background: var(--card-bg); border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 12px; padding: 12px 16px;
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+}
+.m-prod-card.shortage { border-left: 3px solid #FF3D00; }
+.m-prod-card.imbalance { border-left: 3px solid #EA00FF; }
+.m-prod-model { font-size: 0.88rem; font-weight: 700; color: var(--text-white); }
+.m-prod-order { font-size: 0.75rem; color: #666; margin-top: 2px; }
+.m-prod-qty-wrap { text-align: right; flex-shrink: 0; }
+.m-prod-lot { font-size: 0.80rem; color: #888; }
+.m-prod-actual { font-size: 1.05rem; font-weight: 700; font-family: 'Poppins', sans-serif; }
+.m-prod-actual.shortage { color: #FF3D00; }
+.m-prod-actual.imbalance { color: #EA00FF; }
+.m-prod-actual.ok { color: var(--success-green); }
+
+/* AOI 모델 카드 */
+.m-aoi-card {
+    background: var(--card-bg); border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 12px; overflow: hidden;
+}
+.m-aoi-card-head {
+    padding: 10px 14px; display: flex; align-items: center; justify-content: space-between;
+    cursor: pointer;
+}
+.m-aoi-card-model { font-size: 0.88rem; font-weight: 700; color: var(--text-white); }
+.m-aoi-card-period { font-size: 0.75rem; color: #666; margin-top: 1px; }
+.m-aoi-card-badges { display: flex; gap: 6px; flex-shrink: 0; }
+.m-aoi-badge {
+    padding: 3px 8px; border-radius: 10px; font-size: 0.76rem; font-weight: 700;
+}
+.badge-defect { background: rgba(255,68,68,0.15); border: 1px solid rgba(255,68,68,0.3); color: var(--danger-red); }
+.badge-ok { background: rgba(0,230,118,0.1); border: 1px solid rgba(0,230,118,0.25); color: var(--success-green); }
+.m-aoi-card-detail { display: none; padding: 0 14px 12px; }
+.m-aoi-card.open .m-aoi-card-detail { display: block; }
+.m-aoi-expand-icon { font-size: 1rem; color: #8a8a9a; transition: transform 0.25s; flex-shrink: 0; }
+.m-aoi-card.open .m-aoi-expand-icon { transform: rotate(90deg); }
+
+.m-aoi-stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 8px; }
+.m-aoi-stat-cell { background: rgba(255,255,255,0.04); border-radius: 8px; padding: 6px; text-align: center; }
+.m-aoi-stat-lbl { font-size: 0.72rem; color: #666; text-transform: uppercase; }
+.m-aoi-stat-val { font-size: 0.82rem; font-weight: 700; font-family: 'Poppins', sans-serif; }
+
+/* 점검시트 결과 카드 */
+.m-insp-card {
+    background: var(--card-bg); border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 12px; padding: 14px 16px;
+}
+.m-insp-card-title { font-size: 0.82rem; font-weight: 700; color: var(--text-white); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+.m-insp-card-title i { color: var(--point-gold); }
+.m-insp-row { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 0.78rem; }
+.m-insp-row:last-child { border-bottom: none; }
+.m-insp-key { color: #888; }
+.m-insp-val { color: var(--text-white); font-weight: 600; }
+.m-insp-ok { color: var(--success-green); }
+.m-insp-ng { color: var(--danger-red); }
+
+/* =============================================
+   [8] 빈 상태 / 로딩
+   ============================================= */
+.m-empty-state {
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 60px 20px; gap: 10px; text-align: center;
+}
+.m-empty-icon { font-size: 2.5rem; color: #777; }
+.m-empty-text { font-size: 0.88rem; color: #8a8a9a; line-height: 1.6; }
+.m-loading { display: flex; align-items: center; justify-content: center; padding: 60px; gap: 10px; color: #8a8a9a; font-size: 0.85rem; }
+.m-spinner { width: 22px; height: 22px; border: 2px solid rgba(255,235,167,0.15); border-top-color: var(--point-gold); border-radius: 50%; animation: spin 0.7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* =============================================
+   [9] 하단 홈 버튼 바
+   ============================================= */
+.m-action-bar {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: rgba(17,18,24,0.98); border-top: 1px solid var(--border-color);
+    padding: 10px 16px; display: flex; align-items: center; gap: 8px;
+    z-index: 200; backdrop-filter: blur(8px);
+}
+.m-bar-btn {
+    display: flex; align-items: center; justify-content: center; gap: 5px;
+    padding: 9px 14px; background: var(--card-bg);
+    border: 1px solid rgba(255,255,255,0.1); border-radius: 20px;
+    font-size: 0.75rem; color: var(--text-color);
+    cursor: pointer; transition: all 0.2s; white-space: nowrap;
+}
+.m-bar-btn.home { background: rgba(255,235,167,0.07); border-color: rgba(255,235,167,0.2); color: var(--point-gold); }
+.m-bar-btn:active { background: var(--point-gold); color: var(--accent-blue); border-color: transparent; }
+.m-content-pad { padding-bottom: 70px; }
+
+/* =============================================
+   [10] 페이지 전환 오버레이
+   ============================================= */
+.page-overlay { position: fixed; inset: 0; background: var(--bg-dark); opacity: 0; pointer-events: none; z-index: 9999; transition: opacity 0.3s ease; }
+.page-overlay.active { opacity: 1; pointer-events: all; }
+
+/* ── 홈버튼 표준 스타일 (전체 모바일 페이지 공통) ── */
+.m-nav-home-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    background: rgba(255,235,167,0.08);
+    border: 1.5px solid rgba(255,235,167,0.35);
+    border-radius: 14px;
+    color: var(--point-gold);
+    font-size: 1.25rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+.m-nav-home-btn:active {
+    background: var(--point-gold);
+    color: var(--accent-blue);
+    border-color: var(--point-gold);
+    transform: scale(0.92);
+}
+
+/* ── 하단 바 표준 높이/패딩 (전체 모바일 공통) ── */
+.m-action-bar,
+.m-nav-bar {
+    min-height: 62px;
+    padding: 9px 16px !important;
+    gap: 10px !important;
+}
+
+/* ══════════════════════════════════════════════════════
+   입력 요소 가독성 강화 (전체 모바일 공통)
+   — 다크 배경에서 입력 가능 칸임을 명확히 표시
+   ══════════════════════════════════════════════════════ */
+
+/* 공통 입력 필드 기반 스타일 재정의 */
+.m-card-input,
+.m-info-input,
+.m-defect-chip-input,
+.m-scrap-input,
+.m-sheet-input,
+.m-sheet-select,
+.m-filter-input,
+.m-filter-select,
+.m-add-model-input,
+.m-memo-area,
+.m-checker-input,
+.pw-input {
+    background: #0d0e14 !important;          /* 카드 배경보다 확실히 어두운 색 */
+    border: 1.5px solid rgba(255,255,255,0.22) !important;
+    box-shadow: inset 0 1px 4px rgba(0,0,0,0.45);
+    color: #f0f0f0 !important;
+}
+
+/* 왼쪽 포인트 선으로 "입력 가능" 신호 */
+.m-card-input,
+.m-info-input,
+.m-sheet-input,
+.m-add-model-input,
+.pw-input {
+    border-left: 3px solid rgba(255,235,167,0.45) !important;
+    padding-left: 12px !important;
+}
+
+/* 수량 입력 (중앙 정렬, 작은 칸) */
+.m-defect-chip-input,
+.m-scrap-input {
+    border-left: 3px solid rgba(255,235,167,0.35) !important;
+}
+
+/* placeholder 가독성 */
+.m-card-input::placeholder,
+.m-info-input::placeholder,
+.m-sheet-input::placeholder,
+.m-add-model-input::placeholder,
+.pw-input::placeholder,
+.m-memo-area::placeholder {
+    color: rgba(255,255,255,0.3) !important;
+}
+
+/* select 드롭다운 (기본 화살표 유지 + 스타일) */
+.m-sheet-select,
+.m-filter-select {
+    border-left: 3px solid rgba(255,235,167,0.35) !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23ffeba7' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 12px center !important;
+    padding-right: 32px !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    appearance: none !important;
+}
+
+/* 포커스 시: 골드 테두리로 강화 */
+.m-card-input:focus,
+.m-info-input:focus,
+.m-defect-chip-input:focus,
+.m-scrap-input:focus,
+.m-sheet-input:focus,
+.m-sheet-select:focus,
+.m-filter-input:focus,
+.m-filter-select:focus,
+.m-add-model-input:focus,
+.m-memo-area:focus,
+.pw-input:focus {
+    outline: none !important;
+    border-color: rgba(255,235,167,0.75) !important;
+    border-left-color: var(--point-gold) !important;
+    box-shadow: inset 0 1px 4px rgba(0,0,0,0.4),
+                0 0 0 2px rgba(255,235,167,0.12) !important;
+    background: #141520 !important;
+}
+
+/* disabled 상태 명확화 */
+.m-card-input:disabled,
+.m-info-input:disabled,
+.m-defect-chip-input:disabled,
+.m-scrap-input:disabled {
+    background: #0d0e14 !important;
+    border: 1.5px dashed rgba(255,255,255,0.1) !important;
+    border-left: 3px dashed rgba(255,255,255,0.1) !important;
+    box-shadow: none !important;
+    opacity: 0.45 !important;
+    cursor: not-allowed !important;
+}
+
+/* 카드 테두리 강화 (기존보다 밝게) */
+.m-aoi-card,
+.m-schedule-card,
+.m-repair-card,
+.m-group-card,
+.m-dip-card,
+.m-batch-item {
+    border-color: rgba(255,255,255,0.14) !important;
+}
+
+/* 액션 버튼 (저장/완료 등) 최소 높이 보장 */
+.m-card-save-btn,
+.m-save-btn,
+.m-toggle-btn,
+.m-group-action-btn {
+    min-height: 40px;
+    font-size: 0.82rem !important;
+}
+
+/* statistics 전용 */
+.m-filter-bar {
+    gap: 10px !important;
+    padding: 12px 14px !important;
+}
+.m-search-btn {
+    min-height: 42px !important;
+    font-size: 0.82rem !important;
+    font-weight: 800 !important;
+    border-width: 1.5px !important;
+}
+.m-period-opt {
+    font-size: 0.78rem !important;
+    min-height: 34px !important;
+    display: flex; align-items: center;
+}
+.m-sheet-type-btn {
+    min-height: 36px !important;
+    font-size: 0.78rem !important;
+    border: 1.5px solid rgba(255,255,255,0.18) !important;
+}
+
+/* ═══════════════════════════════════════════════════
+   전체 화면 레이아웃 고정 — 스크롤 없이 뷰포트에 꼭 맞춤
+   ═══════════════════════════════════════════════════ */
+html, body {
+    height: 100% !important;
+    overflow-x: hidden !important;
+}
+body {
+    display: flex !important;
+    flex-direction: column !important;
+    min-height: unset !important;   /* min-height:100vh 덮어쓰기 */
+}
+/* 헤더·탭·하단바 — 절대 줄어들지 않음 */
+.m-header, .m-tab-nav, .m-status-tabs, .m-main-tabs,
+.m-action-bar, .m-nav-bar, .m-action-bar,
+.m-date-bar, .m-filter-bar, .m-month-nav,
+.m-summary-bar, .m-breadcrumb, .m-footer, nav {
+    flex-shrink: 0 !important;
+}
+/* 스크롤 가능 영역 — 남은 공간 전부 차지 */
+.m-content, #app-body, #m-content {
+    flex: 1 1 0 !important;      /* 1 1 0 → 줄어들 수 있음 */
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    min-height: 0 !important;    /* flex child 줄어들기 허용 */
+}
+
+/* ════════════════════════════════════════════════════════
+   UI 박스 구분 강화 — 테두리·그림자·배경 대비
+   ════════════════════════════════════════════════════════ */
+
+/* ── 카드 계열 전부 ── */
+.m-schedule-card, .m-aoi-card, .m-dip-card, .m-group-card,
+.m-repair-card, .m-batch-item, .m-mgr-card, .m-item,
+.m-aoi-stat-cell, .m-summary-panel,
+.m-modal-sheet, .m-file-card,
+.m-card, .m-select-btn, .m-dept-column,
+.m-dash-card, .m-menu-card {
+    border-color: rgba(255,255,255,0.18) !important;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.55),
+                0 0 0 1px rgba(255,255,255,0.06) !important;
+}
+
+/* ── 호버/액티브 시 더 밝게 ── */
+.m-schedule-card:active, .m-aoi-card:active,
+.m-group-card:active, .m-item:active,
+.m-dash-card:active, .m-menu-card:active {
+    border-color: rgba(255,235,167,0.45) !important;
+    box-shadow: 0 4px 18px rgba(0,0,0,0.65),
+                0 0 0 1px rgba(255,235,167,0.18) !important;
+}
+
+/* ── KPI 칸 (생산/AOI 카드 안) ── */
+.m-card-kpi, .m-aoi-kpi {
+    background: #0d0e14 !important;
+    border-color: rgba(255,255,255,0.16) !important;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.5) !important;
+}
+
+/* ── 점검 대시보드 카드 ── */
+.m-insp-card {
+    border-color: rgba(255,255,255,0.18) !important;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.55) !important;
+}
+
+/* ── 탭 네비 ── */
+.m-tab-nav, .m-main-tabs, .m-status-tabs {
+    border-bottom: 1px solid rgba(255,255,255,0.12) !important;
+    background: rgba(17,18,24,0.98) !important;
+}
+
+/* ── 필터 바 ── */
+.m-filter-bar {
+    border-bottom: 1px solid rgba(255,255,255,0.1) !important;
+    background: rgba(17,18,24,0.95) !important;
+}
+
+/* ── 헤더 ── */
+.m-header {
+    border-bottom: 1px solid rgba(255,235,167,0.2) !important;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.6) !important;
+}
+
+/* ── 하단 액션 바 ── */
+.m-action-bar, .m-nav-bar, .m-footer {
+    border-top: 1px solid rgba(255,255,255,0.12) !important;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.5) !important;
+}
+
+/* ── 배경보다 살짝 밝은 mid-layer (모달 등) ── */
+.m-modal-sheet {
+    background: #1e1f2e !important;
+    border-top: 1px solid rgba(255,255,255,0.18) !important;
+    box-shadow: 0 -8px 40px rgba(0,0,0,0.8) !important;
+}
+
+/* ── 섹션 구분선 ── */
+.m-section-label {
+    color: rgba(255,235,167,0.7) !important;
+    border-bottom: 1px solid rgba(255,235,167,0.18) !important;
+    padding-bottom: 4px;
+    margin-bottom: 8px;
+}
+
+/* ── index 메뉴 카드 특별 강조 ── */
+.m-menu-card {
+    background: #1e1f2e !important;
+}
+.m-menu-card.primary {
+    background: linear-gradient(135deg, rgba(255,235,167,0.10) 0%, #1e1f2e 100%) !important;
+    border-color: rgba(255,235,167,0.30) !important;
+}
+
+/* ── 점검 배너 ── */
+.m-inspect-banner {
+    background: rgba(255,235,167,0.07) !important;
+    border: 1.5px solid rgba(255,235,167,0.28) !important;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.5) !important;
+}
+
+/* ── 입력 필드 ── */
+.m-sheet-input, .m-sheet-select,
+.m-card-input, .m-info-input {
+    background: #0d0e14 !important;
+    border-color: rgba(255,255,255,0.25) !important;
+}
+
+/* ── 진행률 트랙 ── */
+.m-progress-track, .m-card-progress-track,
+.m-card-mini-bar-track {
+    background: rgba(255,255,255,0.14) !important;
+}
+
+/* ── 요약 칩 ── */
+.m-summary-chip {
+    background: #0d0e14 !important;
+    border: 1px solid rgba(255,255,255,0.15) !important;
+}
+
+/* ── 생산 진행률 패널 ── */
+.m-progress-wrap {
+    background: rgba(255,255,255,0.04) !important;
+    border: 1px solid rgba(255,255,255,0.1) !important;
+    border-radius: 12px;
+    padding: 10px 14px;
+    margin-bottom: 10px;
+}
+
+/* ── 점검시트 선택 버튼 ── */
+.m-select-btn {
+    background: #1e1f2e !important;
+}
+.m-insp-type-card, .m-insp-card {
+    background: #1e1f2e !important;
+    border-color: rgba(255,255,255,0.18) !important;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.5) !important;
+}
+
+/* ── mobile_check 점검 항목 ── */
+.m-item {
+    background: #1e1f2e !important;
+    border: 1px solid rgba(255,255,255,0.16) !important;
+}
+.m-item.done {
+    border-color: rgba(78,115,223,0.6) !important;
+    background: rgba(78,115,223,0.1) !important;
+}
+
+/* ── 모달 오버레이 (기본 숨김) ── */
+.m-modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.75);
+    z-index: 500;
+    display: none;
+    align-items: flex-end;
+}
+.m-modal-overlay.open { display: flex; }
+.m-modal-sheet {
+    width: 100%;
+    background: #1e1f2e;
+    border-radius: 20px 20px 0 0;
+    border-top: 1px solid rgba(255,255,255,0.18);
+    padding: 20px 20px 48px;
+    box-shadow: 0 -8px 40px rgba(0,0,0,0.8);
+    animation: slideUp 0.25s ease;
+    max-height: 85vh;
+    overflow-y: auto;
+}
+@keyframes slideUp {
+    from { transform: translateY(100%); }
+    to   { transform: translateY(0); }
+}
+.m-sheet-title {
+    font-family: 'BMDOHYEON', sans-serif;
+    font-size: 1.05rem; color: var(--point-gold);
+    margin-bottom: 14px;
+    display: flex; align-items: center; gap: 8px;
+}
+.m-sheet-label {
+    font-size: 0.72rem; color: #8a8a9a;
+    margin-bottom: 5px; margin-top: 12px;
+}
+.m-sheet-input, .m-sheet-select {
+    width: 100%; background: #0d0e14;
+    border: 1.5px solid rgba(255,255,255,0.22);
+    border-left: 3px solid rgba(255,235,167,0.45);
+    border-radius: 10px; padding: 11px 14px;
+    color: #f0f0f0; font-size: 0.88rem;
+    font-family: 'Poppins', sans-serif;
+    -webkit-appearance: none; appearance: none;
+}
+.m-sheet-input:focus, .m-sheet-select:focus {
+    outline: none; border-color: rgba(255,235,167,0.75); background: #141520;
+}
+.m-sheet-btn-row { display: flex; gap: 8px; margin-top: 16px; }
+.m-sheet-btn {
+    flex: 1; padding: 12px; border-radius: 10px;
+    font-size: 0.9rem; font-weight: 700; cursor: pointer;
+    border: none; font-family: 'Poppins', sans-serif; transition: all 0.15s;
+}
+.m-sheet-btn.cancel  { background: rgba(255,255,255,0.07); color: #888; }
+.m-sheet-btn.confirm { background: var(--point-gold); color: var(--accent-blue); }
+
+/* ════════════════════════════════════════════════
+   테마 폰트 통일 — 모든 입력 요소
+   라벨·제목: BMDOHYEON
+   입력값·수치: Poppins
+   ════════════════════════════════════════════════ */
+
+/* 전체 기본 폰트 */
+body, * {
+    font-family: 'Poppins', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+}
+
+/* 입력 요소 — Poppins (숫자·영문 가독성) */
+input, select, textarea,
+.m-sheet-input, .m-sheet-select,
+.m-card-input, .m-info-input,
+.m-defect-chip-input, .m-scrap-input,
+.m-add-model-input, .m-memo-area,
+.m-checker-input, .pw-input,
+.dm-qty-input, .dm-ref-input,
+.m-defect-row-input,
+.m-filter-input, .m-filter-select {
+    font-family: 'Poppins', 'Apple SD Gothic Neo', sans-serif !important;
+    font-size: 0.9rem !important;
+}
+
+/* placeholder 폰트 */
+input::placeholder, textarea::placeholder,
+.m-sheet-input::placeholder,
+.m-card-input::placeholder,
+.m-info-input::placeholder,
+.m-memo-area::placeholder {
+    font-family: 'Poppins', 'Apple SD Gothic Neo', sans-serif !important;
+    font-size: 0.82rem !important;
+    opacity: 0.45;
+}
+
+/* 타이틀·라벨 — BMDOHYEON */
+.m-sheet-title, .m-section-label,
+.m-header-title, .m-header-sub,
+.m-card-model, .m-card-company,
+.m-tab-btn, .m-main-tab,
+.m-kpi-label, .m-kpi-value,
+.m-aoi-kpi .m-kpi-label,
+.m-aoi-kpi .m-kpi-value,
+.m-sheet-label,
+.m-section-title,
+.m-equip-title,
+.m-empty-text,
+.m-loading,
+.m-result-title {
+    font-family: 'BMDOHYEON', 'Apple SD Gothic Neo', sans-serif !important;
+}
+
+/* 버튼 — Poppins (숫자 포함) */
+button, .m-sheet-btn, .m-nav-btn,
+.m-bar-btn, .m-action-btn,
+.m-aoi-entry-btn, .m-aoi-del-btn,
+.m-aoi-detail-btn, .m-card-action-btn,
+.m-save-btn, .m-search-btn,
+.m-submit-btn, .m-bulk-btn,
+.m-type-btn, .m-line-btn,
+.m-period-opt, .m-sheet-type-btn,
+.m-select-btn {
+    font-family: 'Poppins', 'Apple SD Gothic Neo', sans-serif !important;
+}
+
+/* 숫자 표시 — Poppins */
+.m-kpi-value, .m-chip-value,
+.m-card-info-value, .m-progress-pct,
+.m-card-tb-badge, .m-card-defect-badge,
+.m-prod-actual {
+    font-family: 'Poppins', sans-serif !important;
+    font-feature-settings: 'tnum';
+}
+</style>
+
+  <!-- ═══ PWA 메타 태그 ═══ -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#ffeba7">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="PPMS 통계">
+  <link rel="apple-touch-icon" href="/static/pwa/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/static/pwa/favicon-32.png">
+  <!-- ═══════════════════════ -->
+</head>
+<body>
+
+<div class="page-overlay" id="page-overlay"></div>
+
+<!-- ===== 헤더 ===== -->
+<header class="m-header">
+    <div class="m-header-left">
+        <div class="m-logo-box" onclick="goTo('/mobile_index')">
+            <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                <path d="M40 160 L40 40 L100 40 C140 40 160 60 160 90 C160 120 140 140 100 140 L70 140 L70 160 Z M70 65 L70 115 L98 115 C122 115 132 105 132 90 C132 75 122 65 98 65 Z"/>
+            </svg>
+        </div>
+        <div>
+            <span class="m-header-title">통계 분석</span>
+            <span class="m-header-sub">Statistics & Analysis</span>
+        </div>
+    </div>
+    <div class="m-time-display" id="m-time">
+        <i class="uil uil-clock-eight"></i><span>--:--</span>
+    </div>
+</header>
+
+<!-- ===== 메인 탭 ===== -->
+<nav class="m-main-tabs">
+    <button class="m-main-tab active" data-tab="production" onclick="switchTab('production', this)">
+        <i class="uil uil-chart-line"></i> 생산실적
+    </button>
+    <button class="m-main-tab" data-tab="aoi" onclick="switchTab('aoi', this)">
+        <i class="uil uil-microscope"></i> AOI 분석
+    </button>
+    <button class="m-main-tab" data-tab="inspection" onclick="switchTab('inspection', this)">
+        <i class="uil uil-clipboard-alt"></i> 점검시트
+    </button>
+</nav>
+
+<!-- ===== 생산 실적 필터 ===== -->
+<div class="m-filter-bar" id="filter-production">
+    <span class="m-filter-label">연도</span>
+    <input type="number" class="m-filter-input" id="prod-year" style="max-width:80px;" placeholder="2026">
+    <span class="m-filter-label">월</span>
+    <select class="m-filter-select" id="prod-month" style="max-width:90px;"></select>
+    <button class="m-search-btn" onclick="searchProduction()"><i class="uil uil-search"></i> 조회</button>
+</div>
+
+<!-- ===== AOI 필터 ===== -->
+<div class="m-filter-bar" id="filter-aoi" style="display:none; flex-direction:column; align-items:stretch; gap:8px;">
+    <div style="display:flex; align-items:center; gap:8px;">
+        <div class="m-period-toggle">
+            <div class="m-period-opt active" data-type="weekly" onclick="selectPeriodType('weekly',this)">주간</div>
+            <div class="m-period-opt" data-type="monthly" onclick="selectPeriodType('monthly',this)">월간</div>
+        </div>
+        <select class="m-filter-select" id="aoi-year" style="max-width:80px;"></select>
+        <span class="m-filter-label">년</span>
+        <select class="m-filter-select" id="aoi-month" style="max-width:72px;"></select>
+        <span class="m-filter-label">월</span>
+        <select class="m-filter-select" id="aoi-week" style="max-width:66px;"></select>
+        <span class="m-filter-label" id="aoi-week-label">주</span>
+    </div>
+    <div style="display:flex; align-items:center; justify-content:space-between;">
+        <span id="aoi-period-text" style="font-size:0.7rem; color:var(--point-gold);"></span>
+        <button class="m-search-btn" onclick="searchAoi()"><i class="uil uil-search"></i> 분석</button>
+    </div>
+</div>
+
+<!-- ===== 점검시트 필터 ===== -->
+<div class="m-filter-bar" id="filter-inspection" style="display:none; flex-direction:column; align-items:stretch; gap:8px;">
+    <div class="m-sheet-types" id="sheet-type-btns">
+        <button class="m-sheet-type-btn active" data-sheet="vision" onclick="selectSheet('vision',this)">비전</button>
+        <button class="m-sheet-type-btn" data-sheet="esd" onclick="selectSheet('esd',this)">제전화</button>
+        <button class="m-sheet-type-btn" data-sheet="smd" onclick="selectSheet('smd',this)">SMD설비</button>
+        <button class="m-sheet-type-btn" data-sheet="wave" onclick="selectSheet('wave',this)">Wave</button>
+        <button class="m-sheet-type-btn" data-sheet="metal" onclick="selectSheet('metal',this)">MetalMask</button>
+        <button class="m-sheet-type-btn" data-sheet="env" onclick="selectSheet('env',this)">환경</button>
+        <button class="m-sheet-type-btn" data-sheet="ac" onclick="selectSheet('ac',this)">AC누설</button>
+    </div>
+    <div style="display:flex; align-items:center; gap:8px;">
+        <select class="m-filter-select" id="insp-year" style="max-width:80px;"></select>
+        <span class="m-filter-label">년</span>
+        <select class="m-filter-select" id="insp-month" style="max-width:72px;"></select>
+        <span class="m-filter-label">월</span>
+        <button class="m-search-btn" onclick="searchInspection()"><i class="uil uil-search"></i> 조회</button>
+    </div>
+</div>
+
+<!-- ===== 콘텐츠 ===== -->
+<main class="m-content m-content-pad" id="m-content">
+    <div class="m-empty-state">
+        <div class="m-empty-icon"><i class="uil uil-mouse-alt"></i></div>
+        <div class="m-empty-text">조건을 선택하고<br>조회를 눌러주세요.</div>
+    </div>
+</main>
+
+<!-- ===== 하단 홈 바 ===== -->
+<nav class="m-action-bar">
+    <button class="m-nav-home-btn" onclick="goTo('/mobile_index')"><i class="uil uil-home"></i></button>
+    <span style="font-size:0.68rem; color:#555; flex:1; text-align:center;" id="result-info"></span>
+</nav>
+
+<script>
+/* =============================================
+   상태 관리
+   ============================================= */
+let currentTab = 'production';
+let aoiPeriodType = 'weekly';
+let inspSheetType = 'vision';
+const now = new Date();
+
+/* =============================================
+   초기화
+   ============================================= */
+document.addEventListener('DOMContentLoaded', () => {
+    const role = localStorage.getItem('ppms_user_role') || '';
+    if (!role) { window.location.href = '/api/auth/login_view'; return; }
+
+    initSelects();
+    updateTime();
+    setInterval(updateTime, 1000);
+    setTimeout(() => { document.body.style.opacity = '1'; }, 50);
+});
+
+window.addEventListener('pageshow', () => {
+    document.body.style.opacity = '1';
+    document.getElementById('page-overlay').classList.remove('active');
+});
+
+function updateTime() {
+    const el = document.querySelector('#m-time span');
+    if (!el) return;
+    const d = new Date();
+    const pad = n => String(n).padStart(2,'0');
+    el.textContent = `${d.getFullYear()}.${pad(d.getMonth()+1)}.${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function initSelects() {
+    const y = now.getFullYear(), m = now.getMonth() + 1;
+
+    // 생산 연도/월
+    document.getElementById('prod-year').value = y;
+    const pm = document.getElementById('prod-month');
+    for (let i = 1; i <= 12; i++) {
+        pm.innerHTML += `<option value="${i}" ${i === m ? 'selected' : ''}>${i}월</option>`;
+    }
+
+    // AOI 연도/월/주
+    const ay = document.getElementById('aoi-year');
+    for (let yr = y - 1; yr <= y + 1; yr++) ay.innerHTML += `<option value="${yr}" ${yr === y ? 'selected' : ''}>${yr}</option>`;
+    const am = document.getElementById('aoi-month');
+    for (let i = 1; i <= 12; i++) am.innerHTML += `<option value="${i}" ${i === m ? 'selected' : ''}>${i}월</option>`;
+    const aw = document.getElementById('aoi-week');
+    for (let w = 1; w <= 5; w++) aw.innerHTML += `<option value="${w}">${w}주</option>`;
+    [ay, am, aw].forEach(el => el.addEventListener('change', updateAoiPeriodText));
+    updateAoiPeriodText();
+
+    // 점검시트 연도/월
+    const iy = document.getElementById('insp-year');
+    for (let yr = y - 1; yr <= y + 1; yr++) iy.innerHTML += `<option value="${yr}" ${yr === y ? 'selected' : ''}>${yr}</option>`;
+    const im = document.getElementById('insp-month');
+    for (let i = 1; i <= 12; i++) im.innerHTML += `<option value="${i}" ${i === m ? 'selected' : ''}>${i}월</option>`;
+}
+
+/* =============================================
+   탭 전환
+   ============================================= */
+function switchTab(tab, btn) {
+    currentTab = tab;
+    document.querySelectorAll('.m-main-tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+
+    document.getElementById('filter-production').style.display = tab === 'production' ? 'flex' : 'none';
+    document.getElementById('filter-aoi').style.display       = tab === 'aoi'        ? 'flex' : 'none';
+    document.getElementById('filter-inspection').style.display = tab === 'inspection' ? 'flex' : 'none';
+
+    showEmpty('조건을 선택하고 조회를 눌러주세요.');
+    document.getElementById('result-info').textContent = '';
+}
+
+function showEmpty(msg) {
+    document.getElementById('m-content').innerHTML = `
+        <div class="m-empty-state">
+            <div class="m-empty-icon"><i class="uil uil-search"></i></div>
+            <div class="m-empty-text">${msg}</div>
+        </div>`;
+}
+
+function showLoading() {
+    document.getElementById('m-content').innerHTML =
+        `<div class="m-loading"><div class="m-spinner"></div> 분석 중...</div>`;
+}
+
+/* =============================================
+   AOI 기간 유틸
+   ============================================= */
+function selectPeriodType(type, el) {
+    aoiPeriodType = type;
+    document.querySelectorAll('.m-period-opt').forEach(o => o.classList.remove('active'));
+    el.classList.add('active');
+    const weekSel = document.getElementById('aoi-week');
+    const weekLabel = document.getElementById('aoi-week-label');
+    weekSel.style.display = type === 'monthly' ? 'none' : '';
+    weekLabel.style.display = type === 'monthly' ? 'none' : '';
+    updateAoiPeriodText();
+}
+
+function selectSheet(sheet, el) {
+    inspSheetType = sheet;
+    document.querySelectorAll('.m-sheet-type-btn').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+}
+
+function getAoiDates() {
+    const y = parseInt(document.getElementById('aoi-year').value);
+    const m = parseInt(document.getElementById('aoi-month').value);
+    if (aoiPeriodType === 'monthly') {
+        return { start: new Date(y, m-1, 1), end: new Date(y, m, 0) };
+    } else {
+        const w = parseInt(document.getElementById('aoi-week').value);
+        const dow = new Date(y, m-1, 1).getDay();
+        const last = new Date(y, m, 0).getDate();
+        const s = Math.max(1, (w-1)*7 - dow + 1);
+        const e = Math.min(last, w*7 - dow);
+        return { start: new Date(y, m-1, s), end: new Date(y, m-1, e) };
+    }
+}
+
+function updateAoiPeriodText() {
+    const { start, end } = getAoiDates();
+    const fmt = d => `${d.getMonth()+1}/${d.getDate()}`;
+    document.getElementById('aoi-period-text').textContent = `${fmt(start)} ~ ${fmt(end)}`;
+}
+
+function fmtDate(d) {
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+/* =============================================
+   [생산 실적] 조회 & 렌더링
+   ============================================= */
+async function searchProduction() {
+    const y = document.getElementById('prod-year').value;
+    const m = document.getElementById('prod-month').value;
+    if (!y || !m) { alert('연도와 월을 선택하세요.'); return; }
+    showLoading();
+    try {
+        const res = await fetch(`/api/statistics/order_month_summary?prod_month=${m}&year=${y}`);
+        const data = await res.json();
+        renderProduction(data, y, m);
+    } catch (e) {
+        showEmpty('데이터를 불러올 수 없습니다.');
+    }
+}
+
+function renderProduction(data, y, m) {
+    const content = document.getElementById('m-content');
+    document.getElementById('result-info').textContent = `${y}년 ${m}월 · ${data.length}건`;
+
+    if (!data || data.length === 0) {
+        showEmpty('해당 기간에 데이터가 없습니다.');
+        return;
+    }
+
+    const totalLot = data.reduce((s, d) => s + (d.totalQuantity || 0), 0);
+    const totalAct = data.reduce((s, d) => s + (d.actualProduction || 0), 0);
+    const rate = totalLot > 0 ? ((totalAct / totalLot) * 100).toFixed(1) : 0;
+
+    let html = `
+    <div class="m-summary-panel">
+        <div class="m-summary-panel-title"><i class="uil uil-chart-bar"></i> ${y}년 ${m}월 생산 총계</div>
+        <div class="m-summary-chips">
+            <div class="m-summary-chip">
+                <span class="m-chip-label">모델 수</span>
+                <span class="m-chip-value" style="color:var(--point-gold)">${data.length}</span>
+            </div>
+            <div class="m-summary-chip">
+                <span class="m-chip-label">총 LOT</span>
+                <span class="m-chip-value" style="color:#fff">${totalLot.toLocaleString()}</span>
+            </div>
+            <div class="m-summary-chip">
+                <span class="m-chip-label">실생산</span>
+                <span class="m-chip-value" style="color:var(--success-green)">${totalAct.toLocaleString()}</span>
+            </div>
+            <div class="m-summary-chip">
+                <span class="m-chip-label">달성률</span>
+                <span class="m-chip-value" style="color:${parseFloat(rate) >= 100 ? 'var(--success-green)' : 'var(--point-gold)'}">${rate}%</span>
+            </div>
+        </div>
+    </div>
+    <div class="m-section-label">모델별 실적</div>`;
+
+    html += data.map(item => {
+        const lot    = (item.totalQuantity || 0).toLocaleString();
+        const actual = (item.actualProduction || 0).toLocaleString();
+        const sc = item.status === 'shortage' ? 'shortage' : item.status === 'imbalance' ? 'imbalance' : 'ok';
+        const orderInfo = item.orderMonth ? `${item.orderYear}년 ${item.orderMonth} 주문` : '';
+        return `
+        <div class="m-prod-card ${sc !== 'ok' ? sc : ''}">
+            <div>
+                <div class="m-prod-model">${item.model}</div>
+                ${orderInfo ? `<div class="m-prod-order">${orderInfo}</div>` : ''}
+            </div>
+            <div class="m-prod-qty-wrap">
+                <div class="m-prod-lot">LOT ${lot}</div>
+                <div class="m-prod-actual ${sc}">실 ${actual}</div>
+            </div>
+        </div>`;
+    }).join('');
+
+    // 상태 범례
+    html += `
+    <div style="display:flex;gap:10px;padding:4px 2px;flex-wrap:wrap;">
+        <span style="font-size:0.62rem;color:#666;"><span style="color:#FF3D00;">■</span> 실생산 부족</span>
+        <span style="font-size:0.62rem;color:#666;"><span style="color:#EA00FF;">■</span> 라인 불균형</span>
+    </div>`;
+
+    content.innerHTML = html;
+}
+
+/* =============================================
+   [AOI 분석] 조회 & 렌더링
+   ============================================= */
+async function searchAoi() {
+    const { start, end } = getAoiDates();
+    showLoading();
+    try {
+        const res = await fetch(`/api/statistics/aoi_performance?start_date=${fmtDate(start)}&end_date=${fmtDate(end)}`);
+        const data = await res.json();
+        renderAoi(data, start, end);
+    } catch (e) {
+        showEmpty('데이터를 불러올 수 없습니다.');
+    }
+}
+
+function renderAoi(data, start, end) {
+    const content = document.getElementById('m-content');
+    const periodStr = `${start.getMonth()+1}/${start.getDate()} ~ ${end.getMonth()+1}/${end.getDate()}`;
+    document.getElementById('result-info').textContent = `${periodStr} · ${data.length}건`;
+
+    if (!data || data.length === 0) { showEmpty('해당 기간에 AOI 데이터가 없습니다.'); return; }
+
+    // 전체 집계
+    let totalQty = 0, totalDefect = 0;
+    const gDef = { missing:0, wrong:0, reverse:0, skewed:0, flipped:0, damaged:0, manhattan:0, detached:0, cold:0, unsoldered:0, short:0, material:0, dip:0 };
+    data.forEach(r => {
+        totalQty    += parseInt(r.inspection_qty) || 0;
+        totalDefect += parseInt(r.total_defect) || 0;
+        for (let k in gDef) gDef[k] += parseInt(r[k]) || 0;
+    });
+    const defectRate = totalQty > 0 ? ((totalDefect / totalQty) * 100).toFixed(2) : 0;
+    const totalPoints = Object.values(gDef).reduce((a,b) => a+b, 0);
+
+    const groupSums = {
+        a: gDef.missing + gDef.wrong + gDef.reverse + gDef.skewed + gDef.flipped,
+        b: gDef.damaged + gDef.manhattan + gDef.detached,
+        c: gDef.cold + gDef.unsoldered + gDef.short,
+        d: gDef.material + gDef.dip,
+    };
+    const maxGroup = Math.max(...Object.values(groupSums), 1);
+    const pct = v => Math.round((v / maxGroup) * 100);
+
+    let html = `
+    <div class="m-summary-panel">
+        <div class="m-summary-panel-title"><i class="uil uil-microscope"></i> ${periodStr} 전체 현황</div>
+        <div class="m-summary-chips">
+            <div class="m-summary-chip">
+                <span class="m-chip-label">검사수량</span>
+                <span class="m-chip-value" style="color:#fff">${totalQty.toLocaleString()}</span>
+            </div>
+            <div class="m-summary-chip">
+                <span class="m-chip-label">총 불량</span>
+                <span class="m-chip-value" style="color:var(--danger-red)">${totalDefect.toLocaleString()}</span>
+            </div>
+            <div class="m-summary-chip">
+                <span class="m-chip-label">불량율</span>
+                <span class="m-chip-value" style="color:${parseFloat(defectRate) > 5 ? 'var(--danger-red)' : 'var(--success-green)'}">${defectRate}%</span>
+            </div>
+            <div class="m-summary-chip">
+                <span class="m-chip-label">모델 수</span>
+                <span class="m-chip-value" style="color:var(--point-gold)">${data.length}</span>
+            </div>
+        </div>
+        <div class="m-defect-breakdown">
+            <div class="m-defect-bar-row">
+                <span class="m-defect-bar-label">실장오류</span>
+                <div class="m-defect-bar-track"><div class="m-defect-bar-fill bar-a" style="width:${pct(groupSums.a)}%"></div></div>
+                <span class="m-defect-bar-val">${groupSums.a} (${totalPoints > 0 ? Math.round(groupSums.a/totalPoints*100) : 0}%)</span>
+            </div>
+            <div class="m-defect-bar-row">
+                <span class="m-defect-bar-label">부품결함</span>
+                <div class="m-defect-bar-track"><div class="m-defect-bar-fill bar-b" style="width:${pct(groupSums.b)}%"></div></div>
+                <span class="m-defect-bar-val">${groupSums.b} (${totalPoints > 0 ? Math.round(groupSums.b/totalPoints*100) : 0}%)</span>
+            </div>
+            <div class="m-defect-bar-row">
+                <span class="m-defect-bar-label">납땜불량</span>
+                <div class="m-defect-bar-track"><div class="m-defect-bar-fill bar-c" style="width:${pct(groupSums.c)}%"></div></div>
+                <span class="m-defect-bar-val">${groupSums.c} (${totalPoints > 0 ? Math.round(groupSums.c/totalPoints*100) : 0}%)</span>
+            </div>
+            <div class="m-defect-bar-row">
+                <span class="m-defect-bar-label">기타</span>
+                <div class="m-defect-bar-track"><div class="m-defect-bar-fill bar-d" style="width:${pct(groupSums.d)}%"></div></div>
+                <span class="m-defect-bar-val">${groupSums.d} (${totalPoints > 0 ? Math.round(groupSums.d/totalPoints*100) : 0}%)</span>
+            </div>
+        </div>
+    </div>
+    <div class="m-section-label">모델별 상세</div>`;
+
+    html += data.map(r => {
+        const qty    = parseInt(r.inspection_qty) || 0;
+        const defect = parseInt(r.total_defect) || 0;
+        const good   = parseInt(r.good_qty) || 0;
+        const lot    = parseInt(r.lot) || 0;
+        const cumQty = parseInt(r.cumulative_qty) || qty;
+        const progress = lot > 0 ? Math.min((cumQty / lot * 100), 100).toFixed(0) : '—';
+
+        const DEFECT_DEFS = [
+            {f:'missing',   r:'missing_ref',   lbl:'미삽'},
+            {f:'wrong',     r:'wrong_ref',     lbl:'오삽'},
+            {f:'reverse',   r:'reverse_ref',   lbl:'역삽'},
+            {f:'skewed',    r:'skewed_ref',    lbl:'틀어짐'},
+            {f:'flipped',   r:'flipped_ref',   lbl:'뒤집힘'},
+            {f:'damaged',   r:'damaged_ref',   lbl:'파손'},
+            {f:'manhattan', r:'manhattan_ref', lbl:'맨하탄'},
+            {f:'detached',  r:'detached_ref',  lbl:'이탈'},
+            {f:'cold',      r:'cold_ref',      lbl:'냉납'},
+            {f:'unsoldered',r:'unsoldered_ref',lbl:'미납'},
+            {f:'short',     r:'short_ref',     lbl:'쇼트'},
+            {f:'material',  r:'material_ref',  lbl:'원자재'},
+            {f:'dip',       r:'dip_ref',       lbl:'DIP'},
+        ];
+        const defectItems = DEFECT_DEFS
+            .map(d => ({label:d.lbl, val:parseInt(r[d.f])||0, ref:r[d.r]||''}))
+            .filter(i => i.val > 0);
+
+        const sumA = (r.missing||0)+(r.wrong||0)+(r.reverse||0)+(r.skewed||0)+(r.flipped||0);
+        const sumB = (r.damaged||0)+(r.manhattan||0)+(r.detached||0);
+        const sumC = (r.cold||0)+(r.unsoldered||0)+(r.short||0);
+        const sumD = (r.material||0)+(r.dip||0);
+
+        const detailHtml = `
+        <div class="m-aoi-card-detail">
+            <!-- 기본 수치 4칸 -->
+            <div class="m-aoi-stats-grid">
+                <div class="m-aoi-stat-cell"><div class="m-aoi-stat-lbl">검사Point</div><div class="m-aoi-stat-val" style="color:#aaa">${r.inspection_point||'—'}</div></div>
+                <div class="m-aoi-stat-cell"><div class="m-aoi-stat-lbl">수량</div><div class="m-aoi-stat-val" style="color:#fff">${qty}</div></div>
+                <div class="m-aoi-stat-cell"><div class="m-aoi-stat-lbl">양품</div><div class="m-aoi-stat-val" style="color:var(--success-green)">${good}</div></div>
+                <div class="m-aoi-stat-cell"><div class="m-aoi-stat-lbl">총불량</div><div class="m-aoi-stat-val" style="color:var(--danger-red)">${defect}</div></div>
+            </div>
+            <!-- 그룹별 합계 -->
+            ${sumA+sumB+sumC+sumD > 0 ? `
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin:8px 0;">
+                ${[['실장오류','#4e73df',sumA],['부품결함','#f6c23e',sumB],['납땜불량','#e74a3b',sumC],['기타','#858796',sumD]].map(([lbl,color,v])=>
+                    v>0 ? `<div style="background:${color}18;border:1px solid ${color}44;border-radius:7px;padding:5px 4px;text-align:center;">
+                        <div style="font-size:0.6rem;color:${color};margin-bottom:2px;">${lbl}</div>
+                        <div style="font-size:0.9rem;font-weight:700;color:${color};">${v}</div>
+                    </div>` : `<div style="opacity:0.2;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:7px;padding:5px 4px;text-align:center;">
+                        <div style="font-size:0.6rem;color:#555;margin-bottom:2px;">${lbl}</div>
+                        <div style="font-size:0.9rem;color:#555;">0</div>
+                    </div>`
+                ).join('')}
+            </div>` : ''}
+            <!-- 불량 항목별 수치 + Ref -->
+            ${defectItems.length > 0 ? `
+            <div style="margin-top:6px;display:flex;flex-direction:column;gap:3px;">
+                ${defectItems.map(i => `
+                <div style="display:flex;align-items:center;gap:8px;font-size:0.76rem;padding:3px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+                    <span style="color:#ff8080;font-weight:700;min-width:48px;">${i.label}: ${i.val}</span>
+                    ${i.ref ? `<span style="color:#8a8a9a;font-family:monospace;font-size:0.68rem;">${i.ref}</span>` : ''}
+                </div>`).join('')}
+            </div>` : ''}
+            <!-- LOT / 주문정보 -->
+            <div style="margin-top:8px;font-size:0.7rem;color:#666;display:flex;gap:10px;flex-wrap:wrap;">
+                ${r.lot ? `<span>LOT: <strong style="color:#aaa">${r.lot}</strong></span>` : ''}
+                ${r.order_year ? `<span>${r.order_year}년 ${r.order_month||''}</span>` : ''}
+                ${r.period_info ? `<span style="color:#555;">${r.period_info}</span>` : ''}
+            </div>
+        </div>`;
+
+        return `
+        <div class="m-aoi-card" id="aoi-card-${r.id}">
+            <div class="m-aoi-card-head" onclick="toggleAoiCard(${r.id})">
+                <div>
+                    <div class="m-aoi-card-model">${r.model}</div>
+                    <div class="m-aoi-card-period">${r.period_info || ''}</div>
+                </div>
+                <div class="m-aoi-card-badges">
+                    <div class="m-aoi-badge ${defect > 0 ? 'badge-defect' : 'badge-ok'}">
+                        ${defect > 0 ? `불량 ${defect}` : '양호'}
+                    </div>
+                </div>
+                <i class="uil uil-angle-right m-aoi-expand-icon"></i>
+            </div>
+            ${detailHtml}
+        </div>`;
+    }).join('');
+
+    content.innerHTML = html;
+}
+
+function toggleAoiCard(id) {
+    document.getElementById(`aoi-card-${id}`)?.classList.toggle('open');
+}
+
+/* =============================================
+   [점검시트] 조회 & 렌더링 — PC 동일 정보량
+   ============================================= */
+
+// PC statistics.html 의 renderInspectionTables 를 모바일에 완전 이식
+const SMD_EQUIPMENTS = {
+    'Loader':['장비 내·외부','Main Air 압력','Lift','Pusher','Switch','Tower Lamp','Emergency Stop','각종 구동부','Air 점검'],
+    'Screen Printer':['장비 내·외부','Main Air 압력','Metal Mask Clamp','Cleaning Solvent','Squeegee Cylinder','Metal Mask','Conveyor','Squeegee','Sensor','Tower Lamp','Emergency Stop','각종 구동부','Air 점검'],
+    'SPI':['장비 내·외부','Switch','Sensor','Main Air 압력','Program','Camera Lighting','Air Filter','Emergency Stop','각종 구동부'],
+    'Multi Mounter 471':['장비 내·외부','Main Air 압력','Head 공압','Feeder Base','Backup Table','Nozzle','Sensor','Conveyor','ANC','Air Filter','Vision Camera','Tower Lamp','Emergency Stop','각종 구동부','Air 점검'],
+    'Chip Mounter 411':['장비 내·외부','Main Air 압력','Head 공압','Feeder Base','Backup Table','Nozzle','Sensor','Conveyor','ANC','Air Filter','Tower Lamp','Emergency Stop','각종 구동부','Air 점검'],
+    'Multi Mounter 421':['장비 내·외부','Main Air 압력','Head 공압','Feeder Base','Backup Table','Nozzle','Sensor','Conveyor','ANC','Air Filter','Vision Camera','Tower Lamp','Emergency Stop','각종 구동부','Air 점검'],
+    'Multi Mounter':['장비 내·외부','Main Air 압력','Head 공압','Feeder Base','Backup Table','Nozzle','Sensor','Conveyor','ANC','Air Filter','Vision Camera','Tower Lamp','Emergency Stop','각종 구동부','Air 점검'],
+    'Reflow':['장비 내·외부','Conveyor Speed','Temperature','반송부','Sensor','Program','N2','Conveying Chain','PCB','Air Filter','Dust Fan','Tower Lamp','Emergency Stop','각종 구동부','Air 점검'],
+    'Unloader':['장비 내·외부','Main Air 압력','Lift','Pusher','Switch','Tower Lamp','Emergency Stop','각종 구동부','Air 점검']
+};
+const WAVE_ITEMS = ['장비 미사용','Control Box','납조 DROSS','Conveyor 동작','Flux 노즐','Pre-Heater 150℃±5','납조 Wave','납조온도 250℃±5','Finger 상태','열풍 FAN','배기 Duct','비상정지','Flux 주유','FLUX 이물'];
+const METAL_ITEMS = ['점검자','세척액 확인','AIR 압력 확인','전원 확인','이물질 확인'];
+const AC_LINES_MAP = {
+    A:['LOADER','PRINTER','Mounter1','Mounter2','Mounter3','WORK TABLE','Reflow','UNLOADER'],
+    B:['LOADER','PRINTER','Mounter1','Mounter2','Mounter3','WORK TABLE','Reflow','UNLOADER'],
+    C:['LOADER','PRINTER','Mounter1','WORK TABLE','제습기','CONVECTION OVEN']
+};
+
+async function searchInspection() {
+    const y = parseInt(document.getElementById('insp-year').value);
+    const m = parseInt(document.getElementById('insp-month').value);
+    showLoading();
+
+    const sheetNames = {vision:'비전장비',esd:'제전화',smd:'SMD설비',wave:'Wave Solder',metal:'Metal Mask',env:'환경',ac:'AC누설'};
+    document.getElementById('result-info').textContent = `${y}년 ${m}월 · ${sheetNames[inspSheetType]}`;
+
+    try {
+        const pad = n => String(n).padStart(2,'0');
+        const lastDay = new Date(y, m, 0).getDate();
+
+        // 공휴일 조회
+        let holidays = {};
+        try {
+            const hRes = await fetch(`/api/inspection/holidays?year=${y}&month=${m}`);
+            const hData = await hRes.json();
+            holidays = hData.holidays || {};
+        } catch(e) {}
+
+        // 워킹데이 계산
+        const workdays = [];
+        for (let d = 1; d <= lastDay; d++) {
+            const ds = `${y}-${pad(m)}-${pad(d)}`;
+            const dow = new Date(y, m-1, d).getDay();
+            if (dow !== 0 && dow !== 6 && !holidays[ds]) workdays.push({d, ds, dow});
+        }
+
+        // 시트 타입별 데이터 로드
+        let extra = {};
+        if (inspSheetType === 'vision') {
+            const [v1, v2] = await Promise.all([
+                fetch(`/api/inspection/vision/monthly?year=${y}&month=${m}&machine_id=1`).then(r=>r.json()),
+                fetch(`/api/inspection/vision/monthly?year=${y}&month=${m}&machine_id=2`).then(r=>r.json()),
+            ]);
+            // API가 {date: status} dict를 직접 반환 — 배열이면 변환, 아니면 그대로 사용
+            const toMap = data => {
+                if (Array.isArray(data)) {
+                    const map = {};
+                    data.forEach(rec => { if (rec.date) map[rec.date] = rec.status; });
+                    return map;
+                }
+                return data || {};   // 이미 {date:status} 형태
+            };
+            extra = { vision1: toMap(v1), vision2: toMap(v2) };
+        } else if (inspSheetType === 'esd') {
+            const [mgrs, esdArr] = await Promise.all([
+                fetch('/api/production/managers').then(r=>r.json()),
+                fetch(`/api/inspection/esd/monthly?year=${y}&month=${m}`).then(r=>r.json()),
+            ]);
+            const esdMap = {};
+            (esdArr||[]).forEach(rec => {
+                esdMap[`${rec.date}_${rec.manager_id}`] = {shoes: rec.shoes, wrist: rec.wrist};
+            });
+            extra = { managers: mgrs, esdMap };
+        } else if (['smd','wave','metal'].includes(inspSheetType)) {
+            const typeMap = {smd:'smd_daily', wave:'wave_solder', metal:'metal_mask'};
+            const raw = await fetch(`/api/smd_check/equipment/monthly?sheet_type=${typeMap[inspSheetType]}&year=${y}&month=${m}`).then(r=>r.json());
+            extra = { equipData: raw };
+        } else if (inspSheetType === 'env') {
+            const [fridge, room, dehumid] = await Promise.all([
+                fetch(`/api/smd_check/environment/monthly?check_type=fridge&year=${y}&month=${m}`).then(r=>r.json()),
+                fetch(`/api/smd_check/environment/monthly?check_type=room&year=${y}&month=${m}`).then(r=>r.json()),
+                fetch(`/api/smd_check/environment/monthly?check_type=dehumid&year=${y}&month=${m}`).then(r=>r.json()),
+            ]);
+            extra = { fridge, room, dehumid };
+        } else if (inspSheetType === 'ac') {
+            const acData = await fetch(`/api/smd_check/ac_leakage/yearly?year=${y}`).then(r=>r.json());
+            extra = { acData };
+        }
+
+        const html = renderInspectionTables(y, m, workdays, inspSheetType, extra);
+        document.getElementById('m-content').innerHTML = html
+            ? `<div style="padding:12px 10px 80px;">${html}</div>`
+            : '';
+        if (!html) showEmpty('해당 월 데이터가 없습니다.');
+
+    } catch(e) {
+        console.error(e);
+        showEmpty('데이터를 불러올 수 없습니다.');
+    }
+}
+
+// ── PC 와 동일한 테이블 렌더러 (모바일 최적화) ─────────────────────
+function renderInspectionTables(year, month, workdays, sheetType, extra) {
+    const pad = n => String(n).padStart(2,'0');
+    const DAY_KR = ['일','월','화','수','목','금','토'];
+
+    // 공통 스타일 (가로 스크롤 테이블)
+    const thB = `background:#0d0e14;color:#ffeba7;padding:6px 4px;font-size:0.72rem;border:1px solid #3a3b47;position:sticky;top:0;z-index:10;white-space:nowrap;`;
+    const tdB = `border:1px solid #2e2f3a;text-align:center;padding:4px 3px;font-size:0.75rem;white-space:nowrap;`;
+    const stickyLeft = `background:#141520;position:sticky;left:0;z-index:5;text-align:left;padding:4px 8px;border-right:2px solid #ffeba7;`;
+    const stickyLeftTh = `background:#0d0e14;position:sticky;left:0;z-index:15;padding:6px 8px;border-right:2px solid #ffeba7;color:#ffeba7;white-space:nowrap;`;
+
+    const tableWrap = inner =>
+        `<div style="overflow-x:auto;border:1px solid rgba(255,235,167,0.15);border-radius:10px;margin-bottom:14px;">
+         <table style="width:max-content;min-width:100%;border-collapse:collapse;">${inner}</table></div>`;
+
+    const titleBar = title =>
+        `<div style="font-family:'BMDOHYEON';font-size:0.95rem;color:#ffeba7;margin:14px 0 8px;padding-bottom:6px;border-bottom:1px solid rgba(255,235,167,0.2);">${year}년 ${month}월 — ${title}</div>`;
+
+    const dayHeaders = workdays.map(({d,dow}) =>
+        `<th title="${DAY_KR[dow]}" style="${thB}min-width:26px;">${d}</th>`).join('');
+
+    // ── vision ──────────────────────────────────────────────────────
+    if (sheetType === 'vision') {
+        const {vision1, vision2} = extra;
+        const vSt = s => s==='ok'
+            ? 'background:rgba(78,115,223,.2);color:#4e73df;font-weight:700;'
+            : s==='ng' ? 'background:rgba(255,68,68,.2);color:#ff4444;font-weight:700;' : '';
+        const makeVT = (map, label) => {
+            let row = `<tr><td style="${tdB}${stickyLeft}font-size:0.72rem;">${label}</td>`;
+            workdays.forEach(({ds}) => {
+                const s = map[ds] || '';
+                row += `<td style="${tdB}${vSt(s)}">${s==='ok'?'OK':s==='ng'?'NG':''}</td>`;
+            });
+            row += '</tr>';
+            return tableWrap(
+                `<thead><tr><th style="${thB}${stickyLeftTh}min-width:100px;">장비</th>${dayHeaders}</tr></thead><tbody>${row}</tbody>`
+            );
+        };
+        return titleBar('비전 장비 일일 점검')
+            + makeVT(vision1, '1호기 (A-Line)')
+            + makeVT(vision2, '2호기 (B-Line)');
+    }
+
+    // ── esd ─────────────────────────────────────────────────────────
+    if (sheetType === 'esd') {
+        const {managers, esdMap} = extra;
+        const getComb = (s,w) => { if(s===w)return s; if(s==='X'||w==='X')return 'X'; if(s==='C'||w==='C')return 'C'; if(s==='O'||w==='O')return 'O'; return ''; };
+        const eSt = s => s==='O' ? 'background:rgba(0,230,118,.12);color:#00e676;font-weight:700;'
+            : s==='X' ? 'background:rgba(255,68,68,.15);color:#ff4444;font-weight:700;'
+            : s==='C' ? 'background:rgba(255,235,167,.1);color:#ffeba7;font-weight:700;' : '';
+        let rows = '';
+        (managers||[]).forEach(mgr => {
+            rows += `<tr><td style="${tdB}${stickyLeft}font-size:0.75rem;font-weight:700;color:#fff;">${mgr.name}</td>`;
+            workdays.forEach(({ds}) => {
+                const c = esdMap[`${ds}_${mgr.id}`] || {};
+                const s = getComb(c.shoes||'', c.wrist||'');
+                rows += `<td style="${tdB}${eSt(s)}">${s}</td>`;
+            });
+            rows += '</tr>';
+        });
+        return titleBar('제전화 및 손목띠 점검')
+            + tableWrap(`<thead><tr><th style="${thB}${stickyLeftTh}min-width:80px;">성명</th>${dayHeaders}</tr></thead><tbody>${rows}</tbody>`);
+    }
+
+    // ── smd ─────────────────────────────────────────────────────────
+    if (sheetType === 'smd') {
+        const {equipData} = extra;
+        const sSt = s => s==='O' ? 'background:rgba(78,115,223,.15);color:#4e73df;font-weight:700;'
+            : s==='△' ? 'background:rgba(255,235,167,.1);color:#ffeba7;font-weight:700;'
+            : s==='X' ? 'background:rgba(255,68,68,.15);color:#ff4444;font-weight:700;'
+            : s==='□' ? 'background:rgba(0,230,118,.1);color:#00e676;font-weight:700;' : '';
+        let html = titleBar('SMD 설비 점검');
+        Object.entries(SMD_EQUIPMENTS).forEach(([equip, items]) => {
+            let rows = '';
+            items.forEach((name, idx) => {
+                const no = idx + 1;
+                rows += `<tr><td style="${tdB}${stickyLeft}min-width:120px;font-size:0.7rem;">${no}. ${name}</td>`;
+                workdays.forEach(({ds}) => {
+                    const k = `${equip}_${no}_${ds}`;
+                    const s = (equipData[k]||{}).status || '';
+                    rows += `<td style="${tdB}${sSt(s)}">${s}</td>`;
+                });
+                rows += '</tr>';
+            });
+            html += `<div style="font-size:0.76rem;color:#aaa;margin:6px 0 3px;font-weight:600;">${equip}</div>`
+                + tableWrap(`<thead><tr><th style="${thB}${stickyLeftTh}min-width:120px;">항목</th>${dayHeaders}</tr></thead><tbody>${rows}</tbody>`);
+        });
+        return html;
+    }
+
+    // ── wave ─────────────────────────────────────────────────────────
+    if (sheetType === 'wave') {
+        const {equipData} = extra;
+        const wSt = s => s==='V' ? 'background:rgba(78,115,223,.15);color:#4e73df;font-weight:700;'
+            : s==='△' ? 'background:rgba(255,235,167,.1);color:#ffeba7;font-weight:700;'
+            : s==='X' ? 'background:rgba(255,68,68,.15);color:#ff4444;font-weight:700;'
+            : s==='☆' ? 'background:rgba(255,50,50,.25);color:#ff1744;font-weight:700;' : '';
+        let rows = '';
+        WAVE_ITEMS.forEach((name, idx) => {
+            const no = idx + 1;
+            rows += `<tr><td style="${tdB}${stickyLeft}min-width:130px;font-size:0.7rem;">${no}. ${name}</td>`;
+            workdays.forEach(({ds}) => {
+                const k = `Auto Solder_${no}_${ds}`;
+                const s = (equipData[k]||{}).status || '';
+                rows += `<td style="${tdB}${wSt(s)}">${s}</td>`;
+            });
+            rows += '</tr>';
+        });
+        return titleBar('Wave Solder 점검')
+            + tableWrap(`<thead><tr><th style="${thB}${stickyLeftTh}min-width:130px;">항목</th>${dayHeaders}</tr></thead><tbody>${rows}</tbody>`);
+    }
+
+    // ── metal ────────────────────────────────────────────────────────
+    if (sheetType === 'metal') {
+        const {equipData} = extra;
+        const mSt = s => s==='O' ? 'background:rgba(78,115,223,.15);color:#4e73df;font-weight:700;'
+            : s==='X' ? 'background:rgba(255,68,68,.15);color:#ff4444;font-weight:700;' : '';
+        let rows = '';
+        METAL_ITEMS.forEach((name, idx) => {
+            rows += `<tr><td style="${tdB}${stickyLeft}min-width:130px;font-size:0.7rem;">${name}</td>`;
+            workdays.forEach(({ds}) => {
+                const k = `Metal Mask Washer_${idx}_${ds}`;
+                const rec = equipData[k] || {};
+                const v = idx === 0 ? (rec.checker||'') : (rec.status||'');
+                rows += `<td style="${tdB}${idx>0?mSt(v):''}">${v}</td>`;
+            });
+            rows += '</tr>';
+        });
+        return titleBar('Metal Mask 세척기 점검')
+            + tableWrap(`<thead><tr><th style="${thB}${stickyLeftTh}min-width:130px;">항목</th>${dayHeaders}</tr></thead><tbody>${rows}</tbody>`);
+    }
+
+    // ── env ──────────────────────────────────────────────────────────
+    if (sheetType === 'env') {
+        const {fridge, room, dehumid} = extra;
+        const tSt = s => s==='O' ? 'background:rgba(78,115,223,.15);color:#4e73df;font-weight:700;'
+            : s==='X' ? 'background:rgba(255,68,68,.15);color:#ff4444;font-weight:700;' : '';
+        const SECS = [
+            {label:'냉장고 온도', data:fridge,
+             rows:[{slot:'10:00',name:'온도(℃)',field:'temperature',isToggle:true}]},
+            {label:'실내 온·습도', data:room,
+             rows:[{slot:'10:00',name:'온도 10시',field:'temperature'},{slot:'10:00',name:'습도 10시',field:'humidity'},
+                   {slot:'18:00',name:'온도 18시',field:'temperature'},{slot:'18:00',name:'습도 18시',field:'humidity'}]},
+            {label:'제습함 온·습도', data:dehumid,
+             rows:[{slot:'10:00',name:'온도(℃)',field:'temperature'},{slot:'10:00',name:'습도(%RH)',field:'humidity'}]},
+        ];
+        let html = titleBar('환경 점검');
+        SECS.forEach(sec => {
+            let rows = '';
+            sec.rows.forEach(row => {
+                rows += `<tr><td style="${tdB}${stickyLeft}min-width:90px;font-size:0.7rem;">${row.name}</td>`;
+                workdays.forEach(({ds}) => {
+                    const k = `${ds}_${row.slot}`;
+                    const rec = (sec.data||{})[k] || {};
+                    const v = row.isToggle ? (rec.status||'') : (rec[row.field]!==null&&rec[row.field]!==undefined ? rec[row.field] : '');
+                    rows += `<td style="${tdB}${row.isToggle?tSt(v):''}">${v}</td>`;
+                });
+                rows += '</tr>';
+            });
+            html += `<div style="font-size:0.76rem;color:#aaa;margin:8px 0 3px;font-weight:600;">${sec.label}</div>`
+                + tableWrap(`<thead><tr><th style="${thB}${stickyLeftTh}min-width:90px;">항목</th>${dayHeaders}</tr></thead><tbody>${rows}</tbody>`);
+        });
+        return html;
+    }
+
+    // ── ac ───────────────────────────────────────────────────────────
+    if (sheetType === 'ac') {
+        const {acData} = extra;
+        const MONTHS = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+        let rows = '';
+        Object.entries(AC_LINES_MAP).forEach(([line, equips]) => {
+            equips.forEach((equip, i) => {
+                rows += '<tr>';
+                if (i === 0) {
+                    rows += `<td style="${tdB}${stickyLeft}font-family:'BMDOHYEON';text-align:center;" rowspan="${equips.length}">${line}</td>`;
+                }
+                rows += `<td style="${tdB}background:#141520;position:sticky;left:34px;z-index:5;text-align:left;padding:3px 8px;border-right:2px solid #ffeba7;min-width:90px;font-size:0.7rem;">${equip}</td>`;
+                for (let mo = 1; mo <= 12; mo++) {
+                    const k = `${line}_${equip}_${mo}`;
+                    const rec = (acData||{})[k] || {};
+                    const v = rec.voltage !== null && rec.voltage !== undefined ? rec.voltage : '';
+                    const isNg = v !== '' && parseFloat(v) > 5;
+                    rows += `<td style="${tdB}${isNg?'color:#ff4444;background:rgba(255,68,68,.1);font-weight:700;':v!==''?'color:#00e676;':''}">${v}</td>`;
+                }
+                rows += '</tr>';
+            });
+        });
+        const mHeaders = MONTHS.map((ml, i) =>
+            `<th style="${thB}min-width:46px;${i+1===month?'background:#1e2535!important;border-bottom:2px solid #ffeba7!important;':''}">${ml}</th>`
+        ).join('');
+        return titleBar(`AC 누설전류 (${year}년)`)
+            + tableWrap(`<thead><tr>
+                <th style="${thB}${stickyLeftTh}min-width:34px;">라인</th>
+                <th style="${thB}background:#0d0e14;position:sticky;left:34px;z-index:15;min-width:90px;border-right:2px solid #ffeba7;">설비</th>
+                ${mHeaders}</tr></thead><tbody>${rows}</tbody>`);
+    }
+    return '';
+}
+
+
+/* =============================================
+   페이지 전환
+   ============================================= */
+function goTo(url) {
+    document.getElementById('page-overlay').classList.add('active');
+    setTimeout(() => { window.location.href = url; }, 300);
+}
+</script>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js', { scope: '/' })
+          .catch(() => {/* SW 등록 실패는 무시 — 앱 동작에 영향 없음 */});
+      });
+    }
+  </script>
+</body>
+</html>

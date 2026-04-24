@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>PPMS - 제전화 및 손목띠 점검</title>
+    <link rel="stylesheet" href="/static/common.css">
+    <link rel="stylesheet" href="https://unicons.iconscout.com/release/v4.0.8/css/line.css">
+    <link href="https://hangeul.pstatic.net/hangeul_static/css/bmdohyeon.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Poppins:400,600,800" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="/static/logo.js"></script>
+
+    <style>
+        /* 드래그 중 텍스트 선택 방지 */
+        .table-wrapper { user-select: none; -webkit-user-select: none; }
+
+        /* ── 전체 래퍼 ────────────────────────────────────────── */
+        .esd-inner {
+            display: flex; flex-direction: column;
+            width: 100%; max-width: 1400px; height: 100%;
+            gap: 8px; box-sizing: border-box;
+        }
+
+        /* ── 컨트롤 패널 ──────────────────────────────────────── */
+        .control-panel {
+            flex: 0 0 auto;
+            background: var(--card-bg); border: 1px solid var(--border-color);
+            border-radius: 10px; padding: 10px 20px;
+            display: flex; justify-content: space-between; align-items: center; gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        /* 월 이동 */
+        .month-controller {
+            display: flex; align-items: center; gap: 12px;
+            font-family: 'BMDOHYEON'; font-size: 1.2rem; color: #fff;
+        }
+        .arrow-btn {
+            background: none; border: 1px solid #555; color: var(--point-gold);
+            width: 30px; height: 30px; border-radius: 50%; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1rem; transition: all 0.2s; flex-shrink: 0;
+        }
+        .arrow-btn:hover { background: var(--point-gold); color: #1f2029; }
+        .ctrl-divider { width: 1px; height: 18px; background: #444; margin: 0 4px; }
+
+        /* 주차 탭 */
+        .week-tabs { display: flex; gap: 6px; align-items: center; }
+        .week-tab {
+            background: #1a1b24; border: 1px solid #444; color: #888;
+            padding: 5px 14px; border-radius: 20px;
+            font-family: 'BMDOHYEON'; font-size: 0.85rem;
+            cursor: pointer; transition: all 0.2s; white-space: nowrap;
+        }
+        .week-tab.active  { background: var(--point-gold); color: #1f2029; border-color: var(--point-gold); font-weight: bold; }
+        .week-tab:hover:not(.active) { border-color: var(--point-gold); color: var(--point-gold); }
+
+        /* 가이드 */
+        .guide-list { margin: 0; padding: 0; list-style: none; display: flex; gap: 12px; font-size: 0.82rem; flex-wrap: wrap; align-items: center; }
+        .guide-list li { display: flex; align-items: center; gap: 4px; }
+
+        /* ── 테이블 래퍼 ──────────────────────────────────────── */
+        .table-wrapper {
+            flex: 1; min-height: 0; overflow: auto;
+            background: var(--card-bg); border-radius: 12px; border: 1px solid var(--border-color);
+        }
+
+        table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        th, td { border: 1px solid #3a3b47; text-align: center; padding: 0; }
+        th {
+            background: #1a1b21; color: var(--point-gold);
+            font-family: 'BMDOHYEON'; padding: 10px 4px;
+            position: sticky; top: 0; z-index: 20;
+            font-size: 0.9rem;
+        }
+
+        /* 이름 고정 열 */
+        .name-col {
+            position: sticky; left: 0; background: #1a1b21; z-index: 30;
+            width: 130px; min-width: 130px;
+            border-right: 2px solid var(--point-gold);
+            font-size: 0.85rem; padding: 2px 6px;
+        }
+        th.name-col { z-index: 40; }
+
+        /* 날짜 열: 7칸이 나머지 너비 균등 분배 */
+        .day-col { width: calc((100% - 130px) / 7); height: 26px; padding: 0 !important; }
+
+        /* 공휴일/일요일: 색만 빨강 */
+        th.holiday { color: var(--danger-red); }
+
+        /* 오늘 날짜 헤더 강조 */
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: inset 0 3px 0 var(--point-gold), 0 0 8px rgba(255,235,167,0.05); }
+            50%       { box-shadow: inset 0 3px 0 var(--point-gold), 0 0 20px rgba(255,235,167,0.3); }
+        }
+        @keyframes todayBadgeIn {
+            from { opacity: 0; transform: translateY(3px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        th.today {
+            position: sticky; top: 0; z-index: 20;
+            border: 1px solid rgba(255,235,167,0.25) !important;
+            background: #1e2030 !important;
+            box-shadow: inset 0 3px 0 var(--point-gold), 0 0 12px rgba(255,235,167,0.15);
+            animation: pulseGlow 3s infinite ease-in-out;
+            color: var(--point-gold) !important;
+            text-shadow: 0 0 10px rgba(255,235,167,0.6);
+        }
+        th.today .today-badge {
+            display: inline-block;
+            font-size: 0.55rem; font-family: 'Poppins'; font-weight: 700;
+            letter-spacing: 0.1em; color: var(--point-gold);
+            opacity: 0.7; margin-top: 2px;
+            animation: todayBadgeIn 0.6s ease forwards;
+        }
+
+        /* 빈 칸 */
+        th.empty-day { background: #15161d; color: #333; }
+        td.empty-day { background: #15161d; }
+
+        /* ── 셀: 단일 클릭 셀 ─────────────────────────────────── */
+        .check-cell {
+            height: 100%;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: background 0.15s;
+            position: relative;
+        }
+        .check-cell:hover { background: rgba(255,235,167,0.07); }
+
+        .cell-status {
+            font-size: 1.1rem; font-weight: bold;
+            pointer-events: none;
+            transition: transform 0.15s;
+        }
+        .check-cell:hover .cell-status { transform: scale(1.15); }
+
+        /* 상태별 배경 + 글자 */
+        .check-cell.status-O { background: rgba(0,230,118,0.1); }
+        .check-cell.status-O .cell-status { color: var(--success-green); }
+        .check-cell.status-X { background: rgba(255,68,68,0.1); }
+        .check-cell.status-X .cell-status { color: var(--danger-red); }
+        .check-cell.status-C { background: rgba(255,235,167,0.08); }
+        .check-cell.status-C .cell-status { color: var(--point-gold); }
+
+        /* 담당자 셀 */
+        td.name-col { background: #1c1d26; }
+        .name-cell { padding: 2px 8px; text-align: left; }
+        .mgr-name { font-weight: bold; color: #fff; font-size: 0.85rem; }
+        .mgr-pos  { font-size: 0.72rem; color: #aaa; margin-left: 3px; }
+        .dept-label { font-size: 0.68rem; color: #888; display: block; margin-top: 2px; }
+
+        /* 부서 구분선 */
+        tr.new-dept td { border-top: 2px solid rgba(255,235,167,0.25); }
+        tr.new-dept td.name-col { border-top: 2px solid var(--point-gold); }
+
+        /* PDF 버튼 (footer 우측용) */
+        .pdf-btn {
+            background: transparent; border: 1px solid #555; color: #bbb;
+            padding: 0 15px; height: 100%; border-radius: 8px; cursor: pointer;
+            font-size: 0.9rem; display: flex; align-items: center; gap: 6px;
+            transition: all 0.2s; font-family: 'BMDOHYEON';
+            white-space: nowrap;
+        }
+        .pdf-btn:hover { background: var(--point-gold); color: #1f2029; border-color: var(--point-gold); }
+    </style>
+</head>
+<body>
+    <div class="page-container">
+
+        <!-- ── 헤더: 로고 없음 / 제목 / 현재시각 ── -->
+        <header class="main-header">
+            <div class="header-left">
+                <a href="javascript:void(0)" onclick="goToHome()" class="ppms-logo-placeholder"></a>
+            </div>
+            <div class="header-center">
+                <div class="common-box font-35pt">제전화 및 손목띠 점검</div>
+            </div>
+            <div class="header-right">
+                <div class="common-box font-15pt time-display" id="current-time"></div>
+            </div>
+        </header>
+
+        <main class="content-area">
+            <div class="esd-inner">
+
+                <!-- 컨트롤 패널 -->
+                <div class="control-panel">
+                    <div class="month-controller">
+                        <button class="arrow-btn" onclick="moveMonth(-1)"><i class="uil uil-angle-left"></i></button>
+                        <span id="month-display"></span>
+                        <button class="arrow-btn" onclick="moveMonth(1)"><i class="uil uil-angle-right"></i></button>
+                        <div class="ctrl-divider"></div>
+                        <div class="week-tabs" id="week-tabs"></div>
+                    </div>
+
+                    <ul class="guide-list">
+                        <li><span style="color:var(--success-green); font-weight:bold; font-size:1rem;">O</span> 정상</li>
+                        <li><span style="color:var(--danger-red); font-weight:bold; font-size:1rem;">X</span> 불량</li>
+                        <li><span style="color:var(--point-gold); font-weight:bold; font-size:1rem;">C</span> 교체</li>
+                        <li style="color:#666; font-size:0.78rem;">* 제전화·손목띠 통합</li>
+                    </ul>
+                </div>
+
+                <!-- 테이블 -->
+                <div class="table-wrapper">
+                    <table id="esd-table">
+                        <thead><tr id="table-header-row"></tr></thead>
+                        <tbody id="table-body"></tbody>
+                    </table>
+                </div>
+
+            </div>
+        </main>
+
+        <!-- ── footer: 뒤로/홈/앞으로 + PDF 우측 ── -->
+        <footer class="main-footer">
+            <div class="footer-left"></div>
+            <div class="footer-center">
+                <div class="footer-btn" onclick="goBack()"><i class="uil uil-arrow-left"></i></div>
+                <div class="footer-btn" onclick="goToHome()"><i class="uil uil-home"></i></div>
+                <div class="footer-btn" onclick="goForward()"><i class="uil uil-arrow-right"></i></div>
+            </div>
+            <div class="footer-right">
+                <button class="pdf-btn" onclick="downloadPDF()">
+                    <i class="uil uil-file-download-alt"></i> PDF 저장
+                </button>
+            </div>
+        </footer>
+
+    </div>
+
+    <!-- Fade-in: body 최하단 배치 (dip.html 패턴) -->
+    <style>
+        body { opacity: 0; transition: opacity 0.5s ease-in-out; }
+    </style>
+
+    <script>
+        let holidays    = {};
+        let viewYear    = new Date().getFullYear();
+        let viewMonth   = new Date().getMonth() + 1;
+        let managers    = [];
+        let monthlyData = {};
+        let weeks       = [];
+        let activeWeek  = 0;
+
+        // ── 드래그 상태 ───────────────────────────────────────────────────
+        let isDragging   = false;
+        let dragStatus   = null;   // 드래그 세션 동안 적용할 상태
+        let draggedCells = [];     // 드래그 중 변경된 셀 목록
+
+        function updateCellUI(el, status) {
+            el.dataset.combined = status;
+            el.className = `check-cell status-${status}`;
+            el.querySelector('.cell-status').textContent = status;
+        }
+
+        // 단일 셀 서버 저장 (shoes → wrist 순차)
+        async function saveCell(el, status) {
+            const ds        = el.dataset.date;
+            const managerId = el.dataset.id;
+            const post = (target) => fetch('/api/inspection/esd/toggle', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ date: ds, manager_id: parseInt(managerId), target, status })
+            });
+            const r1 = await post('shoes');
+            if (!r1.ok) throw new Error('shoes 저장 실패');
+            const r2 = await post('wrist');
+            if (!r2.ok) throw new Error('wrist 저장 실패');
+            const dataKey = `${ds}_${managerId}`;
+            if (!monthlyData[dataKey]) monthlyData[dataKey] = {};
+            monthlyData[dataKey].shoes = status;
+            monthlyData[dataKey].wrist = status;
+        }
+
+        const table = () => document.getElementById('esd-table');
+
+        document.addEventListener('mousedown', (e) => {
+            const el = e.target.closest('.check-cell');
+            if (!el || !table().contains(el)) return;
+            e.preventDefault();
+            const current = el.dataset.combined || '';
+            const cycle   = { '': 'O', 'O': 'X', 'X': 'C', 'C': '' };
+            dragStatus   = cycle[current];
+            isDragging   = true;
+            draggedCells = [];
+            applyDragToCell(el);
+        });
+
+        document.addEventListener('mouseenter', (e) => {
+            if (!isDragging) return;
+            const el = e.target.closest('.check-cell');
+            if (!el || !table().contains(el)) return;
+            applyDragToCell(el);
+        }, true);
+
+        document.addEventListener('mouseup', async () => {
+            if (!isDragging) return;
+            isDragging = false;
+            // 드래그 종료 후 변경된 셀 일괄 저장
+            const toSave = [...draggedCells];
+            draggedCells = [];
+            const failed = [];
+            for (const { el, prevStatus } of toSave) {
+                try {
+                    await saveCell(el, dragStatus);
+                } catch (e) {
+                    failed.push({ el, prevStatus });
+                }
+            }
+            if (failed.length > 0) {
+                alert(`통신 실패: ${failed.length}개 항목을 저장하지 못했습니다.`);
+                failed.forEach(({ el, prevStatus }) => updateCellUI(el, prevStatus));
+            }
+            dragStatus = null;
+        });
+
+        function applyDragToCell(el) {
+            if (!el.dataset.date) return;
+            if (el.dataset.combined === dragStatus) return;
+            if (draggedCells.find(c => c.el === el)) return;
+            draggedCells.push({ el, prevStatus: el.dataset.combined || '' });
+            updateCellUI(el, dragStatus);
+        }
+
+        // ── 셀 클릭 (제전화+손목띠 동시 저장) ───────────────────────────
+        async function handleCellClick(el) {
+            const ds            = el.dataset.date;
+            const managerId     = el.dataset.id;
+            const currentStatus = el.dataset.combined || '';
+            const cycle         = { '': 'O', 'O': 'X', 'X': 'C', 'C': '' };
+            const nextStatus    = cycle[currentStatus];
+
+            updateCellUI(el, nextStatus);
+            try {
+                await saveCell(el, nextStatus);
+            } catch (e) {
+                alert("통신 실패: 기록을 저장하지 못했습니다.");
+                updateCellUI(el, currentStatus);
+            }
+        }
+        // ── 초기화 ────────────────────────────────────────────────────────
+        async function init() {
+            updateMonthDisplay();
+            await fetchHolidays(viewYear);
+            await fetchManagers();
+            await fetchMonthlyData();
+            buildWeeks();
+            setCurrentWeek();   // 항상 오늘 주차로 진입
+            renderWeekTabs();
+            renderTable();
+        }
+
+        // ── 주차 배열 생성 (월~일 기준, 월요일 시작) ─────────────────────
+        function buildWeeks() {
+            weeks = [];
+            const lastDay = new Date(viewYear, viewMonth, 0).getDate();
+            let week = [];
+            for (let d = 1; d <= lastDay; d++) {
+                const dow = new Date(viewYear, viewMonth - 1, d).getDay(); // 0=일
+                // 월요일(1) 시작 — 단, 1일이 월이 아니면 첫 주는 1일부터 시작
+                if (dow === 1 && week.length > 0) {
+                    weeks.push(week);
+                    week = [];
+                }
+                week.push(d);
+            }
+            if (week.length > 0) weeks.push(week);
+        }
+
+        // ── 오늘 날짜가 속한 주차 선택 ───────────────────────────────────
+        function setCurrentWeek() {
+            const today = new Date();
+            if (today.getFullYear() === viewYear && today.getMonth() + 1 === viewMonth) {
+                const d   = today.getDate();
+                const idx = weeks.findIndex(w => w.includes(d));
+                activeWeek = idx >= 0 ? idx : 0;
+            } else {
+                activeWeek = 0;
+            }
+        }
+
+        // ── 주차 탭 렌더링 ────────────────────────────────────────────────
+        function renderWeekTabs() {
+            document.getElementById('week-tabs').innerHTML = weeks.map((w, i) =>
+                `<div class="week-tab ${i === activeWeek ? 'active' : ''}" onclick="selectWeek(${i})">${i + 1}주차</div>`
+            ).join('');
+        }
+
+        function selectWeek(idx) {
+            activeWeek = idx;
+            renderWeekTabs();
+            renderTable();
+        }
+
+        // ── 테이블 렌더링 ─────────────────────────────────────────────────
+        function renderTable() {
+            const headerRow = document.getElementById('table-header-row');
+            const tbody     = document.getElementById('table-body');
+            const today     = new Date();
+            const todayStr  = toDateStr(today.getFullYear(), today.getMonth() + 1, today.getDate());
+
+            const weekDays   = weeks[activeWeek] || [];
+            const COLS       = 7;
+            const paddedDays = [...weekDays];
+            while (paddedDays.length < COLS) paddedDays.push(null);
+
+            const DAY_NAMES = ['일','월','화','수','목','금','토'];
+
+            // 헤더
+            let headerHtml = '<th class="name-col">성명 / 직급</th>';
+            paddedDays.forEach(d => {
+                if (d === null) {
+                    headerHtml += `<th class="day-col empty-day"></th>`;
+                } else {
+                    const ds    = toDateStr(viewYear, viewMonth, d);
+                    const dow   = new Date(viewYear, viewMonth - 1, d).getDay();
+                    const isHol = !!(holidays[ds] || dow === 0);
+                    const isTod = ds === todayStr;
+                    const cls   = ['day-col', isHol ? 'holiday' : '', isTod ? 'today' : ''].filter(Boolean).join(' ');
+                    headerHtml += `<th class="${cls}">
+                        ${d}<br>
+                        <small style="font-weight:normal;">${DAY_NAMES[dow]}</small>
+                        ${isTod ? '<div class="today-badge">TODAY</div>' : ''}
+                    </th>`;
+                }
+            });
+            headerRow.innerHTML = headerHtml;
+
+            // 바디
+            if (managers.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="${COLS + 1}" style="padding:30px; color:#888;">등록된 담당자가 없습니다.</td></tr>`;
+                return;
+            }
+
+            let bodyHtml = '', currentDept = null;
+            managers.forEach(mgr => {
+                const isNewDept = currentDept !== mgr.department;
+                if (isNewDept) currentDept = mgr.department;
+
+                bodyHtml += `<tr class="${isNewDept ? 'new-dept' : ''}">
+                    <td class="name-col">
+                        <div class="name-cell">
+                            <div>
+                                <span class="mgr-name">${mgr.name}</span>
+                                <span class="mgr-pos">${mgr.position || '사원'}</span>
+                            </div>
+                            <span class="dept-label" style="${isNewDept ? 'color:var(--point-gold);font-weight:bold;' : ''}">${mgr.department || '부서없음'}</span>
+                        </div>
+                    </td>`;
+
+                paddedDays.forEach(d => {
+                    if (d === null) { bodyHtml += `<td class="day-col empty-day"></td>`; return; }
+
+                    const ds       = toDateStr(viewYear, viewMonth, d);
+                    const dataKey  = `${ds}_${mgr.id}`;
+                    const cellData = monthlyData[dataKey] || { shoes: '', wrist: '' };
+
+                    // 통합 상태 계산: shoes와 wrist가 모두 같은 값이면 그 값, 
+                    // 비어있으면 빈칸, 하나라도 X면 X, 하나라도 C면 C, 둘 다 O면 O
+                    const combined = getCombined(cellData.shoes || '', cellData.wrist || '');
+
+                    bodyHtml += `<td class="day-col">
+                        <div class="check-cell status-${combined}"
+                             data-date="${ds}" data-id="${mgr.id}" data-combined="${combined}">
+                            <span class="cell-status">${combined}</span>
+                        </div>
+                    </td>`;
+                });
+
+                bodyHtml += '</tr>';
+            });
+            tbody.innerHTML = bodyHtml;
+        }
+
+        // ── 통합 상태 계산 ────────────────────────────────────────────────
+        // 빈칸 → O → X → C → 빈칸 순환
+        // 저장 시 shoes, wrist 모두 동일한 값으로 저장
+        function getCombined(shoes, wrist) {
+            // 둘 다 같으면 그 값 그대로
+            if (shoes === wrist) return shoes;
+            // 하나라도 X면 X
+            if (shoes === 'X' || wrist === 'X') return 'X';
+            // 하나라도 C면 C
+            if (shoes === 'C' || wrist === 'C') return 'C';
+            // 하나라도 O면 O
+            if (shoes === 'O' || wrist === 'O') return 'O';
+            return '';
+        }
+
+        // ── 월 이동 ───────────────────────────────────────────────────────
+        async function moveMonth(delta) {
+            const oldYear = viewYear;
+            viewMonth += delta;
+            if (viewMonth > 12) { viewMonth = 1; viewYear++; }
+            else if (viewMonth < 1) { viewMonth = 12; viewYear--; }
+            updateMonthDisplay();
+            if (oldYear !== viewYear) await fetchHolidays(viewYear);
+            await fetchMonthlyData();
+            buildWeeks();
+            setCurrentWeek();
+            renderWeekTabs();
+            renderTable();
+        }
+
+        // ── API ───────────────────────────────────────────────────────────
+        async function fetchHolidays(year) {
+            try {
+                const res = await fetch(`/api/inspection/holidays?year=${year}`);
+                if (res.ok) holidays = await res.json();
+            } catch (e) { console.error("공휴일 로드 실패", e); }
+        }
+
+        async function fetchManagers() {
+            try {
+                const res = await fetch('/api/production/managers');
+                if (res.ok) managers = await res.json();
+            } catch (e) { console.error("매니저 로드 실패", e); }
+        }
+
+        async function fetchMonthlyData() {
+            try {
+                const res = await fetch(`/api/inspection/esd/monthly?year=${viewYear}&month=${viewMonth}`);
+                if (res.ok) {
+                    monthlyData = {};
+                    (await res.json()).forEach(d => {
+                        monthlyData[`${d.date}_${d.manager_id}`] = { shoes: d.shoes || '', wrist: d.wrist || '' };
+                    });
+                }
+            } catch (e) { monthlyData = {}; }
+        }
+
+        // ── 유틸 ──────────────────────────────────────────────────────────
+        function toDateStr(y, m, d) {
+            return `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        }
+
+        function updateMonthDisplay() {
+            document.getElementById('month-display').textContent = `${viewYear}년 ${viewMonth}월`;
+        }
+
+        function downloadPDF() {
+            alert('PDF 다운로드 기능은 백엔드 구현 후 사용 가능합니다.');
+        }
+
+        // ── 현재 시각 표시 (aoi.html 동일 패턴) ─────────────────────────
+        function updateTime() {
+            const now = new Date();
+            const str = `${now.getFullYear()}년 ${now.getMonth()+1}월 ${now.getDate()}일 ${now.getHours()}시 ${now.getMinutes()}분`;
+            const el  = document.getElementById('current-time');
+            if (el) el.textContent = str;
+        }
+        setInterval(updateTime, 1000);
+        updateTime();
+
+        // Fade-in: pageshow는 bfcache 복원 시에도 항상 실행됨
+        window.addEventListener('pageshow', function() {
+            updateMonthDisplay();
+            setTimeout(() => { document.body.style.opacity = '1'; }, 50);
+        });
+
+        window.goBack    = function () { document.body.style.opacity = '0'; setTimeout(() => { history.back();       }, 500); };
+        window.goToHome  = function () { document.body.style.opacity = '0'; setTimeout(() => { location.href = '/'; }, 500); };
+        window.goForward = function () { document.body.style.opacity = '0'; setTimeout(() => { history.forward();   }, 500); };
+
+        window.onload = init;
+    </script>
+</body>
+</html>

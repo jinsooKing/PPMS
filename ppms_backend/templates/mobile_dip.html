@@ -1,0 +1,1309 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>PPMS - DIP (외주 관리)</title>
+<link href="https://hangeul.pstatic.net/hangeul_static/css/bmdohyeon.css" rel="stylesheet">
+<link href="https://hangeul.pstatic.net/hangeul_static/css/bmjua.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css?family=Poppins:400,500,600,700,800,900" rel="stylesheet">
+<link rel="stylesheet" href="https://unicons.iconscout.com/release/v2.1.9/css/unicons.css">
+<style>
+/* =============================================
+   [1] 전역 변수 & 리셋
+   ============================================= */
+:root {
+    --bg-dark:       #111218;
+    --card-bg:       #1e1f2e;
+    --text-color:    #c4c3ca;
+    --text-white:    #ffffff;
+    --point-gold:    #ffeba7;
+    --accent-blue:   #102770;
+    --danger-red:    #ff4444;
+    --success-green: #00e676;
+    --border-color:  rgba(255,235,167,0.15);
+    --ship-color:    #4e73df;   /* 출고 */
+    --recv-color:    #1cc88a;   /* 입고 */
+    --ready-color:   rgba(255,235,167,0.12);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+body {
+    background-color: #111218;
+    color: var(--text-color);
+    font-family: 'Poppins', 'BMDOHYEON', sans-serif;
+    display: flex; flex-direction: column;
+    opacity: 0; transition: opacity 0.4s ease;
+}
+
+a { text-decoration: none; color: inherit; }
+
+/* =============================================
+   [2] 헤더: 로고 + 제목 + 시각
+   ============================================= */
+.m-header {
+    background: rgba(17,18,24,0.98);
+    border-bottom: 1px solid var(--border-color);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    padding: 0 16px; height: 64px;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-shrink: 0; position: sticky; top: 0; z-index: 100; gap: 10px;
+}
+.m-header-left { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+.m-logo-box {
+    width: 34px; height: 34px;
+    background: rgba(255,235,167,0.08); border: 1px solid rgba(255,235,167,0.35);
+    border-radius: 9px; display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; cursor: pointer;
+}
+.m-logo-box svg { width: 20px; height: 20px; fill: var(--point-gold); }
+.m-header-title-block { line-height: 1.15; min-width: 0; }
+.m-header-title {
+    font-family: 'Poppins', sans-serif; font-size: 0.82rem; font-weight: 800;
+    color: var(--point-gold); letter-spacing: 1.5px; text-transform: uppercase; display: block;
+}
+.m-header-sub { font-size: 0.74rem; color: #8a8a9a; }
+.m-time-display {
+    display: flex; align-items: center; gap: 4px;
+    font-size: 0.76rem; color: var(--text-color); white-space: nowrap; flex-shrink: 0;
+}
+.m-time-display i { font-size: 0.8rem; color: var(--point-gold); opacity: 0.8; }
+
+/* =============================================
+   [3] 상태 탭 (전체 / 미완료 / 완료)
+   ============================================= */
+.m-status-tabs {
+    background: rgba(17,18,24,0.97);
+    border-bottom: 1px solid var(--border-color);
+    display: flex; flex-shrink: 0;
+    position: sticky; top: 64px; z-index: 99;
+}
+.m-status-tab {
+    flex: 1; padding: 11px 0;
+    font-size: 0.78rem; font-weight: 700;
+    color: #8a8a9a; background: transparent; border: none;
+    border-bottom: 3px solid transparent;
+    cursor: pointer; transition: all 0.2s;
+    font-family: 'Poppins', sans-serif;
+}
+.m-status-tab.active { color: var(--point-gold); border-bottom-color: var(--point-gold); }
+
+/* =============================================
+   [4] 콘텐츠 영역
+   ============================================= */
+.m-content {
+    flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;
+    padding: 12px 12px 90px;
+    display: flex; flex-direction: column; gap: 10px;
+}
+
+/* =============================================
+   [5] 그룹 카드
+   ============================================= */
+.m-group-card {
+    background: var(--card-bg);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 14px; overflow: hidden;
+}
+.m-group-card.ready { border-color: rgba(255,235,167,0.35); background: linear-gradient(135deg, rgba(255,235,167,0.05) 0%, var(--card-bg) 60%); }
+
+/* 카드 헤더 */
+.m-group-header {
+    padding: 13px 16px 10px;
+    display: flex; align-items: flex-start; justify-content: space-between;
+    gap: 10px;
+}
+.m-group-model {
+    font-family: 'Poppins', sans-serif; font-size: 0.95rem; font-weight: 700;
+    color: var(--text-white); margin-bottom: 2px;
+}
+.m-group-lot { font-size: 0.78rem; color: #888; }
+
+.m-group-status-badge {
+    padding: 4px 10px; border-radius: 12px;
+    font-size: 0.76rem; font-weight: 700; white-space: nowrap; flex-shrink: 0;
+}
+.badge-ready { background: rgba(255,235,167,0.15); border: 1px solid rgba(255,235,167,0.4); color: var(--point-gold); }
+.badge-ongoing { background: rgba(78,115,223,0.12); border: 1px solid rgba(78,115,223,0.3); color: var(--ship-color); }
+
+/* 듀얼 진행률 바 */
+.m-group-progress { padding: 0 16px 10px; display: flex; flex-direction: column; gap: 6px; }
+.m-progress-row { display: flex; align-items: center; gap: 8px; }
+.m-progress-tag {
+    font-size: 0.74rem; font-weight: 700; letter-spacing: 0.04em;
+    text-transform: uppercase; width: 26px; flex-shrink: 0;
+}
+.tag-ship { color: var(--ship-color); }
+.tag-recv { color: var(--recv-color); }
+.m-progress-track {
+    flex: 1; height: 5px; background: rgba(255,255,255,0.08);
+    border-radius: 10px; overflow: hidden;
+}
+.m-progress-fill { height: 100%; border-radius: 10px; width: 0%; transition: width 0.5s ease; }
+.fill-ship { background: linear-gradient(90deg, #3a5dd9, var(--ship-color)); }
+.fill-recv { background: linear-gradient(90deg, #14a76c, var(--recv-color)); }
+.fill-complete { background: linear-gradient(90deg, var(--point-gold), #ffe066) !important; }
+.m-progress-nums { font-size: 0.75rem; color: #666; white-space: nowrap; width: 54px; text-align: right; flex-shrink: 0; }
+
+/* 카드 내 탭 (출고 | 입고) */
+.m-inner-tabs { display: flex; border-top: 1px solid rgba(255,255,255,0.06); }
+.m-inner-tab {
+    flex: 1; padding: 9px 0;
+    font-size: 0.73rem; font-weight: 700;
+    background: transparent; border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer; transition: all 0.2s;
+    font-family: 'Poppins', sans-serif;
+    display: flex; align-items: center; justify-content: center; gap: 4px;
+}
+.m-inner-tab i { font-size: 0.85rem; }
+.m-inner-tab.active-ship { color: var(--ship-color); border-bottom-color: var(--ship-color); }
+.m-inner-tab.active-recv { color: var(--recv-color); border-bottom-color: var(--recv-color); }
+.m-inner-tab:not(.active-ship):not(.active-recv) { color: #8a8a9a; }
+
+/* 히스토리 테이블 */
+.m-history-panel { display: none; }
+.m-history-panel.active { display: block; }
+
+.m-history-table { width: 100%; border-collapse: collapse; }
+.m-history-table th {
+    font-size: 0.75rem; color: #666; text-transform: uppercase;
+    letter-spacing: 0.04em; padding: 7px 16px; text-align: left;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.m-history-table td {
+    padding: 9px 16px; font-size: 0.8rem; color: var(--text-color);
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.m-history-table tr:last-child td { border-bottom: none; }
+.m-history-table .td-qty { color: var(--text-white); font-weight: 700; text-align: right; }
+.m-history-table .td-cum { color: #888; text-align: right; font-size: 0.72rem; }
+.m-history-table .td-del {
+    width: 32px; padding: 9px 10px 9px 4px;
+    text-align: right;
+}
+.m-row-del-btn {
+    width: 24px; height: 24px; border-radius: 50%;
+    background: rgba(255,68,68,0.1); border: 1px solid rgba(255,68,68,0.25);
+    color: var(--danger-red); font-size: 0.75rem;
+    cursor: pointer; transition: all 0.15s;
+    display: flex; align-items: center; justify-content: center;
+}
+.m-row-del-btn:active { background: var(--danger-red); color: #fff; }
+.m-empty-row { text-align: center; color: #8a8a9a; padding: 20px; font-size: 0.8rem; }
+
+/* 카드 하단 액션 */
+.m-group-actions {
+    display: flex; gap: 8px; padding: 10px 12px 12px;
+    border-top: 1px solid rgba(255,255,255,0.05);
+}
+.m-group-action-btn {
+    flex: 1; padding: 9px 0;
+    border-radius: 10px; font-size: 0.75rem; font-weight: 700;
+    cursor: pointer; transition: all 0.15s; border: none;
+    display: flex; align-items: center; justify-content: center; gap: 5px;
+    font-family: 'Poppins', sans-serif;
+}
+.btn-ship {
+    background: rgba(78,115,223,0.12); border: 1px solid rgba(78,115,223,0.3); color: var(--ship-color);
+}
+.btn-ship:active { background: var(--ship-color); color: #fff; }
+.btn-recv {
+    background: rgba(28,200,138,0.1); border: 1px solid rgba(28,200,138,0.25); color: var(--recv-color);
+}
+.btn-recv:active { background: var(--recv-color); color: #fff; }
+.btn-complete {
+    background: rgba(255,235,167,0.12); border: 1px solid rgba(255,235,167,0.4); color: var(--point-gold);
+}
+.btn-complete:active { background: var(--point-gold); color: var(--accent-blue); }
+.btn-delete-group {
+    background: rgba(255,68,68,0.07); border: 1px solid rgba(255,68,68,0.2); color: var(--danger-red);
+}
+.btn-delete-group:active { background: var(--danger-red); color: #fff; }
+
+/* =============================================
+   [6] 빈 상태 / 로딩
+   ============================================= */
+.m-empty-state {
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 60px 20px; gap: 12px; text-align: center;
+}
+.m-empty-icon { font-size: 2.5rem; color: #777; }
+.m-empty-text { font-size: 0.88rem; color: #8a8a9a; line-height: 1.6; }
+.m-loading {
+    display: flex; align-items: center; justify-content: center;
+    padding: 60px; gap: 10px; color: #8a8a9a; font-size: 0.85rem;
+}
+.m-spinner {
+    width: 22px; height: 22px;
+    border: 2px solid rgba(255,235,167,0.15);
+    border-top-color: var(--point-gold);
+    border-radius: 50%; animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* =============================================
+   [7] 하단 액션 바
+   ============================================= */
+.m-action-bar {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: rgba(17,18,24,0.98); border-top: 1px solid var(--border-color);
+    padding: 10px 16px;
+    display: flex; align-items: center; gap: 8px;
+    z-index: 200; backdrop-filter: blur(8px);
+}
+.m-bar-btn {
+    display: flex; align-items: center; justify-content: center; gap: 5px;
+    padding: 9px 14px; border-radius: 20px; font-size: 0.75rem;
+    cursor: pointer; transition: all 0.2s; white-space: nowrap;
+    font-family: 'Poppins', sans-serif; border: none;
+}
+.m-bar-btn i { font-size: 1rem; }
+.m-bar-btn.home {
+    background: rgba(255,235,167,0.07); border: 1px solid rgba(255,235,167,0.2); color: var(--point-gold);
+}
+.m-bar-btn.home:active { background: var(--point-gold); color: var(--accent-blue); }
+.m-bar-btn.add-group {
+    flex: 1; background: rgba(16,39,112,0.6); border: 1px solid rgba(78,115,223,0.4); color: #6b8cff;
+}
+.m-bar-btn.add-group:active { background: var(--accent-blue); color: #fff; }
+
+/* =============================================
+   [8] 바텀 시트 모달
+   ============================================= */
+.m-modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+    z-index: 500; display: none; align-items: flex-end;
+}
+.m-modal-overlay.open { display: flex; }
+.m-modal-sheet {
+    width: 100%; background: #252633;
+    border-radius: 20px 20px 0 0; border-top: 1px solid var(--border-color);
+    padding: 20px 20px 40px; animation: slideUp 0.25s ease;
+    max-height: 85vh; overflow-y: auto;
+}
+@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+.m-sheet-title {
+    font-family: 'BMDOHYEON', sans-serif; font-size: 1.1rem; color: var(--point-gold);
+    margin-bottom: 16px; display: flex; align-items: center; gap: 8px;
+}
+.m-sheet-label { font-size: 0.72rem; color: #888; margin-bottom: 5px; margin-top: 12px; }
+.m-sheet-input, .m-sheet-select {
+    width: 100%; background: var(--card-bg);
+    border: 1px solid rgba(255,255,255,0.12); border-radius: 10px;
+    padding: 11px 14px; color: var(--text-white);
+    font-size: 0.9rem; font-family: 'Poppins', sans-serif;
+    -webkit-appearance: none; -moz-appearance: none;
+}
+.m-sheet-input:focus, .m-sheet-select:focus { outline: none; border-color: var(--point-gold); }
+.m-sheet-input[type="number"] { -moz-appearance: textfield; }
+.m-sheet-input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+/* 출고/입고 타입 선택 */
+.m-type-toggle { display: flex; gap: 8px; margin-top: 12px; }
+.m-type-btn {
+    flex: 1; padding: 10px; border-radius: 10px;
+    font-size: 0.85rem; font-weight: 700; cursor: pointer; transition: all 0.2s;
+    border: 2px solid rgba(255,255,255,0.1); background: transparent;
+    color: #666; font-family: 'Poppins', sans-serif;
+}
+.m-type-btn.sel-ship { border-color: var(--ship-color); background: rgba(78,115,223,0.15); color: var(--ship-color); }
+.m-type-btn.sel-recv { border-color: var(--recv-color); background: rgba(28,200,138,0.12); color: var(--recv-color); }
+
+/* 모델 리스트 (그룹 추가) */
+.m-model-list { display: flex; flex-direction: column; gap: 4px; margin-top: 6px; max-height: 240px; overflow-y: auto; }
+.m-model-item {
+    padding: 10px 12px; background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.07); border-radius: 9px;
+    cursor: pointer; transition: all 0.15s;
+}
+.m-model-item:active { background: rgba(255,235,167,0.1); border-color: rgba(255,235,167,0.3); }
+.m-model-item-name { font-size: 0.82rem; color: var(--text-white); font-weight: 600; }
+.m-model-item-lot { font-size: 0.78rem; color: #888; margin-top: 1px; }
+
+.m-sheet-btn-row { display: flex; gap: 8px; margin-top: 16px; }
+.m-sheet-btn {
+    flex: 1; padding: 12px; border-radius: 10px;
+    font-size: 0.9rem; font-weight: 700; cursor: pointer; border: none;
+    font-family: 'Poppins', sans-serif; transition: all 0.15s;
+}
+.m-sheet-btn.cancel { background: rgba(255,255,255,0.07); color: #888; }
+.m-sheet-btn.confirm { background: var(--point-gold); color: var(--accent-blue); }
+
+/* =============================================
+   [9] 토스트 & 오버레이
+   ============================================= */
+.m-toast {
+    position: fixed; bottom: 80px; left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--card-bg); border: 1px solid rgba(255,235,167,0.3);
+    border-radius: 20px; padding: 10px 20px;
+    font-size: 0.8rem; color: var(--point-gold);
+    white-space: nowrap; z-index: 999;
+    opacity: 0; transition: all 0.3s; pointer-events: none;
+}
+.m-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.m-toast.error { color: var(--danger-red); border-color: rgba(255,68,68,0.35); }
+
+.page-overlay {
+    position: fixed; inset: 0; background: var(--bg-dark);
+    opacity: 0; pointer-events: none; z-index: 9999; transition: opacity 0.3s ease;
+}
+.page-overlay.active { opacity: 1; pointer-events: all; }
+
+/* ── 홈버튼 표준 스타일 (전체 모바일 페이지 공통) ── */
+.m-nav-home-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    background: rgba(255,235,167,0.08);
+    border: 1.5px solid rgba(255,235,167,0.35);
+    border-radius: 14px;
+    color: var(--point-gold);
+    font-size: 1.25rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+.m-nav-home-btn:active {
+    background: var(--point-gold);
+    color: var(--accent-blue);
+    border-color: var(--point-gold);
+    transform: scale(0.92);
+}
+
+/* ── 하단 바 표준 높이/패딩 (전체 모바일 공통) ── */
+.m-action-bar,
+.m-nav-bar {
+    min-height: 62px;
+    padding: 9px 16px !important;
+    gap: 10px !important;
+}
+
+/* ══════════════════════════════════════════════════════
+   입력 요소 가독성 강화 (전체 모바일 공통)
+   — 다크 배경에서 입력 가능 칸임을 명확히 표시
+   ══════════════════════════════════════════════════════ */
+
+/* 공통 입력 필드 기반 스타일 재정의 */
+.m-card-input,
+.m-info-input,
+.m-defect-chip-input,
+.m-scrap-input,
+.m-sheet-input,
+.m-sheet-select,
+.m-filter-input,
+.m-filter-select,
+.m-add-model-input,
+.m-memo-area,
+.m-checker-input,
+.pw-input {
+    background: #0d0e14 !important;          /* 카드 배경보다 확실히 어두운 색 */
+    border: 1.5px solid rgba(255,255,255,0.22) !important;
+    box-shadow: inset 0 1px 4px rgba(0,0,0,0.45);
+    color: #f0f0f0 !important;
+}
+
+/* 왼쪽 포인트 선으로 "입력 가능" 신호 */
+.m-card-input,
+.m-info-input,
+.m-sheet-input,
+.m-add-model-input,
+.pw-input {
+    border-left: 3px solid rgba(255,235,167,0.45) !important;
+    padding-left: 12px !important;
+}
+
+/* 수량 입력 (중앙 정렬, 작은 칸) */
+.m-defect-chip-input,
+.m-scrap-input {
+    border-left: 3px solid rgba(255,235,167,0.35) !important;
+}
+
+/* placeholder 가독성 */
+.m-card-input::placeholder,
+.m-info-input::placeholder,
+.m-sheet-input::placeholder,
+.m-add-model-input::placeholder,
+.pw-input::placeholder,
+.m-memo-area::placeholder {
+    color: rgba(255,255,255,0.3) !important;
+}
+
+/* select 드롭다운 (기본 화살표 유지 + 스타일) */
+.m-sheet-select,
+.m-filter-select {
+    border-left: 3px solid rgba(255,235,167,0.35) !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23ffeba7' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 12px center !important;
+    padding-right: 32px !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    appearance: none !important;
+}
+
+/* 포커스 시: 골드 테두리로 강화 */
+.m-card-input:focus,
+.m-info-input:focus,
+.m-defect-chip-input:focus,
+.m-scrap-input:focus,
+.m-sheet-input:focus,
+.m-sheet-select:focus,
+.m-filter-input:focus,
+.m-filter-select:focus,
+.m-add-model-input:focus,
+.m-memo-area:focus,
+.pw-input:focus {
+    outline: none !important;
+    border-color: rgba(255,235,167,0.75) !important;
+    border-left-color: var(--point-gold) !important;
+    box-shadow: inset 0 1px 4px rgba(0,0,0,0.4),
+                0 0 0 2px rgba(255,235,167,0.12) !important;
+    background: #141520 !important;
+}
+
+/* disabled 상태 명확화 */
+.m-card-input:disabled,
+.m-info-input:disabled,
+.m-defect-chip-input:disabled,
+.m-scrap-input:disabled {
+    background: #0d0e14 !important;
+    border: 1.5px dashed rgba(255,255,255,0.1) !important;
+    border-left: 3px dashed rgba(255,255,255,0.1) !important;
+    box-shadow: none !important;
+    opacity: 0.45 !important;
+    cursor: not-allowed !important;
+}
+
+/* 카드 테두리 강화 (기존보다 밝게) */
+.m-aoi-card,
+.m-schedule-card,
+.m-repair-card,
+.m-group-card,
+.m-dip-card,
+.m-batch-item {
+    border-color: rgba(255,255,255,0.14) !important;
+}
+
+/* 액션 버튼 (저장/완료 등) 최소 높이 보장 */
+.m-card-save-btn,
+.m-save-btn,
+.m-toggle-btn,
+.m-group-action-btn {
+    min-height: 40px;
+    font-size: 0.82rem !important;
+}
+
+/* dip 전용 */
+.m-sheet-input,
+.m-sheet-select {
+    min-height: 46px !important;
+    font-size: 0.92rem !important;
+}
+/* 시트 레이블 강조 */
+.m-sheet-label {
+    font-size: 0.8rem !important;
+    color: #c0c0d0 !important;
+    font-weight: 700;
+    margin-top: 14px;
+}
+/* 히스토리 테이블 행 구분선 강화 */
+.m-history-table td {
+    border-bottom: 1px solid rgba(255,255,255,0.08) !important;
+    font-size: 0.84rem !important;
+}
+/* 타입 토글 버튼 비활성 상태 더 명확하게 */
+.m-type-btn {
+    background: rgba(255,255,255,0.05);
+    border: 1.5px solid rgba(255,255,255,0.18);
+    color: #a0a0b0;
+    min-height: 46px;
+    font-size: 0.88rem;
+}
+/* 선택된 상태 — !important 없이 정상 캐스케이드 */
+.m-type-btn.sel-ship {
+    border-color: var(--ship-color) !important;
+    background: rgba(78,115,223,0.2) !important;
+    color: var(--ship-color) !important;
+}
+.m-type-btn.sel-recv {
+    border-color: var(--recv-color) !important;
+    background: rgba(28,200,138,0.15) !important;
+    color: var(--recv-color) !important;
+}
+
+/* ═══════════════════════════════════════════════════
+   전체 화면 레이아웃 고정 — 스크롤 없이 뷰포트에 꼭 맞춤
+   ═══════════════════════════════════════════════════ */
+html, body {
+    height: 100% !important;
+    overflow-x: hidden !important;
+}
+body {
+    display: flex !important;
+    flex-direction: column !important;
+    min-height: unset !important;   /* min-height:100vh 덮어쓰기 */
+}
+/* 헤더·탭·하단바 — 절대 줄어들지 않음 */
+.m-header, .m-tab-nav, .m-status-tabs, .m-main-tabs,
+.m-action-bar, .m-nav-bar, .m-action-bar,
+.m-date-bar, .m-filter-bar, .m-month-nav,
+.m-summary-bar, .m-breadcrumb, .m-footer, nav {
+    flex-shrink: 0 !important;
+}
+/* 스크롤 가능 영역 — 남은 공간 전부 차지 */
+.m-content, #app-body, #m-content {
+    flex: 1 1 0 !important;      /* 1 1 0 → 줄어들 수 있음 */
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    min-height: 0 !important;    /* flex child 줄어들기 허용 */
+}
+
+/* ════════════════════════════════════════════════════════
+   UI 박스 구분 강화 — 테두리·그림자·배경 대비
+   ════════════════════════════════════════════════════════ */
+
+/* ── 카드 계열 전부 ── */
+.m-schedule-card, .m-aoi-card, .m-dip-card, .m-group-card,
+.m-repair-card, .m-batch-item, .m-mgr-card, .m-item,
+.m-aoi-stat-cell, .m-summary-panel,
+.m-modal-sheet, .m-file-card,
+.m-card, .m-select-btn, .m-dept-column,
+.m-dash-card, .m-menu-card {
+    border-color: rgba(255,255,255,0.18) !important;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.55),
+                0 0 0 1px rgba(255,255,255,0.06) !important;
+}
+
+/* ── 호버/액티브 시 더 밝게 ── */
+.m-schedule-card:active, .m-aoi-card:active,
+.m-group-card:active, .m-item:active,
+.m-dash-card:active, .m-menu-card:active {
+    border-color: rgba(255,235,167,0.45) !important;
+    box-shadow: 0 4px 18px rgba(0,0,0,0.65),
+                0 0 0 1px rgba(255,235,167,0.18) !important;
+}
+
+/* ── KPI 칸 (생산/AOI 카드 안) ── */
+.m-card-kpi, .m-aoi-kpi {
+    background: #0d0e14 !important;
+    border-color: rgba(255,255,255,0.16) !important;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.5) !important;
+}
+
+/* ── 점검 대시보드 카드 ── */
+.m-insp-card {
+    border-color: rgba(255,255,255,0.18) !important;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.55) !important;
+}
+
+/* ── 탭 네비 ── */
+.m-tab-nav, .m-main-tabs, .m-status-tabs {
+    border-bottom: 1px solid rgba(255,255,255,0.12) !important;
+    background: rgba(17,18,24,0.98) !important;
+}
+
+/* ── 필터 바 ── */
+.m-filter-bar {
+    border-bottom: 1px solid rgba(255,255,255,0.1) !important;
+    background: rgba(17,18,24,0.95) !important;
+}
+
+/* ── 헤더 ── */
+.m-header {
+    border-bottom: 1px solid rgba(255,235,167,0.2) !important;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.6) !important;
+}
+
+/* ── 하단 액션 바 ── */
+.m-action-bar, .m-nav-bar, .m-footer {
+    border-top: 1px solid rgba(255,255,255,0.12) !important;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.5) !important;
+}
+
+/* ── 배경보다 살짝 밝은 mid-layer (모달 등) ── */
+.m-modal-sheet {
+    background: #1e1f2e !important;
+    border-top: 1px solid rgba(255,255,255,0.18) !important;
+    box-shadow: 0 -8px 40px rgba(0,0,0,0.8) !important;
+}
+
+/* ── 섹션 구분선 ── */
+.m-section-label {
+    color: rgba(255,235,167,0.7) !important;
+    border-bottom: 1px solid rgba(255,235,167,0.18) !important;
+    padding-bottom: 4px;
+    margin-bottom: 8px;
+}
+
+/* ── index 메뉴 카드 특별 강조 ── */
+.m-menu-card {
+    background: #1e1f2e !important;
+}
+.m-menu-card.primary {
+    background: linear-gradient(135deg, rgba(255,235,167,0.10) 0%, #1e1f2e 100%) !important;
+    border-color: rgba(255,235,167,0.30) !important;
+}
+
+/* ── 점검 배너 ── */
+.m-inspect-banner {
+    background: rgba(255,235,167,0.07) !important;
+    border: 1.5px solid rgba(255,235,167,0.28) !important;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.5) !important;
+}
+
+/* ── 입력 필드 ── */
+.m-sheet-input, .m-sheet-select,
+.m-card-input, .m-info-input {
+    background: #0d0e14 !important;
+    border-color: rgba(255,255,255,0.25) !important;
+}
+
+/* ── 진행률 트랙 ── */
+.m-progress-track, .m-card-progress-track,
+.m-card-mini-bar-track {
+    background: rgba(255,255,255,0.14) !important;
+}
+
+/* ── 요약 칩 ── */
+.m-summary-chip {
+    background: #0d0e14 !important;
+    border: 1px solid rgba(255,255,255,0.15) !important;
+}
+
+/* ── 생산 진행률 패널 ── */
+.m-progress-wrap {
+    background: rgba(255,255,255,0.04) !important;
+    border: 1px solid rgba(255,255,255,0.1) !important;
+    border-radius: 12px;
+    padding: 10px 14px;
+    margin-bottom: 10px;
+}
+
+/* ── 점검시트 선택 버튼 ── */
+.m-select-btn {
+    background: #1e1f2e !important;
+}
+.m-insp-type-card, .m-insp-card {
+    background: #1e1f2e !important;
+    border-color: rgba(255,255,255,0.18) !important;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.5) !important;
+}
+
+/* ── mobile_check 점검 항목 ── */
+.m-item {
+    background: #1e1f2e !important;
+    border: 1px solid rgba(255,255,255,0.16) !important;
+}
+.m-item.done {
+    border-color: rgba(78,115,223,0.6) !important;
+    background: rgba(78,115,223,0.1) !important;
+}
+
+/* ════════════════════════════════════════════════
+   테마 폰트 통일 — 모든 입력 요소
+   라벨·제목: BMDOHYEON
+   입력값·수치: Poppins
+   ════════════════════════════════════════════════ */
+
+/* 전체 기본 폰트 */
+body, * {
+    font-family: 'Poppins', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+}
+
+/* 입력 요소 — Poppins (숫자·영문 가독성) */
+input, select, textarea,
+.m-sheet-input, .m-sheet-select,
+.m-card-input, .m-info-input,
+.m-defect-chip-input, .m-scrap-input,
+.m-add-model-input, .m-memo-area,
+.m-checker-input, .pw-input,
+.dm-qty-input, .dm-ref-input,
+.m-defect-row-input,
+.m-filter-input, .m-filter-select {
+    font-family: 'Poppins', 'Apple SD Gothic Neo', sans-serif !important;
+    font-size: 0.9rem !important;
+}
+
+/* placeholder 폰트 */
+input::placeholder, textarea::placeholder,
+.m-sheet-input::placeholder,
+.m-card-input::placeholder,
+.m-info-input::placeholder,
+.m-memo-area::placeholder {
+    font-family: 'Poppins', 'Apple SD Gothic Neo', sans-serif !important;
+    font-size: 0.82rem !important;
+    opacity: 0.45;
+}
+
+/* 타이틀·라벨 — BMDOHYEON */
+.m-sheet-title, .m-section-label,
+.m-header-title, .m-header-sub,
+.m-card-model, .m-card-company,
+.m-tab-btn, .m-main-tab,
+.m-kpi-label, .m-kpi-value,
+.m-aoi-kpi .m-kpi-label,
+.m-aoi-kpi .m-kpi-value,
+.m-sheet-label,
+.m-section-title,
+.m-equip-title,
+.m-empty-text,
+.m-loading,
+.m-result-title {
+    font-family: 'BMDOHYEON', 'Apple SD Gothic Neo', sans-serif !important;
+}
+
+/* 버튼 — Poppins (숫자 포함) */
+button, .m-sheet-btn, .m-nav-btn,
+.m-bar-btn, .m-action-btn,
+.m-aoi-entry-btn, .m-aoi-del-btn,
+.m-aoi-detail-btn, .m-card-action-btn,
+.m-save-btn, .m-search-btn,
+.m-submit-btn, .m-bulk-btn,
+.m-type-btn, .m-line-btn,
+.m-period-opt, .m-sheet-type-btn,
+.m-select-btn {
+    font-family: 'Poppins', 'Apple SD Gothic Neo', sans-serif !important;
+}
+
+/* 숫자 표시 — Poppins */
+.m-kpi-value, .m-chip-value,
+.m-card-info-value, .m-progress-pct,
+.m-card-tb-badge, .m-card-defect-badge,
+.m-prod-actual {
+    font-family: 'Poppins', sans-serif !important;
+    font-feature-settings: 'tnum';
+}
+</style>
+
+  <!-- ═══ PWA 메타 태그 ═══ -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#ffeba7">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="PPMS 조립">
+  <link rel="apple-touch-icon" href="/static/pwa/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/static/pwa/favicon-32.png">
+  <!-- ═══════════════════════ -->
+</head>
+<body>
+
+<div class="page-overlay" id="page-overlay"></div>
+<div class="m-toast" id="m-toast"></div>
+
+<!-- ===== 헤더 ===== -->
+<header class="m-header">
+    <div class="m-header-left">
+        <div class="m-logo-box" onclick="goTo('/mobile_index')">
+            <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                <path d="M40 160 L40 40 L100 40 C140 40 160 60 160 90 C160 120 140 140 100 140 L70 140 L70 160 Z M70 65 L70 115 L98 115 C122 115 132 105 132 90 C132 75 122 65 98 65 Z"/>
+            </svg>
+        </div>
+        <div class="m-header-title-block">
+            <span class="m-header-title">DIP 외주관리</span>
+            <span class="m-header-sub">출고 · 입고 이력 관리</span>
+        </div>
+    </div>
+    <div class="m-time-display" id="m-time">
+        <i class="uil uil-clock-eight"></i>
+        <span>--:--</span>
+    </div>
+</header>
+
+<!-- ===== 상태 탭 ===== -->
+<nav class="m-status-tabs">
+    <button class="m-status-tab active" data-filter="all"      onclick="setFilter('all',this)">전체</button>
+    <button class="m-status-tab"        data-filter="ongoing"  onclick="setFilter('ongoing',this)">미완료</button>
+    <button class="m-status-tab"        data-filter="completed" onclick="setFilter('completed',this)">완료대기</button>
+</nav>
+
+<!-- ===== 콘텐츠 ===== -->
+<main class="m-content" id="m-content">
+    <div class="m-loading"><div class="m-spinner"></div> 로딩 중...</div>
+</main>
+
+<!-- ===== 하단 액션 바 ===== -->
+<nav class="m-action-bar">
+    <button class="m-nav-home-btn" onclick="goTo('/mobile_index')"><i class="uil uil-home"></i></button>
+    <button class="m-bar-btn add-group" onclick="openAddGroupSheet()">
+        <i class="uil uil-layer-group"></i> 그룹 추가
+    </button>
+</nav>
+
+<!-- ===== 출/입고 등록 바텀 시트 ===== -->
+<div class="m-modal-overlay" id="reg-modal" onclick="closeSheet('reg-modal', event)">
+    <div class="m-modal-sheet">
+        <div class="m-sheet-title"><i class="uil uil-exchange"></i> 출/입고 등록</div>
+
+        <div class="m-sheet-label">구분</div>
+        <div class="m-type-toggle">
+            <button class="m-type-btn sel-ship" id="type-ship" onclick="selectRegType('ship')">
+                <i class="uil uil-export"></i> 출고
+            </button>
+            <button class="m-type-btn" id="type-recv" onclick="selectRegType('receive')">
+                <i class="uil uil-import"></i> 입고
+            </button>
+        </div>
+
+        <div class="m-sheet-label">날짜</div>
+        <input type="date" class="m-sheet-input" id="reg-date">
+
+        <div class="m-sheet-label">수량</div>
+        <input type="number" class="m-sheet-input" id="reg-qty" placeholder="수량 입력" inputmode="numeric">
+
+        <input type="hidden" id="reg-group-id">
+
+        <div class="m-sheet-btn-row">
+            <button class="m-sheet-btn cancel" onclick="closeSheet('reg-modal')">취소</button>
+            <button class="m-sheet-btn confirm" onclick="submitRegistration()">등록</button>
+        </div>
+    </div>
+</div>
+
+<!-- ===== 그룹 추가 바텀 시트 ===== -->
+<div class="m-modal-overlay" id="group-modal" onclick="closeSheet('group-modal', event)">
+    <div class="m-modal-sheet">
+        <div class="m-sheet-title"><i class="uil uil-layer-group"></i> 그룹 추가</div>
+
+        <div class="m-sheet-label">생산 모델 선택</div>
+        <div class="m-model-list" id="model-select-list">
+            <div style="text-align:center; color:#555; padding:20px; font-size:0.8rem;">로딩 중...</div>
+        </div>
+
+        <div class="m-sheet-label">모델명 <span style="color:#666;font-size:0.65rem;">(직접 입력 가능)</span></div>
+        <input type="text" class="m-sheet-input" id="group-model-input" placeholder="모델명">
+
+        <div class="m-sheet-label">LOT</div>
+        <input type="number" class="m-sheet-input" id="group-lot-input" placeholder="수량" inputmode="numeric">
+
+        <input type="hidden" id="group-year-input">
+        <input type="hidden" id="group-month-input">
+
+        <div class="m-sheet-btn-row">
+            <button class="m-sheet-btn cancel" onclick="closeSheet('group-modal')">취소</button>
+            <button class="m-sheet-btn confirm" onclick="submitAddGroup()">저장</button>
+        </div>
+    </div>
+</div>
+
+<script>
+/* =============================================
+   상태 관리
+   ============================================= */
+let groupList = [];
+let productionModels = [];
+let currentFilter = 'all';
+let regSelectedType = 'ship';
+let userRole = '';
+const API = '/api/dip';
+
+/* =============================================
+   초기화
+   ============================================= */
+document.addEventListener('DOMContentLoaded', () => {
+    userRole = localStorage.getItem('ppms_user_role') || '';
+    if (!userRole) { window.location.href = '/api/auth/login_view'; return; }
+
+    // 날짜 기본값
+    document.getElementById('reg-date').value = formatDate(new Date());
+
+    updateTime();
+    setInterval(updateTime, 1000);
+    fetchGroups();
+    setTimeout(() => { document.body.style.opacity = '1'; }, 50);
+});
+
+window.addEventListener('pageshow', () => {
+    document.body.style.opacity = '1';
+    document.getElementById('page-overlay').classList.remove('active');
+});
+
+/* =============================================
+   시계
+   ============================================= */
+function updateTime() {
+    const el = document.querySelector('#m-time span');
+    if (!el) return;
+    const now = new Date();
+    const pad = n => String(n).padStart(2,'0');
+    el.textContent = `${now.getFullYear()}.${pad(now.getMonth()+1)}.${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+}
+
+function formatDate(d) {
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function formatDateShort(s) {
+    return s && s.length >= 10 ? s.substring(5) : s;
+}
+
+/* =============================================
+   상태 탭 필터
+   ============================================= */
+function setFilter(filter, btn) {
+    currentFilter = filter;
+    document.querySelectorAll('.m-status-tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderGroups();
+}
+
+/* =============================================
+   그룹 데이터 로딩
+   ============================================= */
+async function fetchGroups() {
+    document.getElementById('m-content').innerHTML =
+        `<div class="m-loading"><div class="m-spinner"></div> 로딩 중...</div>`;
+    try {
+        const res = await fetch(`${API}/groups`);
+        groupList = await res.json();
+        renderGroups();
+    } catch (e) {
+        document.getElementById('m-content').innerHTML =
+            `<div class="m-empty-state"><div class="m-empty-icon"><i class="uil uil-wifi-slash"></i></div><div class="m-empty-text">데이터를 불러올 수 없습니다.</div></div>`;
+    }
+}
+
+/* =============================================
+   그룹 렌더링
+   ============================================= */
+function renderGroups() {
+    const content = document.getElementById('m-content');
+
+    // 필터링
+    let active = groupList.filter(g => g.status !== 'completed');
+
+    const isReady = g => {
+        const ts = g.shipping.reduce((s, r) => s + parseInt(r.quantity), 0);
+        const tr = g.receiving.reduce((s, r) => s + parseInt(r.quantity), 0);
+        const lot = parseInt(g.lot);
+        return ts === lot && tr === lot;
+    };
+
+    let filtered = active;
+    if (currentFilter === 'ongoing')   filtered = active.filter(g => !isReady(g));
+    if (currentFilter === 'completed') filtered = active.filter(g =>  isReady(g));
+
+    if (filtered.length === 0) {
+        const msg = currentFilter === 'completed'
+            ? '완료 대기중인 그룹이 없습니다.<br><span style="font-size:0.8em">수량이 모두 채워지면 이곳에 나타납니다.</span>'
+            : '등록된 그룹이 없습니다.<br><span style="font-size:0.8em">하단 \'그룹 추가\' 버튼을 눌러 시작하세요.</span>';
+        content.innerHTML = `<div class="m-empty-state"><div class="m-empty-icon"><i class="uil uil-layer-group"></i></div><div class="m-empty-text">${msg}</div></div>`;
+        return;
+    }
+
+    content.innerHTML = filtered.map(g => buildGroupCard(g)).join('');
+}
+
+function buildGroupCard(g) {
+    const totalShip = g.shipping.reduce((s, r) => s + parseInt(r.quantity), 0);
+    const totalRecv = g.receiving.reduce((s, r) => s + parseInt(r.quantity), 0);
+    const lot = parseInt(g.lot);
+    const ready = totalShip === lot && totalRecv === lot && lot > 0;
+
+    const shipPct = lot > 0 ? Math.min((totalShip / lot) * 100, 100).toFixed(0) : 0;
+    const recvPct = lot > 0 ? Math.min((totalRecv / lot) * 100, 100).toFixed(0) : 0;
+
+    const shipRows = buildHistoryRows(g.shipping, g.id, 'ship');
+    const recvRows = buildHistoryRows(g.receiving, g.id, 'receive');
+
+    const canEdit = userRole === 'admin' || userRole === 'user';
+
+    return `
+    <div class="m-group-card ${ready ? 'ready' : ''}" id="gcard-${g.id}">
+        <!-- 헤더 -->
+        <div class="m-group-header">
+            <div>
+                <div class="m-group-model">${g.model} <span style="font-size:0.72rem;color:#888;">(${g.month})</span></div>
+                <div class="m-group-lot">LOT: ${g.lot}</div>
+            </div>
+            <div class="m-group-status-badge ${ready ? 'badge-ready' : 'badge-ongoing'}">
+                ${ready ? '✓ 완료대기' : '진행중'}
+            </div>
+        </div>
+
+        <!-- 듀얼 진행률 바 -->
+        <div class="m-group-progress">
+            <div class="m-progress-row">
+                <span class="m-progress-tag tag-ship">출고</span>
+                <div class="m-progress-track">
+                    <div class="m-progress-fill fill-ship ${shipPct >= 100 ? 'fill-complete' : ''}" style="width:${shipPct}%"></div>
+                </div>
+                <span class="m-progress-nums">${totalShip} / ${lot}</span>
+            </div>
+            <div class="m-progress-row">
+                <span class="m-progress-tag tag-recv">입고</span>
+                <div class="m-progress-track">
+                    <div class="m-progress-fill fill-recv ${recvPct >= 100 ? 'fill-complete' : ''}" style="width:${recvPct}%"></div>
+                </div>
+                <span class="m-progress-nums">${totalRecv} / ${lot}</span>
+            </div>
+        </div>
+
+        <!-- 이너 탭: 출고 | 입고 -->
+        <div class="m-inner-tabs">
+            <button class="m-inner-tab active-ship" id="itab-ship-${g.id}"
+                onclick="switchInnerTab(${g.id},'ship')">
+                <i class="uil uil-export"></i> 출고 (${totalShip})
+            </button>
+            <button class="m-inner-tab" id="itab-recv-${g.id}"
+                onclick="switchInnerTab(${g.id},'receive')">
+                <i class="uil uil-import"></i> 입고 (${totalRecv})
+            </button>
+        </div>
+
+        <!-- 출고 패널 -->
+        <div class="m-history-panel active" id="panel-ship-${g.id}">
+            <table class="m-history-table">
+                <thead><tr><th>날짜</th><th style="text-align:right;">수량</th><th style="text-align:right;">누계</th>${canEdit ? '<th></th>' : ''}</tr></thead>
+                <tbody id="tbody-ship-${g.id}">${shipRows || `<tr><td class="m-empty-row" colspan="4">이력 없음</td></tr>`}</tbody>
+            </table>
+        </div>
+
+        <!-- 입고 패널 -->
+        <div class="m-history-panel" id="panel-recv-${g.id}">
+            <table class="m-history-table">
+                <thead><tr><th>날짜</th><th style="text-align:right;">수량</th><th style="text-align:right;">누계</th>${canEdit ? '<th></th>' : ''}</tr></thead>
+                <tbody id="tbody-recv-${g.id}">${recvRows || `<tr><td class="m-empty-row" colspan="4">이력 없음</td></tr>`}</tbody>
+            </table>
+        </div>
+
+        <!-- 카드 하단 액션 -->
+        <div class="m-group-actions">
+            ${canEdit ? `
+            <button class="m-group-action-btn btn-ship" onclick="openRegSheet(${g.id},'ship')">
+                <i class="uil uil-export"></i> 출고 등록
+            </button>
+            <button class="m-group-action-btn btn-recv" onclick="openRegSheet(${g.id},'receive')">
+                <i class="uil uil-import"></i> 입고 등록
+            </button>
+            ${ready ? `<button class="m-group-action-btn btn-complete" onclick="completeGroup(${g.id})">
+                <i class="uil uil-check"></i> 완료
+            </button>` : ''}
+            <button class="m-group-action-btn btn-delete-group" style="flex:0;padding:9px 12px;" onclick="deleteGroup(${g.id})">
+                <i class="uil uil-trash-alt"></i>
+            </button>
+            ` : ''}
+        </div>
+    </div>`;
+}
+
+function buildHistoryRows(rows, groupId, type) {
+    if (!rows || rows.length === 0) return '';
+    const canEdit = userRole === 'admin' || userRole === 'user';
+    let cum = 0;
+    return rows.map(r => {
+        cum += parseInt(r.quantity);
+        return `
+        <tr>
+            <td>${formatDateShort(r.date)}</td>
+            <td class="td-qty">${r.quantity}</td>
+            <td class="td-cum">${cum}</td>
+            ${canEdit ? `<td class="td-del">
+                <button class="m-row-del-btn" onclick="deleteRecord(${r.id},${groupId},'${type}')">
+                    <i class="uil uil-minus"></i>
+                </button>
+            </td>` : ''}
+        </tr>`;
+    }).join('');
+}
+
+/* =============================================
+   이너 탭 전환 (출고 ↔ 입고)
+   ============================================= */
+function switchInnerTab(groupId, type) {
+    const shipTab  = document.getElementById(`itab-ship-${groupId}`);
+    const recvTab  = document.getElementById(`itab-recv-${groupId}`);
+    const shipPanel = document.getElementById(`panel-ship-${groupId}`);
+    const recvPanel = document.getElementById(`panel-recv-${groupId}`);
+
+    shipTab.className  = `m-inner-tab ${type === 'ship' ? 'active-ship' : ''}`;
+    recvTab.className  = `m-inner-tab ${type === 'receive' ? 'active-recv' : ''}`;
+    shipPanel.className  = `m-history-panel ${type === 'ship' ? 'active' : ''}`;
+    recvPanel.className  = `m-history-panel ${type === 'receive' ? 'active' : ''}`;
+}
+
+/* =============================================
+   출/입고 등록 시트
+   ============================================= */
+function openRegSheet(groupId, type) {
+    document.getElementById('reg-group-id').value = groupId;
+    selectRegType(type);
+    document.getElementById('reg-date').value = formatDate(new Date());
+    document.getElementById('reg-qty').value = '';
+    document.getElementById('reg-modal').classList.add('open');
+    setTimeout(() => document.getElementById('reg-qty').focus(), 300);
+}
+
+function selectRegType(type) {
+    regSelectedType = type;
+    const shipBtn = document.getElementById('type-ship');
+    const recvBtn = document.getElementById('type-recv');
+    shipBtn.className = `m-type-btn ${type === 'ship' ? 'sel-ship' : ''}`;
+    recvBtn.className = `m-type-btn ${type === 'receive' ? 'sel-recv' : ''}`;
+}
+
+async function submitRegistration() {
+    const groupId = document.getElementById('reg-group-id').value;
+    const date    = document.getElementById('reg-date').value;
+    const qty     = parseInt(document.getElementById('reg-qty').value);
+
+    if (!date || isNaN(qty) || qty <= 0) { showToast('날짜와 수량을 확인하세요', 'error'); return; }
+
+    try {
+        const res = await fetch(`${API}/records`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ group_id: groupId, date, type: regSelectedType, quantity: qty })
+        });
+        const data = await res.json();
+        if (data.success) {
+            closeSheet('reg-modal');
+            showToast('등록되었습니다');
+            await fetchGroups();
+        } else { showToast(data.message || '등록 실패', 'error'); }
+    } catch (e) { showToast('서버 오류', 'error'); }
+}
+
+/* =============================================
+   그룹 추가 시트
+   ============================================= */
+async function openAddGroupSheet() {
+    document.getElementById('group-model-input').value = '';
+    document.getElementById('group-lot-input').value = '';
+    document.getElementById('group-year-input').value = '';
+    document.getElementById('group-month-input').value = '';
+    document.getElementById('group-modal').classList.add('open');
+
+    // 생산 모델 로딩
+    const listEl = document.getElementById('model-select-list');
+    listEl.innerHTML = `<div style="text-align:center;color:#555;padding:20px;font-size:0.8rem;"><div class="m-spinner" style="margin:auto;"></div></div>`;
+
+    try {
+        const res = await fetch(`${API}/production_models`);
+        productionModels = await res.json();
+
+        // 이미 완료된 그룹 제외
+        const filtered = productionModels.filter(m =>
+            !groupList.some(g => g.model === m.model && g.lot === m.lot && g.status === 'completed')
+        );
+
+        if (filtered.length === 0) {
+            listEl.innerHTML = `<div style="text-align:center;color:#555;padding:20px;font-size:0.8rem;">등록 가능한 생산 모델이 없습니다.</div>`;
+            return;
+        }
+
+        listEl.innerHTML = filtered.map(m => `
+            <div class="m-model-item" onclick="fillGroupForm('${m.model}','${m.lot}','${m.year}','${m.month}')">
+                <div class="m-model-item-name">${m.model} <span style="color:#888;font-size:0.75rem;">(${m.month})</span></div>
+                <div class="m-model-item-lot">LOT: ${m.lot}</div>
+            </div>`).join('');
+    } catch (e) {
+        listEl.innerHTML = `<div style="text-align:center;color:var(--danger-red);padding:20px;font-size:0.8rem;">로드 실패</div>`;
+    }
+}
+
+function fillGroupForm(model, lot, year, month) {
+    document.getElementById('group-model-input').value = model;
+    document.getElementById('group-lot-input').value = lot;
+    document.getElementById('group-year-input').value = year;
+    document.getElementById('group-month-input').value = month;
+    showToast(`${model} 선택됨`);
+}
+
+async function submitAddGroup() {
+    const model = document.getElementById('group-model-input').value.trim().toUpperCase();
+    const lot   = document.getElementById('group-lot-input').value.trim();
+    const year  = document.getElementById('group-year-input').value;
+    const month = document.getElementById('group-month-input').value;
+
+    if (!model) { showToast('모델명을 입력하세요', 'error'); return; }
+    if (!lot)   { showToast('LOT를 입력하세요', 'error'); return; }
+
+    try {
+        const res = await fetch(`${API}/groups`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ model, lot, year, month })
+        });
+        const data = await res.json();
+        if (data.success) {
+            closeSheet('group-modal');
+            showToast('그룹이 생성되었습니다');
+            await fetchGroups();
+        } else { showToast(data.message || '생성 실패', 'error'); }
+    } catch (e) { showToast('서버 오류', 'error'); }
+}
+
+/* =============================================
+   완료 처리 / 삭제
+   ============================================= */
+async function completeGroup(groupId) {
+    const g = groupList.find(g => g.id === groupId);
+    if (!confirm(`[${g?.model}] 그룹을 완료 처리하시겠습니까?`)) return;
+    try {
+        const res = await fetch(`${API}/groups/${groupId}/complete`, { method: 'POST' });
+        const data = await res.json();
+        if (data.success) { showToast('완료 처리되었습니다'); await fetchGroups(); }
+        else { showToast(data.message || '실패', 'error'); }
+    } catch (e) { showToast('서버 오류', 'error'); }
+}
+
+async function deleteGroup(groupId) {
+    const g = groupList.find(g => g.id === groupId);
+    if (!confirm(`[${g?.model}] 그룹 전체를 삭제하시겠습니까?`)) return;
+    try {
+        const res = await fetch(`${API}/groups/${groupId}`, { method: 'DELETE' });
+        const data = await res.json();
+        if (data.success) { showToast('삭제되었습니다'); await fetchGroups(); }
+        else { showToast('삭제 실패', 'error'); }
+    } catch (e) { showToast('서버 오류', 'error'); }
+}
+
+async function deleteRecord(rowId, groupId, type) {
+    if (!confirm('이 기록을 삭제하시겠습니까?')) return;
+    try {
+        const res = await fetch(`${API}/records/${rowId}`, { method: 'DELETE' });
+        const data = await res.json();
+        if (data.success) { showToast('삭제되었습니다'); await fetchGroups(); }
+        else { showToast('삭제 실패', 'error'); }
+    } catch (e) { showToast('서버 오류', 'error'); }
+}
+
+/* =============================================
+   모달 / 토스트 / 페이지 전환
+   ============================================= */
+function closeSheet(id, event) {
+    if (event && event.target !== document.getElementById(id)) return;
+    document.getElementById(id).classList.remove('open');
+}
+
+function showToast(msg, type = '') {
+    const t = document.getElementById('m-toast');
+    t.textContent = msg;
+    t.className = `m-toast ${type} show`;
+    setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+function goTo(url) {
+    document.getElementById('page-overlay').classList.add('active');
+    setTimeout(() => { window.location.href = url; }, 300);
+}
+</script>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js', { scope: '/' })
+          .catch(() => {/* SW 등록 실패는 무시 — 앱 동작에 영향 없음 */});
+      });
+    }
+  </script>
+</body>
+</html>

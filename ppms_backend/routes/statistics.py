@@ -1,4 +1,5 @@
 from flask import Blueprint, request, jsonify, render_template
+from mobile_utils import mobile_render
 # [중요] models.py에서 ProductionSchedule 모델을 가져옵니다.
 from models import db, ProductionSchedule, AoiRecord
 from sqlalchemy import func
@@ -8,94 +9,118 @@ bp = Blueprint('statistics', __name__, url_prefix='/api/statistics')
 
 @bp.route('/view', methods=['GET'])
 def statistics_view():
-    # templates/statistics.html 파일을 반환
-    return render_template('statistics.html')
+    return mobile_render('statistics.html', 'mobile_statistics.html')
 
 @bp.route('/order_month_summary', methods=['GET'])
 def get_order_month_summary():
     try:
-        order_month = request.args.get('order_month')
-        year_str = request.args.get('year')
+        # [수정] 조회 기준을 주문월(order_month) → 실제 생산년월(prod_year, prod_month)로 변경
+        prod_month_str = request.args.get('prod_month')
+        year_str       = request.args.get('year')
 
-        if not all([order_month, year_str]):
-            return jsonify({"error": "주문월과 주문 년도를 모두 선택해주세요."}), 400
+        if not all([prod_month_str, year_str]):
+            return jsonify({"error": "생산 년도와 생산 월을 모두 선택해주세요."}), 400
         
         try:
-            year_int = int(year_str)
+            year_int       = int(year_str)
+            prod_month_int = int(prod_month_str)
         except ValueError:
-            return jsonify({"error": "유효하지 않은 연도입니다."}), 400
+            return jsonify({"error": "유효하지 않은 연도 또는 월입니다."}), 400
 
+        # [수정] prod_year, prod_month 기준으로 조회
         schedules = ProductionSchedule.query.filter_by(
-                    order_month=order_month,
-                    order_year=year_int 
+                    prod_year=year_int,
+                    prod_month=prod_month_int
                 ).all()
                 
         if not schedules:
             return jsonify([])
 
-        # --- 1단계: '모델명' 기준 그룹화 및 합산 (기존과 동일) ---
+        # --- 1단계: '모델명 + 주문키(order_month)' 기준 그룹화 ---
+        # order_month는 같은 모델의 서로 다른 주문을 구별하는 보조 키로만 사용
         grouped_by_model = {}
         orders_accounted_for = {}
         for s in schedules:
             model_name = s.model
-            order_key = (s.model, s.total_quantity, s.order_year) 
-            if model_name not in grouped_by_model:
-                grouped_by_model[model_name] = {
+            # 같은 모델이라도 주문월이 다르면 별개 주문이므로 구별
+            group_key = (s.model, s.order_month, s.order_year)
+            if group_key not in grouped_by_model:
+                grouped_by_model[group_key] = {
+                    'model': s.model,
+                    'order_month': s.order_month,
+                    'order_year': s.order_year,
                     'Top_Prod': 0, 'Bot_Prod': 0, 'T/O_Prod': 0, 'B/O_Prod': 0,
+                    'TB_Prod': 0,  # T/B (Top+Bot 동시 작업)
                     'Total_Qty': 0
                 }
-                orders_accounted_for[model_name] = set()
+                orders_accounted_for[group_key] = set()
             
             if s.tb == 'Top':
-                grouped_by_model[model_name]['Top_Prod'] += s.actual_prod
+                grouped_by_model[group_key]['Top_Prod'] += s.actual_prod
             elif s.tb == 'Bot':
-                grouped_by_model[model_name]['Bot_Prod'] += s.actual_prod
+                grouped_by_model[group_key]['Bot_Prod'] += s.actual_prod
+            elif s.tb == 'T/B':
+                grouped_by_model[group_key]['TB_Prod']  += s.actual_prod
             elif s.tb == 'T/O':
-                grouped_by_model[model_name]['T/O_Prod'] += s.actual_prod
+                grouped_by_model[group_key]['T/O_Prod'] += s.actual_prod
             elif s.tb == 'B/O':
-                grouped_by_model[model_name]['B/O_Prod'] += s.actual_prod
+                grouped_by_model[group_key]['B/O_Prod'] += s.actual_prod
             
-            if order_key not in orders_accounted_for[model_name]:
-                grouped_by_model[model_name]['Total_Qty'] += s.total_quantity
-                orders_accounted_for[model_name].add(order_key)
+            lot_key = (s.model, s.total_quantity, s.order_year, s.order_month)
+            if lot_key not in orders_accounted_for[group_key]:
+                grouped_by_model[group_key]['Total_Qty'] += s.total_quantity
+                orders_accounted_for[group_key].add(lot_key)
 
         # --- 2단계: MIN/MAX 로직 및 '상태' 판별 ---
         final_list = []
-        for model_name, data in grouped_by_model.items():
+        for group_key, data in grouped_by_model.items():
             
             final_actual_prod = 0
-            
-            # ▼▼▼ [수정] 'is_pair_product' 변수를 여기서 'False'로 초기화합니다. ▼▼▼
-            is_pair_product = False 
+            is_pair_product   = False
 
-            if data['T/O_Prod'] > 0 or data['B/O_Prod'] > 0:
-                final_actual_prod = data['T/O_Prod'] + data['B/O_Prod'] + data['Top_Prod'] + data['Bot_Prod']
+            tb_prod  = data['TB_Prod']
+            top_prod = data['Top_Prod']
+            bot_prod = data['Bot_Prod']
+            to_prod  = data['T/O_Prod']
+            bo_prod  = data['B/O_Prod']
+
+            if to_prod > 0 or bo_prod > 0:
+                # T/O 또는 B/O가 존재하면 단순 합산 (단면 전용 작업 포함)
+                final_actual_prod = to_prod + bo_prod + top_prod + bot_prod + tb_prod
+            elif tb_prod > 0 and top_prod == 0 and bot_prod == 0:
+                # T/B 단독: Top+Bot 동시 작업이므로 그대로 합산 (페어 개념 불필요)
+                final_actual_prod = tb_prod
+            elif tb_prod > 0:
+                # T/B와 별도 Top/Bot 혼재: T/B는 합산, 나머지는 페어 min 계산
+                final_actual_prod = tb_prod + min(top_prod, bot_prod)
+                is_pair_product   = (top_prod != bot_prod)
             else:
-                is_pair_product = True # [수정] '페어 제품'임
-                final_actual_prod = min(data['Top_Prod'], data['Bot_Prod'])
+                # Top/Bot만 있는 기존 페어 제품
+                is_pair_product   = True
+                final_actual_prod = min(top_prod, bot_prod)
 
-            # --- 3단계: '총 주문량' 및 '상태' 정의 (기존과 동일) ---
             total_qty = data['Total_Qty']
             status = "normal" 
             
-            if is_pair_product and (data['Top_Prod'] != data['Bot_Prod']) and (final_actual_prod == total_qty):
-                status = "imbalance" # '숨겨진 잉여' (빨간색)
+            if is_pair_product and (top_prod != bot_prod) and (final_actual_prod == total_qty):
+                status = "imbalance"
             elif final_actual_prod != total_qty:
-                status = "shortage" # '수량 불일치' (노란색)
+                status = "shortage"
             
-            # --- 4단계: 최종 달성률 계산 (기존과 동일) ---
             fulfillment_rate = 0
             if total_qty > 0:
                 fulfillment_rate = (final_actual_prod / total_qty) * 100
             
             final_list.append({
-                "model": model_name,
-                "orderMonth": order_month,
-                "orderYear": year_int,
-                "totalQuantity": total_qty,
-                "actualProduction": final_actual_prod,
-                "fulfillmentRate": fulfillment_rate,
-                "status": status # '상태' 필드
+                "model":             data['model'],
+                "orderMonth":        data['order_month'],   # 모달에서 주문 구별용으로만 사용
+                "orderYear":         data['order_year'],
+                "prodYear":          year_int,
+                "prodMonth":         prod_month_int,
+                "totalQuantity":     total_qty,
+                "actualProduction":  final_actual_prod,
+                "fulfillmentRate":   fulfillment_rate,
+                "status":            status
             })
 
         return jsonify(final_list)

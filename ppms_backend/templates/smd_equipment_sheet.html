@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PPMS - SMD 설비 일일점검</title>
+    <link rel="stylesheet" href="/static/common.css">
+    <link rel="stylesheet" href="https://unicons.iconscout.com/release/v4.0.8/css/line.css">
+    <link href="https://hangeul.pstatic.net/hangeul_static/css/bmdohyeon.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Poppins:400,600,800" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="/static/logo.js"></script>
+
+    <style>
+        /* common.css의 content-area가 box-sizing:content-box + padding:20px + width:100%이라
+           body:overflow:hidden에 의해 우측 패딩 20px가 클리핑됨 → border-box로 오버라이드 */
+        .content-area { box-sizing: border-box; overflow-x: hidden; }
+
+        .smd-inner {
+            display: flex; flex-direction: column;
+            width: 100%; height: 100%; gap: 8px;
+            box-sizing: border-box; min-width: 0;
+        }
+
+        /* 설비 탭 */
+        .equip-tabs {
+            flex: 0 0 auto; display: flex; gap: 6px; flex-wrap: wrap;
+        }
+        .equip-tab {
+            background: #1a1b24; border: 1px solid #444; color: #888;
+            padding: 5px 14px; border-radius: 20px; font-family: 'BMDOHYEON';
+            font-size: 0.82rem; cursor: pointer; transition: all 0.2s; white-space: nowrap;
+        }
+        .equip-tab.active  { background: var(--point-gold); color: #1f2029; border-color: var(--point-gold); font-weight: bold; }
+        .equip-tab:hover:not(.active) { border-color: var(--point-gold); color: var(--point-gold); }
+
+        /* 월 이동 컨트롤 */
+        .ctrl-bar {
+            flex: 0 0 auto;
+            display: flex; align-items: center; justify-content: space-between;
+            background: var(--card-bg); border: 1px solid var(--border-color);
+            border-radius: 10px; padding: 8px 16px; gap: 12px;
+        }
+        .month-ctrl { display: flex; align-items: center; gap: 10px; font-family: 'BMDOHYEON'; font-size: 1.1rem; color: #fff; }
+        .arrow-btn {
+            background: none; border: 1px solid #555; color: var(--point-gold);
+            width: 28px; height: 28px; border-radius: 50%; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.95rem; transition: all 0.2s;
+        }
+        .arrow-btn:hover { background: var(--point-gold); color: #1f2029; }
+        .quick-ok-btn {
+            background: none; border: 1px solid #4e73df; color: #4e73df;
+            padding: 3px 10px; border-radius: 6px; cursor: pointer;
+            font-size: 0.8rem; font-family: 'BMDOHYEON'; transition: all 0.2s;
+        }
+        .quick-ok-btn:hover { opacity: 0.75; }
+        .ctrl-btn-group { display: flex; gap: 6px; align-items: center; }
+        .ctrl-divider { width: 1px; height: 18px; background: #444; margin: 0 4px; }
+
+        /* 가이드 */
+        .guide { display: flex; gap: 12px; font-size: 0.8rem; flex-wrap: wrap; align-items: center; }
+        .guide span { color: #888; }
+        .g-ok  { color: #4e73df; font-weight: bold; }
+        .g-warn{ color: var(--point-gold); font-weight: bold; }
+        .g-ng  { color: var(--danger-red); font-weight: bold; }
+
+        /* 테이블 */
+        .table-wrapper {
+            flex: 1; min-height: 0; min-width: 0;
+            overflow-x: auto; overflow-y: auto;
+            background: var(--card-bg); border-radius: 12px; border: 1px solid var(--border-color);
+            /* 스크롤 끝에서 오른쪽 잘림 방지 */
+            padding-right: 2px;
+        }
+        table { width: max-content; min-width: 100%; border-collapse: collapse; table-layout: auto; }
+        th, td { border: 1px solid #3a3b47; text-align: center; padding: 0; }
+        th {
+            background: #1a1b21; color: var(--point-gold); font-family: 'BMDOHYEON';
+            padding: 7px 4px; font-size: 0.82rem;
+            position: sticky; top: 0; z-index: 20; white-space: nowrap;
+        }
+        .item-col {
+            position: sticky; left: 0; background: #1a1b21; z-index: 30;
+            min-width: 140px; text-align: left; padding: 5px 8px; font-size: 0.8rem;
+            border-right: 2px solid var(--point-gold); white-space: nowrap;
+            color: #ccc;
+        }
+        th.item-col { z-index: 40; color: var(--point-gold); }
+        .freq-col { min-width: 36px; color: #888; font-size: 0.75rem; }
+        .day-col  { min-width: 34px; height: 38px; padding: 0 !important; }
+
+        @keyframes pulseGlow {
+            0%,100% { box-shadow: inset 0 3px 0 var(--point-gold), 0 0 6px rgba(255,235,167,0.05); }
+            50%      { box-shadow: inset 0 3px 0 var(--point-gold), 0 0 14px rgba(255,235,167,0.25); }
+        }
+        /* ② today 헤더: 불투명 배경으로 행 침범 방지 */
+        th.today {
+            position: sticky; top: 0; z-index: 20;
+            background: #1e2535 !important;
+            border: 1px solid rgba(255,235,167,0.3) !important;
+            border-bottom: 2px solid var(--point-gold) !important;
+            animation: pulseGlow 3s infinite ease-in-out;
+            color: var(--point-gold) !important;
+        }
+        th.weekend { color: var(--danger-red); }
+
+        .check-cell {
+            width: 100%; height: 38px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; font-size: 0.95rem; font-weight: bold;
+            transition: background 0.15s; user-select: none;
+        }
+        .check-cell:hover { background: rgba(255,235,167,0.07); }
+        .st-O { background: rgba(78,115,223,0.15); color: #4e73df; }
+        .st-△ { background: rgba(255,235,167,0.1);  color: var(--point-gold); }
+        .st-X { background: rgba(255,68,68,0.15);   color: var(--danger-red); }
+        .st-□ { background: rgba(0,230,118,0.1);    color: var(--success-green); }
+
+        /* ④ 주기별 행 구분 */
+        tr.freq-group-start td { border-top: 2px solid #444; }
+        tr.freq-D td.item-col { border-left: 3px solid #4e73df; }
+        tr.freq-W td.item-col { border-left: 3px solid var(--point-gold); }
+        tr.freq-M td.item-col { border-left: 3px solid #ff9800; }
+        tr.freq-W { background: rgba(255,235,167,0.02); }
+        tr.freq-M { background: rgba(255,152,0,0.03); }
+        /* 주차 시작 열 구분선 */
+        th.week-start { border-left: 2px solid rgba(255,235,167,0.5) !important; }
+        td.week-start { border-left: 2px solid rgba(255,235,167,0.25) !important; }
+    </style>
+</head>
+<body>
+    <div class="page-container">
+        <header class="main-header">
+            <div class="header-left">
+                <a href="javascript:void(0)" onclick="goToHome()" class="ppms-logo-placeholder"></a>
+            </div>
+            <div class="header-center">
+                <div class="common-box font-35pt">SMD 설비 일일점검</div>
+            </div>
+            <div class="header-right">
+                <div class="common-box font-15pt time-display" id="current-time"></div>
+            </div>
+        </header>
+
+        <main class="content-area">
+            <div class="smd-inner">
+                <div class="equip-tabs" id="equip-tabs"></div>
+                <div class="ctrl-bar">
+                    <div class="month-ctrl">
+                        <button class="arrow-btn" onclick="moveMonth(-1)"><i class="uil uil-angle-left"></i></button>
+                        <span id="month-display"></span>
+                        <button class="arrow-btn" onclick="moveMonth(1)"><i class="uil uil-angle-right"></i></button>
+                        <button class="quick-ok-btn" onclick="jumpToday()" style="border-color:#888;color:#aaa;">오늘로 이동</button>
+                        <div class="ctrl-divider"></div>
+                        <button class="quick-ok-btn" onclick="fillToday('D')">일간 OK</button>
+                        <button class="quick-ok-btn" onclick="fillToday('W')" style="border-color:var(--point-gold);color:var(--point-gold);">주간 OK</button>
+                        <button class="quick-ok-btn" onclick="fillToday('M')" style="border-color:#ff9800;color:#ff9800;">월간 OK</button>
+                        <button class="quick-ok-btn" onclick="clearToday()" style="border-color:#ff4444;color:#ff4444;">초기화</button>
+                    </div>
+                    <div class="guide">
+                        <span class="g-ok">O</span><span>양호</span>
+                        <span class="g-warn">△</span><span>이상(작업가능)</span>
+                        <span class="g-ng">X</span><span>이상보고</span>
+                        <span style="color:var(--success-green);font-weight:bold;">□</span><span>조치완료</span>
+                    </div>
+                </div>
+                <div class="table-wrapper">
+                    <table id="check-table">
+                        <thead><tr id="header-row"></tr></thead>
+                        <tbody id="table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+
+        <footer class="main-footer">
+            <div class="footer-left"></div>
+            <div class="footer-center">
+                <div class="footer-btn" onclick="goBack()"><i class="uil uil-arrow-left"></i></div>
+                <div class="footer-btn" onclick="goToHome()"><i class="uil uil-home"></i></div>
+                <div class="footer-btn" onclick="goForward()"><i class="uil uil-arrow-right"></i></div>
+            </div>
+            <div class="footer-right"></div>
+        </footer>
+    </div>
+
+    <style>body { opacity: 0; transition: opacity 0.5s ease-in-out; }</style>
+
+    <script>
+    const SHEET_TYPE = 'smd_daily';
+    const STATUS_CYCLE = ['', 'O', '△', 'X', '□'];
+    const DAY_NAMES = ['일','월','화','수','목','금','토'];
+
+    // 설비별 점검 항목 정의 (A-B / C-D LINE 동일)
+    const EQUIPMENTS = {
+        'Loader':           [{no:1, item:'장비 내·외부',      criteria:'청결상태 확인',          freq:'D'},
+                             {no:2, item:'Main Air 압력',     criteria:'5±1Kg/㎠',               freq:'D'},
+                             {no:3, item:'Lift',              criteria:'작동상태 확인',           freq:'D'},
+                             {no:4, item:'Pusher',            criteria:'작동상태 확인',           freq:'D'},
+                             {no:5, item:'Switch',            criteria:'작동상태 확인',           freq:'D'},
+                             {no:6, item:'Tower Lamp',        criteria:'작동상태 확인',           freq:'W'},
+                             {no:7, item:'Emergency Stop',    criteria:'작동상태 확인',           freq:'M'},
+                             {no:8, item:'각종 구동부',        criteria:'Oil 및 Grease 유·무',    freq:'M'},
+                             {no:9, item:'Air 점검',          criteria:'Air Hose 이상 유·무',    freq:'M'}],
+        'Screen Printer':   [{no:1, item:'장비 내·외부',      criteria:'청결상태 확인',           freq:'D'},
+                             {no:2, item:'Main Air 압력',     criteria:'5±1Kg/㎠',               freq:'D'},
+                             {no:3, item:'Metal Mask Clamp',  criteria:'작동상태 확인',           freq:'D'},
+                             {no:4, item:'Cleaning Solvent',  criteria:'작동상태 확인',           freq:'D'},
+                             {no:5, item:'Squeegee Cylinder', criteria:'작동상태 확인',           freq:'D'},
+                             {no:6, item:'Metal Mask',        criteria:'마모상태 확인',           freq:'D'},
+                             {no:7, item:'Conveyor',          criteria:'작동상태 확인',           freq:'W'},
+                             {no:8, item:'Squeegee',          criteria:'청결상태 확인',           freq:'W'},
+                             {no:9, item:'Sensor',            criteria:'감지상태 확인',           freq:'W'},
+                             {no:10,item:'Tower Lamp',        criteria:'작동상태 확인',           freq:'W'},
+                             {no:11,item:'Emergency Stop',    criteria:'작동상태 확인',           freq:'M'},
+                             {no:12,item:'각종 구동부',        criteria:'Oil 및 Grease 유·무',    freq:'M'},
+                             {no:13,item:'Air 점검',          criteria:'Air Hose 이상 유·무',    freq:'M'}],
+        'SPI':              [{no:1, item:'장비 내·외부',      criteria:'청결상태 확인',           freq:'D'},
+                             {no:2, item:'Switch',            criteria:'작동상태 확인',           freq:'D'},
+                             {no:3, item:'Sensor',            criteria:'작동상태 확인',           freq:'D'},
+                             {no:4, item:'Main Air 압력',     criteria:'5±1Kg/㎠',               freq:'D'},
+                             {no:5, item:'Program',           criteria:'일치여부 확인',           freq:'D'},
+                             {no:6, item:'Camera Lighting',   criteria:'청결상태 확인',           freq:'D'},
+                             {no:7, item:'Air Filter',        criteria:'청결/파손 확인',          freq:'W'},
+                             {no:8, item:'Emergency Stop',    criteria:'작동상태 확인',           freq:'M'},
+                             {no:9, item:'각종 구동부',        criteria:'Oil 및 Grease 유·무',    freq:'M'}],
+        'Multi Mounter 471':[{no:1, item:'장비 내·외부',      criteria:'청결상태 확인',           freq:'D'},
+                             {no:2, item:'Main Air 압력',     criteria:'5±1Kg/㎠',               freq:'D'},
+                             {no:3, item:'Head 공압',         criteria:'400~600mmhg',             freq:'D'},
+                             {no:4, item:'Feeder Base',       criteria:'작동상태 확인',           freq:'D'},
+                             {no:5, item:'Backup Table',      criteria:'청결상태 확인',           freq:'D'},
+                             {no:6, item:'Nozzle',            criteria:'청결상태 확인',           freq:'W'},
+                             {no:7, item:'Sensor',            criteria:'작동상태 확인',           freq:'W'},
+                             {no:8, item:'Conveyor',          criteria:'작동상태 확인',           freq:'W'},
+                             {no:9, item:'ANC',               criteria:'청결상태 확인',           freq:'W'},
+                             {no:10,item:'Air Filter',        criteria:'청결/파손 확인',          freq:'W'},
+                             {no:11,item:'Vision Camera',     criteria:'청결상태 확인',           freq:'W'},
+                             {no:12,item:'Tower Lamp',        criteria:'작동상태 확인',           freq:'W'},
+                             {no:13,item:'Emergency Stop',    criteria:'작동상태 확인',           freq:'M'},
+                             {no:14,item:'각종 구동부',        criteria:'Oil 및 Grease 유·무',    freq:'M'},
+                             {no:15,item:'Air 점검',          criteria:'Air Hose 이상 유·무',    freq:'M'}],
+        'Chip Mounter 411': [{no:1, item:'장비 내·외부',      criteria:'청결상태 확인',           freq:'D'},
+                             {no:2, item:'Main Air 압력',     criteria:'5±1Kg/㎠',               freq:'D'},
+                             {no:3, item:'Head 공압',         criteria:'400~600mmhg',             freq:'D'},
+                             {no:4, item:'Feeder Base',       criteria:'작동상태 확인',           freq:'D'},
+                             {no:5, item:'Backup Table',      criteria:'청결상태 확인',           freq:'D'},
+                             {no:6, item:'Nozzle',            criteria:'청결상태 확인',           freq:'W'},
+                             {no:7, item:'Sensor',            criteria:'작동상태 확인',           freq:'W'},
+                             {no:8, item:'Conveyor',          criteria:'작동상태 확인',           freq:'W'},
+                             {no:9, item:'ANC',               criteria:'청결상태 확인',           freq:'W'},
+                             {no:10,item:'Air Filter',        criteria:'청결/파손 확인',          freq:'W'},
+                             {no:11,item:'Tower Lamp',        criteria:'작동상태 확인',           freq:'W'},
+                             {no:12,item:'Emergency Stop',    criteria:'작동상태 확인',           freq:'M'},
+                             {no:13,item:'각종 구동부',        criteria:'Oil 및 Grease 유·무',    freq:'M'},
+                             {no:14,item:'Air 점검',          criteria:'Air Hose 이상 유·무',    freq:'M'}],
+        'Multi Mounter 421':[{no:1, item:'장비 내·외부',      criteria:'청결상태 확인',           freq:'D'},
+                             {no:2, item:'Main Air 압력',     criteria:'5±1Kg/㎠',               freq:'D'},
+                             {no:3, item:'Head 공압',         criteria:'400~600mmhg',             freq:'D'},
+                             {no:4, item:'Feeder Base',       criteria:'작동상태 확인',           freq:'D'},
+                             {no:5, item:'Backup Table',      criteria:'청결상태 확인',           freq:'D'},
+                             {no:6, item:'Nozzle',            criteria:'청결상태 확인',           freq:'W'},
+                             {no:7, item:'Sensor',            criteria:'작동상태 확인',           freq:'W'},
+                             {no:8, item:'Conveyor',          criteria:'작동상태 확인',           freq:'W'},
+                             {no:9, item:'ANC',               criteria:'청결상태 확인',           freq:'W'},
+                             {no:10,item:'Air Filter',        criteria:'청결/파손 확인',          freq:'W'},
+                             {no:11,item:'Vision Camera',     criteria:'청결상태 확인',           freq:'W'},
+                             {no:12,item:'Tower Lamp',        criteria:'작동상태 확인',           freq:'W'},
+                             {no:13,item:'Emergency Stop',    criteria:'작동상태 확인',           freq:'M'},
+                             {no:14,item:'각종 구동부',        criteria:'Oil 및 Grease 유·무',    freq:'M'},
+                             {no:15,item:'Air 점검',          criteria:'Air Hose 이상 유·무',    freq:'M'}],
+        'Multi Mounter':    [{no:1, item:'장비 내·외부',      criteria:'청결상태 확인',           freq:'D'},
+                             {no:2, item:'Main Air 압력',     criteria:'5±1Kg/㎠',               freq:'D'},
+                             {no:3, item:'Head 공압',         criteria:'400~600mmhg',             freq:'D'},
+                             {no:4, item:'Feeder Base',       criteria:'작동상태 확인',           freq:'D'},
+                             {no:5, item:'Backup Table',      criteria:'청결상태 확인',           freq:'D'},
+                             {no:6, item:'Nozzle',            criteria:'청결상태 확인',           freq:'W'},
+                             {no:7, item:'Sensor',            criteria:'작동상태 확인',           freq:'W'},
+                             {no:8, item:'Conveyor',          criteria:'작동상태 확인',           freq:'W'},
+                             {no:9, item:'ANC',               criteria:'청결상태 확인',           freq:'W'},
+                             {no:10,item:'Air Filter',        criteria:'청결/파손 확인',          freq:'W'},
+                             {no:11,item:'Vision Camera',     criteria:'청결상태 확인',           freq:'W'},
+                             {no:12,item:'Tower Lamp',        criteria:'작동상태 확인',           freq:'W'},
+                             {no:13,item:'Emergency Stop',    criteria:'작동상태 확인',           freq:'M'},
+                             {no:14,item:'각종 구동부',        criteria:'Oil 및 Grease 유·무',    freq:'M'},
+                             {no:15,item:'Air 점검',          criteria:'Air Hose 이상 유·무',    freq:'M'}],
+        'Reflow':           [{no:1, item:'장비 내·외부',      criteria:'청결상태 확인',           freq:'D'},
+                             {no:2, item:'Conveyor Speed',    criteria:'Program 확인',            freq:'D'},
+                             {no:3, item:'Temperature',       criteria:'Program 확인',            freq:'D'},
+                             {no:4, item:'반송부',             criteria:'작동상태 확인',           freq:'D'},
+                             {no:5, item:'Sensor',            criteria:'작동상태 확인',           freq:'D'},
+                             {no:6, item:'Program',           criteria:'일치여부 확인',           freq:'D'},
+                             {no:7, item:'N2',                criteria:'3,000ppm 미만',           freq:'D'},
+                             {no:8, item:'Conveying Chain',   criteria:'작동상태 확인',           freq:'D'},
+                             {no:9, item:'PCB',               criteria:'냉각 후 변형 확인',       freq:'D'},
+                             {no:10,item:'Air Filter',        criteria:'청결/파손 확인',          freq:'W'},
+                             {no:11,item:'Dust Fan',          criteria:'작동상태 확인',           freq:'W'},
+                             {no:12,item:'Tower Lamp',        criteria:'작동상태 확인',           freq:'W'},
+                             {no:13,item:'Emergency Stop',    criteria:'작동상태 확인',           freq:'M'},
+                             {no:14,item:'각종 구동부',        criteria:'Oil 및 Grease 유·무',    freq:'M'},
+                             {no:15,item:'Air 점검',          criteria:'Air Hose 이상 유·무',    freq:'M'}],
+        'Unloader':         [{no:1, item:'장비 내·외부',      criteria:'청결상태 확인',           freq:'D'},
+                             {no:2, item:'Main Air 압력',     criteria:'5±1Kg/㎠',               freq:'D'},
+                             {no:3, item:'Lift',              criteria:'작동상태 확인',           freq:'D'},
+                             {no:4, item:'Pusher',            criteria:'작동상태 확인',           freq:'D'},
+                             {no:5, item:'Switch',            criteria:'작동상태 확인',           freq:'D'},
+                             {no:6, item:'Tower Lamp',        criteria:'작동상태 확인',           freq:'W'},
+                             {no:7, item:'Emergency Stop',    criteria:'작동상태 확인',           freq:'M'},
+                             {no:8, item:'각종 구동부',        criteria:'Oil 및 Grease 유·무',    freq:'M'},
+                             {no:9, item:'Air 점검',          criteria:'Air Hose 이상 유·무',    freq:'M'}]
+    };
+
+    let viewYear = new Date().getFullYear();
+    let viewMonth = new Date().getMonth() + 1;
+    let activeEquip = Object.keys(EQUIPMENTS)[0];
+    let monthData = {};
+    let holidays = {};   // ③ 공휴일 캐시
+
+    function isWorkday(ds, dow) { return dow !== 0 && dow !== 6 && !holidays[ds]; }
+
+    // 탭 렌더링
+    function renderTabs() {
+        document.getElementById('equip-tabs').innerHTML =
+            Object.keys(EQUIPMENTS).map(eq =>
+                `<div class="equip-tab ${eq === activeEquip ? 'active' : ''}"
+                      onclick="selectEquip('${eq}')">${eq}</div>`
+            ).join('');
+    }
+
+    function selectEquip(eq) { activeEquip = eq; renderTabs(); renderTable(); }
+
+    function getWeekNum(y, m, d) {
+        const firstDow = new Date(y, m-1, 1).getDay();
+        return Math.ceil((d + firstDow) / 7);
+    }
+
+    // 테이블 렌더링
+    function renderTable() {
+        const lastDay  = new Date(viewYear, viewMonth, 0).getDate();
+        const today    = new Date();
+        const todayStr = dateStr(today.getFullYear(), today.getMonth()+1, today.getDate());
+        const items    = EQUIPMENTS[activeEquip] || [];
+
+        document.getElementById('month-display').textContent = `${viewYear}년 ${viewMonth}월`;
+
+        // 평일 목록 + 주차 계산
+        const workdays = [];
+        for (let d = 1; d <= lastDay; d++) {
+            const ds  = dateStr(viewYear, viewMonth, d);
+            const dow = new Date(viewYear, viewMonth-1, d).getDay();
+            if (!isWorkday(ds, dow)) continue;
+            workdays.push({ d, ds, dow, wk: getWeekNum(viewYear, viewMonth, d) });
+        }
+
+        // 헤더: 주차 시작 열에 week-start 클래스
+        let hHtml = `<th class="item-col">점검 항목</th>
+                     <th class="freq-col" style="min-width:30px;">주기</th>`;
+        let prevWk = null;
+        workdays.forEach(({ d, ds, dow, wk }) => {
+            const isWkStart = wk !== prevWk;
+            prevWk = wk;
+            hHtml += `<th class="day-col ${ds === todayStr ? 'today' : ''} ${isWkStart ? 'week-start' : ''}"
+                          title="${DAY_NAMES[dow]} (${wk}주)">${d}</th>`;
+        });
+        document.getElementById('header-row').innerHTML = hHtml;
+
+        // 바디: 주기 그룹 구분 + 주차 구분선
+        let bHtml = '';
+        let prevFreq = null;
+        items.forEach(item => {
+            const isGroupStart = item.freq !== prevFreq;
+            prevFreq = item.freq;
+            bHtml += `<tr class="freq-${item.freq}${isGroupStart ? ' freq-group-start' : ''}">
+                <td class="item-col" title="${item.criteria}">${item.no}. ${item.item}</td>
+                <td class="freq-col" style="font-size:0.72rem;padding:2px;">${item.freq}</td>`;
+            prevWk = null;
+            workdays.forEach(({ ds, wk }) => {
+                const isWkStart = wk !== prevWk;
+                prevWk = wk;
+                const key = `${activeEquip}_${item.no}_${ds}`;
+                const st  = (monthData[key] || {}).status || '';
+                bHtml += `<td class="day-col ${isWkStart ? 'week-start' : ''}">
+                    <div class="check-cell st-${st}"
+                         data-equip="${activeEquip}" data-no="${item.no}" data-date="${ds}"
+                         data-freq="${item.freq}" data-status="${st}">${st}</div>
+                </td>`;
+            });
+            bHtml += '</tr>';
+        });
+        document.getElementById('table-body').innerHTML = bHtml;
+    }
+
+    // 클릭 이벤트 위임 (드래그 포함)
+    let isDragging = false, dragStatus = null, draggedCells = [];
+
+    document.addEventListener('mousedown', e => {
+        const cell = e.target.closest('.check-cell');
+        if (!cell) return;
+        e.preventDefault();
+        const cur = cell.dataset.status || '';
+        const idx = STATUS_CYCLE.indexOf(cur);
+        dragStatus = STATUS_CYCLE[(idx + 1) % STATUS_CYCLE.length];
+        isDragging = true; draggedCells = [];
+        applyDrag(cell);
+    });
+    document.addEventListener('mouseenter', e => {
+        if (!isDragging) return;
+        const cell = e.target.closest('.check-cell');
+        if (cell) applyDrag(cell);
+    }, true);
+    document.addEventListener('mouseup', async () => {
+        if (!isDragging) return;
+        isDragging = false;
+        for (const c of draggedCells) await saveCell(c);
+        draggedCells = []; dragStatus = null;
+    });
+
+    function applyDrag(cell) {
+        if (draggedCells.find(c => c === cell)) return;
+        if (cell.dataset.status === dragStatus) return;
+        cell.dataset.status = dragStatus;
+        cell.className = `check-cell st-${dragStatus}`;
+        cell.textContent = dragStatus;
+        draggedCells.push(cell);
+    }
+
+    async function saveCell(cell) {
+        const key = `${cell.dataset.equip}_${cell.dataset.no}_${cell.dataset.date}`;
+        try {
+            await fetch('/api/smd_check/equipment/toggle', {
+                method: 'POST', headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({
+                    sheet_type: SHEET_TYPE,
+                    equipment:  cell.dataset.equip,
+                    item_no:    parseInt(cell.dataset.no),
+                    date:       cell.dataset.date,
+                    status:     cell.dataset.status
+                })
+            });
+            monthData[key] = { status: cell.dataset.status };
+        } catch(e) { console.error(e); }
+    }
+
+    async function loadData() {
+        try {
+            // ③ 공휴일 + 점검데이터 병렬 로드
+            const [holRes, dataRes] = await Promise.all([
+                fetch(`/api/inspection/holidays?year=${viewYear}`),
+                fetch(`/api/smd_check/equipment/monthly?sheet_type=${SHEET_TYPE}&year=${viewYear}&month=${viewMonth}`)
+            ]);
+            holidays  = holRes.ok  ? await holRes.json()  : {};
+            monthData = dataRes.ok ? await dataRes.json() : {};
+        } catch(e) { holidays = {}; monthData = {}; }
+        renderTable();
+    }
+
+    async function moveMonth(delta) {
+        viewMonth += delta;
+        if (viewMonth > 12) { viewMonth = 1; viewYear++; }
+        else if (viewMonth < 1) { viewMonth = 12; viewYear--; }
+        await loadData();
+    }
+
+    function dateStr(y, m, d) {
+        return `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    }
+
+    function updateTime() {
+        const now = new Date(), el = document.getElementById('current-time');
+        if (el) el.textContent =
+            `${now.getFullYear()}년 ${now.getMonth()+1}월 ${now.getDate()}일 ${now.getHours()}시 ${now.getMinutes()}분`;
+    }
+    setInterval(updateTime, 1000); updateTime();
+
+    // ── 편의 기능 ──────────────────────────────────────────
+    async function jumpToday() {
+        const now = new Date();
+        const ty = now.getFullYear(), tm = now.getMonth() + 1;
+        if (viewYear !== ty || viewMonth !== tm) {
+            viewYear = ty; viewMonth = tm;
+            await loadData();
+        }
+        const td = String(now.getDate()).padStart(2,'0');
+        const todayStr = `${ty}-${String(tm).padStart(2,'0')}-${td}`;
+        const th = document.querySelector(`th[data-date="${todayStr}"]`);
+        if (th) th.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+    }
+
+    async function fillToday(freq) {
+        const now = new Date();
+        const todayStr = dateStr(now.getFullYear(), now.getMonth()+1, now.getDate());
+        // 오늘이 현재 보는 월과 다르면 이동
+        if (viewYear !== now.getFullYear() || viewMonth !== now.getMonth()+1) {
+            viewYear = now.getFullYear(); viewMonth = now.getMonth()+1;
+            await loadData();
+        }
+        const okStatus = 'O';
+        const promises = [];
+
+        // 모든 설비 순회 → 해당 주기 항목 전체 처리
+        Object.entries(EQUIPMENTS).forEach(([equip, items]) => {
+            items.forEach(item => {
+                if (item.freq !== freq) return;
+                const key = `${equip}_${item.no}_${todayStr}`;
+                if ((monthData[key] || {}).status) return; // 이미 입력된 항목은 건드리지 않음
+
+                // monthData 캐시 업데이트 (탭 전환 시 반영)
+                monthData[key] = { status: okStatus };
+
+                // 현재 탭이면 DOM도 즉시 업데이트
+                if (equip === activeEquip) {
+                    const cell = document.querySelector(
+                        `.check-cell[data-equip="${equip}"][data-no="${item.no}"][data-date="${todayStr}"]`
+                    );
+                    if (cell) {
+                        cell.dataset.status = okStatus;
+                        cell.className = `check-cell st-${okStatus}`;
+                        cell.textContent = okStatus;
+                    }
+                }
+
+                // API 저장
+                promises.push(fetch('/api/smd_check/equipment/toggle', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        sheet_type: SHEET_TYPE,
+                        equipment:  equip,
+                        item_no:    item.no,
+                        date:       todayStr,
+                        status:     okStatus
+                    })
+                }));
+            });
+        });
+        await Promise.all(promises);
+    }
+
+    async function clearToday() {
+        if (!confirm('오늘 날짜의 모든 설비 체크를 초기화하시겠습니까?')) return;
+        const now = new Date();
+        const todayStr = dateStr(now.getFullYear(), now.getMonth()+1, now.getDate());
+        const promises = [];
+
+        // 모든 설비 순회 → 전체 항목 초기화
+        Object.entries(EQUIPMENTS).forEach(([equip, items]) => {
+            items.forEach(item => {
+                const key = `${equip}_${item.no}_${todayStr}`;
+                if (!(monthData[key] || {}).status) return; // 이미 비어있으면 건드리지 않음
+
+                // monthData 캐시 초기화
+                monthData[key] = { status: '' };
+
+                // 현재 탭이면 DOM도 즉시 업데이트
+                if (equip === activeEquip) {
+                    const cell = document.querySelector(
+                        `.check-cell[data-equip="${equip}"][data-no="${item.no}"][data-date="${todayStr}"]`
+                    );
+                    if (cell) {
+                        cell.dataset.status = '';
+                        cell.className = 'check-cell';
+                        cell.textContent = '';
+                    }
+                }
+
+                // API 저장
+                promises.push(fetch('/api/smd_check/equipment/toggle', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        sheet_type: SHEET_TYPE,
+                        equipment:  equip,
+                        item_no:    item.no,
+                        date:       todayStr,
+                        status:     ''
+                    })
+                }));
+            });
+        });
+        await Promise.all(promises);
+    }
+    // ──────────────────────────────────────────────────────
+
+    window.addEventListener('pageshow', () => setTimeout(() => document.body.style.opacity='1', 50));
+    window.goBack    = () => { document.body.style.opacity='0'; setTimeout(()=>history.back(),500); };
+    window.goToHome  = () => { document.body.style.opacity='0'; setTimeout(()=>location.href='/',500); };
+    window.goForward = () => { document.body.style.opacity='0'; setTimeout(()=>history.forward(),500); };
+
+    window.onload = async () => {
+        renderTabs();
+        await loadData();
+    };
+    </script>
+</body>
+</html>

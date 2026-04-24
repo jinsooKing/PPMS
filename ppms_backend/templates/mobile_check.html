@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>PPMS 점검</title>
+    <link href="https://hangeul.pstatic.net/hangeul_static/css/bmdohyeon.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overflow-x: hidden;}
+body{background:#111218;color:#c4c3ca;font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif;display:flex;flex-direction:column;}
+#app-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+.m-header{background:rgba(31,32,41,.97);border-bottom:1px solid rgba(255,235,167,.15);padding:16px 20px 12px;display:flex;align-items:center;gap:12px;flex-shrink:0;}
+.m-logo{width:32px;height:32px;background:rgba(255,235,167,.1);border:1px solid rgba(255,235,167,.3);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1rem;color:#ffeba7;font-weight:700;}
+.m-header-title{font-size:1rem;color:#ffeba7;font-weight:600;}
+.m-header-sub{font-size:.75rem;color:#666;margin-top:1px;}
+.m-card{margin:16px 16px 0;padding:18px 20px;background:#1e1f2e;border:1px solid rgba(255,255,255,.07);border-radius:14px;}
+.m-card-row{display:flex;gap:20px;}
+.m-card-label{font-size:.7rem;color:#888;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;}
+.m-card-value{font-size:1.05rem;color:#fff;font-weight:600;}
+/* 선택 화면 */
+.m-select-grid{margin:16px;display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.m-select-btn{background:#1e1f2e;border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:18px 10px;text-align:center;cursor:pointer;transition:all .2s;}
+.m-select-btn:active{transform:scale(.97);}
+.m-select-btn.full{grid-column:1/-1;}
+.m-select-icon{font-size:1.6rem;margin-bottom:6px;}
+.m-select-label{font-size:.95rem;color:#fff;font-weight:600;}
+.m-select-sub{font-size:.75rem;color:#888;margin-top:3px;}
+.m-select-btn.freq-D{border-color:#4e73df;}
+.m-select-btn.freq-D .m-select-label{color:#4e73df;}
+.m-select-btn.freq-W{border-color:#ffeba7;}
+.m-select-btn.freq-W .m-select-label{color:#ffeba7;}
+.m-select-btn.freq-M{border-color:#ff9800;}
+.m-select-btn.freq-M .m-select-label{color:#ff9800;}
+/* 점검 항목 */
+.m-section-title{margin:16px 16px 8px;font-size:.76rem;color:#ffeba7;font-weight:600;letter-spacing:.06em;text-transform:uppercase;border-bottom:1px solid rgba(255,235,167,.15);padding-bottom:6px;}
+.m-equip-group{margin:0 16px 10px;}
+.m-equip-title{font-size:.82rem;color:#aaa;padding:6px 4px;font-weight:600;}
+.m-items{display:flex;flex-direction:column;gap:6px;}
+.m-item{background:#1e1f2e;border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;transition:border-color .15s;}
+.m-item.done{border-color:rgba(78,115,223,.5);background:rgba(78,115,223,.07);}
+.m-item.ng{border-color:rgba(255,68,68,.5);background:rgba(255,68,68,.07);}
+.m-item-name{font-size:.85rem;color:#ddd;flex:1;}
+.m-item-criteria{font-size:.72rem;color:#666;margin-top:1px;}
+.m-status-btns{display:flex;gap:6px;flex-shrink:0;margin-left:8px;}
+.m-status-btn{width:38px;height:38px;border-radius:50%;border:2px solid #444;background:transparent;font-size:.95rem;font-weight:700;cursor:pointer;color:#666;transition:all .15s;display:flex;align-items:center;justify-content:center;}
+.m-status-btn.sel-ok{border-color:#4e73df;background:rgba(78,115,223,.2);color:#4e73df;}
+.m-status-btn.sel-x{border-color:#ff4444;background:rgba(255,68,68,.2);color:#ff4444;}
+/* 전체 OK 버튼 */
+.m-bulk-ok{margin:10px 16px 0;display:flex;gap:8px;}
+.m-bulk-btn{flex:1;padding:10px;border-radius:10px;border:1px solid #4e73df;background:rgba(78,115,223,.1);color:#4e73df;font-size:.85rem;font-weight:600;cursor:pointer;transition:all .2s;}
+.m-bulk-btn:active{background:rgba(78,115,223,.25);}
+.m-bulk-btn.clear{border-color:#555;background:rgba(255,255,255,.05);color:#888;}
+/* 입력 필드 */
+.m-input-group{display:flex;flex-direction:column;gap:12px;}
+.m-input-row{display:flex;align-items:center;gap:10px;}
+.m-input-label{color:#aaa;font-size:.88rem;min-width:90px;}
+.m-input{flex:1;background:#0d0e14;border:1px solid #444;color:#fff;padding:10px 14px;border-radius:10px;font-size:1rem;text-align:center;-moz-appearance:textfield;}
+.m-input::-webkit-inner-spin-button,.m-input::-webkit-outer-spin-button{-webkit-appearance:none;}
+.m-input:focus{outline:none;border-color:#ffeba7;}
+.m-input-unit{color:#888;font-size:.82rem;min-width:28px;}
+/* 냉장고 O/X 토글 */
+.m-toggle-row{display:flex;gap:10px;}
+.m-toggle-btn{flex:1;padding:14px;border-radius:12px;border:2px solid #444;background:transparent;font-size:1.1rem;font-weight:700;cursor:pointer;color:#666;transition:all .2s;}
+.m-toggle-btn.sel-O{border-color:#4e73df;background:rgba(78,115,223,.15);color:#4e73df;}
+.m-toggle-btn.sel-X{border-color:#ff4444;background:rgba(255,68,68,.15);color:#ff4444;}
+/* 점검자 */
+.m-checker-wrap{margin:10px 16px 0;display:flex;flex-direction:column;align-items:flex-start;gap:8px;}
+.m-checker-label{color:#aaa;font-size:.85rem;white-space:nowrap;}
+.m-checker-input{width:100%;box-sizing:border-box;background:#1e1f2e;border:1px solid #444;color:#fff;padding:10px 14px;border-radius:10px;font-size:.95rem;}
+.m-checker-input:focus{outline:none;border-color:#ffeba7;}
+/* 제출 버튼 */
+.m-submit-wrap{padding:16px;margin-top:auto;padding-top:20px;}
+.m-submit-btn{width:100%;padding:17px;background:#ffeba7;color:#1f2029;border:none;border-radius:14px;font-size:1.1rem;font-weight:700;cursor:pointer;letter-spacing:.03em;transition:opacity .2s;}
+.m-submit-btn:active{opacity:.8;}
+.m-submit-btn:disabled{background:#444;color:#888;cursor:not-allowed;}
+/* 결과/에러 */
+.m-result{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:40px 20px;text-align:center;}
+.m-result-icon{font-size:3.5rem;}
+.m-result-title{font-size:1.3rem;color:#fff;font-weight:700;}
+.m-result-sub{font-size:.88rem;color:#888;line-height:1.6;}
+.m-retry-btn{margin-top:8px;background:#1e1f2e;border:1px solid #555;color:#ddd;padding:10px 24px;border-radius:10px;cursor:pointer;font-size:.9rem;}
+
+/* ═══════════════════════════════════════════════════
+   전체 화면 레이아웃 고정 — 스크롤 없이 뷰포트에 꼭 맞춤
+   ═══════════════════════════════════════════════════ */
+html, body {
+    height: 100% !important;
+    overflow-x: hidden !important;
+}
+body {
+    display: flex !important;
+    flex-direction: column !important;
+    min-height: unset !important;   /* min-height:100vh 덮어쓰기 */
+}
+/* 헤더·탭·하단바 — 절대 줄어들지 않음 */
+.m-header, .m-tab-nav, .m-status-tabs, .m-main-tabs,
+.m-action-bar, .m-nav-bar, .m-action-bar,
+.m-date-bar, .m-filter-bar, .m-month-nav,
+.m-summary-bar, .m-breadcrumb, .m-footer, nav {
+    flex-shrink: 0 !important;
+}
+/* 스크롤 가능 영역 — 남은 공간 전부 차지 */
+.m-content, #app-body, #m-content {
+    flex: 1 1 0 !important;      /* 1 1 0 → 줄어들 수 있음 */
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    min-height: 0 !important;    /* flex child 줄어들기 허용 */
+}
+
+/* ════════════════════════════════════════════════════════
+   UI 박스 구분 강화 — 테두리·그림자·배경 대비
+   ════════════════════════════════════════════════════════ */
+
+/* ── 카드 계열 전부 ── */
+.m-schedule-card, .m-aoi-card, .m-dip-card, .m-group-card,
+.m-repair-card, .m-batch-item, .m-mgr-card, .m-item,
+.m-aoi-stat-cell, .m-summary-panel,
+.m-modal-sheet, .m-file-card,
+.m-card, .m-select-btn, .m-dept-column,
+.m-dash-card, .m-menu-card {
+    border-color: rgba(255,255,255,0.18) !important;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.55),
+                0 0 0 1px rgba(255,255,255,0.06) !important;
+}
+
+/* ── 호버/액티브 시 더 밝게 ── */
+.m-schedule-card:active, .m-aoi-card:active,
+.m-group-card:active, .m-item:active,
+.m-dash-card:active, .m-menu-card:active {
+    border-color: rgba(255,235,167,0.45) !important;
+    box-shadow: 0 4px 18px rgba(0,0,0,0.65),
+                0 0 0 1px rgba(255,235,167,0.18) !important;
+}
+
+/* ── KPI 칸 (생산/AOI 카드 안) ── */
+.m-card-kpi, .m-aoi-kpi {
+    background: #0d0e14 !important;
+    border-color: rgba(255,255,255,0.16) !important;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.5) !important;
+}
+
+/* ── 점검 대시보드 카드 ── */
+.m-insp-card {
+    border-color: rgba(255,255,255,0.18) !important;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.55) !important;
+}
+
+/* ── 탭 네비 ── */
+.m-tab-nav, .m-main-tabs, .m-status-tabs {
+    border-bottom: 1px solid rgba(255,255,255,0.12) !important;
+    background: rgba(17,18,24,0.98) !important;
+}
+
+/* ── 필터 바 ── */
+.m-filter-bar {
+    border-bottom: 1px solid rgba(255,255,255,0.1) !important;
+    background: rgba(17,18,24,0.95) !important;
+}
+
+/* ── 헤더 ── */
+.m-header {
+    border-bottom: 1px solid rgba(255,235,167,0.2) !important;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.6) !important;
+}
+
+/* ── 하단 액션 바 ── */
+.m-action-bar, .m-nav-bar, .m-footer {
+    border-top: 1px solid rgba(255,255,255,0.12) !important;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.5) !important;
+}
+
+/* ── 배경보다 살짝 밝은 mid-layer (모달 등) ── */
+.m-modal-sheet {
+    background: #1e1f2e !important;
+    border-top: 1px solid rgba(255,255,255,0.18) !important;
+    box-shadow: 0 -8px 40px rgba(0,0,0,0.8) !important;
+}
+
+/* ── 섹션 구분선 ── */
+.m-section-label {
+    color: rgba(255,235,167,0.7) !important;
+    border-bottom: 1px solid rgba(255,235,167,0.18) !important;
+    padding-bottom: 4px;
+    margin-bottom: 8px;
+}
+
+/* ── index 메뉴 카드 특별 강조 ── */
+.m-menu-card {
+    background: #1e1f2e !important;
+}
+.m-menu-card.primary {
+    background: linear-gradient(135deg, rgba(255,235,167,0.10) 0%, #1e1f2e 100%) !important;
+    border-color: rgba(255,235,167,0.30) !important;
+}
+
+/* ── 점검 배너 ── */
+.m-inspect-banner {
+    background: rgba(255,235,167,0.07) !important;
+    border: 1.5px solid rgba(255,235,167,0.28) !important;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.5) !important;
+}
+
+/* ── 입력 필드 ── */
+.m-sheet-input, .m-sheet-select,
+.m-card-input, .m-info-input {
+    background: #0d0e14 !important;
+    border-color: rgba(255,255,255,0.25) !important;
+}
+
+/* ── 진행률 트랙 ── */
+.m-progress-track, .m-card-progress-track,
+.m-card-mini-bar-track {
+    background: rgba(255,255,255,0.14) !important;
+}
+
+/* ── 요약 칩 ── */
+.m-summary-chip {
+    background: #0d0e14 !important;
+    border: 1px solid rgba(255,255,255,0.15) !important;
+}
+
+/* ── 생산 진행률 패널 ── */
+.m-progress-wrap {
+    background: rgba(255,255,255,0.04) !important;
+    border: 1px solid rgba(255,255,255,0.1) !important;
+    border-radius: 12px;
+    padding: 10px 14px;
+    margin-bottom: 10px;
+}
+
+/* ── 점검시트 선택 버튼 ── */
+.m-select-btn {
+    background: #1e1f2e !important;
+}
+.m-insp-type-card, .m-insp-card {
+    background: #1e1f2e !important;
+    border-color: rgba(255,255,255,0.18) !important;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.5) !important;
+}
+
+/* ── mobile_check 점검 항목 ── */
+.m-item {
+    background: #1e1f2e !important;
+    border: 1px solid rgba(255,255,255,0.16) !important;
+}
+.m-item.done {
+    border-color: rgba(78,115,223,0.6) !important;
+    background: rgba(78,115,223,0.1) !important;
+}
+
+/* ════════════════════════════════════════════════
+   테마 폰트 통일 — 모든 입력 요소
+   라벨·제목: BMDOHYEON
+   입력값·수치: Poppins
+   ════════════════════════════════════════════════ */
+
+/* 전체 기본 폰트 */
+body, * {
+    font-family: 'Poppins', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+}
+
+/* 입력 요소 — Poppins (숫자·영문 가독성) */
+input, select, textarea,
+.m-sheet-input, .m-sheet-select,
+.m-card-input, .m-info-input,
+.m-defect-chip-input, .m-scrap-input,
+.m-add-model-input, .m-memo-area,
+.m-checker-input, .pw-input,
+.dm-qty-input, .dm-ref-input,
+.m-defect-row-input,
+.m-filter-input, .m-filter-select {
+    font-family: 'Poppins', 'Apple SD Gothic Neo', sans-serif !important;
+    font-size: 0.9rem !important;
+}
+
+/* placeholder 폰트 */
+input::placeholder, textarea::placeholder,
+.m-sheet-input::placeholder,
+.m-card-input::placeholder,
+.m-info-input::placeholder,
+.m-memo-area::placeholder {
+    font-family: 'Poppins', 'Apple SD Gothic Neo', sans-serif !important;
+    font-size: 0.82rem !important;
+    opacity: 0.45;
+}
+
+/* 타이틀·라벨 — BMDOHYEON */
+.m-sheet-title, .m-section-label,
+.m-header-title, .m-header-sub,
+.m-card-model, .m-card-company,
+.m-tab-btn, .m-main-tab,
+.m-kpi-label, .m-kpi-value,
+.m-aoi-kpi .m-kpi-label,
+.m-aoi-kpi .m-kpi-value,
+.m-sheet-label,
+.m-section-title,
+.m-equip-title,
+.m-empty-text,
+.m-loading,
+.m-result-title {
+    font-family: 'BMDOHYEON', 'Apple SD Gothic Neo', sans-serif !important;
+}
+
+/* 버튼 — Poppins (숫자 포함) */
+button, .m-sheet-btn, .m-nav-btn,
+.m-bar-btn, .m-action-btn,
+.m-aoi-entry-btn, .m-aoi-del-btn,
+.m-aoi-detail-btn, .m-card-action-btn,
+.m-save-btn, .m-search-btn,
+.m-submit-btn, .m-bulk-btn,
+.m-type-btn, .m-line-btn,
+.m-period-opt, .m-sheet-type-btn,
+.m-select-btn {
+    font-family: 'Poppins', 'Apple SD Gothic Neo', sans-serif !important;
+}
+
+/* 숫자 표시 — Poppins */
+.m-kpi-value, .m-chip-value,
+.m-card-info-value, .m-progress-pct,
+.m-card-tb-badge, .m-card-defect-badge,
+.m-prod-actual {
+    font-family: 'Poppins', sans-serif !important;
+    font-feature-settings: 'tnum';
+}
+</style>
+
+  <!-- ═══ PWA 메타 태그 ═══ -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#ffeba7">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="PPMS 체크">
+  <link rel="apple-touch-icon" href="/static/pwa/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/static/pwa/favicon-32.png">
+  <!-- ═══════════════════════ -->
+</head>
+<body>
+<div class="m-header">
+    <div class="m-logo">P</div>
+    <div>
+        <div class="m-header-title">PPMS 점검</div>
+        <div class="m-header-sub" id="header-sub">로딩 중...</div>
+    </div>
+</div>
+<div id="app-body"></div>
+
+<script>
+const P   = Object.fromEntries(new URLSearchParams(location.search));
+const SHEET = P.s || '';
+const TOKEN = P.t || '';
+
+// 상태
+let states = {}, checker = '', fridgeStatus = '';
+
+function todayLabel(){const n=new Date();return `${n.getFullYear()}년 ${n.getMonth()+1}월 ${n.getDate()}일`;}
+function dateStr(){const n=new Date();return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}`;}
+function el(id){return document.getElementById(id);}
+function setBody(html){el('app-body').innerHTML=html;}
+
+// ── 설비 데이터 ────────────────────────────────────────────
+const SMD_ITEMS={
+    'Loader':          [{no:1,item:'장비 내·외부',    freq:'D'},{no:2,item:'Main Air 압력',  freq:'D'},{no:3,item:'Lift',             freq:'D'},{no:4,item:'Pusher',           freq:'D'},{no:5,item:'Switch',           freq:'D'},{no:6,item:'Tower Lamp',       freq:'W'},{no:7,item:'Emergency Stop',   freq:'M'},{no:8,item:'각종 구동부',     freq:'M'},{no:9,item:'Air 점검',         freq:'M'}],
+    'Screen Printer':  [{no:1,item:'장비 내·외부',    freq:'D'},{no:2,item:'Main Air 압력',  freq:'D'},{no:3,item:'Metal Mask Clamp', freq:'D'},{no:4,item:'Cleaning Solvent', freq:'D'},{no:5,item:'Squeegee Cylinder',freq:'D'},{no:6,item:'Metal Mask',       freq:'D'},{no:7,item:'Conveyor',         freq:'W'},{no:8,item:'Squeegee',         freq:'W'},{no:9,item:'Sensor',           freq:'W'},{no:10,item:'Tower Lamp',      freq:'W'},{no:11,item:'Emergency Stop',  freq:'M'},{no:12,item:'각종 구동부',     freq:'M'},{no:13,item:'Air 점검',        freq:'M'}],
+    'SPI':             [{no:1,item:'장비 내·외부',    freq:'D'},{no:2,item:'Switch',          freq:'D'},{no:3,item:'Sensor',           freq:'D'},{no:4,item:'Main Air 압력',  freq:'D'},{no:5,item:'Program',          freq:'D'},{no:6,item:'Camera Lighting',  freq:'D'},{no:7,item:'Air Filter',       freq:'W'},{no:8,item:'Emergency Stop',  freq:'M'},{no:9,item:'각종 구동부',      freq:'M'}],
+    'Reflow':          [{no:1,item:'장비 내·외부',    freq:'D'},{no:2,item:'Conveyor Speed', freq:'D'},{no:3,item:'Temperature',      freq:'D'},{no:4,item:'반송부',            freq:'D'},{no:5,item:'Sensor',           freq:'D'},{no:6,item:'Program',          freq:'D'},{no:7,item:'N2',              freq:'D'},{no:8,item:'Conveying Chain',  freq:'D'},{no:9,item:'PCB',             freq:'D'},{no:10,item:'Air Filter',      freq:'W'},{no:11,item:'Dust Fan',        freq:'W'},{no:12,item:'Tower Lamp',      freq:'W'},{no:13,item:'Emergency Stop',  freq:'M'},{no:14,item:'각종 구동부',      freq:'M'},{no:15,item:'Air 점검',        freq:'M'}],
+    'Unloader':        [{no:1,item:'장비 내·외부',    freq:'D'},{no:2,item:'Main Air 압력',  freq:'D'},{no:3,item:'Lift',             freq:'D'},{no:4,item:'Pusher',           freq:'D'},{no:5,item:'Switch',           freq:'D'},{no:6,item:'Tower Lamp',       freq:'W'},{no:7,item:'Emergency Stop',   freq:'M'},{no:8,item:'각종 구동부',     freq:'M'},{no:9,item:'Air 점검',         freq:'M'}],
+};
+const MOUNTER=[{no:1,item:'장비 내·외부',freq:'D'},{no:2,item:'Main Air 압력',freq:'D'},{no:3,item:'Head 공압',freq:'D'},{no:4,item:'Feeder Base',freq:'D'},{no:5,item:'Backup Table',freq:'D'},{no:6,item:'Nozzle',freq:'W'},{no:7,item:'Sensor',freq:'W'},{no:8,item:'Conveyor',freq:'W'},{no:9,item:'ANC',freq:'W'},{no:10,item:'Air Filter',freq:'W'},{no:11,item:'Vision Camera',freq:'W'},{no:12,item:'Tower Lamp',freq:'W'},{no:13,item:'Emergency Stop',freq:'M'},{no:14,item:'각종 구동부',freq:'M'},{no:15,item:'Air 점검',freq:'M'}];
+['Multi Mounter 471','Chip Mounter 411','Multi Mounter 421','Multi Mounter'].forEach(k=>SMD_ITEMS[k]=MOUNTER);
+const SMD_EQUIP_ORDER=['Loader','Screen Printer','SPI','Multi Mounter 471','Chip Mounter 411','Multi Mounter 421','Multi Mounter','Reflow','Unloader'];
+
+const WAVE_ITEMS=[
+    {no:1,item:'장비 미사용',         freq:'D'},{no:2,item:'Control Box',       freq:'D'},{no:4,item:'납조 DROSS',          freq:'D'},
+    {no:5,item:'Conveyor 동작 확인',  freq:'D'},{no:6,item:'Flux 노즐 상태',    freq:'D'},{no:8,item:'Pre-Heater 150℃±5', freq:'D'},
+    {no:9,item:'납조 Wave 상태',      freq:'D'},{no:12,item:'납조온도 250℃±5', freq:'D'},{no:3,item:'Finger 상태',        freq:'W'},
+    {no:7,item:'열풍 FAN',            freq:'W'},{no:10,item:'배기 Duct',        freq:'W'},{no:11,item:'비상정지 스위치',   freq:'W'},
+    {no:13,item:'Flux 주유',          freq:'W'},{no:14,item:'FLUX 이물 상태',   freq:'W'},
+];
+const METAL_ITEMS=[{no:1,item:'세척액 100L 이상 확인'},{no:2,item:'AIR 압력 5~8kg/㎠ 확인'},{no:3,item:'전원 AC220V±10% 확인'},{no:4,item:'이물질 없음 확인'}];
+const AC_EQUIPS={A:['LOADER','PRINTER','Mounter1','Mounter2','Mounter3','WORK TABLE','Reflow','UNLOADER'],B:['LOADER','PRINTER','Mounter1','Mounter2','Mounter3','WORK TABLE','Reflow','UNLOADER'],C:['LOADER','PRINTER','Mounter1','WORK TABLE','제습기','CONVECTION OVEN']};
+
+// ── 라우팅 ────────────────────────────────────────────────
+function render(){
+    el('header-sub').textContent = todayLabel();
+    if(!SHEET||!TOKEN){showError('잘못된 QR 코드입니다.');return;}
+    if(SHEET==='smd_daily')        renderSmdFreqSelect();
+    else if(SHEET==='wave_solder') renderWaveFreqSelect();
+    else if(SHEET==='metal_mask')  renderMetal();
+    else if(SHEET==='environment') renderEnvTypeSelect();
+    else if(SHEET==='ac_leakage')  renderAcLineSelect();
+    else if(SHEET==='vision')      renderVision(parseInt(P.m||'1'));
+    else if(SHEET==='esd')         renderEsd();
+    else showError('알 수 없는 시트 유형입니다.');
+}
+
+// ── SMD ───────────────────────────────────────────────────
+function renderSmdFreqSelect(){
+    setBody(`
+    <div class="m-section-title" style="margin-top:16px;">점검 주기 선택</div>
+    <div class="m-select-grid">
+        <div class="m-select-btn freq-D" onclick="renderSmdAll('D')">
+            <div class="m-select-icon">📋</div>
+            <div class="m-select-label">일간 점검</div>
+            <div class="m-select-sub">매일 점검 항목</div>
+        </div>
+        <div class="m-select-btn freq-W" onclick="renderSmdAll('W')">
+            <div class="m-select-icon">📋</div>
+            <div class="m-select-label">주간 점검</div>
+            <div class="m-select-sub">주 1회 점검 항목</div>
+        </div>
+        <div class="m-select-btn freq-M full" onclick="renderSmdAll('M')">
+            <div class="m-select-icon">📋</div>
+            <div class="m-select-label">월간 점검</div>
+            <div class="m-select-sub">월 1회 점검 항목</div>
+        </div>
+    </div>`);
+}
+
+function renderSmdAll(freq){
+    states={};checker='';
+    const freqLabel={D:'일간',W:'주간',M:'월간'}[freq]||freq;
+    const okSym='O';
+
+    let groupsHtml='';
+    SMD_EQUIP_ORDER.forEach(equip=>{
+        const items=(SMD_ITEMS[equip]||[]).filter(i=>i.freq===freq);
+        if(!items.length)return;
+        const key=`${equip}`;
+        groupsHtml+=`<div class="m-equip-group">
+            <div class="m-equip-title">${equip}</div>
+            <div class="m-items" id="items-${equip.replace(/\s/g,'_')}">
+                ${items.map(i=>itemRowHtml(`${equip}::${i.no}`,i.item,okSym)).join('')}
+            </div>
+        </div>`;
+    });
+
+    setBody(`
+    <div class="m-card m-card-row" style="margin-top:16px;">
+        <div><div class="m-card-label">점검 주기</div><div class="m-card-value">${freqLabel} 점검</div></div>
+    </div>
+    <div class="m-bulk-ok">
+        <button class="m-bulk-btn" onclick="bulkOk('${okSym}')">전체 OK</button>
+        <button class="m-bulk-btn clear" onclick="bulkClear()">전체 초기화</button>
+    </div>
+    <div class="m-checker-wrap">
+        <span class="m-checker-label">점검자</span>
+        <input class="m-checker-input" type="text" placeholder="이름 입력 (선택)" maxlength="10" oninput="checker=this.value">
+    </div>
+    <div style="margin-top:4px;">${groupsHtml}</div>
+    <div class="m-submit-wrap">
+        <button class="m-submit-btn" onclick="submitSmdAll('${freq}')">점검 완료</button>
+    </div>`);
+}
+
+function itemRowHtml(stateKey, itemName, okSym){
+    const s=states[stateKey]||'';
+    return `<div class="m-item${s===okSym?' done':s==='X'?' ng':''}" id="row-${CSS.escape(stateKey)}">
+        <div class="m-item-name">${itemName}</div>
+        <div class="m-status-btns">
+            <button class="m-status-btn${s===okSym?' sel-ok':''}" onclick="toggle('${stateKey}','${okSym}','${okSym}')">${okSym}</button>
+            <button class="m-status-btn${s==='X'?' sel-x':''}" onclick="toggle('${stateKey}','X','${okSym}')">X</button>
+        </div>
+    </div>`;
+}
+
+function toggle(key, val, okSym){
+    states[key]=(states[key]===val)?'':val;
+    const s=states[key];
+    const row=document.getElementById('row-'+CSS.escape(key));
+    if(!row)return;
+    row.className=`m-item${s===okSym?' done':s==='X'?' ng':''}`;
+    row.querySelectorAll('.m-status-btn').forEach(b=>{
+        b.className='m-status-btn';
+        if(b.textContent===okSym&&s===okSym)b.classList.add('sel-ok');
+        if(b.textContent==='X'&&s==='X')b.classList.add('sel-x');
+    });
+}
+
+function bulkOk(okSym){
+    document.querySelectorAll('.m-item').forEach(row=>{
+        const key=row.id.replace('row-','');
+        if(!key)return;
+        states[key]=okSym;
+        row.className='m-item done';
+        row.querySelectorAll('.m-status-btn').forEach(b=>{
+            b.className='m-status-btn';
+            if(b.textContent===okSym)b.classList.add('sel-ok');
+        });
+    });
+}
+function bulkClear(){
+    document.querySelectorAll('.m-item').forEach(row=>{
+        const key=row.id.replace('row-','');
+        if(!key)return;
+        states[key]='';
+        row.className='m-item';
+        row.querySelectorAll('.m-status-btn').forEach(b=>b.className='m-status-btn');
+    });
+}
+
+async function submitSmdAll(freq){
+    // 미입력 항목은 OK로 처리
+    const allItems=[];
+    SMD_EQUIP_ORDER.forEach(equip=>{
+        (SMD_ITEMS[equip]||[]).filter(i=>i.freq===freq).forEach(i=>{
+            allItems.push({equip, no:i.no, status:states[`${equip}::${i.no}`]||'O'});
+        });
+    });
+    setSubmitting(true);
+    // 설비별로 묶어서 전송
+    const grouped={};
+    allItems.forEach(({equip,no,status})=>{
+        if(!grouped[equip])grouped[equip]=[];
+        grouped[equip].push({no,status});
+    });
+    const ps=Object.entries(grouped).map(([equip,items])=>
+        postData({s:'smd_daily',e:equip,f:freq,items,checker})
+    );
+    const results=await Promise.all(ps);
+    const allOk=results.every(r=>r.success);
+    showResult({success:allOk, date:dateStr()});
+}
+
+// ── Wave Solder ───────────────────────────────────────────
+function renderWaveFreqSelect(){
+    setBody(`
+    <div class="m-section-title" style="margin-top:16px;">점검 주기 선택</div>
+    <div class="m-select-grid">
+        <div class="m-select-btn freq-D" onclick="renderWave('D')">
+            <div class="m-select-icon">🌊</div>
+            <div class="m-select-label">일간 점검</div>
+            <div class="m-select-sub">8개 항목</div>
+        </div>
+        <div class="m-select-btn freq-W" onclick="renderWave('W')">
+            <div class="m-select-icon">🌊</div>
+            <div class="m-select-label">주간 점검</div>
+            <div class="m-select-sub">6개 항목</div>
+        </div>
+    </div>`);
+}
+
+function renderWave(freq){
+    states={};checker='';
+    const items=WAVE_ITEMS.filter(i=>i.freq===freq);
+    const freqLabel={D:'일간',W:'주간'}[freq];
+    setBody(`
+    <div class="m-card m-card-row" style="margin-top:16px;">
+        <div><div class="m-card-label">점검 주기</div><div class="m-card-value">${freqLabel} 점검</div></div>
+        <div><div class="m-card-label">항목 수</div><div class="m-card-value">${items.length}개</div></div>
+    </div>
+    <div class="m-bulk-ok">
+        <button class="m-bulk-btn" onclick="bulkOk('V')">전체 OK</button>
+        <button class="m-bulk-btn clear" onclick="bulkClear()">전체 초기화</button>
+    </div>
+    <div class="m-checker-wrap">
+        <span class="m-checker-label">점검자</span>
+        <input class="m-checker-input" type="text" placeholder="이름 입력 (선택)" maxlength="10" oninput="checker=this.value">
+    </div>
+    <div class="m-section-title">점검 항목</div>
+    <div class="m-items" style="margin:0 16px;">
+        ${items.map(i=>itemRowHtml(String(i.no),i.item,'V')).join('')}
+    </div>
+    <div class="m-submit-wrap">
+        <button class="m-submit-btn" onclick="submitWave('${freq}')">점검 완료</button>
+    </div>`);
+}
+
+async function submitWave(freq){
+    const items=WAVE_ITEMS.filter(i=>i.freq===freq).map(i=>({no:i.no,status:states[String(i.no)]||'V'}));
+    setSubmitting(true);
+    const r=await postData({s:'wave_solder',e:'Auto Solder',f:freq,items,checker});
+    showResult(r);
+}
+
+// ── Metal Mask ────────────────────────────────────────────
+function renderMetal(){
+    states={};checker='';
+    setBody(`
+    <div class="m-checker-wrap" style="margin-top:16px;">
+        <span class="m-checker-label">점검자</span>
+        <input class="m-checker-input" type="text" placeholder="이름 입력" maxlength="10" oninput="checker=this.value">
+    </div>
+    <div class="m-bulk-ok" style="margin-top:10px;">
+        <button class="m-bulk-btn" onclick="bulkOk('O')">전체 OK</button>
+        <button class="m-bulk-btn clear" onclick="bulkClear()">전체 초기화</button>
+    </div>
+    <div class="m-section-title">점검 항목</div>
+    <div class="m-items" style="margin:0 16px;">
+        ${METAL_ITEMS.map(i=>itemRowHtml(String(i.no),i.item,'O')).join('')}
+    </div>
+    <div class="m-submit-wrap">
+        <button class="m-submit-btn" onclick="submitMetal()">점검 완료</button>
+    </div>`);
+}
+
+async function submitMetal(){
+    const items=METAL_ITEMS.map(i=>({no:i.no,status:states[String(i.no)]||'O'}));
+    setSubmitting(true);
+    const r=await postData({s:'metal_mask',e:'Metal Mask Washer',f:'ALL',items,checker});
+    showResult(r);
+}
+
+// ── 환경 점검 ─────────────────────────────────────────────
+function renderEnvTypeSelect(){
+    setBody(`
+    <div class="m-section-title" style="margin-top:16px;">점검 종류 선택</div>
+    <div class="m-select-grid">
+        <div class="m-select-btn" onclick="renderEnv('fridge')" style="border-color:#4e73df;">
+            <div class="m-select-icon">🌡️</div>
+            <div class="m-select-label" style="color:#4e73df;">냉장고 온도</div>
+            <div class="m-select-sub">기준: 10℃ 이하</div>
+        </div>
+        <div class="m-select-btn" onclick="renderEnv('room')" style="border-color:#00e676;">
+            <div class="m-select-icon">💧</div>
+            <div class="m-select-label" style="color:#00e676;">실내 온·습도</div>
+            <div class="m-select-sub">23±5℃ / 40~60%RH</div>
+        </div>
+        <div class="m-select-btn full" onclick="renderEnv('dehumid')" style="border-color:#ff9800;">
+            <div class="m-select-icon">📦</div>
+            <div class="m-select-label" style="color:#ff9800;">제습함 온·습도</div>
+            <div class="m-select-sub">23±5℃ / 10%RH 이하</div>
+        </div>
+    </div>`);
+}
+
+function renderEnv(ct){
+    let inputHtml='';
+    if(ct==='fridge'){
+        inputHtml=`
+        <div class="m-card-label" style="margin-bottom:8px;">판정</div>
+        <div class="m-toggle-row" style="margin-bottom:14px;">
+            <button class="m-toggle-btn" id="tog-O" onclick="setFridgeSt('O')">O 정상</button>
+            <button class="m-toggle-btn" id="tog-X" onclick="setFridgeSt('X')">X 이상</button>
+        </div>
+        <div class="m-input-row">
+            <span class="m-input-label">측정 온도</span>
+            <input class="m-input" id="fridge-temp" type="number" step="0.1" placeholder="예: 4.5">
+            <span class="m-input-unit">℃</span>
+        </div>`;
+    } else if(ct==='room'){
+        inputHtml=`
+        <div style="color:#888;font-size:.78rem;margin-bottom:6px;">10:00 측정</div>
+        <div class="m-input-row"><span class="m-input-label">온도</span><input class="m-input" id="rt10" type="number" step="0.1" placeholder="℃"><span class="m-input-unit">℃</span></div>
+        <div class="m-input-row" style="margin-top:8px;"><span class="m-input-label">습도</span><input class="m-input" id="rh10" type="number" step="0.1" placeholder="%RH"><span class="m-input-unit">%</span></div>
+        <div style="color:#888;font-size:.78rem;margin:12px 0 6px;">18:00 측정</div>
+        <div class="m-input-row"><span class="m-input-label">온도</span><input class="m-input" id="rt18" type="number" step="0.1" placeholder="℃"><span class="m-input-unit">℃</span></div>
+        <div class="m-input-row" style="margin-top:8px;"><span class="m-input-label">습도</span><input class="m-input" id="rh18" type="number" step="0.1" placeholder="%RH"><span class="m-input-unit">%</span></div>`;
+    } else {
+        inputHtml=`
+        <div class="m-input-row"><span class="m-input-label">온도</span><input class="m-input" id="dh-t" type="number" step="0.1" placeholder="℃"><span class="m-input-unit">℃</span></div>
+        <div class="m-input-row" style="margin-top:8px;"><span class="m-input-label">습도</span><input class="m-input" id="dh-h" type="number" step="0.1" placeholder="%RH"><span class="m-input-unit">%</span></div>`;
+    }
+    const labels={fridge:'냉장고 온도',room:'실내 온·습도',dehumid:'제습함 온·습도'};
+    setBody(`
+    <div class="m-card" style="margin-top:16px;">
+        <div class="m-card-label">점검 종류</div>
+        <div class="m-card-value">${labels[ct]}</div>
+    </div>
+    <div class="m-section-title">수치 입력</div>
+    <div class="m-card m-input-group">${inputHtml}</div>
+    <div class="m-submit-wrap">
+        <button class="m-submit-btn" onclick="submitEnv('${ct}')">제출</button>
+    </div>`);
+}
+
+function setFridgeSt(v){
+    fridgeStatus=(fridgeStatus===v)?'':v;
+    el('tog-O')&&(el('tog-O').className='m-toggle-btn'+(fridgeStatus==='O'?' sel-O':''));
+    el('tog-X')&&(el('tog-X').className='m-toggle-btn'+(fridgeStatus==='X'?' sel-X':''));
+}
+
+async function submitEnv(ct){
+    let slots=[];
+    if(ct==='fridge'){
+        const t=parseFloat(el('fridge-temp')?.value);
+        slots=[{slot:'10:00',temperature:isNaN(t)?null:t,status:fridgeStatus}];
+    } else if(ct==='room'){
+        const t10=parseFloat(el('rt10')?.value),h10=parseFloat(el('rh10')?.value);
+        const t18=parseFloat(el('rt18')?.value),h18=parseFloat(el('rh18')?.value);
+        slots=[{slot:'10:00',temperature:isNaN(t10)?null:t10,humidity:isNaN(h10)?null:h10},{slot:'18:00',temperature:isNaN(t18)?null:t18,humidity:isNaN(h18)?null:h18}];
+    } else {
+        const t=parseFloat(el('dh-t')?.value),h=parseFloat(el('dh-h')?.value);
+        slots=[{slot:'10:00',temperature:isNaN(t)?null:t,humidity:isNaN(h)?null:h}];
+    }
+    setSubmitting(true);
+    const r=await postData({s:'environment',c:ct,slots});
+    showResult(r);
+}
+
+// ── AC 누설전류 ───────────────────────────────────────────
+function renderAcLineSelect(){
+    setBody(`
+    <div class="m-section-title" style="margin-top:16px;">라인 선택</div>
+    <div class="m-select-grid">
+        ${['A','B','C'].map(l=>`
+        <div class="m-select-btn${l==='C'?' full':''}" onclick="renderAcEquip('${l}')" style="border-color:#26c6da;">
+            <div class="m-select-icon">⚡</div>
+            <div class="m-select-label" style="color:#26c6da;">${l} 라인</div>
+            <div class="m-select-sub">${AC_EQUIPS[l].length}개 설비</div>
+        </div>`).join('')}
+    </div>`);
+}
+
+function renderAcEquip(line){
+    const equips = AC_EQUIPS[line] || [];
+    // 설비별 입력 행 생성 — 한 페이지에 전부 표시
+    const rows = equips.map(e => `
+    <div class="m-item" style="margin-bottom:8px;">
+        <span class="m-item-name" style="font-size:.88rem;">${e}</span>
+        <div style="display:flex;align-items:center;gap:6px;">
+            <input class="m-input" id="ac-${e.replace(/\s/g,'_')}"
+                   type="number" step="0.01" placeholder="V"
+                   style="width:80px;text-align:center;">
+            <span style="font-size:.76rem;color:#888;">V</span>
+        </div>
+    </div>`).join('');
+
+    setBody(`
+    <div class="m-card" style="margin-top:16px;">
+        <div class="m-card-label">라인</div>
+        <div class="m-card-value">${line} 라인 — 전체 설비</div>
+    </div>
+    <div style="color:#888;font-size:.74rem;margin:8px 16px;">5V 초과 시 자동 NG 처리</div>
+    <div class="m-section-title">설비별 AC 누설전류 (V)</div>
+    <div style="margin:0 16px;">${rows}</div>
+    <div class="m-submit-wrap">
+        <button class="m-submit-btn" onclick="submitAcAll('${line}')">전체 제출</button>
+    </div>`);
+}
+
+// 개별 submitAc (하위 호환)
+async function submitAc(line, equip) {
+    const key = equip.replace(/\s/g,'_');
+    const v = parseFloat(el('ac-' + key)?.value);
+    if (isNaN(v)) { alert('수치를 입력해주세요.'); return; }
+    const r = await postData({s:'ac_leakage', l:line, e:equip, voltage:v});
+    showResult(r);
+}
+
+// 라인 전체 일괄 제출
+async function submitAcAll(line) {
+    const equips = AC_EQUIPS[line] || [];
+    const entries = [];
+    for (const e of equips) {
+        const key = e.replace(/\s/g,'_');
+        const v = parseFloat(el('ac-' + key)?.value);
+        if (!isNaN(v)) entries.push({equip:e, voltage:v});
+    }
+    if (!entries.length) { alert('최소 1개 이상의 수치를 입력하세요.'); return; }
+
+    const btn = document.querySelector('.m-submit-btn');
+    if (btn) { btn.disabled = true; btn.textContent = '저장 중...'; }
+
+    let lastResult;
+    for (const entry of entries) {
+        lastResult = await postData({s:'ac_leakage', l:line, e:entry.equip, voltage:entry.voltage});
+    }
+    showResult(lastResult || {success:true, date: dateStr()});
+}
+
+// ── 공통 ──────────────────────────────────────────────────
+function setSubmitting(flag){
+    const btn=document.querySelector('.m-submit-btn');
+    if(!btn)return;
+    btn.disabled=flag;
+    btn.textContent=flag?'저장 중...':'점검 완료';
+}
+
+async function postData(body){
+    body.t = TOKEN; // QR 토큰
+    
+    // 시트 종류(body.s)에 따라 전송할 백엔드 API 주소를 분기합니다.
+    let targetUrl = '/api/smd_check/qr/submit'; // 기본(SMD, 환경, AC 점검) 주소
+    
+    // 비전 장비(vision)와 제전화(esd) 점검은 inspection.py 쪽으로 보냅니다.
+    if (body.s === 'vision' || body.s === 'esd') {
+        targetUrl = '/api/inspection/qr/submit';
+    }
+
+    try{
+        const res = await fetch(targetUrl, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(body)
+        });
+        return await res.json();
+    }catch(e){
+        return {success: false, message: '네트워크 오류가 발생했습니다.'};
+    }
+}
+
+function showResult(r){
+    el('app-body').innerHTML = r.success ? `
+    <div class="m-result">
+        <div class="m-result-icon">✅</div>
+        <div class="m-result-title">점검 완료</div>
+        <div class="m-result-sub">${r.date||todayLabel()} 기록이 저장되었습니다.<br>PC 점검 시트에 자동 반영됩니다.</div>
+    </div>` : `
+    <div class="m-result">
+        <div class="m-result-icon">❌</div>
+        <div class="m-result-title">저장 실패</div>
+        <div class="m-result-sub">${r.message||'오류가 발생했습니다.'}</div>
+        <button class="m-retry-btn" onclick="location.reload()">다시 시도</button>
+    </div>`;
+}
+
+
+// ── 비전 장비 점검 ────────────────────────────────────────
+function renderVision(machineId){
+    setBody(`
+    <div class="m-card" style="margin-top:16px;">
+        <div class="m-card-label">장비</div>
+        <div class="m-card-value">비전 장비 ${machineId}호기</div>
+    </div>
+    <div class="m-card" style="margin-top:10px;display:flex;flex-direction:column;gap:14px;">
+        <div style="color:#aaa;font-size:.85rem;">오늘(${todayLabel()}) 점검 결과를 선택하세요.</div>
+        <div class="m-toggle-row">
+            <button class="m-toggle-btn" id="tog-ok" onclick="setVisionSt('ok')">OK 이상없음</button>
+            <button class="m-toggle-btn" id="tog-ng" onclick="setVisionSt('ng')" style="border-color:#ff4444;color:#666;">NG 이상있음</button>
+        </div>
+    </div>
+    <div class="m-submit-wrap">
+        <button class="m-submit-btn" onclick="submitVision(${machineId})">점검 완료</button>
+    </div>`);
+}
+
+let visionStatus='ok';
+function setVisionSt(v){
+    visionStatus=v;
+    el('tog-ok').className='m-toggle-btn'+(v==='ok'?' sel-O':'');
+    el('tog-ng').className='m-toggle-btn'+(v==='ng'?' sel-X':'');
+    el('tog-ok').style.borderColor=v==='ok'?'#4e73df':'#444';
+    el('tog-ng').style.borderColor=v==='ng'?'#ff4444':'#444';
+}
+
+async function submitVision(machineId){
+    setSubmitting(true);
+    const r=await postData({s:'vision',m:machineId,status:visionStatus});
+    showResult(r);
+}
+
+// ── 제전화 점검 ───────────────────────────────────────────
+let esdManagers=[], esdStatus='O';
+
+async function renderEsd(){
+    setBody(`<div class="m-result"><div class="m-result-icon" style="font-size:2rem;">⏳</div><div class="m-result-sub">담당자 목록 로딩 중...</div></div>`);
+    try{
+        const res=await fetch('/api/inspection/managers/list');
+        esdManagers=await res.json();
+    }catch(e){esdManagers=[];}
+
+    const datalistOpts=esdManagers.map(n=>`<option value="${n}">`).join('');
+    setBody(`
+    <div class="m-card" style="margin-top:16px;">
+        <div class="m-card-label">오늘 날짜</div>
+        <div class="m-card-value">${todayLabel()}</div>
+    </div>
+    <div class="m-section-title">이름 입력</div>
+    <div class="m-card m-input-group">
+        <datalist id="mgr-list">${datalistOpts}</datalist>
+        
+        <div style="display:flex; flex-direction:column; gap:8px;">
+            <span class="m-input-label">담당자 이름</span>
+            <input class="m-input" id="esd-name" type="text" list="mgr-list"
+                placeholder="이름 입력" maxlength="20"
+                style="width:100%; box-sizing:border-box; text-align:left; padding-left:12px;">
+        </div>
+        <div style="color:#666;font-size:.76rem;text-align:center;margin-top:4px;">등록된 담당자 이름을 정확히 입력해주세요</div>
+    </div>
+    <div class="m-section-title">점검 결과</div>
+    <div class="m-card">
+        <div class="m-toggle-row">
+            <button class="m-toggle-btn sel-O" id="esd-O" onclick="setEsdSt('O')" style="border-color:#4e73df;">O 정상</button>
+            <button class="m-toggle-btn" id="esd-X" onclick="setEsdSt('X')">X 불량</button>
+            <button class="m-toggle-btn" id="esd-C" onclick="setEsdSt('C')" style="border-color:#ffeba7;color:#666;">C 교체</button>
+        </div>
+    </div>
+    <div class="m-submit-wrap">
+        <button class="m-submit-btn" onclick="submitEsd()">점검 완료</button>
+    </div>`);
+}
+
+function setEsdSt(v){
+    esdStatus=v;
+    ['O','X','C'].forEach(k=>{
+        const btn=el('esd-'+k);
+        if(!btn)return;
+        btn.className='m-toggle-btn';
+        if(k===v){
+            if(k==='O')btn.classList.add('sel-O'),btn.style.borderColor='#4e73df';
+            else if(k==='X')btn.classList.add('sel-X'),btn.style.borderColor='#ff4444';
+            else btn.style.borderColor='#ffeba7',btn.style.color='#ffeba7';
+        } else {
+            btn.style.borderColor='#444';btn.style.color='#666';
+        }
+    });
+}
+
+async function submitEsd(){
+    const name=(el('esd-name')?.value||'').trim();
+    if(!name){alert('이름을 입력해주세요.');return;}
+    setSubmitting(true);
+    const r=await postData({s:'esd',name,status:esdStatus});
+    showResult(r);
+}
+
+function showError(msg){
+    el('app-body').innerHTML=`<div class="m-result"><div class="m-result-icon">⚠️</div><div class="m-result-title">${msg}</div></div>`;
+}
+
+render();
+</script>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js', { scope: '/' })
+          .catch(() => {/* SW 등록 실패는 무시 — 앱 동작에 영향 없음 */});
+      });
+    }
+  </script>
+</body>
+</html>

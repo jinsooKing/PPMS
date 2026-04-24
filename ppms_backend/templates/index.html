@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="ko">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -22,7 +21,6 @@
 
 <body>
     <div class="page-container">
-
         <header class="main-header">
             <div class="header-left">
                 <a href="/" class="ppms-logo-placeholder"></a>
@@ -107,13 +105,14 @@
                     </div>
                 </a>
 
-            </div>
-        </main>
-
-        <footer class="main-footer">
+            </div> </main> <footer class="main-footer">
             <div class="footer-left" style="display: flex; gap: 10px;">
-                <div class="footer-btn icon-backup">백업</div>
-                <div class="footer-btn icon-restore">복원</div>
+                <a href="/api/inspection/dashboard" onclick="transitionToPage(event, '/api/inspection/dashboard')" style="text-decoration: none;">
+                    <div class="inspection-footer-btn">
+                        <i class="uil uil-file-check-alt" style="font-size: 1.3rem;"></i>
+                        <span>점검 시트</span>
+                    </div>
+                </a>
             </div>
 
             <div class="footer-center">
@@ -133,20 +132,45 @@
             opacity: 0;
             transition: opacity 0.5s ease-in-out;
         }
+
+        /* 맘에 들어하셨던 금색 테두리와 반투명 배경을 푸터 버튼 규격에 맞춤 */
+        .inspection-footer-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 0 20px;
+            height: 45px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 235, 167, 0.4);
+            background: rgba(255, 235, 167, 0.05);
+            color: var(--point-gold, #ffeba7);
+            font-family: 'BMDOHYEON';
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .inspection-footer-btn:hover {
+            background: rgba(255, 235, 167, 0.2);
+            border-color: var(--point-gold, #ffeba7);
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(255, 235, 167, 0.2);
+            color: #fff;
+        }
     </style>
 
     <script>
-
         window.addEventListener('pageshow', (event) => {
-            // 뒤로가기로 페이지에 진입했을 때(BFCache) 화면을 다시 밝게 만듭니다.
             document.body.style.opacity = '1';
         });
-        // 페이지 전환 함수 (페이드 아웃 효과 유지)
+
         function transitionToPage(e, url) {
             e.preventDefault();
             document.body.style.opacity = '0';
             setTimeout(() => {
-                window.location.href = url; // 이제 URL은 /api/... 주소입니다.
+                window.location.href = url;
             }, 500);
         }
 
@@ -157,7 +181,6 @@
 
             const userRole = localStorage.getItem('ppms_user_role');
             if (!userRole) {
-                // 수정: login.html -> Flask 라우트 주소로 변경
                 window.location.href = '/api/auth/login_view';
                 return;
             }
@@ -168,14 +191,10 @@
 
             const footerCenterContent = document.getElementById('footer-center-content');
             if (userRole === 'admin' && footerCenterContent) {
-                // 1. 문구를 감싸고 있는 부모 요소를 먼저 찾습니다. [필수 추가]
                 const centerDiv = document.querySelector('.footer-center');
-
-                // 2. 기존의 "© PHILIA TELECOM" 문구를 깨끗이 지웁니다. [필수 추가]
                 centerDiv.innerHTML = '';
 
                 const adminLink = document.createElement('a');
-                // Option B에 따라 production 블루프린트 주소 사용
                 adminLink.href = '/api/production/admin_view';
 
                 const adminBtn = document.createElement('div');
@@ -183,7 +202,6 @@
                 adminBtn.textContent = '관리자 페이지';
 
                 adminLink.appendChild(adminBtn);
-                // 3. 이제 정의된 centerDiv에 버튼을 추가합니다.
                 centerDiv.appendChild(adminLink);
             }
         });
@@ -203,5 +221,4 @@
         }
     </script>
 </body>
-
 </html>

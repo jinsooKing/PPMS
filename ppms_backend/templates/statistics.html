@@ -17,6 +17,12 @@
     <link href="https://fonts.googleapis.com/css?family=Roboto+Mono" rel="stylesheet">
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <!-- 인쇄 전용 영역 (평소엔 숨김, @media print에서만 표시) -->
+    <div id="print-area" style="display:none;">
+        <span id="print-header" style="display:none;"></span>
+        <div id="print-body"></div>
+    </div>
+
     <script src="/static/auth.js"></script>
     <script src="/static/logo.js"></script>
 
@@ -189,6 +195,29 @@
             font-size: clamp(0.85rem, 0.9vw, 0.95rem) !important;
             white-space: nowrap;
         }
+
+        .pdf-btn {
+            padding: 0 clamp(12px, 1.5vw, 20px) !important;
+            height: 34px !important;
+            font-size: clamp(0.85rem, 0.9vw, 0.95rem) !important;
+            white-space: nowrap;
+            background: transparent !important;
+            border: 1px solid rgba(255, 100, 100, 0.5) !important;
+            color: #ff8080 !important;
+            border-radius: 6px !important;
+            cursor: pointer;
+            font-family: 'BMDOHYEON', sans-serif;
+            display: none;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.2s;
+        }
+        .pdf-btn:hover {
+            background: rgba(255, 100, 100, 0.12) !important;
+            border-color: #ff8080 !important;
+            color: #ffaaaa !important;
+        }
+        .pdf-btn.visible { display: flex; }
 
         .period-toggle {
             display: flex;
@@ -457,6 +486,144 @@
             gap: 15px;
             text-align: center;
         }
+
+        /* ── 인쇄 스타일 ── */
+        @page { size: A4 landscape; margin: 10mm; }
+
+        @media print {
+            /* 인쇄할 영역만 남기고 전부 숨김 */
+            body * { visibility: hidden; }
+            #print-area, #print-area * { visibility: visible; }
+            #print-area {
+                position: fixed; inset: 0;
+                background: #fff !important;
+                color: #111 !important;
+                padding: 0;
+                box-sizing: border-box;
+                overflow: visible;
+            }
+
+            /* ── 핵심: 모든 자식 색상/배경/스크롤 초기화 ── */
+            #print-area * {
+                overflow: visible !important;
+                max-height: none !important;
+                max-width: none !important;
+                height: auto !important;
+                position: static !important;
+                /* 텍스트는 전부 진한 색으로 */
+                color: #1a1a1a !important;
+                /* 배경은 전부 흰색으로 */
+                background: #fff !important;
+                background-color: #fff !important;
+                /* 테두리 색도 밝은 계열에서 회색으로 */
+                border-color: #bbb !important;
+                /* 밝은 폰트 굵기 */
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            /* 인쇄 헤더 */
+            #print-header {
+                display: block !important;
+                font-size: 10pt;
+                font-weight: bold;
+                color: #4a3800 !important;
+                background: #fffbe6 !important;
+                border-bottom: 1.5pt solid #b89a30 !important;
+                padding: 4pt 6pt;
+                margin-bottom: 8pt;
+            }
+
+            /* 테이블 공통 */
+            #print-area table {
+                width: max-content;
+                min-width: 100%;
+                border-collapse: collapse !important;
+                table-layout: auto;
+                margin-bottom: 10pt;
+                page-break-inside: auto;
+            }
+            #print-area thead { display: table-header-group; }
+            #print-area tr    { page-break-inside: avoid; }
+
+            /* th — 연한 금색 배경 + 진한 갈색 텍스트 */
+            #print-area th {
+                background: #fdf3d0 !important;
+                color: #4a3800 !important;
+                font-size: 7.5pt;
+                font-weight: bold;
+                padding: 4pt 3pt;
+                border: 0.6pt solid #c8a838 !important;
+                text-align: center;
+            }
+
+            /* td — 흰 배경 + 검정 텍스트 */
+            #print-area td {
+                font-size: 7pt;
+                padding: 3pt 2pt;
+                border: 0.4pt solid #ccc !important;
+                color: #1a1a1a !important;
+                background: #fff !important;
+                text-align: center;
+            }
+
+            /* 짝수 행 아주 연한 베이지 */
+            #print-area tbody tr:nth-child(even) td {
+                background: #fafaf5 !important;
+            }
+
+            /* ── 상태값 색상 (의미가 있는 색은 유지) ── */
+            /* OK/양호 — 파란색 계열 */
+            #print-area td[data-st="ok"],
+            #print-area td[data-st="O"]  { color: #1a4fa0 !important; font-weight: bold; }
+            /* NG/이상 — 빨간색 계열 */
+            #print-area td[data-st="ng"],
+            #print-area td[data-st="X"]  { color: #b50000 !important; font-weight: bold; }
+            /* 경고 */
+            #print-area td[data-st="warn"] { color: #8a6000 !important; font-weight: bold; }
+
+            /* AOI 불량수 — 붉은색 강조 */
+            #print-area .defect-total-col,
+            #print-area [style*="danger-red"] { color: #b50000 !important; }
+
+            /* 생산실적 구분선 (골드 세로선) */
+            #print-area td[style*="rgba(255, 235, 167"] {
+                background: #c8a838 !important;
+                padding: 0 !important;
+                width: 2px !important;
+            }
+
+            /* progress bar 숨김 */
+            #print-area .qty-progress-track,
+            #print-area .qty-progress-fill { display: none !important; }
+
+            /* 누적/lot 텍스트 */
+            #print-area .acc-val { color: #1a1a1a !important; font-weight: bold; }
+            #print-area .lot-val { color: #666 !important; }
+
+            /* 섹션 소제목 */
+            #print-area .print-section-title {
+                display: block !important;
+                font-size: 9pt;
+                font-weight: bold;
+                color: #4a3800 !important;
+                background: #fffbe6 !important;
+                border-left: 3pt solid #c8a838 !important;
+                padding: 3pt 6pt;
+                margin: 8pt 0 3pt;
+                page-break-after: avoid;
+            }
+
+            /* input 값 텍스트만 표시 */
+            #print-area input {
+                border: none !important;
+                background: transparent !important;
+                color: #1a1a1a !important;
+                padding: 0;
+                font-size: 7pt;
+            }
+            #print-area button { display: none !important; }
+        }
     </style>
 </head>
 
@@ -491,14 +658,18 @@
                 <div class="tab-group">
                     <div class="tab-btn active" data-tab="production"><i class="uil uil-chart-line"></i> 생산 실적</div>
                     <div class="tab-btn" data-tab="aoi"><i class="uil uil-microscope"></i> AOI 분석</div>
+                    <div class="tab-btn" data-tab="inspection"><i class="uil uil-clipboard-alt"></i> 점검시트</div>
                 </div>
 
                 <div id="production-controls" class="control-wrapper active">
-                    <input type="number" id="order-year-input" class="compact-input" placeholder="2025"
+                    <input type="number" id="order-year-input" class="compact-input" placeholder="2026"
                         style="width:70px;">
                     <select id="order-month-select" class="compact-select"></select>
                     <div class="common-box clickable-box compact-btn" id="search-prod-btn"><i
                             class="uil uil-search"></i> 조회</div>
+                    <button class="pdf-btn" id="pdf-prod-btn" onclick="downloadPdf('prod')">
+                        <i class="uil uil-file-download"></i> PDF
+                    </button>
                 </div>
 
                 <div id="aoi-controls" class="control-wrapper">
@@ -518,6 +689,32 @@
                         분석</div>
                     <div id="period-info-text" style="color:var(--point-gold); font-size:0.8rem; font-weight:bold;">
                     </div>
+                    <button class="pdf-btn" id="pdf-aoi-btn" onclick="downloadPdf('aoi')">
+                        <i class="uil uil-file-download"></i> PDF
+                    </button>
+                </div>
+
+                <!-- 점검시트 컨트롤 -->
+                <div id="inspection-controls" class="control-wrapper">
+                    <div class="period-toggle">
+                        <div class="period-option active" data-sheet="vision">비전</div>
+                        <div class="period-option" data-sheet="esd">제전화</div>
+                        <div class="period-option" data-sheet="smd">SMD설비</div>
+                        <div class="period-option" data-sheet="wave">Wave</div>
+                        <div class="period-option" data-sheet="metal">MetalMask</div>
+                        <div class="period-option" data-sheet="env">환경</div>
+                        <div class="period-option" data-sheet="ac">AC누설</div>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:5px; color:#ccc; font-size:0.9rem;">
+                        <select id="insp-year-select" class="compact-select"></select>년
+                        <select id="insp-month-select" class="compact-select"></select>월
+                    </div>
+                    <div class="common-box clickable-box compact-btn" id="search-insp-btn">
+                        <i class="uil uil-search"></i> 조회
+                    </div>
+                    <button class="pdf-btn" id="pdf-insp-btn" onclick="downloadPdf('insp')">
+                        <i class="uil uil-file-download"></i> PDF
+                    </button>
                 </div>
             </div>
 
@@ -587,6 +784,10 @@
                         <tbody id="aoi-list-body">
                         </tbody>
                     </table>
+                </div>
+
+                <!-- 점검시트 결과 영역 -->
+                <div id="insp-container" style="display:none; width:100%; padding: 10px 20px; box-sizing:border-box; overflow-y:auto;">
                 </div>
 
                 <p class="no-line-data-message" style="margin-top:50px;">
@@ -666,10 +867,12 @@
                 const res = await fetch(`/api/statistics/model_details?model=${encodeURIComponent(model)}&year=${year}&month=${encodeURIComponent(month)}`);
                 const d = await res.json();
 
-                let html = `<table class="statistics-table" style="width:100%"><thead><tr><th>주차</th><th>라인</th><th>T/B</th><th>LOT</th><th>실적</th></tr></thead><tbody>`;
+                let html = `<table class="statistics-table" style="width:100%"><thead><tr><th>생산년월</th><th>주차</th><th>라인</th><th>T/B</th><th>LOT</th><th>실적</th></tr></thead><tbody>`;
                 d.forEach(r => {
-                    const linkUrl = `/api/production/view?year=${year}&month=${month}&week=${r.prod_week}`;
+                    // 링크는 주문년월이 아닌 실제 생산년월(prod_year, prod_month, prod_week) 기준으로 이동
+                    const linkUrl = `/api/production/view?year=${r.prod_year}&month=${r.prod_month}&week=${r.prod_week}`;
                     html += `<tr>
+                        <td style="color:#aaa; font-size:0.85rem;">${r.prod_year}년 ${r.prod_month}월</td>
                         <td><a href="javascript:void(0)" onclick="handleModalLinkClick('${linkUrl}', '${model}', '${year}', '${month}')">${r.prod_week}주</a></td>
                         <td>${r.line}</td><td>${r.tb}</td><td>${r.lot}</td><td>${r.actualProd}</td>
                     </tr>`;
@@ -743,13 +946,29 @@
             const tabs = document.querySelectorAll('.tab-btn');
             const prodControls = document.getElementById('production-controls');
             const aoiControls = document.getElementById('aoi-controls');
+            const inspControls = document.getElementById('inspection-controls');
+            const inspContainer = document.getElementById('insp-container');
 
-            // 날짜 선택기 초기화
+            // 점검시트 연도/월 select 초기화
+            const inspYearSel  = document.getElementById('insp-year-select');
+            const inspMonthSel = document.getElementById('insp-month-select');
+            const nowInsp = new Date();
+            for (let y = nowInsp.getFullYear() - 1; y <= nowInsp.getFullYear() + 1; y++) {
+                inspYearSel.innerHTML += `<option value="${y}" ${y === nowInsp.getFullYear() ? 'selected' : ''}>${y}</option>`;
+            }
+            for (let m = 1; m <= 12; m++) {
+                inspMonthSel.innerHTML += `<option value="${m}" ${m === (nowInsp.getMonth()+1) ? 'selected' : ''}>${m}</option>`;
+            }
+
+            // 날짜 선택기 초기화 (생산 기준)
             const monthSelect = document.getElementById('order-month-select');
             const yearInput = document.getElementById('order-year-input');
             yearInput.value = new Date().getFullYear();
-            monthSelect.innerHTML = '<option value="">선택</option>';
-            for (let i = 1; i <= 12; i++) monthSelect.innerHTML += `<option value="${i}월분">${i}월</option>`;
+            monthSelect.innerHTML = '<option value="">월 선택</option>';
+            for (let i = 1; i <= 12; i++) {
+                const selected = i === (new Date().getMonth() + 1) ? 'selected' : '';
+                monthSelect.innerHTML += `<option value="${i}" ${selected}>${i}월</option>`;
+            }
 
             const aoiYearSel = document.getElementById('aoi-year-select');
             const aoiMonthSel = document.getElementById('aoi-month-select');
@@ -760,24 +979,37 @@
             for (let w = 1; w <= 5; w++) aoiWeekSel.innerHTML += `<option value="${w}">${w}</option>`;
 
             // 탭 전환 로직
+            function hideAll() {
+                const summaryContainer = document.getElementById('aoi-summary-container');
+                aoiTableContainer.style.display = 'none';
+                prodTableContainer.style.display = 'none';
+                inspContainer.style.display = 'none';
+                if (summaryContainer) summaryContainer.style.display = 'none';
+                prodControls.classList.remove('active');
+                aoiControls.classList.remove('active');
+                inspControls.classList.remove('active');
+                // PDF 버튼 숨김
+                ['pdf-prod-btn','pdf-aoi-btn','pdf-insp-btn'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.classList.remove('visible');
+                });
+            }
+
             tabs.forEach(tab => {
                 tab.addEventListener('click', () => {
-                    const summaryContainer = document.getElementById('aoi-summary-container');
                     tabs.forEach(t => t.classList.remove('active'));
                     tab.classList.add('active');
+                    hideAll();
 
                     if (tab.dataset.tab === 'production') {
-                        prodControls.classList.add('active'); aoiControls.classList.remove('active');
-                        aoiTableContainer.style.display = 'none';
-                        prodTableContainer.style.display = 'none';
-                        if (summaryContainer) summaryContainer.style.display = 'none';
+                        prodControls.classList.add('active');
                         noMsg.style.display = 'flex'; noMsg.innerHTML = '<i class="uil uil-search" style="font-size:2rem; display:block; margin-bottom:10px;"></i> 조건을 선택하고 조회를 눌러주세요.';
-                    } else {
-                        prodControls.classList.remove('active'); aoiControls.classList.add('active');
-                        prodTableContainer.style.display = 'none';
-                        aoiTableContainer.style.display = 'none';
-                        if (summaryContainer) summaryContainer.style.display = 'none';
+                    } else if (tab.dataset.tab === 'aoi') {
+                        aoiControls.classList.add('active');
                         noMsg.style.display = 'flex'; noMsg.innerHTML = '<i class="uil uil-search" style="font-size:2rem; display:block; margin-bottom:10px;"></i> 조건을 선택하고 분석을 눌러주세요.';
+                    } else if (tab.dataset.tab === 'inspection') {
+                        inspControls.classList.add('active');
+                        noMsg.style.display = 'flex'; noMsg.innerHTML = '<i class="uil uil-search" style="font-size:2rem; display:block; margin-bottom:10px;"></i> 연도와 월을 선택하고 조회를 눌러주세요.';
                     }
                 });
             });
@@ -804,13 +1036,16 @@
                     return { start: new Date(y, m - 1, 1), end: new Date(y, m, 0) };
                 } else {
                     const w = parseInt(aoiWeekSel.value);
-                    const firstDayOfMonth = new Date(y, m - 1, 1);
-                    const offset = (firstDayOfMonth.getDay() + 6) % 7;
-                    let startDayNum = 1 - offset + (w - 1) * 7;
-                    let endDayNum = startDayNum + 4;
+                    // calendar.js getWeekNumber()와 동일한 기준: 1일의 요일(일=0) 기반 일요일 시작 주
+                    const dayOfWeek    = new Date(y, m - 1, 1).getDay();
                     const lastDayOfMonth = new Date(y, m, 0).getDate();
+
+                    const startDayNum  = (w - 1) * 7 - dayOfWeek + 1;
+                    const endDayNum    = w * 7 - dayOfWeek;
+
                     const finalStartDay = Math.max(1, startDayNum);
-                    const finalEndDay = Math.min(lastDayOfMonth, endDayNum);
+                    const finalEndDay   = Math.min(lastDayOfMonth, endDayNum);
+
                     if (finalStartDay > lastDayOfMonth) return { start: new Date(y, m, 0), end: new Date(y, m, 0) };
                     return { start: new Date(y, m - 1, finalStartDay), end: new Date(y, m - 1, finalEndDay) };
                 }
@@ -843,6 +1078,7 @@
                 }
                 noMsg.style.display = 'none';
                 prodTableContainer.style.display = 'block';
+                document.getElementById('pdf-prod-btn').classList.add('visible');
 
                 let html = `
                     <table class="statistics-table" style="width:100%; table-layout:fixed; border-collapse: separate; border-spacing: 0;">
@@ -876,10 +1112,17 @@
                 let statusClass = '';
                 if (item.status === 'shortage') statusClass = 'stats-problem-yellow';
                 else if (item.status === 'imbalance') statusClass = 'stats-problem-red';
-                const lot = item.totalQuantity.toLocaleString();
+                const lot    = item.totalQuantity.toLocaleString();
                 const actual = item.actualProduction.toLocaleString();
+                // 주문월 정보를 작은 글씨로 표시 (같은 모델의 서로 다른 주문 구별용)
+                const orderLabel = item.orderMonth
+                    ? `<div style="font-size:0.72rem; color:#666; margin-top:2px;">${item.orderYear}년 ${item.orderMonth} 주문분</div>`
+                    : '';
                 return `
-                    <td style="color:#fff; font-weight:bold; text-align:center;">${item.model}</td>
+                    <td style="color:#fff; font-weight:bold; text-align:center;">
+                        ${item.model}
+                        ${orderLabel}
+                    </td>
                     <td style="text-align:center;">
                         <span class="stats-lot-val">${lot}</span>
                         <span style="color:#666; margin:0 5px;">/</span>
@@ -915,6 +1158,7 @@
                 noMsg.style.display = 'none';
                 aoiTableContainer.style.display = 'block';
                 summaryContainer.style.display = 'block';
+                document.getElementById('pdf-aoi-btn').classList.add('visible');
 
                 let gTotalInsp = 0, gTotalDefect = 0;
                 const gDefects = {
@@ -932,9 +1176,12 @@
                     }
                 });
 
+                // 불량 포인트 총합 (13개 유형 합산) - 비율 계산 분모로 사용
+                const gTotalPoints = Object.values(gDefects).reduce((a, b) => a + b, 0);
+
                 const defectRate = gTotalInsp > 0 ? ((gTotalDefect / gTotalInsp) * 100).toFixed(2) : 0;
                 const getValStr = (val) => {
-                    const rate = gTotalDefect > 0 ? Math.round((val / gTotalDefect) * 100) : 0;
+                    const rate = gTotalPoints > 0 ? Math.round((val / gTotalPoints) * 100) : 0;
                     return `${rate}% (${val})`;
                 };
 
@@ -961,7 +1208,7 @@
                 <td>역삽</td> <td>미삽</td> <td>오삽</td> <td>틀어짐</td> <td>뒤집힘</td>
                 <td>파손</td> <td>맨하탄</td> <td>이탈</td> <td>냉납</td> <td>미납</td> <td>쇼트</td>
                 <td>자재</td> <td>DIP</td>
-                <td rowspan="2" style="background:var(--card-bg); color:var(--point-gold); font-size:1rem;">100%<br>(${gTotalDefect})</td>
+                <td rowspan="2" style="background:var(--card-bg); color:var(--point-gold); font-size:1rem;">100%<br>(${gTotalPoints})</td>
             </tr>
             <tr class="summary-value-row">
                 <td>${getValStr(gDefects.reverse)}</td>
@@ -1098,7 +1345,7 @@
             // 생산실적 조회 버튼 이벤트
             document.getElementById('search-prod-btn').addEventListener('click', async () => {
                 const mm = monthSelect.value, yy = yearInput.value;
-                if (!mm || !yy) { alert('선택 필요'); return; }
+                if (!mm || !yy) { alert('연도와 월을 모두 선택해주세요.'); return; }
 
                 noMsg.style.display = 'flex'; noMsg.innerHTML = '조회 중...';
                 aoiTableContainer.style.display = 'none';
@@ -1106,13 +1353,317 @@
                 document.getElementById('aoi-summary-container').style.display = 'none';
 
                 try {
-                    const res = await fetch(`/api/statistics/order_month_summary?order_month=${mm}&year=${yy}`);
+                    // [수정] prod_month 파라미터로 생산 기준 조회
+                    const res = await fetch(`/api/statistics/order_month_summary?prod_month=${mm}&year=${yy}`);
                     const data = await res.json();
                     renderProdTable(data);
                 } catch (e) { noMsg.innerHTML = '실패'; }
             });
 
-            // 시간 업데이트
+            // ================================================================
+            // [점검시트 조회 로직]
+            // ================================================================
+            // 점검시트 타입 토글
+            let inspSheetType = 'vision';
+            document.querySelectorAll('#inspection-controls .period-option').forEach(opt => {
+                opt.addEventListener('click', () => {
+                    document.querySelectorAll('#inspection-controls .period-option').forEach(o => o.classList.remove('active'));
+                    opt.classList.add('active');
+                    inspSheetType = opt.dataset.sheet;
+                });
+            });
+
+            document.getElementById('search-insp-btn').addEventListener('click', async () => {
+                const year  = parseInt(inspYearSel.value);
+                const month = parseInt(inspMonthSel.value);
+                noMsg.style.display = 'flex';
+                noMsg.innerHTML = '조회 중...';
+                inspContainer.style.display = 'none';
+                try {
+                    const sheetType = inspSheetType;
+                    const holidays = await fetch(`/api/inspection/holidays?year=${year}`).then(r => r.json());
+                    let extraData = {};
+                    if (sheetType === 'vision') {
+                        const [v1, v2] = await Promise.all([
+                            fetch(`/api/inspection/vision/monthly?year=${year}&month=${month}&machine_id=1`).then(r => r.json()),
+                            fetch(`/api/inspection/vision/monthly?year=${year}&month=${month}&machine_id=2`).then(r => r.json()),
+                        ]);
+                        extraData = { vision1: v1, vision2: v2 };
+                    } else if (sheetType === 'esd') {
+                        const [managers, esdRaw] = await Promise.all([
+                            fetch('/api/production/managers').then(r => r.json()),
+                            fetch(`/api/inspection/esd/monthly?year=${year}&month=${month}`).then(r => r.json()),
+                        ]);
+                        const esdMap = {};
+                        esdRaw.forEach(d => { esdMap[`${d.date}_${d.manager_id}`] = { shoes: d.shoes||'', wrist: d.wrist||'' }; });
+                        extraData = { managers, esdMap };
+                    } else if (['smd','wave','metal'].includes(sheetType)) {
+                        const typeMap = { smd:'smd_daily', wave:'wave_solder', metal:'metal_mask' };
+                        const raw = await fetch(`/api/smd_check/equipment/monthly?sheet_type=${typeMap[sheetType]}&year=${year}&month=${month}`).then(r => r.json());
+                        extraData = { equipData: raw };
+                    } else if (sheetType === 'env') {
+                        const [fridge, room, dehumid] = await Promise.all([
+                            fetch(`/api/smd_check/environment/monthly?check_type=fridge&year=${year}&month=${month}`).then(r => r.json()),
+                            fetch(`/api/smd_check/environment/monthly?check_type=room&year=${year}&month=${month}`).then(r => r.json()),
+                            fetch(`/api/smd_check/environment/monthly?check_type=dehumid&year=${year}&month=${month}`).then(r => r.json()),
+                        ]);
+                        extraData = { fridge, room, dehumid };
+                    } else if (sheetType === 'ac') {
+                        const acData = await fetch(`/api/smd_check/ac_leakage/yearly?year=${year}`).then(r => r.json());
+                        extraData = { acData };
+                    }
+                    noMsg.style.display = 'none';
+                    inspContainer.style.display = 'block';
+                    inspContainer.innerHTML = renderInspectionTables(year, month, holidays, sheetType, extraData);
+                    document.getElementById('pdf-insp-btn').classList.add('visible');
+                } catch(e) {
+                    noMsg.style.display = 'flex';
+                    noMsg.innerHTML = '<i class="uil uil-exclamation-triangle" style="font-size:2rem; display:block; margin-bottom:10px;"></i> 데이터 조회 실패';
+                }
+            });
+
+            const SMD_EQUIPMENTS = {
+                'Loader':['장비 내·외부','Main Air 압력','Lift','Pusher','Switch','Tower Lamp','Emergency Stop','각종 구동부','Air 점검'],
+                'Screen Printer':['장비 내·외부','Main Air 압력','Metal Mask Clamp','Cleaning Solvent','Squeegee Cylinder','Metal Mask','Conveyor','Squeegee','Sensor','Tower Lamp','Emergency Stop','각종 구동부','Air 점검'],
+                'SPI':['장비 내·외부','Switch','Sensor','Main Air 압력','Program','Camera Lighting','Air Filter','Emergency Stop','각종 구동부'],
+                'Multi Mounter 471':['장비 내·외부','Main Air 압력','Head 공압','Feeder Base','Backup Table','Nozzle','Sensor','Conveyor','ANC','Air Filter','Vision Camera','Tower Lamp','Emergency Stop','각종 구동부','Air 점검'],
+                'Chip Mounter 411':['장비 내·외부','Main Air 압력','Head 공압','Feeder Base','Backup Table','Nozzle','Sensor','Conveyor','ANC','Air Filter','Tower Lamp','Emergency Stop','각종 구동부','Air 점검'],
+                'Multi Mounter 421':['장비 내·외부','Main Air 압력','Head 공압','Feeder Base','Backup Table','Nozzle','Sensor','Conveyor','ANC','Air Filter','Vision Camera','Tower Lamp','Emergency Stop','각종 구동부','Air 점검'],
+                'Multi Mounter':['장비 내·외부','Main Air 압력','Head 공압','Feeder Base','Backup Table','Nozzle','Sensor','Conveyor','ANC','Air Filter','Vision Camera','Tower Lamp','Emergency Stop','각종 구동부','Air 점검'],
+                'Reflow':['장비 내·외부','Conveyor Speed','Temperature','반송부','Sensor','Program','N2','Conveying Chain','PCB','Air Filter','Dust Fan','Tower Lamp','Emergency Stop','각종 구동부','Air 점검'],
+                'Unloader':['장비 내·외부','Main Air 압력','Lift','Pusher','Switch','Tower Lamp','Emergency Stop','각종 구동부','Air 점검']
+            };
+            const WAVE_ITEMS = ['장비 미사용','Control Box','납조 DROSS','Conveyor 동작','Flux 노즐','Pre-Heater 150℃±5','납조 Wave','납조온도 250℃±5','Finger 상태','열풍 FAN','배기 Duct','비상정지','Flux 주유','FLUX 이물'];
+            const METAL_ITEMS = ['점검자','세척액 확인','AIR 압력 확인','전원 확인','이물질 확인'];
+            const METAL_EQUIPMENT = 'Metal Mask Washer';
+            const WAVE_EQUIPMENT  = 'Auto Solder';
+            const AC_LINES = { A:['LOADER','PRINTER','Mounter1','Mounter2','Mounter3','WORK TABLE','Reflow','UNLOADER'], B:['LOADER','PRINTER','Mounter1','Mounter2','Mounter3','WORK TABLE','Reflow','UNLOADER'], C:['LOADER','PRINTER','Mounter1','WORK TABLE','제습기','CONVECTION OVEN'] };
+
+            function renderInspectionTables(year, month, holidays, sheetType, extra) {
+                const lastDay = new Date(year, month, 0).getDate();
+                const DAY_NAMES = ['일','월','화','수','목','금','토'];
+                const pad = n => String(n).padStart(2,'0');
+                const ds  = d => `${year}-${pad(month)}-${pad(d)}`;
+                const isWorkday = (dateStr, dow) => dow!==0 && dow!==6 && !holidays[dateStr];
+                const workdays = [];
+                for (let d=1;d<=lastDay;d++) {
+                    const dateStr=ds(d), dow=new Date(year,month-1,d).getDay();
+                    if (!isWorkday(dateStr,dow)) continue;
+                    workdays.push({d, dateStr, dow});
+                }
+                const thBase = `background:#1a1b21;color:var(--point-gold);font-family:'BMDOHYEON';padding:6px 4px;font-size:.82rem;border:1px solid #3a3b47;position:sticky;top:0;z-index:10;white-space:nowrap;`;
+                const tdBase = `border:1px solid #2e2f3a;text-align:center;padding:3px 2px;font-size:.82rem;white-space:nowrap;`;
+                const tableWrap = inner =>
+                    `<div style="overflow-x:auto;border:1px solid var(--border-color);border-radius:10px;margin-bottom:8px;">
+                        <table style="width:100%;border-collapse:collapse;table-layout:auto;">${inner}</table></div>`;
+                const titleBar = title =>
+                    `<div style="font-family:'BMDOHYEON';font-size:1.1rem;color:var(--point-gold);margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid var(--border-color);">
+                        ${year}년 ${month}월 — ${title}</div>`;
+                const makeDayHeaders = () => workdays.map(({d,dow}) =>
+                    `<th title="${DAY_NAMES[dow]}" style="${thBase}min-width:28px;">${d}</th>`).join('');
+
+                if (sheetType === 'vision') {
+                    const {vision1, vision2} = extra;
+                    const vSt = s => s==='ok'?'background:rgba(78,115,223,.2);color:#4e73df;font-weight:bold;':s==='ng'?'background:rgba(255,68,68,.2);color:var(--danger-red);font-weight:bold;':'color:#333;';
+                    const makeVT = (data, label) => {
+                        let row = `<tr><td style="${tdBase}background:#1c1d26;position:sticky;left:0;z-index:5;padding:3px 8px;border-right:2px solid var(--point-gold);">점검 상태</td>`;
+                        workdays.forEach(({dateStr}) => { const s=data[dateStr]||''; row+=`<td style="${tdBase}${vSt(s)}" data-st="${s}">${s==='ok'?'OK':s==='ng'?'NG':''}</td>`; });
+                        row+='</tr>';
+                        return tableWrap(`<thead><tr><th style="${thBase}position:sticky;left:0;z-index:15;padding:6px 8px;border-right:2px solid var(--point-gold);">${label}</th>${makeDayHeaders()}</tr></thead><tbody>${row}</tbody>`);
+                    };
+                    return titleBar('비전 장비 일일 점검') + makeVT(vision1,'1호기 (A-Line)') + makeVT(vision2,'2호기 (B-Line)');
+                }
+                if (sheetType === 'esd') {
+                    const {managers, esdMap} = extra;
+                    const getComb = (s,w) => { if(s===w)return s; if(s==='X'||w==='X')return 'X'; if(s==='C'||w==='C')return 'C'; if(s==='O'||w==='O')return 'O'; return ''; };
+                    const eSt = s => s==='O'?'background:rgba(0,230,118,.12);color:var(--success-green);font-weight:bold;':s==='X'?'background:rgba(255,68,68,.15);color:var(--danger-red);font-weight:bold;':s==='C'?'background:rgba(255,235,167,.1);color:var(--point-gold);font-weight:bold;':'color:#333;';
+                    let rows='';
+                    managers.forEach(mgr => {
+                        rows+=`<tr><td style="${tdBase}background:#1c1d26;position:sticky;left:0;z-index:5;text-align:left;padding:3px 8px;border-right:2px solid var(--point-gold);"><span style="font-weight:bold;color:#fff;font-size:.82rem;">${mgr.name}</span></td>`;
+                        workdays.forEach(({dateStr}) => { const c=esdMap[`${dateStr}_${mgr.id}`]||{}; const s=getComb(c.shoes||'',c.wrist||''); rows+=`<td style="${tdBase}${eSt(s)}" data-st="${s}">${s}</td>`; });
+                        rows+='</tr>';
+                    });
+                    return titleBar('제전화 및 손목띠 점검') + tableWrap(`<thead><tr><th style="${thBase}position:sticky;left:0;z-index:15;padding:6px 8px;border-right:2px solid var(--point-gold);">성명</th>${makeDayHeaders()}</tr></thead><tbody>${rows}</tbody>`);
+                }
+                if (sheetType === 'smd') {
+                    const {equipData} = extra;
+                    const sSt = s => s==='O'?'background:rgba(78,115,223,.15);color:#4e73df;font-weight:bold;':s==='△'?'background:rgba(255,235,167,.1);color:var(--point-gold);font-weight:bold;':s==='X'?'background:rgba(255,68,68,.15);color:var(--danger-red);font-weight:bold;':s==='□'?'background:rgba(0,230,118,.1);color:var(--success-green);font-weight:bold;':'color:#333;';
+                    let html = titleBar('SMD 설비 일일점검');
+                    Object.entries(SMD_EQUIPMENTS).forEach(([equip, items]) => {
+                        let rows='';
+                        items.forEach((name,idx) => {
+                            const no=idx+1;
+                            rows+=`<tr><td style="${tdBase}background:#1c1d26;position:sticky;left:0;z-index:5;text-align:left;padding:3px 8px;border-right:2px solid var(--point-gold);min-width:130px;font-size:.78rem;">${no}. ${name}</td>`;
+                            workdays.forEach(({dateStr}) => { const k=`${equip}_${no}_${dateStr}`; const s=(equipData[k]||{}).status||''; rows+=`<td style="${tdBase}${sSt(s)}" data-st="${s}">${s}</td>`; });
+                            rows+='</tr>';
+                        });
+                        html+=tableWrap(`<thead><tr><th style="${thBase}position:sticky;left:0;z-index:15;padding:6px 8px;border-right:2px solid var(--point-gold);min-width:130px;">${equip}</th>${makeDayHeaders()}</tr></thead><tbody>${rows}</tbody>`);
+                    });
+                    return html;
+                }
+                if (sheetType === 'wave') {
+                    const {equipData} = extra;
+                    const wSt = s => s==='V'?'background:rgba(78,115,223,.15);color:#4e73df;font-weight:bold;':s==='△'?'background:rgba(255,235,167,.1);color:var(--point-gold);font-weight:bold;':s==='X'?'background:rgba(255,68,68,.15);color:var(--danger-red);font-weight:bold;':s==='☆'?'background:rgba(255,50,50,.25);color:#ff1744;font-weight:bold;':'color:#333;';
+                    let rows='';
+                    WAVE_ITEMS.forEach((name,idx) => {
+                        const no=idx+1;
+                        rows+=`<tr><td style="${tdBase}background:#1c1d26;position:sticky;left:0;z-index:5;text-align:left;padding:3px 8px;border-right:2px solid var(--point-gold);min-width:150px;font-size:.78rem;">${no}. ${name}</td>`;
+                        workdays.forEach(({dateStr}) => { const k=`${WAVE_EQUIPMENT}_${no}_${dateStr}`; const s=(equipData[k]||{}).status||''; rows+=`<td style="${tdBase}${wSt(s)}" data-st="${s}">${s}</td>`; });
+                        rows+='</tr>';
+                    });
+                    return titleBar('Wave Solder 점검') + tableWrap(`<thead><tr><th style="${thBase}position:sticky;left:0;z-index:15;padding:6px 8px;border-right:2px solid var(--point-gold);min-width:150px;">점검 사항</th>${makeDayHeaders()}</tr></thead><tbody>${rows}</tbody>`);
+                }
+                if (sheetType === 'metal') {
+                    const {equipData} = extra;
+                    const mSt = s => s==='O'?'background:rgba(78,115,223,.15);color:#4e73df;font-weight:bold;':s==='X'?'background:rgba(255,68,68,.15);color:var(--danger-red);font-weight:bold;':'color:#333;';
+                    let rows='';
+                    METAL_ITEMS.forEach((name,idx) => {
+                        rows+=`<tr><td style="${tdBase}background:#1c1d26;position:sticky;left:0;z-index:5;text-align:left;padding:3px 8px;border-right:2px solid var(--point-gold);min-width:170px;font-size:.78rem;">${name}</td>`;
+                        workdays.forEach(({dateStr}) => { const k=`${METAL_EQUIPMENT}_${idx}_${dateStr}`; const r=equipData[k]||{}; const v=idx===0?(r.checker||''):(r.status||''); rows+=`<td style="${tdBase}${idx>0?mSt(v):''}" data-st="${v}">${v}</td>`; });
+                        rows+='</tr>';
+                    });
+                    return titleBar('Metal Mask 세척기 점검') + tableWrap(`<thead><tr><th style="${thBase}position:sticky;left:0;z-index:15;padding:6px 8px;border-right:2px solid var(--point-gold);min-width:170px;">항목</th>${makeDayHeaders()}</tr></thead><tbody>${rows}</tbody>`);
+                }
+                if (sheetType === 'env') {
+                    const {fridge, room, dehumid} = extra;
+                    const SECS = [
+                        {label:'냉장고 온도',data:fridge, rows:[{slot:'10:00',name:'온도(℃)',field:'temperature',isToggle:true}]},
+                        {label:'실내 온·습도',data:room,  rows:[{slot:'10:00',name:'온도 10시',field:'temperature'},{slot:'10:00',name:'습도 10시',field:'humidity'},{slot:'18:00',name:'온도 18시',field:'temperature'},{slot:'18:00',name:'습도 18시',field:'humidity'}]},
+                        {label:'제습함 온·습도',data:dehumid,rows:[{slot:'10:00',name:'온도(℃)',field:'temperature'},{slot:'10:00',name:'습도(%RH)',field:'humidity'}]},
+                    ];
+                    const tSt = s => s==='O'?'background:rgba(78,115,223,.15);color:#4e73df;font-weight:bold;':s==='X'?'background:rgba(255,68,68,.15);color:var(--danger-red);font-weight:bold;':'color:#333;';
+                    let html=titleBar('환경 점검');
+                    SECS.forEach(sec => {
+                        let rows='';
+                        sec.rows.forEach(row => {
+                            rows+=`<tr><td style="${tdBase}background:#1c1d26;position:sticky;left:0;z-index:5;text-align:left;padding:3px 8px;border-right:2px solid var(--point-gold);min-width:100px;font-size:.78rem;">${row.name}</td>`;
+                            workdays.forEach(({dateStr}) => { const k=`${dateStr}_${row.slot}`; const rec=sec.data[k]||{}; const v=row.isToggle?(rec.status||''):(rec[row.field]!==null&&rec[row.field]!==undefined?rec[row.field]:''); rows+=`<td style="${tdBase}${row.isToggle?tSt(v):''}">${v}</td>`; });
+                            rows+='</tr>';
+                        });
+                        html+=tableWrap(`<thead><tr><th style="${thBase}position:sticky;left:0;z-index:15;padding:6px 8px;border-right:2px solid var(--point-gold);min-width:100px;">${sec.label}</th>${makeDayHeaders()}</tr></thead><tbody>${rows}</tbody>`);
+                    });
+                    return html;
+                }
+                if (sheetType === 'ac') {
+                    const {acData} = extra;
+                    const MONTHS=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+                    let rows='';
+                    Object.entries(AC_LINES).forEach(([line,equips]) => {
+                        equips.forEach((equip,i) => {
+                            rows+=`<tr>${i===0?`<td style="${tdBase}background:#1c1d26;position:sticky;left:0;z-index:5;font-family:'BMDOHYEON';" rowspan="${equips.length}">${line}</td>`:''}<td style="${tdBase}background:#1c1d26;position:sticky;left:34px;z-index:5;text-align:left;padding:3px 8px;border-right:2px solid var(--point-gold);min-width:100px;font-size:.78rem;">${equip}</td>`;
+                            for(let m=1;m<=12;m++){const k=`${line}_${equip}_${m}`;const rec=acData[k]||{};const v=rec.voltage!==null&&rec.voltage!==undefined?rec.voltage:'';const isNg=v!==''&&parseFloat(v)>5;rows+=`<td style="${tdBase}${isNg?'color:var(--danger-red);background:rgba(255,68,68,.1);font-weight:bold;':v!==''?'color:var(--success-green);':''}" data-st="${isNg?'ng':v!==''?'ok':''}">${v}</td>`;}
+                            rows+='</tr>';
+                        });
+                    });
+                    const mH=MONTHS.map((m,i)=>`<th style="${thBase}min-width:52px;${i+1===month?'background:#1e2535!important;border-bottom:2px solid var(--point-gold)!important;':''}">${m}</th>`).join('');
+                    return titleBar(`AC 누설전류 점검 (${year}년)`) + tableWrap(`<thead><tr><th style="${thBase}position:sticky;left:0;z-index:15;min-width:34px;">라인</th><th style="${thBase}position:sticky;left:34px;z-index:15;min-width:100px;border-right:2px solid var(--point-gold);">설비</th>${mH}</tr></thead><tbody>${rows}</tbody>`);
+                }
+                return '';
+            }
+
+            // ================================================================
+            // [PDF 출력 — window.print()]
+            // ================================================================
+            window.downloadPdf = function(type) {
+                const btn = document.getElementById(`pdf-${type}-btn`);
+                const origText = btn.innerHTML;
+                btn.innerHTML = '<i class="uil uil-spinner-alt"></i> 준비 중...';
+                btn.disabled = true;
+
+                // ── 제목 결정 ────────────────────────────────────────────
+                let title = 'PPMS';
+                if (type === 'prod') {
+                    const yy = document.getElementById('order-year-input').value;
+                    const mm = document.getElementById('order-month-select').value;
+                    title = `PPMS  |  생산 실적 — ${yy}년 ${mm}월`;
+                } else if (type === 'aoi') {
+                    const info = document.getElementById('period-info-text').textContent.trim();
+                    title = `PPMS  |  AOI 분석 — ${info}`;
+                } else if (type === 'insp') {
+                    const yy = document.getElementById('insp-year-select').value;
+                    const mm = document.getElementById('insp-month-select').value;
+                    const label = document.querySelector('#inspection-controls .period-option.active')?.textContent?.trim() || '';
+                    title = `PPMS  |  점검시트 — ${label}  ${yy}년 ${mm}월`;
+                }
+
+                // ── 소스 컨테이너 결정 ───────────────────────────────────
+                let srcEls = [];
+                if (type === 'prod')  srcEls = [document.getElementById('prod-table-container')];
+                else if (type === 'aoi')  srcEls = [
+                    document.getElementById('aoi-summary-container'),
+                    document.getElementById('aoi-table-container')
+                ];
+                else if (type === 'insp') srcEls = [document.getElementById('insp-container')];
+
+                // ── print-area 에 복사 ───────────────────────────────────
+                const printArea   = document.getElementById('print-area');
+                const printHeader = document.getElementById('print-header');
+                const printBody   = document.getElementById('print-body');
+
+                const now = new Date().toLocaleString('ko-KR');
+                printHeader.textContent = `${title}　　　　${now}`;
+                printBody.innerHTML = '';
+
+                // 클론된 요소의 overflow/max-height 인라인 스타일 제거 헬퍼
+                function stripScrollStyles(el) {
+                    el.querySelectorAll('*').forEach(node => {
+                        if (node.style) {
+                            node.style.overflow   = '';
+                            node.style.overflowX  = '';
+                            node.style.overflowY  = '';
+                            node.style.maxHeight  = '';
+                            node.style.maxWidth   = '';
+                            node.style.height     = '';
+                        }
+                    });
+                    // 루트 요소 자체도
+                    if (el.style) {
+                        el.style.overflow  = '';
+                        el.style.overflowX = '';
+                        el.style.overflowY = '';
+                        el.style.maxHeight = '';
+                        el.style.height    = '';
+                    }
+                }
+
+                srcEls.forEach(el => {
+                    if (!el || el.style.display === 'none') return;
+
+                    if (type === 'insp') {
+                        Array.from(el.children).forEach(child => {
+                            const clone = child.cloneNode(true);
+                            if (child.tagName === 'DIV' && !child.querySelector('table')) {
+                                clone.className = 'print-section-title';
+                            }
+                            const origInputs  = child.querySelectorAll('input');
+                            const cloneInputs = clone.querySelectorAll('input');
+                            origInputs.forEach((inp, i) => { if (cloneInputs[i]) cloneInputs[i].value = inp.value; });
+                            stripScrollStyles(clone);
+                            printBody.appendChild(clone);
+                        });
+                    } else {
+                        const clone = el.cloneNode(true);
+                        const origInputs  = el.querySelectorAll('input');
+                        const cloneInputs = clone.querySelectorAll('input');
+                        origInputs.forEach((inp, i) => { if (cloneInputs[i]) cloneInputs[i].value = inp.value; });
+                        stripScrollStyles(clone);
+                        printBody.appendChild(clone);
+                    }
+                });
+
+                // ── 인쇄 실행 ───────────────────────────────────────────
+                // print-area를 잠깐 표시해야 @media print가 인식
+                printArea.style.display = 'block';
+                setTimeout(() => {
+                    window.print();
+                    // 인쇄 다이얼로그 닫힌 후 원복
+                    printArea.style.display = 'none';
+                    btn.innerHTML = origText;
+                    btn.disabled = false;
+                }, 100);
+            };
+
+                        // 시간 업데이트
             function updateTime() {
                 const n = new Date();
                 const el = document.getElementById('current-time');
@@ -1132,5 +1683,4 @@
         });
     </script>
 </body>
-
 </html>

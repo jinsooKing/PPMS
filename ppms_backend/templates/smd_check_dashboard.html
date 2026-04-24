@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PPMS - 생산/SMD 점검시트</title>
+    <link rel="stylesheet" href="/static/common.css">
+    <link rel="stylesheet" href="https://unicons.iconscout.com/release/v4.0.8/css/line.css">
+    <link href="https://hangeul.pstatic.net/hangeul_static/css/bmdohyeon.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Poppins:400,600,800" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="/static/logo.js"></script>
+
+    <style>
+        .content-area { box-sizing: border-box; overflow-x: hidden; }
+
+        .dashboard-wrapper {
+            width: 100%; max-width: 1100px; min-width: 0; box-sizing: border-box;
+            padding: 20px; box-sizing: border-box; margin: auto;
+        }
+
+        .section-title {
+            font-family: 'BMDOHYEON'; font-size: 1rem;
+            color: #888; margin: 0 0 12px 4px;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .section-title::before {
+            content: ''; display: block;
+            width: 3px; height: 1em;
+            background: var(--point-gold); border-radius: 2px;
+        }
+
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px; margin-bottom: 30px;
+        }
+
+        .menu-card {
+            background: var(--card-bg); border: 1px solid var(--border-color);
+            border-radius: 16px; padding: 28px 24px; text-align: center;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative; overflow: hidden;
+        }
+        .menu-card:hover {
+            transform: translateY(-8px); border-color: var(--point-gold);
+            box-shadow: 0 12px 28px rgba(0,0,0,0.4);
+        }
+
+        .card-icon {
+            font-size: 2.8rem; margin-bottom: 14px;
+            display: inline-block; transition: transform 0.3s;
+        }
+        .menu-card:hover .card-icon { transform: scale(1.1); }
+
+        .icon-blue   { color: #4e73df; text-shadow: 0 0 16px rgba(78,115,223,0.4); }
+        .icon-orange { color: #ff9800; text-shadow: 0 0 16px rgba(255,152,0,0.4); }
+        .icon-teal   { color: #26c6da; text-shadow: 0 0 16px rgba(38,198,218,0.4); }
+        .icon-green  { color: #00e676; text-shadow: 0 0 16px rgba(0,230,118,0.4); }
+        .icon-red    { color: #ff4444; text-shadow: 0 0 16px rgba(255,68,68,0.4); }
+        .icon-esd    { color: var(--point-gold); text-shadow: 0 0 16px rgba(255,235,167,0.4); }
+
+        .card-title {
+            font-family: 'BMDOHYEON'; font-size: 1.1rem; color: #fff; margin-bottom: 8px;
+        }
+        .card-desc {
+            font-size: 0.82rem; color: #777; line-height: 1.5; margin-bottom: 18px;
+        }
+        .enter-btn {
+            background: transparent; border: 1px solid #555; color: #aaa;
+            padding: 7px 20px; border-radius: 20px;
+            font-family: 'BMDOHYEON'; font-size: 0.9rem;
+            transition: all 0.3s; pointer-events: none;
+        }
+        .menu-card:hover .enter-btn {
+            background: var(--point-gold); color: #1f2029; border-color: var(--point-gold);
+        }
+    </style>
+</head>
+<body>
+    <div class="page-container">
+
+        <header class="main-header">
+            <div class="header-left">
+                <a href="javascript:void(0)" onclick="goToHome()" class="ppms-logo-placeholder"></a>
+            </div>
+            <div class="header-center">
+                <div class="common-box font-35pt">생산 / SMD 점검시트</div>
+            </div>
+            <div class="header-right">
+                <div class="common-box font-15pt time-display" id="current-time"></div>
+            </div>
+        </header>
+
+        <main class="content-area">
+            <div class="dashboard-wrapper">
+
+                <div class="section-title">설비 점검</div>
+                <div class="card-grid">
+
+                    <div class="menu-card" onclick="navigateTo('/api/smd_check/smd_daily')">
+                        <i class="uil uil-processor card-icon icon-blue"></i>
+                        <div class="card-title">SMD 설비 일일점검</div>
+                        <div class="card-desc">
+                            Loader, Screen Printer, SPI,<br>
+                            Mounter, Reflow, Unloader<br>
+                            9개 설비 일일 상태 점검
+                        </div>
+                        <div class="enter-btn">점검표 열기</div>
+                    </div>
+
+                    <div class="menu-card" onclick="navigateTo('/api/smd_check/wave_solder')">
+                        <i class="uil uil-fire card-icon icon-orange"></i>
+                        <div class="card-title">Wave Solder 점검</div>
+                        <div class="card-desc">
+                            Auto Solder 설비 일/주별<br>
+                            14개 항목 점검<br>
+                            (V/△/X/☆ 판정)
+                        </div>
+                        <div class="enter-btn">점검표 열기</div>
+                    </div>
+
+                    <div class="menu-card" onclick="navigateTo('/api/smd_check/metal_mask')">
+                        <i class="uil uil-layer-group card-icon icon-teal"></i>
+                        <div class="card-title">Metal Mask 세척기 점검</div>
+                        <div class="card-desc">
+                            세척액·AIR압력·전원·이물질<br>
+                            4개 항목 일일 점검<br>
+                            (점검자 + O/X 판정)
+                        </div>
+                        <div class="enter-btn">점검표 열기</div>
+                    </div>
+
+                </div>
+
+                <div class="section-title">환경 / 전기 점검</div>
+                <div class="card-grid">
+
+                    <div class="menu-card" onclick="navigateTo('/api/inspection/esd')">
+                        <i class="uil uil-bolt card-icon icon-esd"></i>
+                        <div class="card-title">제전화 및 손목띠 점검</div>
+                        <div class="card-desc">
+                            라인 작업자 및 관리자의<br>
+                            정전기 방지 용품 착용 및<br>
+                            정상 작동 일일 점검
+                        </div>
+                        <div class="enter-btn">점검표 열기</div>
+                    </div>
+
+                    <div class="menu-card" onclick="navigateTo('/api/smd_check/environment')">
+                        <i class="uil uil-temperature card-icon icon-green"></i>
+                        <div class="card-title">환경 점검</div>
+                        <div class="card-desc">
+                            냉장고 온도 / 실내 온·습도<br>
+                            제습함 온·습도<br>
+                            일별 수치 기록 관리
+                        </div>
+                        <div class="enter-btn">점검표 열기</div>
+                    </div>
+
+                    <div class="menu-card" onclick="navigateTo('/api/smd_check/ac_leakage')">
+                        <i class="uil uil-bolt card-icon icon-red"></i>
+                        <div class="card-title">AC 누설전류 점검</div>
+                        <div class="card-desc">
+                            A·B·C 라인 설비별<br>
+                            AC 누설전압 월 1회 측정<br>
+                            연간 12개월 관리
+                        </div>
+                        <div class="enter-btn">점검표 열기</div>
+                    </div>
+
+                </div>
+            </div>
+        </main>
+
+<footer class="main-footer" id="new-footer">
+            <div class="footer-left"></div>
+            <div class="footer-center">
+                <div class="footer-btn" onclick="goBack()"><i class="uil uil-arrow-left"></i></div>
+                <div class="footer-btn" onclick="goToHome()"><i class="uil uil-home"></i></div>
+                <div class="footer-btn" onclick="goForward()"><i class="uil uil-arrow-right"></i></div>
+            </div>
+            <div class="footer-right"></div>
+        </footer>
+
+    </div>
+
+    <style>body { opacity: 0; transition: opacity 0.5s ease-in-out; }</style>
+
+    <script>
+        function navigateTo(url) {
+            document.body.style.opacity = '0';
+            setTimeout(() => { location.href = url; }, 500);
+        }
+        window.goBack    = () => { document.body.style.opacity = '0'; setTimeout(() => history.back(), 500); };
+        window.goToHome  = () => { document.body.style.opacity = '0'; setTimeout(() => location.href = '/', 500); };
+        window.goForward = () => { document.body.style.opacity = '0'; setTimeout(() => history.forward(), 500); };
+
+        function updateTime() {
+            const now = new Date();
+            const el  = document.getElementById('current-time');
+            if (el) el.textContent =
+                `${now.getFullYear()}년 ${now.getMonth()+1}월 ${now.getDate()}일 ${now.getHours()}시 ${now.getMinutes()}분`;
+        }
+        setInterval(updateTime, 1000); updateTime();
+
+        window.addEventListener('pageshow', () => {
+            setTimeout(() => { document.body.style.opacity = '1'; }, 50);
+        });
+    </script>
+
+
+
+
+
+
+
+
+</body>
+</html>

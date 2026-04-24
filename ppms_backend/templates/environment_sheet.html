@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PPMS - 환경 점검</title>
+    <link rel="stylesheet" href="/static/common.css">
+    <link rel="stylesheet" href="https://unicons.iconscout.com/release/v4.0.8/css/line.css">
+    <link href="https://hangeul.pstatic.net/hangeul_static/css/bmdohyeon.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Poppins:400,600,800" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="/static/logo.js"></script>
+    <style>
+        .content-area { box-sizing: border-box; overflow-x: hidden; }
+        .env-inner{display:flex;flex-direction:column;width:100%;height:100%;gap:8px;box-sizing:border-box;min-width:0;}
+        .type-tabs{flex:0 0 auto;display:flex;gap:8px;}
+        .type-tab{background:#1a1b24;border:1px solid #444;color:#888;padding:6px 18px;border-radius:20px;font-family:'BMDOHYEON';font-size:.9rem;cursor:pointer;transition:all .2s;white-space:nowrap;}
+        .type-tab.active{background:var(--point-gold);color:#1f2029;border-color:var(--point-gold);font-weight:bold;}
+        .type-tab:hover:not(.active){border-color:var(--point-gold);color:var(--point-gold);}
+        .ctrl-bar{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;background:var(--card-bg);border:1px solid var(--border-color);border-radius:10px;padding:8px 16px;gap:12px;}
+        .month-ctrl{display:flex;align-items:center;gap:10px;font-family:'BMDOHYEON';font-size:1.1rem;color:#fff;}
+        .arrow-btn{background:none;border:1px solid #555;color:var(--point-gold);width:28px;height:28px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.95rem;transition:all .2s;}
+        .arrow-btn:hover{background:var(--point-gold);color:#1f2029;}
+
+        /* 주차별 구조 — 최대 7컬럼, 가로스크롤 없음 */
+        .table-wrapper{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;background:var(--card-bg);border-radius:12px;border:1px solid var(--border-color);}
+        table{width:100%;border-collapse:collapse;table-layout:fixed;}
+        th,td{border:1px solid #3a3b47;text-align:center;padding:0;overflow:hidden;}
+        th{background:#1a1b21;color:var(--point-gold);font-family:'BMDOHYEON';padding:8px 4px;font-size:.85rem;position:sticky;top:0;z-index:20;white-space:nowrap;}
+
+        /* 열 너비 고정 */
+        col.col-label{width:18%;}
+        col.col-week {width:9%;}
+        col.col-day  {width:14.6%;}  /* (100 - 18 - 9) / 5 */
+
+        .label-cell{background:#1a1b21;z-index:10;text-align:center;font-family:'BMDOHYEON';font-size:.85rem;color:var(--point-gold);border-right:2px solid var(--point-gold);padding:4px 6px;vertical-align:middle;}
+        .week-cell{background:#181920;font-family:'BMDOHYEON';font-size:.78rem;color:#888;vertical-align:middle;}
+        .week-group-start td{border-top:2px solid #3a3b47;}
+
+        .val-cell{width:100%;height:44px;display:flex;align-items:center;justify-content:center;gap:2px;}
+        .val-input{background:transparent;border:none;color:#fff;text-align:right;font-size:.88rem;width:52%;outline:none;font-family:'Poppins';-moz-appearance:textfield;}
+        .val-input::-webkit-inner-spin-button,.val-input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
+        .val-input:focus{border-bottom:1px solid var(--point-gold);}
+        .val-unit{font-size:.72rem;color:#666;font-family:'Poppins';white-space:nowrap;min-width:28px;}
+        .val-ok{color:#00e676 !important;}
+        .val-ng{color:#ff4444 !important;}
+
+        /* 오늘 날짜 열 강조 */
+        .today-col{background:rgba(255,235,167,.06);}
+        td.today-col .val-input{color:var(--point-gold);}
+        /* 비어있는 날짜 셀 */
+        .empty-day{background:#141419;}
+    </style>
+</head>
+<body>
+    <div class="page-container">
+        <header class="main-header">
+            <div class="header-left">
+                <a href="javascript:void(0)" onclick="goToHome()" class="ppms-logo-placeholder"></a>
+            </div>
+            <div class="header-center">
+                <div class="common-box font-35pt">환경 점검</div>
+            </div>
+            <div class="header-right">
+                <div class="common-box font-15pt time-display" id="current-time"></div>
+            </div>
+        </header>
+        <main class="content-area">
+            <div class="env-inner">
+                <div class="type-tabs">
+                    <div class="type-tab active" data-type="fridge">🌡 냉장고 온도</div>
+                    <div class="type-tab" data-type="room">💧 실내 온·습도</div>
+                    <div class="type-tab" data-type="dehumid">📦 제습함 온·습도</div>
+                </div>
+                <div class="ctrl-bar">
+                    <div class="month-ctrl">
+                        <button class="arrow-btn" onclick="moveMonth(-1)"><i class="uil uil-angle-left"></i></button>
+                        <span id="month-display"></span>
+                        <button class="arrow-btn" onclick="moveMonth(1)"><i class="uil uil-angle-right"></i></button>
+                        <button class="quick-ok-btn" onclick="jumpToday()" style="border-color:#888;color:#aaa;">오늘로 이동</button>
+                        <div class="ctrl-divider"></div>
+                        <button class="quick-ok-btn" onclick="applyPreset()">프리셋 적용</button>
+                        <button class="quick-ok-btn" onclick="clearToday()" style="border-color:#ff4444;color:#ff4444;">초기화</button>
+                    </div>
+                    <div id="spec-label" style="font-size:.82rem;color:#888;"></div>
+                </div>
+                <div class="table-wrapper">
+                    <table id="check-table">
+                        <colgroup>
+                            <col class="col-label">
+                            <col class="col-week">
+                            <col class="col-day"><col class="col-day"><col class="col-day"><col class="col-day"><col class="col-day">
+                        </colgroup>
+                        <thead><tr id="header-row"></tr></thead>
+                        <tbody id="table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+        <footer class="main-footer">
+            <div class="footer-left">
+                <div class="inspection-footer-btn" onclick="openPresetModal()" style="cursor:pointer;">
+                    <i class="uil uil-setting"></i> 프리셋 설정
+                </div>
+            </div>
+            <div class="footer-center">
+                <div class="footer-btn" onclick="goBack()"><i class="uil uil-arrow-left"></i></div>
+                <div class="footer-btn" onclick="goToHome()"><i class="uil uil-home"></i></div>
+                <div class="footer-btn" onclick="goForward()"><i class="uil uil-arrow-right"></i></div>
+            </div>
+            <div class="footer-right"></div>
+        </footer>
+    </div>
+    <style>body{opacity:0;transition:opacity .5s ease-in-out}
+    .quick-ok-btn{background:none;border:1px solid #4e73df;color:#4e73df;padding:3px 10px;border-radius:6px;cursor:pointer;font-size:.8rem;font-family:'BMDOHYEON';transition:all .2s;}
+    .quick-ok-btn:hover{opacity:.75;}
+    .ctrl-btn-group{display:flex;gap:6px;align-items:center;}
+    .ctrl-divider{width:1px;height:18px;background:#444;margin:0 4px;}
+    .inspection-footer-btn{display:flex;align-items:center;justify-content:center;gap:8px;padding:0 20px;height:45px;border-radius:12px;border:1px solid rgba(255,235,167,.4);background:rgba(255,235,167,.05);color:var(--point-gold);font-family:'BMDOHYEON';font-size:1rem;cursor:pointer;transition:all .3s;}
+    .inspection-footer-btn:hover{background:rgba(255,235,167,.2);border-color:var(--point-gold);}
+    /* 프리셋 모달 */
+    .preset-modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:12000;align-items:center;justify-content:center;}
+    .preset-modal-overlay.visible{display:flex;}
+    .preset-modal{background:#1a1c23;border:1px solid var(--point-gold);border-radius:12px;width:460px;max-height:80vh;display:flex;flex-direction:column;}
+    .preset-modal-header{display:flex;justify-content:space-between;align-items:center;padding:18px 24px;border-bottom:1px solid rgba(255,255,255,.08);}
+    .preset-modal-title{color:var(--point-gold);font-family:'BMDOHYEON';font-size:1.2rem;}
+    .preset-modal-body{padding:20px 24px;overflow-y:auto;display:flex;flex-direction:column;gap:14px;}
+    .preset-row{display:flex;align-items:center;gap:10px;}
+    .preset-label{color:#bbb;font-size:.9rem;min-width:130px;}
+    .preset-input{background:#222;border:1px solid #444;color:#fff;padding:6px 10px;border-radius:6px;width:90px;text-align:center;-moz-appearance:textfield;}
+    .preset-input::-webkit-inner-spin-button,.preset-input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
+    .preset-input:focus{outline:none;border-color:var(--point-gold);}
+    .preset-unit{color:#777;font-size:.85rem;}
+    .preset-section-title{color:var(--point-gold);font-family:'BMDOHYEON';font-size:.95rem;border-bottom:1px solid rgba(255,235,167,.2);padding-bottom:4px;margin-top:4px;}
+    .preset-modal-footer{padding:16px 24px;border-top:1px solid rgba(255,255,255,.08);display:flex;justify-content:flex-end;gap:10px;}
+    .preset-save-btn{background:var(--point-gold);color:#1a1c23;border:none;padding:8px 24px;border-radius:20px;font-family:'BMJUA';font-size:.95rem;cursor:pointer;font-weight:bold;}
+    .preset-cancel-btn{background:#3d3d3d;color:#eee;border:none;padding:8px 20px;border-radius:20px;font-family:'BMJUA';cursor:pointer;}
+    </style>
+
+    <!-- 프리셋 설정 모달 -->
+    <div class="preset-modal-overlay" id="preset-modal">
+        <div class="preset-modal">
+            <div class="preset-modal-header">
+                <span class="preset-modal-title"><i class="uil uil-setting"></i> 환경 점검 프리셋 설정</span>
+                <button onclick="closePresetModal()" style="background:none;border:none;color:#888;font-size:1.8rem;cursor:pointer;line-height:1;">&times;</button>
+            </div>
+            <div class="preset-modal-body">
+                <div class="preset-section-title">🌡 냉장고 온도</div>
+                <div class="preset-row">
+                    <span class="preset-label">온도</span>
+                    <input class="preset-input" id="p-fridge-temp" type="number" step="0.1" placeholder="예: 5">
+                    <span class="preset-unit">℃</span>
+                </div>
+
+                <div class="preset-section-title">💧 실내 온·습도</div>
+                <div class="preset-row">
+                    <span class="preset-label">온도 (10:00)</span>
+                    <input class="preset-input" id="p-room-temp-10" type="number" step="0.1" placeholder="예: 22">
+                    <span class="preset-unit">℃</span>
+                </div>
+                <div class="preset-row">
+                    <span class="preset-label">습도 (10:00)</span>
+                    <input class="preset-input" id="p-room-hum-10" type="number" step="0.1" placeholder="예: 55">
+                    <span class="preset-unit">%RH</span>
+                </div>
+                <div class="preset-row">
+                    <span class="preset-label">온도 (18:00)</span>
+                    <input class="preset-input" id="p-room-temp-18" type="number" step="0.1" placeholder="예: 23">
+                    <span class="preset-unit">℃</span>
+                </div>
+                <div class="preset-row">
+                    <span class="preset-label">습도 (18:00)</span>
+                    <input class="preset-input" id="p-room-hum-18" type="number" step="0.1" placeholder="예: 58">
+                    <span class="preset-unit">%RH</span>
+                </div>
+
+                <div class="preset-section-title">📦 제습함 온·습도</div>
+                <div class="preset-row">
+                    <span class="preset-label">온도</span>
+                    <input class="preset-input" id="p-dehumid-temp" type="number" step="0.1" placeholder="예: 20">
+                    <span class="preset-unit">℃</span>
+                </div>
+                <div class="preset-row">
+                    <span class="preset-label">습도</span>
+                    <input class="preset-input" id="p-dehumid-hum" type="number" step="0.1" placeholder="예: 40">
+                    <span class="preset-unit">%RH</span>
+                </div>
+            </div>
+            <div class="preset-modal-footer">
+                <button class="preset-cancel-btn" onclick="closePresetModal()">취소</button>
+                <button class="preset-save-btn" onclick="savePreset()">저장</button>
+            </div>
+        </div>
+    </div>
+    <script>
+    const DAY_NAMES=['일','월','화','수','목','금','토'];
+    const SPECS={
+        fridge:  {label:'기준: 10℃ 이하',          rows:[{slot:'10:00',label:'온도(℃)',field:'temperature',unit:'℃'}]},
+        room:    {label:'온도 23±5℃ / 습도 40~60%RH',rows:[
+                    {slot:'10:00',label:'온도 10:00',field:'temperature',unit:'℃'},
+                    {slot:'10:00',label:'습도 10:00',field:'humidity',   unit:'%RH'},
+                    {slot:'18:00',label:'온도 18:00',field:'temperature',unit:'℃'},
+                    {slot:'18:00',label:'습도 18:00',field:'humidity',   unit:'%RH'}]},
+        dehumid: {label:'온도 23±5℃ / 습도 10%RH 이하',rows:[
+                    {slot:'10:00',label:'온도(℃)',  field:'temperature',unit:'℃'},
+                    {slot:'10:00',label:'습도(%RH)',field:'humidity',   unit:'%RH'}]}
+    };
+
+    // 정상범위 정의 (min/max 중 해당하는 것만 정의)
+    const RANGES={
+        fridge:  { temperature: {          max:10  } },
+        room:    { temperature: {min:18,   max:28  },
+                   humidity:    {min:40,   max:60  } },
+        dehumid: { temperature: {min:18,   max:28  },
+                   humidity:    {          max:10  } }
+    };
+
+    function isInRange(type, field, val){
+        const r=(RANGES[type]||{})[field];
+        if(!r) return true;
+        if(r.min!==undefined && val<r.min) return false;
+        if(r.max!==undefined && val>r.max) return false;
+        return true;
+    }
+
+    function colorByRange(input){
+        const val=input.value;
+        if(val===''||val===null){
+            input.classList.remove('val-ok','val-ng');
+            return;
+        }
+        const ok=isInRange(activeType, input.dataset.field, parseFloat(val));
+        input.classList.toggle('val-ok', ok);
+        input.classList.toggle('val-ng', !ok);
+    }
+    let viewYear=new Date().getFullYear(), viewMonth=new Date().getMonth()+1;
+    let activeType='fridge', monthData={}, holidays={};
+
+    document.querySelectorAll('.type-tab').forEach(tab=>{
+        tab.addEventListener('click',()=>{
+            document.querySelectorAll('.type-tab').forEach(t=>t.classList.remove('active'));
+            tab.classList.add('active'); activeType=tab.dataset.type;
+            loadData();
+        });
+    });
+
+    function isWorkday(ds,dow){return dow!==0&&dow!==6&&!holidays[ds];}
+
+    // calendar.js 동일 주차 계산 (1일 요일 기준, 일요일 시작)
+    function getWeekNum(y,m,d){
+        const firstDow=new Date(y,m-1,1).getDay();
+        return Math.ceil((d+firstDow)/7);
+    }
+
+    // 해당 월의 주차별 평일 날짜 목록 반환 (표시 번호는 항상 1부터)
+    function getWeeklyDays(y,m){
+        const lastDay=new Date(y,m,0).getDate();
+        const weeks={};
+        for(let d=1;d<=lastDay;d++){
+            const ds=dateStr(y,m,d);
+            const dow=new Date(y,m-1,d).getDay();
+            if(!isWorkday(ds,dow)) continue;
+            const w=getWeekNum(y,m,d);
+            if(!weeks[w]) weeks[w]=[];
+            weeks[w].push({d,ds,dow});
+        }
+        // 실제 주차 번호(2~5 등)와 무관하게 화면 표시는 항상 1주부터
+        return Object.keys(weeks).sort((a,b)=>a-b)
+            .map((w, i)=>({week: i+1, days:weeks[w]}));
+    }
+
+    function renderTable(){
+        const today=new Date();
+        const todayStr=dateStr(today.getFullYear(),today.getMonth()+1,today.getDate());
+        document.getElementById('month-display').textContent=`${viewYear}년 ${viewMonth}월`;
+        document.getElementById('spec-label').textContent=SPECS[activeType].label;
+
+        const weekDays=['월','화','수','목','금'];
+
+        // 헤더: 구분 | 주차 | 월~금
+        document.getElementById('header-row').innerHTML=
+            `<th class="label-cell" style="background:#1a1b21;color:var(--point-gold);">구분</th>
+             <th style="background:#1a1b21;color:#666;font-size:.75rem;">주차</th>
+             ${weekDays.map(d=>`<th style="background:#1a1b21;color:var(--point-gold);">${d}</th>`).join('')}`;
+
+        const rows=SPECS[activeType].rows;
+        const weeklyData=getWeeklyDays(viewYear,viewMonth);
+        let bHtml='';
+
+        rows.forEach((row, ri)=>{
+            // 각 행(구분)마다 주차별로 tr 생성
+            weeklyData.forEach((wk,wi)=>{
+                const isFirstWeek = wi===0;
+                const rowspan = weeklyData.length;
+
+                bHtml+=`<tr class="${isFirstWeek?'week-group-start':''}">`;
+
+                // 구분 셀: 첫 주차에만 rowspan으로 표시
+                if(isFirstWeek){
+                    bHtml+=`<td class="label-cell" rowspan="${rowspan}"
+                        style="font-size:.82rem;vertical-align:middle;text-align:center;">
+                        ${row.label}
+                    </td>`;
+                }
+
+                // 주차 셀
+                bHtml+=`<td class="week-cell" style="font-size:.75rem;padding:2px;">${wk.week}주</td>`;
+
+                // 월~금 5개 셀 — 해당 주에 그 요일이 있으면 데이터 셀, 없으면 빈 셀
+                // 요일 순서: 1=월, 2=화, 3=수, 4=목, 5=금
+                for(let targetDow=1;targetDow<=5;targetDow++){
+                    const dayObj=wk.days.find(x=>x.dow===targetDow);
+                    if(!dayObj){
+                        bHtml+=`<td class="empty-day"></td>`;
+                        continue;
+                    }
+                    const {ds}=dayObj;
+                    const isToday=ds===todayStr;
+                    const key=`${ds}_${row.slot}`;
+                    const rec=monthData[key]||{};
+                    const tdClass=isToday?'today-col':'';
+
+                    const val=(rec[row.field]!==null&&rec[row.field]!==undefined)?rec[row.field]:'';
+                    bHtml+=`<td class="${tdClass}">
+                        <div class="val-cell">
+                            <input class="val-input" type="number" step="0.1"
+                                value="${val}" placeholder="-"
+                                data-date="${ds}" data-slot="${row.slot}" data-field="${row.field}"
+                                oninput="colorByRange(this)" onblur="saveVal(this)">
+                            <span class="val-unit">${row.unit}</span>
+                        </div></td>`;
+                }
+                bHtml+=`</tr>`;
+            });
+        });
+
+        document.getElementById('table-body').innerHTML=bHtml;
+
+        // 기존 저장값에 초기 색상 적용
+        document.querySelectorAll('.val-input').forEach(colorByRange);
+    }
+
+    async function saveVal(input){
+        const val=input.value===''?null:parseFloat(input.value);
+        const key=`${input.dataset.date}_${input.dataset.slot}`;
+        const rec=monthData[key]||{};
+        rec[input.dataset.field]=val;
+        monthData[key]=rec;
+        const body={check_type:activeType,date:input.dataset.date,time_slot:input.dataset.slot};
+        body[input.dataset.field]=val;
+        try{await fetch('/api/smd_check/environment/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});}
+        catch(e){console.error(e);}
+    }
+
+
+
+    async function loadData(){
+        try{
+            const [holRes,dataRes]=await Promise.all([
+                fetch(`/api/inspection/holidays?year=${viewYear}`),
+                fetch(`/api/smd_check/environment/monthly?check_type=${activeType}&year=${viewYear}&month=${viewMonth}`)
+            ]);
+            holidays=holRes.ok?await holRes.json():{};
+            monthData=dataRes.ok?await dataRes.json():{};
+        }catch(e){holidays={};monthData={};}renderTable();
+    }
+    async function moveMonth(d){viewMonth+=d;if(viewMonth>12){viewMonth=1;viewYear++;}else if(viewMonth<1){viewMonth=12;viewYear--;}await loadData();}
+    function dateStr(y,m,d){return `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;}
+
+    // ── 오늘로 이동 ──────────────────────────────────────
+    async function jumpToday(){
+        const n=new Date(),ty=n.getFullYear(),tm=n.getMonth()+1;
+        if(viewYear!==ty||viewMonth!==tm){viewYear=ty;viewMonth=tm;await loadData();}
+        const td=dateStr(ty,tm,n.getDate());
+        document.querySelector(`th[data-date="${td}"]`)?.scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'});
+    }
+
+    // ── 프리셋 저장/불러오기 ──────────────────────────────
+    let envPreset = {};
+    async function loadPreset(){
+        try{
+            const res = await fetch('/api/smd_check/preset/environment');
+            const data = await res.json();
+            envPreset = data.preset_data || {};
+        }catch(e){ envPreset={}; }
+    }
+    function openPresetModal(){
+        // 저장된 값 입력창에 채우기
+        document.getElementById('p-fridge-temp').value   = envPreset['fridge_temp']   ?? '';
+        document.getElementById('p-room-temp-10').value  = envPreset['room_temp_10']  ?? '';
+        document.getElementById('p-room-hum-10').value   = envPreset['room_hum_10']   ?? '';
+        document.getElementById('p-room-temp-18').value  = envPreset['room_temp_18']  ?? '';
+        document.getElementById('p-room-hum-18').value   = envPreset['room_hum_18']   ?? '';
+        document.getElementById('p-dehumid-temp').value  = envPreset['dehumid_temp']  ?? '';
+        document.getElementById('p-dehumid-hum').value   = envPreset['dehumid_hum']   ?? '';
+        document.getElementById('preset-modal').classList.add('visible');
+    }
+    function closePresetModal(){
+        document.getElementById('preset-modal').classList.remove('visible');
+    }
+    async function savePreset(){
+        const data = {
+            fridge_temp:  parseFloat(document.getElementById('p-fridge-temp').value)   || null,
+            room_temp_10: parseFloat(document.getElementById('p-room-temp-10').value)  || null,
+            room_hum_10:  parseFloat(document.getElementById('p-room-hum-10').value)   || null,
+            room_temp_18: parseFloat(document.getElementById('p-room-temp-18').value)  || null,
+            room_hum_18:  parseFloat(document.getElementById('p-room-hum-18').value)   || null,
+            dehumid_temp: parseFloat(document.getElementById('p-dehumid-temp').value)  || null,
+            dehumid_hum:  parseFloat(document.getElementById('p-dehumid-hum').value)   || null,
+        };
+        try{
+            await fetch('/api/smd_check/preset/environment',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({preset_data:data})});
+            envPreset = data;
+            closePresetModal();
+            alert('프리셋이 저장되었습니다.');
+        }catch(e){alert('저장 실패');}
+    }
+
+    // ── 프리셋 적용 ──────────────────────────────────────
+    async function applyPreset(){
+        if(!Object.keys(envPreset).length){ alert('저장된 프리셋이 없습니다.\n프리셋 설정 버튼으로 먼저 값을 설정해주세요.'); return; }
+        const n=new Date(),ty=n.getFullYear(),tm=n.getMonth()+1;
+        if(viewYear!==ty||viewMonth!==tm){viewYear=ty;viewMonth=tm;await loadData();}
+        const todayStr=dateStr(ty,tm,n.getDate());
+
+        // 타입별 저장 매핑
+        const tasks = [
+            {type:'fridge', date:todayStr, slot:'10:00', temperature:envPreset['fridge_temp'], humidity:null},
+            {type:'room',   date:todayStr, slot:'10:00', temperature:envPreset['room_temp_10'], humidity:envPreset['room_hum_10']},
+            {type:'room',   date:todayStr, slot:'18:00', temperature:envPreset['room_temp_18'], humidity:envPreset['room_hum_18']},
+            {type:'dehumid',date:todayStr, slot:'10:00', temperature:envPreset['dehumid_temp'], humidity:envPreset['dehumid_hum']},
+        ];
+        const ps = tasks.map(t =>
+            fetch('/api/smd_check/environment/save',{method:'POST',headers:{'Content-Type':'application/json'},
+                body:JSON.stringify({check_type:t.type,date:t.date,time_slot:t.slot,temperature:t.temperature,humidity:t.humidity})})
+        );
+        await Promise.all(ps);
+        await loadData(); // 화면 갱신
+    }
+
+    // ── 오늘 초기화 (전체 타입) ──────────────────────────
+    async function clearToday(){
+        if(!confirm('오늘 날짜의 모든 값을 초기화하시겠습니까?\n(냉장고 / 실내 온·습도 / 제습함 전체)')) return;
+        const n=new Date(), todayStr=dateStr(n.getFullYear(),n.getMonth()+1,n.getDate());
+        const ps=[];
+        // 탭에 관계없이 fridge / room / dehumid 전체 타입 순회
+        Object.keys(SPECS).forEach(type=>{
+            SPECS[type].rows.forEach(row=>
+                ps.push(fetch('/api/smd_check/environment/save',{method:'POST',headers:{'Content-Type':'application/json'},
+                    body:JSON.stringify({check_type:type,date:todayStr,time_slot:row.slot,
+                        temperature:null,humidity:null,status:''})}))
+            );
+        });
+        await Promise.all(ps);
+        await loadData();
+    }
+    // ─────────────────────────────────────────────────────
+    function updateTime(){const n=new Date(),el=document.getElementById('current-time');if(el)el.textContent=`${n.getFullYear()}년 ${n.getMonth()+1}월 ${n.getDate()}일 ${n.getHours()}시 ${n.getMinutes()}분`;}
+    setInterval(updateTime,1000);updateTime();
+    window.addEventListener('pageshow',()=>setTimeout(()=>document.body.style.opacity='1',50));
+    window.goBack=()=>{document.body.style.opacity='0';setTimeout(()=>history.back(),500);};
+    window.goToHome=()=>{document.body.style.opacity='0';setTimeout(()=>location.href='/',500);};
+    window.goForward=()=>{document.body.style.opacity='0';setTimeout(()=>history.forward(),500);};
+    window.onload = async () => { await loadPreset(); await loadData(); };
+    </script>
+</body>
+</html>

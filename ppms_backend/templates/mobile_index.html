@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>PPMS - 생산공정관리시스템</title>
+<link href="https://hangeul.pstatic.net/hangeul_static/css/bmdohyeon.css" rel="stylesheet">
+<link href="https://hangeul.pstatic.net/hangeul_static/css/bmjua.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css?family=Poppins:400,500,600,700,800,900" rel="stylesheet">
+<link rel="stylesheet" href="https://unicons.iconscout.com/release/v2.1.9/css/unicons.css">
+<style>
+/* =============================================
+   [1] 전역 변수 & 리셋
+   ============================================= */
+:root {
+    --bg-dark:      #1f2029;
+    --card-bg:      #2a2b38;
+    --text-color:   #c4c3ca;
+    --text-white:   #ffffff;
+    --point-gold:   #ffeba7;
+    --accent-blue:  #102770;
+    --danger-red:   #ff4444;
+    --success-green:#00e676;
+    --border-color: rgba(255,235,167,0.15);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+body {
+    background-color: var(--bg-dark);
+    background-image: url('https://s3-us-west-2.amazonaws.com/s.cdpn.io/1462889/pat.svg');
+    background-position: center;
+    background-repeat: repeat;
+    background-size: 300%;
+    color: var(--text-color);
+    font-family: 'Poppins', 'BMDOHYEON', sans-serif;
+    min-height: unset;
+    display: flex;
+    flex-direction: column;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+}
+
+a { text-decoration: none; color: inherit; }
+
+/* =============================================
+   [2] 헤더: 로고 + 제목 + 현재시각
+   ============================================= */
+.m-header {
+    background: rgba(17,18,24,0.98);
+    border-bottom: 1px solid var(--border-color);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    padding: 0 20px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.m-header-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+}
+
+/* 로고 박스: logo.js SVG 대신 모바일 전용 인라인 심볼 */
+.m-logo-box {
+    width: 36px;
+    height: 36px;
+    background: rgba(255,235,167,0.08);
+    border: 1px solid rgba(255,235,167,0.35);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.m-logo-box svg {
+    width: 22px;
+    height: 22px;
+    fill: var(--point-gold);
+    filter: drop-shadow(0 0 4px rgba(255,235,167,0.5));
+}
+
+.m-header-title-block {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.15;
+}
+.m-header-title {
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: var(--point-gold);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+.m-header-sub {
+    font-size: 0.75rem;
+    color: #666;
+    letter-spacing: 0.5px;
+}
+
+/* 시계 */
+.m-time-display {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.72rem;
+    color: var(--text-color);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+.m-time-display i {
+    font-size: 0.9rem;
+    color: var(--point-gold);
+    opacity: 0.8;
+}
+
+/* =============================================
+   [3] 메인 콘텐츠 영역
+   ============================================= */
+.m-content {
+    flex: 1;
+    padding: 20px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    overflow-y: auto;
+}
+
+/* 섹션 레이블 */
+.m-section-label {
+    font-size: 0.78rem;
+    color: var(--point-gold);
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    opacity: 0.8;
+    padding-left: 2px;
+}
+
+/* =============================================
+   [4] 메뉴 카드 그리드
+   ============================================= */
+.m-menu-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.m-menu-card {
+    background: var(--card-bg);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 16px;
+    padding: 22px 14px 18px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative;
+    overflow: hidden;
+    min-height: 120px;
+}
+
+/* 카드 배경 광택 효과 */
+.m-menu-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,235,167,0.3), transparent);
+}
+
+.m-menu-card:active {
+    transform: scale(0.96);
+    background: rgba(255,235,167,0.15);
+    border-color: rgba(255,235,167,0.5);
+}
+
+.m-menu-icon {
+    font-size: 2.2rem;
+    color: var(--point-gold);
+    text-shadow: 0 0 16px rgba(255,235,167,0.35);
+    transition: all 0.25s;
+    line-height: 1;
+}
+
+.m-menu-label {
+    font-family: 'BMDOHYEON', sans-serif;
+    font-size: 1.1rem;
+    color: var(--text-white);
+    letter-spacing: 2px;
+    transition: color 0.25s;
+}
+
+.m-menu-desc {
+    font-size: 0.76rem;
+    color: #666;
+    letter-spacing: 0.03em;
+}
+
+/* 강조 카드 (생산) */
+.m-menu-card.primary {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    justify-content: flex-start;
+    padding: 18px 24px;
+    gap: 18px;
+    min-height: auto;
+    border-color: rgba(255,235,167,0.2);
+    background: linear-gradient(135deg, rgba(255,235,167,0.06) 0%, var(--card-bg) 100%);
+}
+.m-menu-card.primary .m-menu-icon { font-size: 2.5rem; }
+.m-menu-card.primary .m-menu-text { text-align: left; }
+.m-menu-card.primary .m-menu-label { font-size: 1.2rem; }
+
+/* =============================================
+   [5] 점검 시트 배너
+   ============================================= */
+.m-inspect-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(255,235,167,0.05);
+    border: 1px solid rgba(255,235,167,0.2);
+    border-radius: 14px;
+    padding: 14px 18px;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 4px;
+}
+.m-inspect-banner:active {
+    background: rgba(255,235,167,0.12);
+}
+.m-inspect-banner-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.m-inspect-banner-icon {
+    font-size: 1.6rem;
+    color: var(--point-gold);
+}
+.m-inspect-banner-title {
+    font-family: 'BMDOHYEON', sans-serif;
+    font-size: 1rem;
+    color: var(--point-gold);
+    letter-spacing: 1px;
+}
+.m-inspect-banner-sub {
+    font-size: 0.78rem;
+    color: #666;
+    margin-top: 1px;
+}
+.m-inspect-banner-arrow {
+    font-size: 1.3rem;
+    color: rgba(255,235,167,0.4);
+}
+
+/* =============================================
+   [6] 푸터
+   ============================================= */
+.m-footer {
+    background: rgba(17,18,24,0.98);
+    border-top: 1px solid var(--border-color);
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+}
+
+.m-footer-copy {
+    font-size: 0.76rem;
+    color: #8a8a9a;
+    letter-spacing: 0.5px;
+}
+
+.m-logout-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 20px;
+    font-size: 0.78rem;
+    color: var(--text-color);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.m-logout-btn:active {
+    background: var(--point-gold);
+    color: var(--accent-blue);
+    border-color: transparent;
+}
+.m-logout-btn i { font-size: 1rem; }
+
+/* 관리자 버튼 */
+.m-admin-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background: rgba(255,235,167,0.08);
+    border: 1px solid rgba(255,235,167,0.25);
+    border-radius: 20px;
+    font-size: 0.78rem;
+    color: var(--point-gold);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.m-admin-btn:active {
+    background: var(--point-gold);
+    color: var(--accent-blue);
+}
+
+/* =============================================
+   [7] 사용자 정보 칩
+   ============================================= */
+.m-user-chip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--card-bg);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 12px;
+    padding: 10px 14px;
+    margin-bottom: 4px;
+}
+.m-user-chip-icon {
+    width: 32px;
+    height: 32px;
+    background: rgba(255,235,167,0.1);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.m-user-chip-icon i { font-size: 1.1rem; color: var(--point-gold); }
+.m-user-chip-label { font-size: 0.78rem; color: #666; }
+.m-user-chip-name { font-size: 0.88rem; color: var(--text-white); font-weight: 600; }
+
+/* =============================================
+   [8] 페이지 전환 오버레이
+   ============================================= */
+.page-overlay {
+    position: fixed;
+    inset: 0;
+    background: var(--bg-dark);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 9999;
+    transition: opacity 0.3s ease;
+}
+.page-overlay.active {
+    opacity: 1;
+    pointer-events: all;
+}
+
+/* ── 홈버튼 표준 스타일 (전체 모바일 페이지 공통) ── */
+.m-nav-home-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    background: rgba(255,235,167,0.08);
+    border: 1.5px solid rgba(255,235,167,0.35);
+    border-radius: 14px;
+    color: var(--point-gold);
+    font-size: 1.25rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+.m-nav-home-btn:active {
+    background: var(--point-gold);
+    color: var(--accent-blue);
+    border-color: var(--point-gold);
+    transform: scale(0.92);
+}
+
+/* ═══════════════════════════════════════════════════
+   전체 화면 레이아웃 고정 — 스크롤 없이 뷰포트에 꼭 맞춤
+   ═══════════════════════════════════════════════════ */
+html, body {
+    height: 100% !important;
+    overflow-x: hidden !important;
+}
+body {
+    display: flex !important;
+    flex-direction: column !important;
+    min-height: unset !important;   /* min-height:100vh 덮어쓰기 */
+}
+/* 헤더·탭·하단바 — 절대 줄어들지 않음 */
+.m-header, .m-tab-nav, .m-status-tabs, .m-main-tabs,
+.m-action-bar, .m-nav-bar, .m-action-bar,
+.m-date-bar, .m-filter-bar, .m-month-nav,
+.m-summary-bar, .m-breadcrumb, .m-footer, nav {
+    flex-shrink: 0 !important;
+}
+/* 스크롤 가능 영역 — 남은 공간 전부 차지 */
+.m-content, #app-body, #m-content {
+    flex: 1 1 0 !important;      /* 1 1 0 → 줄어들 수 있음 */
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    min-height: 0 !important;    /* flex child 줄어들기 허용 */
+}
+
+/* ════════════════════════════════════════════════════════
+   UI 박스 구분 강화 — 테두리·그림자·배경 대비
+   ════════════════════════════════════════════════════════ */
+
+/* ── 카드 계열 전부 ── */
+.m-schedule-card, .m-aoi-card, .m-dip-card, .m-group-card,
+.m-repair-card, .m-batch-item, .m-mgr-card, .m-item,
+.m-aoi-stat-cell, .m-summary-panel,
+.m-modal-sheet, .m-file-card,
+.m-card, .m-select-btn, .m-dept-column,
+.m-dash-card, .m-menu-card {
+    border-color: rgba(255,255,255,0.18) !important;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.55),
+                0 0 0 1px rgba(255,255,255,0.06) !important;
+}
+
+/* ── 호버/액티브 시 더 밝게 ── */
+.m-schedule-card:active, .m-aoi-card:active,
+.m-group-card:active, .m-item:active,
+.m-dash-card:active, .m-menu-card:active {
+    border-color: rgba(255,235,167,0.45) !important;
+    box-shadow: 0 4px 18px rgba(0,0,0,0.65),
+                0 0 0 1px rgba(255,235,167,0.18) !important;
+}
+
+/* ── KPI 칸 (생산/AOI 카드 안) ── */
+.m-card-kpi, .m-aoi-kpi {
+    background: #0d0e14 !important;
+    border-color: rgba(255,255,255,0.16) !important;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.5) !important;
+}
+
+/* ── 점검 대시보드 카드 ── */
+.m-insp-card {
+    border-color: rgba(255,255,255,0.18) !important;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.55) !important;
+}
+
+/* ── 탭 네비 ── */
+.m-tab-nav, .m-main-tabs, .m-status-tabs {
+    border-bottom: 1px solid rgba(255,255,255,0.12) !important;
+    background: rgba(17,18,24,0.98) !important;
+}
+
+/* ── 필터 바 ── */
+.m-filter-bar {
+    border-bottom: 1px solid rgba(255,255,255,0.1) !important;
+    background: rgba(17,18,24,0.95) !important;
+}
+
+/* ── 헤더 ── */
+.m-header {
+    border-bottom: 1px solid rgba(255,235,167,0.2) !important;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.6) !important;
+}
+
+/* ── 하단 액션 바 ── */
+.m-action-bar, .m-nav-bar, .m-footer {
+    border-top: 1px solid rgba(255,255,255,0.12) !important;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.5) !important;
+}
+
+/* ── 배경보다 살짝 밝은 mid-layer (모달 등) ── */
+.m-modal-sheet {
+    background: #1e1f2e !important;
+    border-top: 1px solid rgba(255,255,255,0.18) !important;
+    box-shadow: 0 -8px 40px rgba(0,0,0,0.8) !important;
+}
+
+/* ── 섹션 구분선 ── */
+.m-section-label {
+    color: rgba(255,235,167,0.7) !important;
+    border-bottom: 1px solid rgba(255,235,167,0.18) !important;
+    padding-bottom: 4px;
+    margin-bottom: 8px;
+}
+
+/* ── index 메뉴 카드 특별 강조 ── */
+.m-menu-card {
+    background: #1e1f2e !important;
+}
+.m-menu-card.primary {
+    background: linear-gradient(135deg, rgba(255,235,167,0.10) 0%, #1e1f2e 100%) !important;
+    border-color: rgba(255,235,167,0.30) !important;
+}
+
+/* ── 점검 배너 ── */
+.m-inspect-banner {
+    background: rgba(255,235,167,0.07) !important;
+    border: 1.5px solid rgba(255,235,167,0.28) !important;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.5) !important;
+}
+
+/* ── 입력 필드 ── */
+.m-sheet-input, .m-sheet-select,
+.m-card-input, .m-info-input {
+    background: #0d0e14 !important;
+    border-color: rgba(255,255,255,0.25) !important;
+}
+
+/* ── 진행률 트랙 ── */
+.m-progress-track, .m-card-progress-track,
+.m-card-mini-bar-track {
+    background: rgba(255,255,255,0.14) !important;
+}
+
+/* ── 요약 칩 ── */
+.m-summary-chip {
+    background: #0d0e14 !important;
+    border: 1px solid rgba(255,255,255,0.15) !important;
+}
+
+/* ── 생산 진행률 패널 ── */
+.m-progress-wrap {
+    background: rgba(255,255,255,0.04) !important;
+    border: 1px solid rgba(255,255,255,0.1) !important;
+    border-radius: 12px;
+    padding: 10px 14px;
+    margin-bottom: 10px;
+}
+
+/* ── 점검시트 선택 버튼 ── */
+.m-select-btn {
+    background: #1e1f2e !important;
+}
+.m-insp-type-card, .m-insp-card {
+    background: #1e1f2e !important;
+    border-color: rgba(255,255,255,0.18) !important;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.5) !important;
+}
+
+/* ── mobile_check 점검 항목 ── */
+.m-item {
+    background: #1e1f2e !important;
+    border: 1px solid rgba(255,255,255,0.16) !important;
+}
+.m-item.done {
+    border-color: rgba(78,115,223,0.6) !important;
+    background: rgba(78,115,223,0.1) !important;
+}
+
+/* ════════════════════════════════════════════════
+   테마 폰트 통일 — 모든 입력 요소
+   라벨·제목: BMDOHYEON
+   입력값·수치: Poppins
+   ════════════════════════════════════════════════ */
+
+/* 전체 기본 폰트 */
+body, * {
+    font-family: 'Poppins', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+}
+
+/* 입력 요소 — Poppins (숫자·영문 가독성) */
+input, select, textarea,
+.m-sheet-input, .m-sheet-select,
+.m-card-input, .m-info-input,
+.m-defect-chip-input, .m-scrap-input,
+.m-add-model-input, .m-memo-area,
+.m-checker-input, .pw-input,
+.dm-qty-input, .dm-ref-input,
+.m-defect-row-input,
+.m-filter-input, .m-filter-select {
+    font-family: 'Poppins', 'Apple SD Gothic Neo', sans-serif !important;
+    font-size: 0.9rem !important;
+}
+
+/* placeholder 폰트 */
+input::placeholder, textarea::placeholder,
+.m-sheet-input::placeholder,
+.m-card-input::placeholder,
+.m-info-input::placeholder,
+.m-memo-area::placeholder {
+    font-family: 'Poppins', 'Apple SD Gothic Neo', sans-serif !important;
+    font-size: 0.82rem !important;
+    opacity: 0.45;
+}
+
+/* 타이틀·라벨 — BMDOHYEON */
+.m-sheet-title, .m-section-label,
+.m-header-title, .m-header-sub,
+.m-card-model, .m-card-company,
+.m-tab-btn, .m-main-tab,
+.m-kpi-label, .m-kpi-value,
+.m-aoi-kpi .m-kpi-label,
+.m-aoi-kpi .m-kpi-value,
+.m-sheet-label,
+.m-section-title,
+.m-equip-title,
+.m-empty-text,
+.m-loading,
+.m-result-title {
+    font-family: 'BMDOHYEON', 'Apple SD Gothic Neo', sans-serif !important;
+}
+
+/* 버튼 — Poppins (숫자 포함) */
+button, .m-sheet-btn, .m-nav-btn,
+.m-bar-btn, .m-action-btn,
+.m-aoi-entry-btn, .m-aoi-del-btn,
+.m-aoi-detail-btn, .m-card-action-btn,
+.m-save-btn, .m-search-btn,
+.m-submit-btn, .m-bulk-btn,
+.m-type-btn, .m-line-btn,
+.m-period-opt, .m-sheet-type-btn,
+.m-select-btn {
+    font-family: 'Poppins', 'Apple SD Gothic Neo', sans-serif !important;
+}
+
+/* 숫자 표시 — Poppins */
+.m-kpi-value, .m-chip-value,
+.m-card-info-value, .m-progress-pct,
+.m-card-tb-badge, .m-card-defect-badge,
+.m-prod-actual {
+    font-family: 'Poppins', sans-serif !important;
+    font-feature-settings: 'tnum';
+}
+</style>
+
+  <!-- ═══ PWA 메타 태그 ═══ -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#ffeba7">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="PPMS">
+  <link rel="apple-touch-icon" href="/static/pwa/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/static/pwa/favicon-32.png">
+  <!-- ═══════════════════════ -->
+</head>
+
+<body>
+
+<!-- 전환 오버레이 -->
+<div class="page-overlay" id="page-overlay"></div>
+
+<!-- ===== 헤더 ===== -->
+<header class="m-header">
+    <div class="m-header-logo">
+        <!-- 모바일 전용 인라인 SVG 로고 심볼 -->
+        <div class="m-logo-box">
+            <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                <path d="M40 160 L40 40 L100 40 C140 40 160 60 160 90 C160 120 140 140 100 140 L70 140 L70 160 Z M70 65 L70 115 L98 115 C122 115 132 105 132 90 C132 75 122 65 98 65 Z"/>
+            </svg>
+        </div>
+        <div class="m-header-title-block">
+            <span class="m-header-title">PPMS</span>
+            <span class="m-header-sub">생산공정관리시스템</span>
+        </div>
+    </div>
+
+    <div class="m-time-display" id="m-time">
+        <i class="uil uil-clock-eight"></i>
+        <span>--:--</span>
+    </div>
+</header>
+
+<!-- ===== 메인 콘텐츠 ===== -->
+<main class="m-content">
+
+    <!-- 사용자 정보 칩 -->
+    <div class="m-user-chip" id="user-chip">
+        <div class="m-user-chip-icon"><i class="uil uil-user-circle"></i></div>
+        <div>
+            <div class="m-user-chip-label">현재 로그인</div>
+            <div class="m-user-chip-name" id="user-name-display">로딩 중...</div>
+        </div>
+    </div>
+
+    <!-- 메뉴 레이블 -->
+    <div class="m-section-label">PROCESS MENU</div>
+
+    <!-- 메뉴 카드 그리드 -->
+    <div class="m-menu-grid">
+
+        <!-- 생산 (wide) -->
+        <div class="m-menu-card primary" onclick="goTo('/api/production/view')">
+            <div class="m-menu-icon"><i class="uil uil-box"></i></div>
+            <div class="m-menu-text">
+                <div class="m-menu-label">생 산</div>
+                <div class="m-menu-desc">Production Management</div>
+            </div>
+        </div>
+
+        <!-- AOI -->
+        <div class="m-menu-card" onclick="goTo('/api/aoi/view')">
+            <div class="m-menu-icon"><i class="uil uil-eye"></i></div>
+            <div class="m-menu-label">AOI</div>
+            <div class="m-menu-desc">자동 광학 검사</div>
+        </div>
+
+        <!-- 조립 -->
+        <div class="m-menu-card" onclick="goTo('/api/dip/view')">
+            <div class="m-menu-icon"><i class="uil uil-processor"></i></div>
+            <div class="m-menu-label">조 립</div>
+            <div class="m-menu-desc">DIP Assembly</div>
+        </div>
+
+        <!-- 수리 -->
+        <div class="m-menu-card" onclick="goTo('/api/repair/view')">
+            <div class="m-menu-icon"><i class="uil uil-wrench"></i></div>
+            <div class="m-menu-label">수 리</div>
+            <div class="m-menu-desc">Repair</div>
+        </div>
+
+        <!-- 기능 테스트 (미구현 — 비활성) -->
+        <div class="m-menu-card" style="opacity:0.35; cursor:not-allowed;"
+             onclick="showToast('기능 테스트 페이지는 준비 중입니다.')">
+            <div class="m-menu-icon"><i class="uil uil-laptop"></i></div>
+            <div class="m-menu-label">기 능</div>
+            <div class="m-menu-desc">준비 중</div>
+        </div>
+
+
+    </div>
+
+    <!-- 점검 시트 배너 -->
+    <div class="m-inspect-banner" onclick="goTo('/api/inspection/dashboard')">
+        <div class="m-inspect-banner-left">
+            <div class="m-inspect-banner-icon"><i class="uil uil-file-check-alt"></i></div>
+            <div>
+                <div class="m-inspect-banner-title">점검 시트</div>
+                <div class="m-inspect-banner-sub">Inspection Dashboard</div>
+            </div>
+        </div>
+        <div class="m-inspect-banner-arrow"><i class="uil uil-angle-right"></i></div>
+    </div>
+
+</main>
+
+<!-- ===== 푸터 ===== -->
+<footer class="m-footer">
+    <span class="m-footer-copy">© PHILIA TELECOM</span>
+    <div style="display:flex; gap:8px; align-items:center;">
+        <div class="m-admin-btn" id="admin-btn" style="display:none;" onclick="goTo('/api/production/admin_view')">
+            <i class="uil uil-shield-check"></i>
+            <span>관리자</span>
+        </div>
+        <div class="m-logout-btn" id="logout-btn">
+            <i class="uil uil-signout"></i>
+            <span>로그아웃</span>
+        </div>
+    </div>
+</footer>
+
+<script>
+/* =============================================
+   인증 체크 & 초기화
+   ============================================= */
+document.addEventListener('DOMContentLoaded', () => {
+    const role = localStorage.getItem('ppms_user_role');
+    const userId = localStorage.getItem('ppms_user_id') || localStorage.getItem('ppms_username') || '사용자';
+
+    if (!role) {
+        window.location.href = '/api/auth/login_view';
+        return;
+    }
+
+    // 사용자 이름 표시
+    const nameEl = document.getElementById('user-name-display');
+    if (nameEl) nameEl.textContent = userId + (role === 'admin' ? '  [관리자]' : '');
+
+    // 관리자 버튼 표시
+    if (role === 'admin') {
+        const adminBtn = document.getElementById('admin-btn');
+        if (adminBtn) adminBtn.style.display = 'flex';
+    }
+
+    // 로그아웃 버튼
+    document.getElementById('logout-btn').addEventListener('click', () => {
+        if (confirm('로그아웃 하시겠습니까?')) {
+            localStorage.removeItem('ppms_user_role');
+            localStorage.removeItem('ppms_user_id');
+            localStorage.removeItem('ppms_username');
+            window.location.href = '/api/auth/login_view';
+        }
+    });
+
+    // 시계 시작
+    updateTime();
+    setInterval(updateTime, 1000);
+
+    // 페이드인
+    setTimeout(() => { document.body.style.opacity = '1'; }, 50);
+});
+
+/* =============================================
+   시계 업데이트
+   ============================================= */
+function updateTime() {
+    const el = document.querySelector('#m-time span');
+    if (!el) return;
+    const now = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    el.textContent = `${now.getFullYear()}.${pad(now.getMonth()+1)}.${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+}
+
+/* =============================================
+   페이지 전환 (페이드 효과)
+   ============================================= */
+function showToast(msg) {
+    // 간단한 인라인 토스트 (페이지에 토스트 컨테이너가 없을 경우 대비)
+    const t = document.createElement('div');
+    t.textContent = msg;
+    t.style.cssText = 'position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#1e1f2e;border:1px solid rgba(255,235,167,0.3);border-radius:20px;padding:10px 20px;font-size:0.8rem;color:#ffeba7;z-index:9999;white-space:nowrap;pointer-events:none;';
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 2200);
+}
+
+function goTo(url) {
+    const overlay = document.getElementById('page-overlay');
+    overlay.classList.add('active');
+    setTimeout(() => { window.location.href = url; }, 300);
+}
+
+/* 뒤로가기 시 페이드인 복원 */
+window.addEventListener('pageshow', () => {
+    document.body.style.opacity = '1';
+    const overlay = document.getElementById('page-overlay');
+    if (overlay) overlay.classList.remove('active');
+});
+</script>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js', { scope: '/' })
+          .catch(() => {/* SW 등록 실패는 무시 — 앱 동작에 영향 없음 */});
+      });
+    }
+  </script>
+</body>
+</html>

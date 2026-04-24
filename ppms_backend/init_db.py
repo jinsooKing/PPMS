@@ -1,21 +1,12 @@
-# init_db.py (수정본)
-from app import create_app, db
-# ModelFolder도 import에 포함시켜 주세요!
-from models import ProductionSchedule, Manager, Company, ProductModel, ModelData, ModelFolder
+# 파일명: init_vision_db.py
+from app import create_app
+from models import db, VisionInspection  # 모델을 가져와야 인식합니다.
 
 app = create_app()
 
 with app.app_context():
-    try:
-        print("데이터베이스 초기화 시작...")
-        
-        # [추가됨] 기존 테이블을 모두 삭제합니다. (주의: 데이터 날아감!)
-        db.drop_all()
-        print("🗑️ 기존 테이블 삭제 완료")
-
-        # 새로 생성 (이제 folder_id 컬럼도 확실히 생깁니다)
-        db.create_all()
-        print("✅ 성공: 모든 테이블이 새로운 구조로 생성되었습니다.")
-        
-    except Exception as e:
-        print(f"❌ 실패: {e}")
+    # 현재 models.py에 정의되어 있지만, DB에는 없는 테이블을 자동으로 감지해 생성합니다.
+    db.create_all()
+    print("=========================================")
+    print(" [성공] vision_inspection 테이블이 생성되었습니다! ")
+    print("=========================================")

@@ -34,16 +34,12 @@ class ProductionSchedule(db.Model):
     assy_end_date = db.Column(db.String(50))
     assy_worker = db.Column(db.String(100))        # 조립 담당자
     
-    # (3) AOI 부서 영역 (신규 추가)
-    aoi_insp_qty = db.Column(db.Integer, default=0)   # 검사 수량
-    aoi_defect_qty = db.Column(db.Integer, default=0) # 불량 수량
-    aoi_worker = db.Column(db.String(100))           # AOI 담당자
-    
     # ----------------------------------
     
     notes = db.Column(db.Text)
     batch_quantity = db.Column(db.Integer, default=0)
     total_quantity = db.Column(db.Integer, default=0)
+    aoi_done = db.Column(db.Boolean, default=False)  # AOI 검사 완료 여부
     
     def to_dict(self):
         batch = self.batch_quantity or 0
@@ -59,9 +55,6 @@ class ProductionSchedule(db.Model):
             # 조립 및 AOI 데이터 포함
             "assyActual": self.assy_actual,
             "assyWorker": self.assy_worker,
-            "aoiInspQty": self.aoi_insp_qty,
-            "aoiDefectQty": self.aoi_defect_qty,
-            "aoiWorker": self.aoi_worker,
             "notes": self.notes, "lot": lot_string,
             "prod_year": self.prod_year, "prod_month": self.prod_month, "prod_week": self.prod_week
         }
@@ -192,9 +185,6 @@ class AoiRecord(db.Model):
             'material_ref': self.material_ref, 'dip_ref': self.dip_ref,
             'total_defect': self.total_defect, 'good_qty': self.good_qty
         }
-
-# [models.py] ModelFolder와 ProductModel의 company_id를 nullable=True로 변경
-
 # 8. 폴더 모델
 class ModelFolder(db.Model):
     __tablename__ = 'model_folders'
@@ -246,4 +236,210 @@ class ModelData(db.Model):
         return {
             'id': self.id, 'model_id': self.model_id, 'type': self.data_type,
             'fileName': self.file_name, 'content': self.content, 'updated_at': self.updated_at
+
+        }
+        
+# models.py 기존 코드 하단에 추가
+
+# ==========================================================
+# [섹션] 점검(Inspection) 관련 모델
+# ==========================================================
+class VisionInspection(db.Model):
+    __tablename__ = 'vision_inspection'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    date = db.Column(db.Date, nullable=False)        # 점검일
+    machine_id = db.Column(db.Integer, nullable=False)  # 1호기, 2호기 구분
+    status = db.Column(db.String(10), nullable=False)   # 'ok', 'ng'
+    
+    # 수정일자 (누가 언제 체크했는지 추적용)
+    checked_at = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
+
+    # 같은 날짜, 같은 호기에는 하나의 기록만 존재하도록 제약
+    __table_args__ = (db.UniqueConstraint('date', 'machine_id', name='uix_vision_date_machine'),)
+    
+    
+# models.py 최하단에 추가
+
+class EsdInspection(db.Model):
+    __tablename__ = 'esd_inspection'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    date = db.Column(db.Date, nullable=False)
+    # 기존 Manager 테이블의 id를 외래키(ForeignKey)로 연결
+    manager_id = db.Column(db.Integer, db.ForeignKey('managers.id'), nullable=False)
+    
+    shoes_status = db.Column(db.String(10), default='') # 제전화 상태: 'O', 'X', 'C'
+    wrist_status = db.Column(db.String(10), default='') # 손목띠 상태: 'O', 'X', 'C'
+    
+    updated_at = db.Column(db.DateTime, default=db.func.current_timestamp(), onupdate=db.func.current_timestamp())
+
+    # Manager 모델과의 관계 설정 (선택 사항이지만 데이터 조회 시 유용)
+    manager = db.relationship('Manager', backref=db.backref('esd_records', lazy=True))
+
+    # 한 담당자는 하루에 하나의 점검 기록만 가지도록 제약 조건 설정
+    __table_args__ = (db.UniqueConstraint('date', 'manager_id', name='uix_esd_date_manager'),)
+
+
+# ==========================================================
+# [섹션] SMD / 생산 점검 관련 모델
+# ==========================================================
+
+# 1. SMD 설비 일일점검 (SMD설비일일, Wave Solder, Metal Mask 공통 사용)
+class SmdEquipmentCheck(db.Model):
+    __tablename__ = 'smd_equipment_checks'
+
+    id          = db.Column(db.Integer, primary_key=True)
+    sheet_type  = db.Column(db.String(30), nullable=False)  # 'smd_daily' | 'wave_solder' | 'metal_mask'
+    equipment   = db.Column(db.String(50), nullable=False)  # 설비명 (Loader, Screen Printer 등)
+    item_no     = db.Column(db.Integer, nullable=False)      # 점검항목 번호
+    date        = db.Column(db.Date, nullable=False)
+    status      = db.Column(db.String(10), default='')       # 'O','V','△','X','☆','□' 등
+    checker     = db.Column(db.String(50), default='')       # 점검자 (Metal Mask용)
+    note        = db.Column(db.String(200), default='')      # 비고
+    updated_at  = db.Column(db.DateTime, default=db.func.current_timestamp(),
+                             onupdate=db.func.current_timestamp())
+
+    __table_args__ = (db.UniqueConstraint('sheet_type', 'equipment', 'item_no', 'date',
+                                           name='uix_smd_equip_check'),)
+
+    def to_dict(self):
+        return {
+            'id': self.id, 'sheet_type': self.sheet_type,
+            'equipment': self.equipment, 'item_no': self.item_no,
+            'date': self.date.strftime('%Y-%m-%d'),
+            'status': self.status, 'checker': self.checker, 'note': self.note
+        }
+
+
+# 2. 환경 점검 (냉장고 온도 / 실내 온습도 / 제습함 온습도)
+class EnvironmentCheck(db.Model):
+    __tablename__ = 'environment_checks'
+
+    id          = db.Column(db.Integer, primary_key=True)
+    check_type  = db.Column(db.String(20), nullable=False)   # 'fridge' | 'room' | 'dehumid'
+    date        = db.Column(db.Date, nullable=False)
+    time_slot   = db.Column(db.String(10), default='10:00')  # '10:00' | '18:00' (실내온습도 2회)
+    temperature = db.Column(db.Float, nullable=True)          # 온도 (℃)
+    humidity    = db.Column(db.Float, nullable=True)          # 습도 (%RH, 냉장고는 null)
+    status      = db.Column(db.String(10), default='')        # 'O' | 'X' (냉장고 pass/fail)
+    note        = db.Column(db.String(200), default='')
+    updated_at  = db.Column(db.DateTime, default=db.func.current_timestamp(),
+                             onupdate=db.func.current_timestamp())
+
+    __table_args__ = (db.UniqueConstraint('check_type', 'date', 'time_slot',
+                                           name='uix_env_check'),)
+
+    def to_dict(self):
+        return {
+            'id': self.id, 'check_type': self.check_type,
+            'date': self.date.strftime('%Y-%m-%d'), 'time_slot': self.time_slot,
+            'temperature': self.temperature, 'humidity': self.humidity,
+            'status': self.status, 'note': self.note
+        }
+
+
+# 3. AC 누설전류 점검 (월 1회, 연간 관리)
+class AcLeakageCheck(db.Model):
+    __tablename__ = 'ac_leakage_checks'
+
+    id          = db.Column(db.Integer, primary_key=True)
+    year        = db.Column(db.Integer, nullable=False)
+    month       = db.Column(db.Integer, nullable=False)       # 1~12
+    line        = db.Column(db.String(10), nullable=False)    # 'A', 'B', 'C'
+    equipment   = db.Column(db.String(50), nullable=False)    # 'LOADER', 'PRINTER' 등
+    voltage     = db.Column(db.Float, nullable=True)           # 측정값 (V)
+    status      = db.Column(db.String(10), default='')         # 'OK' | 'NG' | ''
+    updated_at  = db.Column(db.DateTime, default=db.func.current_timestamp(),
+                             onupdate=db.func.current_timestamp())
+
+    __table_args__ = (db.UniqueConstraint('year', 'month', 'line', 'equipment',
+                                           name='uix_ac_leakage'),)
+
+    def to_dict(self):
+        return {
+            'id': self.id, 'year': self.year, 'month': self.month,
+            'line': self.line, 'equipment': self.equipment,
+            'voltage': self.voltage, 'status': self.status
+        }
+
+# 점검 시트 프리셋 (관리자 설정값)
+class SheetPreset(db.Model):
+    __tablename__ = 'sheet_presets'
+
+    id          = db.Column(db.Integer, primary_key=True)
+    sheet_type  = db.Column(db.String(30), nullable=False, unique=True)  # 'environment' | 'ac_leakage'
+    preset_data = db.Column(db.Text, nullable=False, default='{}')       # JSON 문자열
+    updated_at  = db.Column(db.DateTime, default=db.func.current_timestamp(),
+                             onupdate=db.func.current_timestamp())
+
+    def to_dict(self):
+        import json
+        return {
+            'sheet_type': self.sheet_type,
+            'preset_data': json.loads(self.preset_data or '{}')
+        }
+
+# ==========================================================
+# [섹션] 수리 (Repair) 관련 모델
+# ==========================================================
+
+# 1. 수리 군집 (고유주문 단위)
+class RepairGroup(db.Model):
+    __tablename__ = 'repair_groups'
+
+    id          = db.Column(db.Integer, primary_key=True)
+    model       = db.Column(db.String(100), nullable=False)
+    order_year  = db.Column(db.Integer, nullable=False)
+    order_month = db.Column(db.String(20), nullable=False)
+    lot         = db.Column(db.String(50), nullable=False)
+    notes       = db.Column(db.Text, default='')
+    status      = db.Column(db.String(20), nullable=False, default='active')
+    created_at  = db.Column(db.DateTime, default=datetime.now)
+    done_at     = db.Column(db.DateTime, nullable=True)
+
+    __table_args__ = (db.UniqueConstraint('model', 'order_year', 'order_month', 'lot',
+                                          name='uix_repair_group_key'),)
+
+    batches = db.relationship('RepairBatch', backref='group',
+                              cascade='all, delete-orphan', lazy=True)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'model': self.model,
+            'order_year': self.order_year,
+            'order_month': self.order_month,
+            'lot': self.lot,
+            'notes': self.notes or '',
+            'status': self.status,
+            'created_at': self.created_at.strftime('%Y-%m-%d') if self.created_at else '',
+            'done_at': self.done_at.strftime('%Y-%m-%d %H:%M') if self.done_at else None,
+            'batches': [b.to_dict() for b in self.batches]
+        }
+
+
+# 2. 수리 배치 (AoiRecord 단위)
+class RepairBatch(db.Model):
+    __tablename__ = 'repair_batches'
+
+    id            = db.Column(db.Integer, primary_key=True)
+    group_id      = db.Column(db.Integer, db.ForeignKey('repair_groups.id'), nullable=False)
+    aoi_record_id = db.Column(db.Integer, db.ForeignKey('aoi_records.id'), nullable=False, unique=True)
+    defect_qty    = db.Column(db.Integer, nullable=False, default=0)
+    aoi_date      = db.Column(db.String(20), default='')
+    is_done       = db.Column(db.Boolean, nullable=False, default=False)
+    done_at       = db.Column(db.DateTime, nullable=True)
+    scrap_qty     = db.Column(db.Integer, nullable=False, default=0)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'group_id': self.group_id,
+            'aoi_record_id': self.aoi_record_id,
+            'defect_qty': self.defect_qty,
+            'aoi_date': self.aoi_date or '',
+            'is_done': self.is_done,
+            'done_at': self.done_at.strftime('%Y-%m-%d %H:%M') if self.done_at else None,
+            'scrap_qty': self.scrap_qty or 0
         }

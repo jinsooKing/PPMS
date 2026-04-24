@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PPMS - 점검 관리 대시보드</title>
+    <link rel="stylesheet" href="/static/common.css">
+    <link rel="stylesheet" href="https://unicons.iconscout.com/release/v4.0.8/css/line.css">
+    <link href="https://hangeul.pstatic.net/hangeul_static/css/bmdohyeon.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Poppins:400,600,800" rel="stylesheet">
+    <script src="/static/logo.js"></script>
+
+    <style>
+        body {
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+        }
+
+        .dashboard-wrapper {
+            width: 100%;
+            max-width: 1000px;
+            padding: 20px;
+            box-sizing: border-box;
+            margin: auto;
+        }
+
+        .header-title {
+            font-family: 'BMDOHYEON';
+            font-size: 2rem;
+            color: var(--point-gold);
+            text-align: center;
+            margin-bottom: 40px;
+            text-shadow: 0 0 15px rgba(255, 235, 167, 0.2);
+        }
+
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 30px;
+        }
+
+        .menu-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 40px 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .menu-card:hover {
+            transform: translateY(-10px);
+            border-color: var(--point-gold);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4);
+            background: var(--hover-bg);
+        }
+
+        .card-icon {
+            font-size: 3.5rem;
+            margin-bottom: 20px;
+            display: inline-block;
+            transition: transform 0.3s;
+        }
+        .menu-card:hover .card-icon { transform: scale(1.1); }
+
+        .icon-vision { color: #4e73df; text-shadow: 0 0 20px rgba(78, 115, 223, 0.4); }
+        .icon-esd    { color: var(--point-gold); text-shadow: 0 0 20px rgba(255, 235, 167, 0.3); }
+        .icon-smd    { color: #00e676; text-shadow: 0 0 20px rgba(0, 230, 118, 0.3); }
+
+        .card-title {
+            font-family: 'BMDOHYEON';
+            font-size: 1.4rem;
+            color: #fff;
+            margin-bottom: 15px;
+        }
+
+        .card-desc {
+            font-size: 0.9rem;
+            color: #888;
+            line-height: 1.5;
+            margin-bottom: 30px;
+        }
+
+        .enter-btn {
+            background: transparent;
+            border: 2px solid #555;
+            color: #bbb;
+            padding: 10px 25px;
+            border-radius: 30px;
+            font-family: 'BMDOHYEON';
+            font-size: 1rem;
+            transition: all 0.3s;
+            pointer-events: none;
+        }
+
+        .menu-card:hover .enter-btn {
+            background: var(--point-gold);
+            color: #1f2029;
+            border-color: var(--point-gold);
+        }
+
+        /* QR 푸터 버튼 */
+        .inspection-footer-btn {
+            display: flex; align-items: center; gap: 8px;
+            padding: 0 20px; height: 45px; border-radius: 12px;
+            border: 1px solid rgba(255,235,167,.4);
+            background: rgba(255,235,167,.05);
+            color: var(--point-gold);
+            font-family: 'BMDOHYEON'; font-size: 1rem;
+            cursor: pointer;
+            transition: all .3s;
+        }
+        .inspection-footer-btn:hover { background: rgba(255,235,167,.2); }
+
+        /* QR 아이템 */
+        .qr-item { display:flex; align-items:flex-start; gap:16px; background:#2a2b38; border:1px solid rgba(255,255,255,.07); border-radius:12px; padding:14px 16px; }
+        .qr-item-info { flex:1; }
+        .qr-item-title { color:#fff; font-size:.92rem; font-weight:600; margin-bottom:2px; }
+        .qr-item-sub   { color:#888; font-size:.76rem; }
+        .qr-gen-btn    { background:none; border:1px solid var(--point-gold); color:var(--point-gold); padding:6px 12px; border-radius:8px; font-family:'BMDOHYEON'; cursor:pointer; font-size:.8rem; white-space:nowrap; flex-shrink:0; transition:all .2s; }
+        .qr-gen-btn:hover    { background:rgba(255,235,167,.15); }
+        .qr-gen-btn:disabled { opacity:.5; cursor:default; }
+        .qr-canvas-wrap { margin-top:10px; display:none; flex-direction:column; align-items:flex-start; gap:4px; }
+        .qr-canvas-wrap canvas { border:3px solid #fff; border-radius:4px; }
+        .qr-cat-divider { color:var(--point-gold); font-family:'BMDOHYEON'; font-size:.8rem; padding:6px 2px 2px; border-bottom:1px solid rgba(255,235,167,.15); margin-bottom:2px; opacity:.8; }
+
+        @media print {
+            body > *:not(#qr-print-area) { display: none !important; }
+            #qr-print-area { display:flex !important; flex-wrap:wrap; gap:16px; padding:12px; }
+            .qr-print-card  { break-inside:avoid; text-align:center; padding:10px; border:1px solid #ccc; border-radius:6px; width:160px; }
+            .qr-print-title { font-size:11px; font-weight:bold; margin-bottom:6px; color:#000; word-break:keep-all; }
+            .qr-print-sub   { font-size:9px; color:#555; margin-top:4px; }
+        }
+
+        @media (max-width: 768px) {
+            .header-title { font-size: 1.5rem; margin-bottom: 25px; }
+            .menu-card    { padding: 30px 20px; }
+            .card-icon    { font-size: 3rem; }
+            .card-title   { font-size: 1.2rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="page-container">
+
+        <!-- 헤더: 로고 + 제목 + 현재시각 -->
+        <header class="main-header">
+            <div class="header-left">
+                <a href="javascript:void(0)" onclick="goToHome()" class="ppms-logo-placeholder"></a>
+            </div>
+            <div class="header-center">
+                <div class="common-box font-35pt">점검 관리 대시보드</div>
+            </div>
+            <div class="header-right">
+                <div class="common-box font-15pt time-display" id="current-time"></div>
+            </div>
+        </header>
+
+        <!-- 콘텐츠 영역 -->
+        <main class="content-area">
+            <div class="dashboard-wrapper">
+                <div class="card-grid">
+
+                    <div class="menu-card" onclick="navigateTo('/api/inspection/vision')">
+                        <i class="uil uil-eye card-icon icon-vision"></i>
+                        <div class="card-title">비젼 장비 일일 점검</div>
+                        <div class="card-desc">
+                            1호기(A-Line) 및 2호기(B-Line) 비젼 검사 장비의<br>
+                            동작 상태와 렌즈/조명 청결도를 점검합니다.
+                        </div>
+                        <div class="enter-btn">점검표 열기</div>
+                    </div>
+
+                    <div class="menu-card" onclick="navigateTo('/api/smd_check/dashboard')">
+                        <i class="uil uil-cog card-icon icon-smd"></i>
+                        <div class="card-title">생산 / SMD 점검시트</div>
+                        <div class="card-desc">
+                            제전화·손목띠, SMD 설비 일일점검,<br>
+                            Wave Solder, Metal Mask, 환경점검,<br>
+                            AC 누설전류 점검표입니다.
+                        </div>
+                        <div class="enter-btn">점검표 열기</div>
+                    </div>
+
+                </div>
+            </div>
+        </main>
+
+        <!-- 하단 푸터 -->
+        <footer class="main-footer">
+            <div class="footer-left">
+                <div class="inspection-footer-btn" onclick="openQrModal()">
+                    <i class="uil uil-qrcode-scan"></i> QR 코드 관리
+                </div>
+            </div>
+            <div class="footer-center">
+                <div class="footer-btn" onclick="goBack()"><i class="uil uil-arrow-left"></i></div>
+                <div class="footer-btn" onclick="goToHome()"><i class="uil uil-home"></i></div>
+                <div class="footer-btn" onclick="goForward()"><i class="uil uil-arrow-right"></i></div>
+            </div>
+            <div class="footer-right"></div>
+        </footer>
+
+    </div>
+
+    <!-- QR 관리 모달 -->
+    <div id="qr-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:12000;align-items:flex-start;justify-content:center;overflow-y:auto;padding:20px;">
+        <div style="background:#1a1c23;border:1px solid var(--point-gold);border-radius:16px;width:100%;max-width:760px;margin:auto;">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:20px 24px;border-bottom:1px solid rgba(255,255,255,.08);">
+                <span style="color:var(--point-gold);font-family:'BMDOHYEON';font-size:1.3rem;"><i class="uil uil-qrcode-scan"></i> QR 코드 관리</span>
+                <button onclick="closeQrModal()" style="background:none;border:none;color:#888;font-size:1.8rem;cursor:pointer;line-height:1;">&times;</button>
+            </div>
+            <div style="padding:20px 24px;display:flex;flex-direction:column;gap:16px;">
+                <div style="color:#888;font-size:.85rem;">각 점검 항목별 QR 코드를 생성하여 현장에 부착하세요. QR 스캔 시 모바일 점검 폼이 열립니다.</div>
+                <div id="qr-list" style="display:flex;flex-direction:column;gap:10px;max-height:55vh;overflow-y:auto;"></div>
+            </div>
+            <div style="padding:16px 24px;border-top:1px solid rgba(255,255,255,.08);display:flex;justify-content:flex-end;gap:10px;">
+                <button id="btn-all-gen" onclick="generateAllQr(this)" style="background:#2a2b38;border:1px solid rgba(100,180,255,.4);color:#6ab4ff;padding:8px 20px;border-radius:20px;font-family:'BMJUA';cursor:pointer;">전체 QR 일괄 생성</button>
+                <button onclick="printQrVisible()" style="background:#2a2b38;border:1px solid #555;color:#ddd;padding:8px 20px;border-radius:20px;font-family:'BMJUA';cursor:pointer;">인쇄</button>
+                <button onclick="closeQrModal()" style="background:var(--point-gold);color:#1a1c23;border:none;padding:8px 24px;border-radius:20px;font-family:'BMJUA';cursor:pointer;font-weight:bold;">닫기</button>
+            </div>
+        </div>
+    </div>
+    <div id="qr-print-area" style="display:none;"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script>
+        /* ── 페이지 공통 ──────────────────────────────────────── */
+        window.addEventListener('pageshow', () => {
+            setTimeout(() => { document.body.style.opacity = '1'; }, 50);
+        });
+
+        function navigateTo(url) {
+            document.body.style.opacity = '0';
+            setTimeout(() => { location.href = url; }, 500);
+        }
+        window.goBack    = () => { document.body.style.opacity = '0'; setTimeout(() => history.back(),        500); };
+        window.goToHome  = () => { document.body.style.opacity = '0'; setTimeout(() => location.href = '/',   500); };
+        window.goForward = () => { document.body.style.opacity = '0'; setTimeout(() => history.forward(),    500); };
+
+        function updateTime() {
+            const now = new Date();
+            const el  = document.getElementById('current-time');
+            if (el) el.textContent =
+                `${now.getFullYear()}년 ${now.getMonth()+1}월 ${now.getDate()}일 ${now.getHours()}시 ${now.getMinutes()}분`;
+        }
+        setInterval(updateTime, 1000);
+        updateTime();
+
+        const QR_CATEGORIES = {
+            'SMD 설비 점검': [{ title: 'SMD 설비 일일점검',      sub: '주기(일/주/월) 선택 → 전체 설비 그룹 표시', params: { s: 'smd_daily'    } }],
+            'Wave Solder':   [{ title: 'Wave Solder 점검',       sub: '주기(일/주) 선택 → 항목 표시',             params: { s: 'wave_solder'  } }],
+            'Metal Mask':    [{ title: 'Metal Mask Washer 점검', sub: '점검자 입력 + O/X 체크',                   params: { s: 'metal_mask'   } }],
+            '환경 점검':     [{ title: '환경 점검',               sub: '종류(냉장고/실내/제습함) 선택 → 수치 입력', params: { s: 'environment'  } }],
+            'AC 누설전류':   [{ title: 'AC 누설전류 점검',        sub: '라인 → 설비 선택 → 수치 입력',             params: { s: 'ac_leakage'  } }],
+            '비전 장비 점검': [
+                { title: '비전 장비 1호기', sub: '오늘 OK/NG 선택', params: { s: 'vision', m: '1' }, endpoint: '/api/inspection/qr/token' },
+                { title: '비전 장비 2호기', sub: '오늘 OK/NG 선택', params: { s: 'vision', m: '2' }, endpoint: '/api/inspection/qr/token' },
+            ],
+            '제전화 점검':   [{ title: '제전화 및 손목띠 점검', sub: '이름 입력 + O/X/C 선택', params: { s: 'esd' }, endpoint: '/api/inspection/qr/token' }],
+        };
+
+        async function getToken(params, endpoint = '/api/smd_check/qr/token') {
+            const res = await fetch(endpoint + '?' + new URLSearchParams(params));
+            return (await res.json()).token;
+        }
+        function buildUrl(params, token) {
+            return location.origin + '/api/smd_check/mobile?' + new URLSearchParams({ ...params, t: token });
+        }
+
+        /* 공백·특수문자를 포함한 카테고리명을 CSS 선택자 안전 ID로 변환 */
+        function safeId(cat, idx) {
+            return 'qr-wrap-' + cat.replace(/[^a-zA-Z0-9가-힣]/g, '_') + '-' + idx;
+        }
+
+        async function generateQrCore(catKey, idx) {
+            const def   = QR_CATEGORIES[catKey][idx];
+            const token = await getToken(def.params, def.endpoint || '/api/smd_check/qr/token');
+            const url   = buildUrl(def.params, token);
+            const wrap  = document.getElementById(safeId(catKey, idx));
+            wrap.innerHTML = ''; wrap.style.display = 'flex';
+            const cd = document.createElement('div');
+            new QRCode(cd, { text: url, width: 120, height: 120, colorDark: '#000', colorLight: '#fff' });
+            wrap.appendChild(cd);
+        }
+
+        async function generateQr(catKey, idx, btnEl) {
+            btnEl.textContent = '생성 중...'; btnEl.disabled = true;
+            await generateQrCore(catKey, idx);
+            btnEl.textContent = '재생성'; btnEl.disabled = false;
+        }
+
+        function renderQrAll() {
+            const html = Object.entries(QR_CATEGORIES).map(([cat, defs]) =>
+                `<div class="qr-cat-divider"><i class="uil uil-tag-alt"></i> ${cat}</div>` +
+                defs.map((def, i) => `
+                <div class="qr-item">
+                    <div class="qr-item-info">
+                        <div class="qr-item-title">${def.title}</div>
+                        <div class="qr-item-sub">${def.sub}</div>
+                        <div class="qr-canvas-wrap" id="${safeId(cat, i)}"></div>
+                    </div>
+                    <button class="qr-gen-btn" onclick="generateQr('${cat}',${i},this)">QR 생성</button>
+                </div>`).join('')
+            ).join('');
+            document.getElementById('qr-list').innerHTML = html;
+        }
+
+        async function generateAllQr(btnEl) {
+            btnEl.textContent = '생성 중...'; btnEl.disabled = true;
+            for (const [cat, defs] of Object.entries(QR_CATEGORIES)) {
+                for (let i = 0; i < defs.length; i++) {
+                    const itemBtn = document.getElementById(safeId(cat, i))
+                        ?.closest('.qr-item')?.querySelector('.qr-gen-btn');
+                    if (itemBtn) { itemBtn.textContent = '생성 중...'; itemBtn.disabled = true; }
+                    await generateQrCore(cat, i);
+                    if (itemBtn) { itemBtn.textContent = '재생성'; itemBtn.disabled = false; }
+                }
+            }
+            btnEl.textContent = '전체 QR 일괄 생성'; btnEl.disabled = false;
+        }
+
+        function openQrModal() {
+            renderQrAll();
+            document.getElementById('qr-modal').style.display = 'flex';
+        }
+
+        function closeQrModal() { document.getElementById('qr-modal').style.display = 'none'; }
+
+        function printQrVisible() {
+            const area = document.getElementById('qr-print-area');
+            let cards = '';
+            Object.entries(QR_CATEGORIES).forEach(([cat, defs]) => {
+                defs.forEach((def, i) => {
+                    /* getElementById로 공백 문제 없이 wrap 탐색 후 canvas 추출 */
+                    const wrap   = document.getElementById(safeId(cat, i));
+                    const canvas = wrap ? wrap.querySelector('canvas') : null;
+                    if (canvas) cards += `<div class="qr-print-card"><div class="qr-print-title">${def.title}</div><img src="${canvas.toDataURL()}" width="120" height="120"><div class="qr-print-sub">${def.sub}</div></div>`;
+                });
+            });
+            area.innerHTML = cards;
+            if (!area.innerHTML.trim()) { alert('먼저 QR 생성 버튼을 눌러주세요.'); return; }
+            area.style.display = 'flex'; window.print(); area.style.display = 'none';
+        }
+    </script>
+
+</body>
+</html>

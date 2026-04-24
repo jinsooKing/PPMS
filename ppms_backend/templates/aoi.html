@@ -41,7 +41,13 @@
             <div class="line-schedule-section">
 
                 <div class="aoi-header">
+                    <button class="header-btn" onclick="moveDateBy(-1)" title="전날">
+                        <i class="uil uil-angle-left"></i>
+                    </button>
                     <div class="aoi-title" id="main-table-title">검사 현황</div>
+                    <button class="header-btn" onclick="moveDateBy(1)" title="다음날">
+                        <i class="uil uil-angle-right"></i>
+                    </button>
 
                     <div class="header-command-bar">
                         <i class="uil uil-keyboard cmd-icon"></i>
@@ -147,10 +153,15 @@
 
         <footer class="main-footer">
             <div class="footer-left">
-                <div class="common-box clickable-box aoi-add-btn" id="add-model-btn"
-                    style="background-color:var(--accent-blue);">
-                    <i class="uil uil-plus-circle"></i> 모델추가
-                </div>
+                <button class="common-box clickable-box" onclick="location.href='/api/inspection/vision'"
+                    style="margin-right: 10px;">
+                    <i class="uil uil-eye"></i> 비전 장비 점검
+                </button>
+                <button class="common-box clickable-box" id="add-model-btn" style="margin-right: 10px;">
+                    <i class="uil uil-plus-circle"></i> 모델 추가
+                </button>
+
+                <div id="pagination-info" style="margin-left:10px; font-weight:bold; color:var(--point-gold);"></div>
             </div>
             <div class="footer-center">
                 <div class="footer-btn" id="back-btn" onclick="goBack()">
@@ -173,41 +184,6 @@
 
     <div id="toast-container"></div>
 
-    <div class="modal-overlay model-list-modal">
-        <div class="modal-window">
-            <div class="modal-header"
-                style="display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; border-bottom: 1px solid rgba(255,255,255,0.1); width: 100%; box-sizing: border-box;">
-
-                <h3
-                    style="margin:0; color:var(--point-gold); display:flex; align-items:center; gap:10px; font-size: 1.3rem; white-space: nowrap;">
-                    <i class="uil uil-list-ul"></i> 모델 리스트 (SMD)
-                </h3>
-
-                <div style="display:flex; align-items:center; gap:20px;">
-                    <div class="date-range-wrapper" style="display: flex; align-items: center; gap: 5px;">
-                        <select id="start-year" class="period-select year-select"></select>
-                        <select id="start-month" class="period-select month-select"></select>
-                        <span class="range-separator">~</span>
-                        <select id="end-year" class="period-select year-select"></select>
-                        <select id="end-month" class="period-select month-select"></select>
-                        <button id="refresh-model-list-btn" class="refresh-btn" title="새로고침">
-                            <i class="uil uil-sync"></i>
-                        </button>
-                    </div>
-                    <button class="close-modal-btn"
-                        style="background:none; border:none; color:#bbb; font-size:1.8rem; cursor:pointer; line-height: 1; padding: 0; transition: color 0.2s;">
-                        <i class="uil uil-multiply"></i>
-                    </button>
-                </div>
-            </div>
-
-            <div class="modal-content"
-                style="padding:20px; max-height:80vh; overflow-y:auto; width: 100%; box-sizing: border-box;">
-                <div class="model-list-container"></div>
-            </div>
-        </div>
-    </div>
-
     <div id="global-tooltip"></div>
     <div id="aoi-context-menu" class="custom-context-menu">
         <div class="ctx-item" id="ctx-add-direct-model" style="color: #4dabf7;">
@@ -222,6 +198,37 @@
             <i class="uil uil-trash-alt"></i> 행 삭제
         </div>
     </div>
+    <!-- 모델 선택 모달 -->
+    <div class="modal-overlay" id="model-modal" style="z-index: 11000;">
+        <div class="modal-window"
+            style="width: 600px; max-height: 80vh; display: flex; flex-direction: column; border: 1px solid var(--point-gold); border-radius: 12px; background: #1a1c23;">
+            <div class="modal-header"
+                style="display: flex; justify-content: space-between; align-items: center; padding: 20px 25px; border-bottom: 1px solid rgba(255,255,255,0.1); flex-shrink: 0;">
+                <h3 style="margin: 0; color: var(--point-gold); font-family: 'BMDOHYEON'; font-size: 1.3rem; display: flex; align-items: center; gap: 10px;">
+                    <i class="uil uil-list-ul"></i> 모델 선택
+                </h3>
+                <button id="close-modal-btn"
+                    style="background: none; border: none; color: #888; font-size: 1.8rem; cursor: pointer; line-height:1;">&times;</button>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px; padding: 14px 25px; border-bottom: 1px solid rgba(255,255,255,0.08); flex-shrink: 0; flex-wrap: wrap;">
+                <span style="color:#aaa; font-size:0.9rem;">기간</span>
+                <select id="start-year" style="background:#222; border:1px solid #444; color:#fff; padding:5px 8px; border-radius:6px; cursor:pointer;"></select>
+                <select id="start-month" style="background:#222; border:1px solid #444; color:#fff; padding:5px 8px; border-radius:6px; cursor:pointer;"></select>
+                <span style="color:#666;">~</span>
+                <select id="end-year" style="background:#222; border:1px solid #444; color:#fff; padding:5px 8px; border-radius:6px; cursor:pointer;"></select>
+                <select id="end-month" style="background:#222; border:1px solid #444; color:#fff; padding:5px 8px; border-radius:6px; cursor:pointer;"></select>
+                <button id="refresh-btn"
+                    style="background: var(--point-gold); color:#1a1c23; border:none; padding:5px 16px; border-radius:6px; font-family:'BMJUA'; cursor:pointer; font-size:0.9rem;">
+                    <i class="uil uil-sync"></i> 조회
+                </button>
+            </div>
+            <div id="model-list-container"
+                style="flex: 1; overflow-y: auto; padding: 15px 25px;">
+                <div style="text-align:center; padding:40px; color:#666;">조회 버튼을 눌러 모델을 불러오세요.</div>
+            </div>
+        </div>
+    </div>
+
     <div class="modal-overlay" id="direct-add-modal" style="z-index: 11000;">
         <div class="modal-window"
             style="width: 480px; border: 1px solid var(--point-gold); border-radius: 12px; background: #1a1c23;">
@@ -238,10 +245,24 @@
             <div class="modal-content" style="padding: 25px;">
                 <div style="display: flex; flex-direction: column; gap: 20px;">
 
-                    <div class="dip-input-group">
+                    <div class="dip-input-group" style="position: relative;">
                         <label style="display: block; color: #bbb; margin-bottom: 8px; font-size: 0.95rem;">모델명</label>
                         <input type="text" id="direct-model-name" class="form-input" placeholder="예: ABC-100"
-                            style="width: 100%; background: #222; border: 1px solid #444; color: #fff; padding: 10px; border-radius: 6px;">
+                            autocomplete="off"
+                            style="width: 100%; background: #222; border: 1px solid #444; color: #fff; padding: 10px; border-radius: 6px; box-sizing: border-box;">
+                        <div id="model-autocomplete-list" style="
+                            display: none;
+                            position: absolute;
+                            top: 100%;
+                            left: 0; right: 0;
+                            background: #1a1c23;
+                            border: 1px solid var(--point-gold);
+                            border-radius: 0 0 8px 8px;
+                            max-height: 200px;
+                            overflow-y: auto;
+                            z-index: 99999;
+                            box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+                        "></div>
                     </div>
 
                     <div style="display: flex; gap: 15px;">
@@ -293,6 +314,18 @@
 
         let historyIndex = 0;    // 현재 머물고 있는 위치
         let maxHistoryIndex = 0; // 최대로 진행했던 위치
+
+        /**
+         * lot 문자열에서 전체 LOT 수량을 파싱.
+         * '500/2000' → 2000  (/ 뒤 = 전체 LOT)
+         * '1500'     → 1500  (숫자 그대로)
+         */
+        function parseLotTotal(lotStr) {
+            if (!lotStr && lotStr !== 0) return 0;
+            const s = String(lotStr).trim();
+            const parts = s.split('/');
+            return parseInt(parts[parts.length - 1]) || 0;
+        }
 
 
         // 2. 뒤로가기/홈 이동 함수 (전역 window 객체 등록)
@@ -456,6 +489,105 @@
             const table = document.querySelector('.aoi-table');
             const toggleViewBtn = document.getElementById('toggle-view-btn');
 
+            // 모델 선택 모달 관련 변수
+            const modelModal         = document.getElementById('model-modal');
+            const addModelBtn        = document.getElementById('add-model-btn');
+            const closeModalBtn      = document.getElementById('close-modal-btn');
+            const refreshBtn         = document.getElementById('refresh-btn');
+            const modelListContainer = document.getElementById('model-list-container');
+            const sYearSel           = document.getElementById('start-year');
+            const eYearSel           = document.getElementById('end-year');
+            const sMonthSel          = document.getElementById('start-month');
+            const eMonthSel          = document.getElementById('end-month');
+
+            // ----------------------------------------------------------------
+            // [자동완성] 모델명 입력 필드
+            // ----------------------------------------------------------------
+            (function setupModelAutocomplete() {
+                const input = document.getElementById('direct-model-name');
+                const list  = document.getElementById('model-autocomplete-list');
+                if (!input || !list) return;
+
+                let debounceTimer = null;
+
+                function closeList() {
+                    list.style.display = 'none';
+                    list.innerHTML = '';
+                }
+
+                function renderList(names) {
+                    if (!names.length) { closeList(); return; }
+                    list.innerHTML = names.map(name => `
+                        <div class="ac-item" data-value="${name}" style="
+                            padding: 10px 14px;
+                            cursor: pointer;
+                            font-size: 0.9rem;
+                            color: var(--text-color);
+                            border-bottom: 1px solid rgba(255,255,255,0.05);
+                            transition: background 0.15s;
+                        ">${name}</div>`).join('');
+                    list.style.display = 'block';
+
+                    list.querySelectorAll('.ac-item').forEach(item => {
+                        item.addEventListener('mouseenter', () => {
+                            item.style.background = 'rgba(255,235,167,0.12)';
+                            item.style.color = 'var(--point-gold)';
+                        });
+                        item.addEventListener('mouseleave', () => {
+                            item.style.background = '';
+                            item.style.color = 'var(--text-color)';
+                        });
+                        item.addEventListener('mousedown', (e) => {
+                            e.preventDefault(); // input blur 방지
+                            input.value = item.dataset.value;
+                            closeList();
+                        });
+                    });
+                }
+
+                input.addEventListener('input', () => {
+                    clearTimeout(debounceTimer);
+                    const q = input.value.trim();
+                    if (q.length < 1) { closeList(); return; }
+                    debounceTimer = setTimeout(async () => {
+                        try {
+                            const res = await fetch(`/api/aoi/model_suggestions?q=${encodeURIComponent(q)}`);
+                            const names = await res.json();
+                            renderList(names);
+                        } catch(e) { closeList(); }
+                    }, 200);
+                });
+
+                input.addEventListener('keydown', (e) => {
+                    const items = list.querySelectorAll('.ac-item');
+                    const active = list.querySelector('.ac-active');
+                    if (e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        if (!active) {
+                            items[0]?.classList.add('ac-active');
+                            items[0] && (items[0].style.background = 'rgba(255,235,167,0.12)', items[0].style.color = 'var(--point-gold)');
+                        } else {
+                            const next = active.nextElementSibling;
+                            active.classList.remove('ac-active'); active.style.background = ''; active.style.color = '';
+                            if (next) { next.classList.add('ac-active'); next.style.background = 'rgba(255,235,167,0.12)'; next.style.color = 'var(--point-gold)'; }
+                        }
+                    } else if (e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        if (active) {
+                            const prev = active.previousElementSibling;
+                            active.classList.remove('ac-active'); active.style.background = ''; active.style.color = '';
+                            if (prev) { prev.classList.add('ac-active'); prev.style.background = 'rgba(255,235,167,0.12)'; prev.style.color = 'var(--point-gold)'; }
+                        }
+                    } else if (e.key === 'Enter') {
+                        if (active) { e.preventDefault(); input.value = active.dataset.value; closeList(); }
+                    } else if (e.key === 'Escape') {
+                        closeList();
+                    }
+                });
+
+                input.addEventListener('blur', () => setTimeout(closeList, 150));
+            })();
+
             // ----------------------------------------------------------------
             // [1] 데이터 로드
             // ----------------------------------------------------------------
@@ -482,7 +614,12 @@
 
                 if (tableContainer) tableContainer.style.display = 'block';
                 if (noRecordMsg) noRecordMsg.style.display = 'none';
-                tbody.innerHTML = '<tr><td colspan="30" style="padding:30px; text-align:center;">데이터 조회 중...</td></tr>';
+
+                // 기존 내용 유지한 채 흐리게만 처리 (반짝임 방지)
+                if (tableContainer) {
+                    tableContainer.style.transition = 'opacity 0.15s ease';
+                    tableContainer.style.opacity = '0.3';
+                }
 
                 try {
                     const res = await fetch(`/api/aoi/records?date=${dateStr}`);
@@ -492,9 +629,21 @@
                     tbody.innerHTML = '<tr><td colspan="30" style="padding:30px; text-align:center; color:var(--danger-red);">로드 실패</td></tr>';
                     console.error(e);
                 } finally {
-                    // [핵심 추가] 데이터 로드가 끝나면(성공/실패 무관) 화면을 다시 밝게 만듭니다.
+                    if (tableContainer) tableContainer.style.opacity = '1';
                     document.body.style.opacity = '1';
                 }
+            }
+
+
+
+            // 전날 / 다음날 이동
+            window.moveDateBy = function(delta) {
+                const d = new Date(currentSelectedDate);
+                d.setDate(d.getDate() + delta);
+                const yyyy = d.getFullYear();
+                const mm   = String(d.getMonth() + 1).padStart(2, '0');
+                const dd   = String(d.getDate()).padStart(2, '0');
+                loadRecordsByDate(`${yyyy}-${mm}-${dd}`);
             }
 
             /* ==============================================================================
@@ -671,40 +820,45 @@
             window.updateRecord = async function (id, field, value) {
                 if (isDeleteMode) return;
 
-                let inputVal = 0;
-                if (field !== 'inspection_point' && !field.endsWith('_ref')) {
-                    inputVal = parseInt(value) || 0;
-                } else {
-                    inputVal = value;
-                }
+                let inputVal = (field !== 'inspection_point' && !field.endsWith('_ref'))
+                    ? (parseInt(value) || 0)
+                    : value;
 
                 const upperRow = document.querySelector(`tr.upper-row[data-id="${id}"]`);
                 const lowerRow = document.querySelector(`tr.lower-row[data-id="${id}"]`);
 
-                if (field === 'inspection_qty' && upperRow) {
-                    updateProgressUI(upperRow, inputVal);
-                }
-
                 try {
-                    const payload = {}; payload[field] = inputVal;
+                    const payload = {};
+                    payload[field] = inputVal;
+
                     const response = await fetch(`/api/aoi/records/${id}`, {
-                        method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
                     });
                     const res = await response.json();
 
                     if (res.success && upperRow) {
                         const updated = res.updated_record;
-                        const totalDefectWrapper = upperRow.querySelector('.defect-total-col .row-span-wrapper');
-                        const goodQtyWrapper = upperRow.querySelector('.good-col .row-span-wrapper');
 
-                        if (totalDefectWrapper) totalDefectWrapper.textContent = updated.total_defect;
+                        // 1. [변경] 총불량은 이제 자동 합산값이 아닌 DB에 저장된(작업자가 입력한) 값을 그대로 표시합니다.
+                        const totalDefectInput = upperRow.querySelector('.defect-total-col input');
+                        if (totalDefectInput) totalDefectInput.value = updated.total_defect;
+
+                        // 2. 양품 수량 업데이트 (양품 = 검사수량 - 총불량보드수)
+                        const goodQtyWrapper = upperRow.querySelector('.good-col .row-span-wrapper');
                         if (goodQtyWrapper) {
                             goodQtyWrapper.textContent = updated.good_qty;
                             goodQtyWrapper.style.color = updated.good_qty < 0 ? 'var(--danger-red)' : 'var(--success-green)';
                         }
+
+                        // 3. 개별 불량 카테고리별 '포인트 합계'는 참고용으로 계속 업데이트합니다.
                         updateGroupSums(upperRow, lowerRow);
                     }
-                } catch (e) { console.error(e); showToast('저장 실패', 'error'); }
+                } catch (e) {
+                    console.error(e);
+                    showToast('저장 실패', 'error');
+                }
             };
 
             function updateGroupSums(upperRow, lowerRow) {
@@ -940,7 +1094,7 @@
 
                 tbody.innerHTML = records.map(r => {
                     const safe = (v) => v || 0;
-                    const lotQty = r.lot || 0;
+                    const lotQty = (r.lot_total !== undefined) ? r.lot_total : parseLotTotal(r.lot);
                     const todayQty = safe(r.inspection_qty);
                     const totalQty = (r.cumulative_qty !== undefined) ? r.cumulative_qty : todayQty;
                     const baseCumulative = totalQty - todayQty;
@@ -972,7 +1126,15 @@
                 
                 <td class="detail-col group-basic ${getVis('basic')} good-col merge-top"><div class="row-span-wrapper" style="color:${goodColor}; font-weight:bold;">${safe(r.good_qty)}</div></td>
                 
-                <td class="defect-total-col merge-top"><div class="row-span-wrapper" style="color:var(--danger-red); font-weight:bold;">${safe(r.total_defect)}</div></td>
+                <td class="defect-total-col merge-top">
+                    <div class="row-span-wrapper">
+                        <input type="number" 
+                            class="defect-qty-input total-defect-input" 
+                            value="${safe(r.total_defect)}" 
+                            style="color:var(--danger-red); font-weight:bold;"
+                            onchange="updateRecord(${r.id}, 'total_defect', this.value)">
+                    </div>
+                </td>
 
                 <td class="group-sum-cell merge-top"><div class="row-span-wrapper">${sumA}</div></td>
                 <td class="detail-col group-a ${getVis('a')} ref-cell group-start"><input type="text" class="defect-ref-input" value="${r.missing_ref || ''}" placeholder="Ref" onchange="updateRecord(${r.id}, 'missing_ref', this.value)"></td>
@@ -1161,15 +1323,6 @@
             setInterval(updateTime, 1000);
             updateTime();
 
-            // 모델 추가 모달
-            const addModelBtn = document.getElementById('add-model-btn');
-            const modelModal = document.querySelector('.model-list-modal');
-            const closeModalBtn = document.querySelector('.close-modal-btn');
-            const modelListContainer = document.querySelector('.model-list-container');
-            const sYearSel = document.getElementById('start-year'), sMonthSel = document.getElementById('start-month');
-            const eYearSel = document.getElementById('end-year'), eMonthSel = document.getElementById('end-month');
-            const refreshBtn = document.getElementById('refresh-model-list-btn');
-
             // ----------------------------------------------------------------
             // [모달 초기화] 날짜 드롭다운 설정 (수정: 전월 ~ 익월 기본 선택)
             // ----------------------------------------------------------------
@@ -1232,54 +1385,18 @@
 
                     const fullHtml = data.map(group => {
                         const modelsHtml = group.models.map(item => {
-                            // 1. 수량 파싱
-                            const aoiQty = parseInt(item.aoi_qty) || 0;
-                            const recvQty = parseInt(item.recv_qty) || 0;
-                            const lotQty = parseInt(item.lot) || 0;
-
-                            // 2. 완료 가능 조건 확인 (AOI검사 == 입고 == LOT)
-                            const isReadyToComplete = (lotQty > 0) && (recvQty === lotQty) && (aoiQty === lotQty);
-
-                            // 3. 스타일 및 상태 설정
-                            const cardStyle = isReadyToComplete
-                                ? 'border: 2px solid var(--success-green); background: rgba(0, 230, 118, 0.1);'
-                                : '';
-                            const statusBadge = isReadyToComplete
-                                ? '<div style="background:var(--success-green); color:#000; padding:2px 8px; border-radius:4px; font-size:0.8rem; font-weight:bold;">검사완료 (클릭하여 마감)</div>'
-                                : '';
-
                             return `
-                    <div class="model-select-card" 
+                    <div class="model-select-card"
                          data-group-id="${item.id}"
-                         data-model="${item.model}" 
-                         data-year="${item.year}" 
-                         data-month="${item.month}" 
+                         data-model="${item.model}"
+                         data-year="${item.year}"
+                         data-month="${item.month}"
                          data-lot="${item.lot}"
-                         data-ready="${isReadyToComplete}"
-                         style="flex-direction: column; align-items: flex-start; gap: 8px; ${cardStyle}">
-                        
-                        <div style="width:100%; display:flex; justify-content:space-between; align-items:center;">
-                            <div class="model-name" style="font-size:1.1rem;">${item.model}</div>
-                            ${statusBadge}
-                        </div>
-                        
-                        <div class="model-info" style="width:100%; display:flex; justify-content:space-between; align-items:center; font-size:0.85rem; color:#ccc;">
-                            <span style="color:#aaa;">${item.year}.${item.month}</span>
-                            <div style="display:flex; gap:15px; font-family:'Roboto Mono', monospace;">
-                                <span style="color:#ffeb3b;" title="AOI 완료">AOI: ${aoiQty}</span>
-                                <span style="color:#00e676;" title="DIP 입고">입고: ${recvQty}</span>
-                                <span class="model-lot" title="LOT">LOT: ${item.lot}</span>
-                            </div>
-                        </div>
-                        
-                        <div style="width:100%; display:flex; gap:2px; height:4px; margin-top:2px;">
-                            <div style="flex:1; background:rgba(255,255,255,0.1); border-radius:2px; overflow:hidden;" title="입고율">
-                                <div style="width:${Math.min((recvQty / lotQty) * 100, 100)}%; height:100%; background-color:#00e676;"></div>
-                            </div>
-                            <div style="flex:1; background:rgba(255,255,255,0.1); border-radius:2px; overflow:hidden;" title="검사율">
-                                <div style="width:${Math.min((aoiQty / lotQty) * 100, 100)}%; height:100%; background-color:#ffeb3b;"></div>
-                            </div>
-                        </div>
+                         data-ready="false"
+                         style="flex-direction: row; align-items: center; gap: 12px; padding: 10px 14px;">
+                        <span style="color:#aaa; font-size:0.82rem; white-space:nowrap; flex-shrink:0;">${item.year}년 ${item.month}월분</span>
+                        <span class="model-name" style="font-size:1rem; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${item.model}</span>
+                        <span style="color:#888; font-size:0.82rem; font-family:'Roboto Mono',monospace; white-space:nowrap; flex-shrink:0;">LOT ${item.lot}</span>
                     </div>`;
                         }).join('');
 
@@ -1309,51 +1426,32 @@
                     titleEl.classList.toggle('active');
                     titleEl.nextElementSibling.classList.toggle('open');
                 }
-                // 2. 모델 카드 클릭
+                // 2. 모델 카드 클릭 → 검사 기록 추가
                 else if (target.closest('.model-select-card')) {
                     const card = target.closest('.model-select-card');
-                    const { groupId, model, year, month, lot, ready } = card.dataset;
-                    const isReady = (ready === 'true');
+                    const { model, year, month, lot } = card.dataset;
 
-                    // [CASE A] 검사 완료 처리 (리스트에서 숨김)
-                    if (isReady) {
-                        if (confirm(`[${model}] 모든 수량이 일치합니다.\n검사 완료 처리하여 리스트에서 숨기시겠습니까?`)) {
-                            try {
-                                const res = await fetch(`/api/aoi/groups/${groupId}/complete`, {
-                                    method: 'POST'
-                                });
-                                const json = await res.json();
-                                if (json.success) {
-                                    alert('완료 처리되었습니다.');
-                                    loadModelList(); // 리스트 새로고침 (해당 모델 사라짐)
-                                } else {
-                                    alert('오류: ' + json.message);
-                                }
-                            } catch (e) { alert('통신 오류 발생'); }
-                        }
-                    }
-                    // [CASE B] 일반 추가 (검사 기록 생성)
-                    else {
-                        if (confirm(`[${model}] 모델을 추가하시겠습니까?`)) {
-                            try {
-                                const targetDate = currentSelectedDate;
-                                const res = await fetch('/api/aoi/records', {
-                                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({
-                                        model,
-                                        year: parseInt(year),
-                                        month: parseInt(month),
-                                        lot,
-                                        date: targetDate
-                                    })
-                                });
-                                if (res.ok) {
-                                    alert('추가되었습니다.');
-                                    modelModal.classList.remove('visible');
-                                    loadRecordsByDate(targetDate);
-                                }
-                            } catch (e) { alert('오류 발생'); }
-                        }
+                    if (confirm(`[${model}] 모델을 추가하시겠습니까?`)) {
+                        try {
+                            const targetDate = currentSelectedDate;
+                            // month는 DB 저장 형식 "X월분" 으로 통일
+                            const monthStr = String(month).replace(/[^0-9]/g, '') + '월분';
+                            const res = await fetch('/api/aoi/records', {
+                                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    model,
+                                    year: parseInt(year),
+                                    month: monthStr,
+                                    lot,
+                                    date: targetDate
+                                })
+                            });
+                            if (res.ok) {
+                                alert('추가되었습니다.');
+                                modelModal.classList.remove('visible');
+                                loadRecordsByDate(targetDate);
+                            }
+                        } catch (e) { alert('오류 발생'); }
                     }
                 }
             });

@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PPMS - Metal Mask 세척기 점검</title>
+    <link rel="stylesheet" href="/static/common.css">
+    <link rel="stylesheet" href="https://unicons.iconscout.com/release/v4.0.8/css/line.css">
+    <link href="https://hangeul.pstatic.net/hangeul_static/css/bmdohyeon.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Poppins:400,600,800" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="/static/logo.js"></script>
+    <style>
+        .content-area { box-sizing: border-box; overflow-x: hidden; }
+        .smd-inner{display:flex;flex-direction:column;width:100%;height:100%;gap:8px;box-sizing:border-box;min-width:0;}
+        .ctrl-bar{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;background:var(--card-bg);border:1px solid var(--border-color);border-radius:10px;padding:8px 16px;gap:12px;}
+        .month-ctrl{display:flex;align-items:center;gap:10px;font-family:'BMDOHYEON';font-size:1.1rem;color:#fff;}
+        .arrow-btn{background:none;border:1px solid #555;color:var(--point-gold);width:28px;height:28px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.95rem;transition:all .2s;}
+        .arrow-btn:hover{background:var(--point-gold);color:#1f2029;}
+        .week-tab{background:#1a1b24;border:1px solid #444;color:#888;padding:4px 12px;border-radius:16px;font-family:'BMDOHYEON';font-size:.82rem;cursor:pointer;transition:all .2s;white-space:nowrap;}
+        .week-tab.active{background:var(--point-gold);color:#1f2029;border-color:var(--point-gold);font-weight:bold;}
+        .week-tab:hover:not(.active){border-color:var(--point-gold);color:var(--point-gold);}
+        .table-wrapper{flex:1;min-height:0;overflow-x:hidden;overflow-y:auto;background:var(--card-bg);border-radius:12px;border:1px solid var(--border-color);}
+        /* 화면 너비에 맞게 축소 — 가로스크롤 없음 */
+        table{width:100%;border-collapse:collapse;table-layout:fixed;}
+        th,td{border:1px solid #3a3b47;text-align:center;padding:0;overflow:hidden;}
+        th{background:#1a1b21;color:var(--point-gold);font-family:'BMDOHYEON';padding:7px 4px;font-size:.82rem;position:sticky;top:0;z-index:20;white-space:nowrap;}
+        /* 항목 열: 너비 축소 */
+        .item-col{position:sticky;left:0;background:#1a1b21;z-index:30;width:18%;text-align:left;padding:5px 6px;font-size:.75rem;border-right:2px solid var(--point-gold);color:#ccc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;vertical-align:middle;}
+        th.item-col{z-index:40;color:var(--point-gold);}
+        /* 전반/후반 구분 셀 */
+        .half-label{background:#181920;font-family:'BMDOHYEON';font-size:.72rem;color:#666;width:8%;vertical-align:middle;}
+        .day-col{width:auto;padding:0!important;}
+        /* 항목별 첫 행(전반) 상단 구분선 */
+        tr.item-start td{border-top:2px solid #3a3b47;}
+        .check-cell{width:100%;height:44px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:.9rem;font-weight:bold;transition:background .15s;user-select:none;}
+        .check-cell:hover{background:rgba(255,235,167,.07);}
+        .st-O{background:rgba(78,115,223,.15);color:#4e73df;}
+        .st-X{background:rgba(255,68,68,.15);color:var(--danger-red);}
+        .checker-cell{width:100%;height:44px;display:flex;align-items:center;justify-content:center;}
+        .checker-input{background:transparent;border:none;color:#fff;text-align:center;font-size:.82rem;width:90%;outline:none;font-family:'Poppins';}
+        .checker-input:focus{border-bottom:1px solid var(--point-gold);}
+        @keyframes pulseGlow{0%,100%{box-shadow:inset 0 3px 0 var(--point-gold),0 0 6px rgba(255,235,167,.05)}50%{box-shadow:inset 0 3px 0 var(--point-gold),0 0 14px rgba(255,235,167,.25)}}
+        th.today{position:sticky;top:0;z-index:20;background:#1e2535!important;border:1px solid rgba(255,235,167,.3)!important;border-bottom:2px solid var(--point-gold)!important;animation:pulseGlow 3s infinite ease-in-out;color:var(--point-gold)!important;}
+    </style>
+</head>
+<body>
+    <div class="page-container">
+        <header class="main-header">
+            <div class="header-left">
+                <a href="javascript:void(0)" onclick="goToHome()" class="ppms-logo-placeholder"></a>
+            </div>
+            <div class="header-center">
+                <div class="common-box font-35pt">Metal Mask 세척기 점검</div>
+            </div>
+            <div class="header-right">
+                <div class="common-box font-15pt time-display" id="current-time"></div>
+            </div>
+        </header>
+        <main class="content-area">
+            <div class="smd-inner">
+                <div class="ctrl-bar">
+                    <div class="month-ctrl">
+                        <button class="arrow-btn" onclick="moveMonth(-1)"><i class="uil uil-angle-left"></i></button>
+                        <span id="month-display"></span>
+                        <button class="arrow-btn" onclick="moveMonth(1)"><i class="uil uil-angle-right"></i></button>
+                        <button class="quick-ok-btn" onclick="jumpToday()" style="border-color:#888;color:#aaa;">오늘로 이동</button>
+                        <div class="ctrl-divider"></div>
+                        <button class="quick-ok-btn" onclick="fillToday()">오늘 OK</button>
+                        <button class="quick-ok-btn" onclick="clearToday()" style="border-color:#ff4444;color:#ff4444;">초기화</button>
+                        <div class="ctrl-divider"></div>
+                        <div id="week-tabs" style="display:flex;gap:5px;flex-wrap:wrap;"></div>
+                    </div>
+                    <div style="font-size:.8rem;color:#888;">
+                        AIR 압력: 수치 직접 입력 &nbsp;|&nbsp;
+                        <span style="color:#4e73df;font-weight:bold;">O</span> 양호 &nbsp;
+                        <span style="color:var(--danger-red);font-weight:bold;">X</span> 이상
+                    </div>
+                </div>
+                <div class="table-wrapper">
+                    <table id="check-table">
+                        <thead><tr id="header-row"></tr></thead>
+                        <tbody id="table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+        <footer class="main-footer">
+            <div class="footer-left">
+                <div class="inspection-footer-btn" onclick="openCheckerPresetModal()" style="cursor:pointer;">
+                    <i class="uil uil-setting"></i> 점검자 설정
+                </div>
+            </div>
+            <div class="footer-center">
+                <div class="footer-btn" onclick="goBack()"><i class="uil uil-arrow-left"></i></div>
+                <div class="footer-btn" onclick="goToHome()"><i class="uil uil-home"></i></div>
+                <div class="footer-btn" onclick="goForward()"><i class="uil uil-arrow-right"></i></div>
+            </div>
+            <div class="footer-right"></div>
+        </footer>
+    </div>
+    <style>body{opacity:0;transition:opacity .5s ease-in-out}
+    .quick-ok-btn{background:none;border:1px solid #4e73df;color:#4e73df;padding:3px 10px;border-radius:6px;cursor:pointer;font-size:.8rem;font-family:'BMDOHYEON';transition:all .2s;}
+    .quick-ok-btn:hover{opacity:.75;}
+    .ctrl-btn-group{display:flex;gap:6px;align-items:center;}
+    .ctrl-divider{width:1px;height:18px;background:#444;margin:0 4px;}
+    .inspection-footer-btn{display:flex;align-items:center;justify-content:center;gap:8px;padding:0 20px;height:45px;border-radius:12px;border:1px solid rgba(255,235,167,.4);background:rgba(255,235,167,.05);color:var(--point-gold);font-family:'BMDOHYEON';font-size:1rem;cursor:pointer;transition:all .3s;}
+    .inspection-footer-btn:hover{background:rgba(255,235,167,.2);border-color:var(--point-gold);}
+    .preset-modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:12000;align-items:center;justify-content:center;}
+    .preset-modal-overlay.visible{display:flex;}
+    .preset-modal{background:#1a1c23;border:1px solid var(--point-gold);border-radius:12px;width:400px;display:flex;flex-direction:column;}
+    .preset-modal-header{display:flex;justify-content:space-between;align-items:center;padding:18px 24px;border-bottom:1px solid rgba(255,255,255,.08);}
+    .preset-modal-title{color:var(--point-gold);font-family:'BMDOHYEON';font-size:1.2rem;}
+    .preset-modal-body{padding:24px;display:flex;flex-direction:column;gap:14px;}
+    .preset-row{display:flex;align-items:center;gap:12px;}
+    .preset-label{color:#bbb;font-size:.9rem;min-width:80px;}
+    .preset-input{background:#222;border:1px solid #444;color:#fff;padding:7px 12px;border-radius:6px;flex:1;font-size:.95rem;}
+    .preset-input:focus{outline:none;border-color:var(--point-gold);}
+    .preset-modal-footer{padding:16px 24px;border-top:1px solid rgba(255,255,255,.08);display:flex;justify-content:flex-end;gap:10px;}
+    .preset-save-btn{background:var(--point-gold);color:#1a1c23;border:none;padding:8px 24px;border-radius:20px;font-family:'BMJUA';font-size:.95rem;cursor:pointer;font-weight:bold;}
+    .preset-cancel-btn{background:#3d3d3d;color:#eee;border:none;padding:8px 20px;border-radius:20px;font-family:'BMJUA';cursor:pointer;}
+    </style>
+
+    <!-- 점검자 프리셋 모달 -->
+    <div class="preset-modal-overlay" id="checker-preset-modal">
+        <div class="preset-modal">
+            <div class="preset-modal-header">
+                <span class="preset-modal-title"><i class="uil uil-user"></i> 점검자 설정</span>
+                <button onclick="closeCheckerPresetModal()" style="background:none;border:none;color:#888;font-size:1.8rem;cursor:pointer;line-height:1;">&times;</button>
+            </div>
+            <div class="preset-modal-body">
+                <p style="color:#888;font-size:.85rem;margin:0;">오늘 점검자 적용 버튼 클릭 시 입력될 기본 점검자명을 설정합니다.</p>
+                <div class="preset-row">
+                    <span class="preset-label">점검자명</span>
+                    <input class="preset-input" id="p-checker-name" type="text" maxlength="10" placeholder="예: 홍길동">
+                </div>
+            </div>
+            <div class="preset-modal-footer">
+                <button class="preset-cancel-btn" onclick="closeCheckerPresetModal()">취소</button>
+                <button class="preset-save-btn" onclick="saveCheckerPreset()">저장</button>
+            </div>
+        </div>
+    </div>
+    </style>
+    <script>
+    const SHEET_TYPE='metal_mask', EQUIPMENT='Metal Mask Washer';
+    // item_no 0 = 점검자, 1~4 = 점검항목
+    const ITEMS=[
+        {no:0, item:'점검자',                      type:'checker'},
+        {no:1, item:'1. 세척액 100L 이상 확인',     type:'toggle'},
+        {no:2, item:'2. AIR 압력 5~8kg/㎠ 확인',   type:'toggle'},
+        {no:3, item:'3. 전원 AC220V±10% 확인',     type:'toggle'},
+        {no:4, item:'4. 이물질 없음 확인',           type:'toggle'},
+    ];
+    const STATUS_CYCLE=['','O','X'];
+    const DAY_NAMES=['일','월','화','수','목','금','토'];
+    let viewYear=new Date().getFullYear(), viewMonth=new Date().getMonth()+1, monthData={}, holidays={};
+    let activeWeek = 1;
+
+    function isWorkday(ds,dow){return dow!==0&&dow!==6&&!holidays[ds];}
+
+    function getWeekNum(y,m,d){
+        const firstDow=new Date(y,m-1,1).getDay();
+        return Math.ceil((d+firstDow)/7);
+    }
+
+    // 월의 주차별 평일 목록 반환 (표시 번호 1부터 재인덱싱)
+    function getWeeklyDays(y,m){
+        const lastDay=new Date(y,m,0).getDate();
+        const weeks={};
+        for(let d=1;d<=lastDay;d++){
+            const ds=dateStr(y,m,d), dow=new Date(y,m-1,d).getDay();
+            if(!isWorkday(ds,dow)) continue;
+            const w=getWeekNum(y,m,d);
+            if(!weeks[w]) weeks[w]=[];
+            weeks[w].push({d,ds,dow});
+        }
+        return Object.keys(weeks).sort((a,b)=>a-b)
+            .map((w,i)=>({week:i+1, days:weeks[w]}));
+    }
+
+    // 주차 탭 렌더링
+    function renderWeekTabs(){
+        const weekly=getWeeklyDays(viewYear,viewMonth);
+        // activeWeek가 범위 벗어나면 1로 초기화
+        if(activeWeek > weekly.length) activeWeek=1;
+        document.getElementById('week-tabs').innerHTML=
+            weekly.map(w=>
+                `<div class="week-tab ${w.week===activeWeek?'active':''}"
+                      onclick="selectWeek(${w.week})">${w.week}주</div>`
+            ).join('');
+        return weekly;
+    }
+
+    function selectWeek(w){ activeWeek=w; renderAll(); }
+
+    function renderAll(){
+        const weekly=renderWeekTabs();
+        const wkObj=weekly.find(w=>w.week===activeWeek);
+        const days=wkObj?wkObj.days:[];
+        renderTable(days);
+    }
+
+    function renderTable(days){
+        const today=new Date();
+        const todayStr=dateStr(today.getFullYear(),today.getMonth()+1,today.getDate());
+        document.getElementById('month-display').textContent=`${viewYear}년 ${viewMonth}월`;
+
+        // 헤더: 항목 | 월 | 화 | 수 | 목 | 금
+        let hHtml=`<th class="item-col">항목</th>`;
+        days.forEach(({d,dow})=>{
+            hHtml+=`<th class="day-col" style="font-size:.85rem;">${d}<br><small style="font-weight:normal;color:#888;">${DAY_NAMES[dow]}</small></th>`;
+        });
+        // 빈 열 채우기 (5열 맞춤)
+        for(let i=days.length;i<5;i++) hHtml+=`<th class="day-col" style="background:#141419;"></th>`;
+        document.getElementById('header-row').innerHTML=hHtml;
+
+        let bHtml='';
+        ITEMS.forEach(item=>{
+            bHtml+=`<tr><td class="item-col">${item.item}</td>`;
+            days.forEach(({ds,d,dow})=>{
+                const isToday=ds===todayStr;
+                const key=`${EQUIPMENT}_${item.no}_${ds}`;
+                const rec=monthData[key]||{};
+                const bg=isToday?'background:rgba(255,235,167,.06);':'';
+                if(item.type==='checker'){
+                    bHtml+=`<td class="day-col" style="${bg}">
+                        <div class="checker-cell">
+                            <input class="checker-input" type="text" maxlength="6"
+                                value="${rec.checker||''}"
+                                data-no="${item.no}" data-date="${ds}"
+                                onblur="saveChecker(this)">
+                        </div></td>`;
+                } else {
+                    const st=rec.status||'';
+                    bHtml+=`<td class="day-col" style="${bg}">
+                        <div class="check-cell st-${st}" data-no="${item.no}" data-date="${ds}" data-status="${st}">${st}</div></td>`;
+                }
+            });
+            // 빈 열 채우기
+            for(let i=days.length;i<5;i++) bHtml+=`<td class="day-col" style="background:#141419;"></td>`;
+            bHtml+='</tr>';
+        });
+        document.getElementById('table-body').innerHTML=bHtml;
+    }
+
+    async function saveChecker(input){
+        const key=`${EQUIPMENT}_${input.dataset.no}_${input.dataset.date}`;
+        try{
+            await fetch('/api/smd_check/equipment/toggle',{method:'POST',headers:{'Content-Type':'application/json'},
+                body:JSON.stringify({sheet_type:SHEET_TYPE,equipment:EQUIPMENT,item_no:0,date:input.dataset.date,checker:input.value,status:''})});
+            monthData[key]={checker:input.value,status:''};
+        }catch(e){console.error(e);}
+    }
+
+    let isDragging=false,dragStatus=null,draggedCells=[];
+    document.addEventListener('mousedown',e=>{
+        const c=e.target.closest('.check-cell');if(!c)return;
+        e.preventDefault();
+        const idx=STATUS_CYCLE.indexOf(c.dataset.status||'');
+        dragStatus=STATUS_CYCLE[(idx+1)%STATUS_CYCLE.length];
+        isDragging=true;draggedCells=[];applyDrag(c);
+    });
+    document.addEventListener('mouseenter',e=>{if(!isDragging)return;const c=e.target.closest('.check-cell');if(c)applyDrag(c);},true);
+    document.addEventListener('mouseup',async()=>{
+        if(!isDragging)return;isDragging=false;
+        for(const c of draggedCells)await saveCell(c);
+        draggedCells=[];dragStatus=null;
+    });
+    function applyDrag(c){if(draggedCells.find(x=>x===c)||c.dataset.status===dragStatus)return;c.dataset.status=dragStatus;c.className=`check-cell st-${dragStatus}`;c.textContent=dragStatus;draggedCells.push(c);}
+    async function saveCell(c){
+        const key=`${EQUIPMENT}_${c.dataset.no}_${c.dataset.date}`;
+        try{
+            await fetch('/api/smd_check/equipment/toggle',{method:'POST',headers:{'Content-Type':'application/json'},
+                body:JSON.stringify({sheet_type:SHEET_TYPE,equipment:EQUIPMENT,item_no:parseInt(c.dataset.no),date:c.dataset.date,status:c.dataset.status,checker:''})});
+            monthData[key]={status:c.dataset.status};
+        }catch(e){console.error(e);}
+    }
+    async function loadData(){
+        try{
+            const [holRes,dataRes]=await Promise.all([
+                fetch(`/api/inspection/holidays?year=${viewYear}`),
+                fetch(`/api/smd_check/equipment/monthly?sheet_type=${SHEET_TYPE}&year=${viewYear}&month=${viewMonth}`)
+            ]);
+            holidays=holRes.ok?await holRes.json():{};
+            monthData=dataRes.ok?await dataRes.json():{};
+        }catch(e){holidays={};monthData={};}renderAll();
+    }
+    async function moveMonth(d){
+        viewMonth+=d;
+        if(viewMonth>12){viewMonth=1;viewYear++;}
+        else if(viewMonth<1){viewMonth=12;viewYear--;}
+        activeWeek=1;
+        await loadData();
+    }
+    function dateStr(y,m,d){return `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;}
+
+    // ── 점검자 프리셋 ─────────────────────────────────────
+    let checkerPreset = '';
+    async function loadCheckerPreset(){
+        try{
+            const res = await fetch('/api/smd_check/preset/metal_mask_checker');
+            const data = await res.json();
+            checkerPreset = data.preset_data?.checker || '';
+        }catch(e){ checkerPreset=''; }
+    }
+    function openCheckerPresetModal(){
+        document.getElementById('p-checker-name').value = checkerPreset;
+        document.getElementById('checker-preset-modal').classList.add('visible');
+    }
+    function closeCheckerPresetModal(){
+        document.getElementById('checker-preset-modal').classList.remove('visible');
+    }
+    async function saveCheckerPreset(){
+        const name = document.getElementById('p-checker-name').value.trim();
+        try{
+            await fetch('/api/smd_check/preset/metal_mask_checker',{method:'POST',
+                headers:{'Content-Type':'application/json'},
+                body:JSON.stringify({preset_data:{checker:name}})});
+            checkerPreset = name;
+            closeCheckerPresetModal();
+            alert('점검자가 저장되었습니다.');
+        }catch(e){alert('저장 실패');}
+    }
+    // ─────────────────────────────────────────────────────
+    async function jumpToday(){
+        const n=new Date(),ty=n.getFullYear(),tm=n.getMonth()+1;
+        if(viewYear!==ty||viewMonth!==tm){viewYear=ty;viewMonth=tm;activeWeek=1;}
+        // 오늘이 속한 주차로 이동
+        const todayStr=dateStr(ty,tm,n.getDate());
+        const weekly=getWeeklyDays(ty,tm);
+        const found=weekly.find(w=>w.days.some(day=>day.ds===todayStr));
+        if(found) activeWeek=found.week;
+        await loadData();
+    }
+    async function fillToday(){
+        const n=new Date(),ty=n.getFullYear(),tm=n.getMonth()+1;
+        const todayStr=dateStr(ty,tm,n.getDate());
+        if(viewYear!==ty||viewMonth!==tm){await jumpToday();}
+        const ok='O';
+        const ps=[];
+
+        // ① 점검 항목 OK 채우기
+        const cells=document.querySelectorAll(`.check-cell[data-date="${todayStr}"]`);
+        cells.forEach(c=>{
+            if(c.dataset.status!=='')return;
+            c.dataset.status=ok;c.className=`check-cell st-${ok}`;c.textContent=ok;
+            ps.push(fetch('/api/smd_check/equipment/toggle',{method:'POST',headers:{'Content-Type':'application/json'},
+                body:JSON.stringify({sheet_type:SHEET_TYPE,equipment:EQUIPMENT,item_no:parseInt(c.dataset.no),date:c.dataset.date,status:ok,checker:''})}));
+        });
+
+        // ② 점검자 프리셋 자동 기입 (비어있는 경우만)
+        if(checkerPreset){
+            const inputs=document.querySelectorAll(`.checker-input[data-date="${todayStr}"]`);
+            inputs.forEach(input=>{
+                if(input.value!=='')return;
+                input.value=checkerPreset;
+                const key=`${EQUIPMENT}_0_${todayStr}`;
+                monthData[key]={checker:checkerPreset,status:''};
+                ps.push(fetch('/api/smd_check/equipment/toggle',{method:'POST',
+                    headers:{'Content-Type':'application/json'},
+                    body:JSON.stringify({sheet_type:SHEET_TYPE,equipment:EQUIPMENT,
+                        item_no:0,date:todayStr,checker:checkerPreset,status:''})}));
+            });
+        }
+
+        await Promise.all(ps);
+    }
+    async function clearToday(){
+        if(!confirm('오늘 날짜의 모든 체크를 초기화하시겠습니까?'))return;
+        const n=new Date(),todayStr=dateStr(n.getFullYear(),n.getMonth()+1,n.getDate());
+        const ps=[];
+
+        // O/X 체크 셀 초기화
+        document.querySelectorAll(`.check-cell[data-date="${todayStr}"]`).forEach(c=>{
+            if(c.dataset.status==='')return;
+            c.dataset.status='';c.className='check-cell';c.textContent='';
+            ps.push(fetch('/api/smd_check/equipment/toggle',{method:'POST',headers:{'Content-Type':'application/json'},
+                body:JSON.stringify({sheet_type:SHEET_TYPE,equipment:EQUIPMENT,item_no:parseInt(c.dataset.no),date:c.dataset.date,status:'',checker:''})}));
+        });
+
+        // 점검자(checker) 행 초기화
+        document.querySelectorAll(`.checker-input[data-date="${todayStr}"]`).forEach(input=>{
+            if(input.value==='')return;
+            input.value='';
+            const key=`${todayStr}_10:00_0`;
+            monthData[key]={checker:'',status:''};
+            ps.push(fetch('/api/smd_check/equipment/toggle',{method:'POST',headers:{'Content-Type':'application/json'},
+                body:JSON.stringify({sheet_type:SHEET_TYPE,equipment:EQUIPMENT,item_no:0,date:todayStr,status:'',checker:''})}));
+        });
+
+        await Promise.all(ps);
+    }    function updateTime(){const n=new Date(),el=document.getElementById('current-time');if(el)el.textContent=`${n.getFullYear()}년 ${n.getMonth()+1}월 ${n.getDate()}일 ${n.getHours()}시 ${n.getMinutes()}분`;}
+    setInterval(updateTime,1000);updateTime();
+    window.addEventListener('pageshow',()=>setTimeout(()=>document.body.style.opacity='1',50));
+    window.goBack=()=>{document.body.style.opacity='0';setTimeout(()=>history.back(),500);};
+    window.goToHome=()=>{document.body.style.opacity='0';setTimeout(()=>location.href='/',500);};
+    window.goForward=()=>{document.body.style.opacity='0';setTimeout(()=>history.forward(),500);};
+    window.onload=async()=>{
+        // 오늘 주차 자동 선택
+        const today=new Date();
+        if(today.getFullYear()===viewYear && today.getMonth()+1===viewMonth){
+            const weekly=getWeeklyDays(viewYear,viewMonth);
+            const todayStr=dateStr(today.getFullYear(),today.getMonth()+1,today.getDate());
+            const found=weekly.find(w=>w.days.some(day=>day.ds===todayStr));
+            if(found) activeWeek=found.week;
+        }
+        await loadCheckerPreset();
+        await loadData();
+    };
+    </script>
+</body>
+</html>
